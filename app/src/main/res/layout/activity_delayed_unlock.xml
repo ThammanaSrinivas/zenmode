@@ -1,0 +1,286 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#D1E2C4"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:gravity="center_horizontal">
+
+    <!-- Face Image (Top) -->
+    <ImageView
+        android:id="@+id/img_face_large"
+        android:layout_width="match_parent"
+        android:layout_height="218dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/face_happy"
+        android:contentDescription="Mindful Face" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Do you really need mobile now?"
+        android:textSize="20sp"
+        android:fontFamily="@font/cabinet_grotesk_bold"
+        android:textColor="@color/zen_text_primary"
+        android:layout_marginTop="32dp"
+        android:textAlignment="center" />
+
+    <!-- Stats Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="100dp"
+        android:layout_marginTop="32dp">
+
+        <!-- Screen Time Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Screen Time"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/cabinet_grotesk_bold"
+                    android:textColor="@color/zen_text_primary"
+                    android:textStyle="bold"/>
+                <ProgressBar
+                    android:id="@+id/progress_screen_time"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp"
+                    android:progress="50"
+                    android:progressTint="#9C9C9C"
+                    android:progressBackgroundTint="#FFFFFF"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/txt_screen_time_stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="66/120"
+                android:textSize="20sp"
+                android:fontFamily="@font/cabinet_grotesk"
+                android:textColor="@color/zen_text_primary"/>
+            <TextView
+                android:id="@+id/txt_screen_time_stats_suffix"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="mins"
+                android:textSize="8sp"
+                android:fontFamily="@font/cabinet_grotesk"
+                android:textColor="@color/zen_text_primary"/>
+
+        </LinearLayout>
+
+        <!-- Unlocks Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Unlocks"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/cabinet_grotesk_bold"
+                    android:textColor="@color/zen_text_primary"
+                    android:textStyle="bold"/>
+                <ProgressBar
+                    android:id="@+id/progress_unlocks"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp"
+                    android:progress="20"
+                    android:progressTint="#9C9C9C"
+                    android:progressBackgroundTint="#FFFFFF"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/txt_unlocks_stats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="10/60"
+                android:textSize="20sp"
+                android:fontFamily="@font/cabinet_grotesk"
+                android:textColor="@color/zen_text_primary"/>
+            <TextView
+                android:id="@+id/txt_unlocks_stats_suffix"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="times"
+                android:textSize="8sp"
+                android:fontFamily="@font/cabinet_grotesk"
+                android:textColor="@color/zen_text_primary"/>
+
+        </LinearLayout>
+
+        <!-- Mindfulness Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mindfulness"
+                android:textSize="12sp"
+                android:fontFamily="@font/cabinet_grotesk_bold"
+                android:textColor="@color/zen_text_primary"
+                android:textStyle="bold"/>
+            
+             <!-- Using a segmented progress bar style idea here by just using a regular one for now, 
+                 or we could use multiple views. Sticking to simple progress bar as per requirements for speed -->
+            <!-- Segmented Mindfulness Bar -->
+            <com.zenlauncher.zenmode.SegmentedProgressBar
+                android:id="@+id/progress_mindfulness"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/txt_advice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="You're being so mindful Today!💚"
+        android:textSize="16sp"
+        android:fontFamily="@font/cabinet_grotesk_bold"
+        android:textColor="#555555"
+        android:layout_marginTop="8dp" />
+
+    <!-- Countdown Circle -->
+    <FrameLayout
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="32dp">
+        
+        <ProgressBar
+            android:id="@+id/progress_countdown"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="false"
+            android:max="7"
+            android:progress="1"
+            android:progressDrawable="@drawable/circular_progress"
+            android:rotation="-90"/>
+
+        <TextView
+            android:id="@+id/txt_countdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="1"
+            android:textSize="32sp"
+            android:fontFamily="@font/bricolage_grotesque"
+            android:textStyle="bold"
+            android:textColor="@color/zen_text_primary"/>
+    </FrameLayout>
+    
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="16dp">
+        
+        <ImageView
+             android:layout_width="wrap_content"
+             android:layout_height="28dp"
+             android:src="@drawable/logo_png"
+             android:layout_marginEnd="8dp"/>
+             
+    </LinearLayout>
+
+    <!-- Skip Button -->
+    <TextView
+        android:id="@+id/btn_skip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Skip &amp; Open"
+        android:textSize="12sp"
+        android:fontFamily="@font/bricolage_grotesque_semi_bold"
+        android:textColor="@color/zen_skip_and_open"
+        android:layout_centerInParent="true"
+        android:padding="8dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:paddingHorizontal="48dp"
+        android:layout_marginBottom="32dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_alignParentStart="true"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/btn_settings"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_settings"
+                android:padding="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/zen_text_primary"
+                android:contentDescription="Settings" />
+
+            <ImageView
+                android:id="@+id/btn_google"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_google"
+                android:layout_marginStart="24dp"
+                android:padding="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Google" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btn_phone"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_phone"
+            android:layout_alignParentEnd="true"
+            android:padding="10dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/zen_text_primary"
+            android:contentDescription="Phone" />
+
+    </RelativeLayout>
+
+</LinearLayout>

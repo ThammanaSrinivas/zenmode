@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@color/zen_green"
+    app:cardCornerRadius="32dp"
+    app:cardElevation="0dp">
+
+    <ImageView
+        android:id="@+id/iv_buddy_face_top"
+        android:layout_width="150dp"
+        android:layout_height="80dp"
+        android:src="@drawable/face_happy"
+        android:scaleType="fitCenter"
+        android:layout_gravity="right"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Zenmode Buddy"
+            android:fontFamily="@font/cabinet_grotesk_extrabold"
+            android:textSize="28sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="50dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_my_code_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="My zenmode code: "
+            android:fontFamily="@font/cabinet_grotesk_bold"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_title" />
+
+        <TextView
+            android:id="@+id/tv_my_code_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3C4Fczene+!"
+            android:fontFamily="@font/cabinet_grotesk_bold"
+            android:textSize="16sp"
+            android:textColor="#555555"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_my_code_label"
+            app:layout_constraintStart_toEndOf="@+id/tv_my_code_label"
+            app:layout_constraintTop_toTopOf="@+id/tv_my_code_label" />
+        
+        <ImageView
+            android:id="@+id/iv_copy_code"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_content_copy"
+            android:layout_marginStart="8dp"
+            app:tint="@color/black"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_my_code_value"
+            app:layout_constraintStart_toEndOf="@+id/tv_my_code_value"
+            app:layout_constraintTop_toTopOf="@+id/tv_my_code_value" />
+
+        <TextView
+            android:id="@+id/tv_enter_code_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ENTER YOUR BUDDY'S CODE"
+            android:fontFamily="@font/cabinet_grotesk_extrabold"
+            android:textSize="14sp"
+            android:textColor="@color/black"
+            android:layout_marginTop="32dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_my_code_label" />
+
+        <EditText
+            android:id="@+id/et_buddy_code"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_rounded_white"
+            android:hint="3C4Fczene+!"
+            android:textAlignment="viewStart"
+            android:paddingHorizontal="16dp"
+            android:fontFamily="@font/cabinet_grotesk_bold"
+            android:textSize="24sp"
+            android:textColor="@color/black"
+            android:textColorHint="#CCCCCC"
+            android:layout_marginTop="12dp"
+            app:layout_constraintTop_toBottomOf="@+id/tv_enter_code_label"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_desc"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Congrats for start accompanying your friend on mindful journey!!"
+            android:fontFamily="@font/cabinet_grotesk_bold"
+            android:textSize="16sp"
+            android:textColor="#444444"
+            android:layout_marginTop="16dp"
+            android:lineSpacingMultiplier="1.1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/et_buddy_code" />
+
+        <ImageButton
+            android:id="@+id/btn_add_buddy"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/button_add_buddy"
+            android:background="?attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_marginTop="32dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_desc"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>
