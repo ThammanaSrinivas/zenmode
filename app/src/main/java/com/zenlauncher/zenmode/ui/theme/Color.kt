@@ -24,6 +24,9 @@ val ZenDark: Color @Composable get() = colorResource(R.color.zen_dark)
 data class ZenColors(
     val bgPrimary: Color,
     val bgSecondary: Color,
+    val surfaceElevated: Color,
+    val borderSubtle: Color,
+    val borderFocus: Color,
     val textPrimary: Color,
     val textSecondary: Color,
     val textBrand: Color,
@@ -36,6 +39,9 @@ val LightZenColors: ZenColors
     get() = ZenColors(
         bgPrimary = White,
         bgSecondary = Grey100,
+        surfaceElevated = White,
+        borderSubtle = Grey200,
+        borderFocus = ZenBase,
         textPrimary = Black,
         textSecondary = Grey600,
         textBrand = ZenBase,
@@ -48,6 +54,9 @@ val DarkZenColors: ZenColors
     get() = ZenColors(
         bgPrimary = Black,
         bgSecondary = Grey800,
+        surfaceElevated = Grey600,
+        borderSubtle = Grey800,
+        borderFocus = ZenGlow,
         textPrimary = White,
         textSecondary = Grey400,
         textBrand = ZenGlow,
@@ -59,6 +68,9 @@ val LocalZenColors = staticCompositionLocalOf {
     ZenColors(
         bgPrimary = Color.Unspecified,
         bgSecondary = Color.Unspecified,
+        surfaceElevated = Color.Unspecified,
+        borderSubtle = Color.Unspecified,
+        borderFocus = Color.Unspecified,
         textPrimary = Color.Unspecified,
         textSecondary = Color.Unspecified,
         textBrand = Color.Unspecified,

@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">ZenMode</string>
     <string name="a_mindful_minimalist_launcher">A mindful Minimalist Launcher</string>
+    <string name="accessibility_service_description">ZenMode uses this service to lock your screen when you tap the lock button on your home screen.</string>
 </resources>

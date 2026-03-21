@@ -28,6 +28,8 @@ fun OnboardingScreenLayout(
     buttonText: String,
     onButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showLogo: Boolean = false,
+    onBackClick: (() -> Unit)? = null,
     bottomFooter: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -61,11 +63,24 @@ fun OnboardingScreenLayout(
             contentScale = ContentScale.Fit
         )
 
+        // Top-center: App logo (optional)
+        if (showLogo) {
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "ZenMode logo",
+                modifier = Modifier
+                    .size(60.dp)
+                    .offset(y = 16.dp)
+                    .align(Alignment.TopCenter),
+                contentScale = ContentScale.Fit
+            )
+        }
+
         // Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 40.dp),
+                .padding(top = if (showLogo) 100.dp else 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Main dynamic content
@@ -92,6 +107,17 @@ fun OnboardingScreenLayout(
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
                 ) {
+                    if (onBackClick != null) {
+                        Image(
+                            painter = painterResource(id = R.drawable.left_arrow),
+                            contentDescription = "Back",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable { onBackClick() },
+                            contentScale = ContentScale.Fit
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -132,9 +158,15 @@ fun OnboardingScreenLayout(
                 }
 
                 // Optional bottom footer (like terms & config links)
-                if (bottomFooter != null) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    bottomFooter()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    if (bottomFooter != null) {
+                        bottomFooter()
+                    }
                 }
             }
         }

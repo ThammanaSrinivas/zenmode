@@ -50,6 +50,8 @@ gradlew.bat
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
 
+.claude
+
 # Opencore / Composite builds generated files
 core-*/.idea/
 core-*/.kotlin/

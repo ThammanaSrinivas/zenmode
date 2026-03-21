@@ -19,21 +19,31 @@
 package com.zenlauncher.zenmode
 
 import android.content.Intent
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import android.widget.ImageView
 import android.net.Uri
-import androidx.lifecycle.ViewModelProvider
-import android.widget.LinearLayout
+import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModelProvider
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.ui.screens.HomeScreen
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 class MainActivity : AppCompatActivity() {
     private var isReceiverRegistered = false
     private lateinit var viewModel: MainViewModel
     private lateinit var repository: UsageRepository
+
+    private var installedApps by mutableStateOf<List<AppInfo>>(emptyList())
+    private var showSearch by mutableStateOf(false)
 
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
@@ -48,6 +58,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Home button pressed while already on launcher — dismiss search overlay
+        showSearch = false
+    }
+
     override fun onResume() {
         super.onResume()
         if (::viewModel.isInitialized) {
@@ -55,10 +71,11 @@ class MainActivity : AppCompatActivity() {
             viewModel.refreshBuddyStatsFromCache()
         }
         checkAndStartDoomMonitor()
+        loadInstalledApps()
 
         // Analytics
         val tracker = ServiceLocator.analyticsTracker
-        
+
         // Check Launcher Default
         val intent = Intent(Intent.ACTION_MAIN)
         intent.addCategory(Intent.CATEGORY_HOME)
@@ -69,10 +86,7 @@ class MainActivity : AppCompatActivity() {
 
         // Check Buddies
         if (::viewModel.isInitialized && viewModel.hasBuddies.value == true) {
-             // Retrieve count if possible, or just default to 1 for now if boolean
-             // The viewModel hasBuddies is boolean, but I can check buddyStats maybe?
-             // For now, if hasBuddies is true, we assume at least 1.
-             tracker.trackBuddyConnectionActive(1)
+            tracker.trackBuddyConnectionActive(1)
         }
 
         // Stats Sync Check
@@ -97,7 +111,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkAndStartDoomMonitor() {
-        if (DoomScrollingMonitorService.isRunning) return // Already running, skip redundant start
+        if (DoomScrollingMonitorService.isRunning) return
 
         val hasUsageStats = hasUsageStatsPermission()
         val hasOverlayPermission = Settings.canDrawOverlays(this)
@@ -113,16 +127,6 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        } else {
-             // Optionally prompt user. Since this is ZenMode, we should probably guide them.
-             // For v1, I will just log or user might have to enable manually, 
-             // but user said "Use permissions...". I should ideally prompt.
-             // Let's add a simple check to prompt if missing.
-             if (!hasUsageStats) {
-                 // We could show a dialog here or just toast
-                 // android.widget.Toast.makeText(this, "Please grant Usage Access for ZenMode", android.widget.Toast.LENGTH_LONG).show()
-                 // startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-             }
         }
     }
 
@@ -135,7 +139,7 @@ class MainActivity : AppCompatActivity() {
                 packageName
             )
         } else {
-             appOps.checkOpNoThrow(
+            appOps.checkOpNoThrow(
                 android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
                 android.os.Process.myUid(),
                 packageName
@@ -144,9 +148,21 @@ class MainActivity : AppCompatActivity() {
         return mode == android.app.AppOpsManager.MODE_ALLOWED
     }
 
+    private fun loadInstalledApps() {
+        val intent = Intent(Intent.ACTION_MAIN, null)
+        intent.addCategory(Intent.CATEGORY_LAUNCHER)
+        val activities = packageManager.queryIntentActivities(intent, 0)
+        installedApps = activities.map { resolveInfo ->
+            AppInfo(
+                label = resolveInfo.loadLabel(packageManager),
+                packageName = resolveInfo.activityInfo.packageName,
+                icon = resolveInfo.loadIcon(packageManager)
+            )
+        }.sortedBy { it.label.toString() }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
 
         // Initialize ViewModel
         val analyticsManager = ServiceLocator.analyticsManager
@@ -160,8 +176,6 @@ class MainActivity : AppCompatActivity() {
             finish()
             return
         }
-
-        setContentView(R.layout.activity_main)
 
         // Disable back button since this is a launcher home screen
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -180,7 +194,7 @@ class MainActivity : AppCompatActivity() {
         )
         isReceiverRegistered = true
 
-        // Observe ViewModel
+        // Observe delayed unlock navigation (non-Compose, stays as LiveData observer)
         viewModel.navigateToDelayedUnlock.observe(this) { shouldNavigate ->
             if (shouldNavigate) {
                 val delayedIntent = Intent(this, DelayedUnlockActivity::class.java)
@@ -190,58 +204,154 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 1. Inject Fragments
-        if (savedInstanceState == null) {
-            val myStats = StatsWidgetFragment.newInstance("My stats", true)
-            val buddyInvite = BuddyInviteFragment.newInstance()
-
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.widget_slot_1, myStats)
-                .replace(R.id.widget_slot_2, buddyInvite)
-                .commit()
-        }
-
-        // Fetch buddy data and swap widget if buddies exist
+        // Fetch buddy data
         viewModel.fetchBuddyData()
-        viewModel.hasBuddies.observe(this) { hasBuddies ->
-            if (hasBuddies) {
-                val buddyStats = StatsWidgetFragment.newInstance("My Buddy's stats", false)
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.widget_slot_2, buddyStats)
-                    .commit()
+
+        // Load apps initially
+        loadInstalledApps()
+
+        setContent {
+            ZenTheme(darkTheme = true) {
+                val usage by viewModel.stats.observeAsState()
+
+                HomeScreen(
+                    usage = usage,
+                    streaks = 0, // TODO: wire up streak tracking
+                    yesterdayChangePercent = null, // TODO: wire up yesterday comparison
+                    showSearch = showSearch,
+                    onShowSearchChange = { showSearch = it },
+                    onSettingsClick = {
+                        startActivity(Intent(this, SettingsActivity::class.java))
+                    },
+                    onGoogleSearch = { query ->
+                        val searchIntent = Intent(Intent.ACTION_WEB_SEARCH).apply {
+                            putExtra(android.app.SearchManager.QUERY, query)
+                        }
+                        if (searchIntent.resolveActivity(packageManager) != null) {
+                            startActivity(searchIntent)
+                        } else {
+                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=${Uri.encode(query)}")))
+                        }
+                    },
+                    onPhoneClick = {
+                        startActivity(Intent(Intent.ACTION_DIAL))
+                    },
+                    onLockClick = {
+                        lockScreen()
+                    },
+                    onInviteBuddyClick = {
+                        showBuddyInviteDialog()
+                    },
+                    onAppClick = { appInfo ->
+                        val launchIntent = packageManager.getLaunchIntentForPackage(appInfo.packageName.toString())
+                        if (launchIntent != null) {
+                            startActivity(launchIntent)
+                        }
+                    },
+                    apps = installedApps
+                )
+            }
+        }
+    }
+
+    private fun lockScreen() {
+        if (ZenAccessibilityService.isRunning()) {
+            ZenAccessibilityService.lockScreen()
+        } else {
+            android.widget.Toast.makeText(this, "Please enable ZenMode accessibility service to lock screen", android.widget.Toast.LENGTH_SHORT).show()
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+    }
+
+    private fun showBuddyInviteDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_add_buddy, null)
+        val dialog = android.app.AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+        val analyticsManager = ServiceLocator.analyticsManager
+        val currentUserId = ServiceLocator.authProvider.getCurrentUserId()
+        val uid = repository.getUserUid() ?: currentUserId
+
+        val tvMyCode = dialogView.findViewById<android.widget.TextView>(R.id.tv_my_code_value)
+        if (uid != null && uid.length > 7) {
+            tvMyCode.text = "${uid.take(7)}..."
+        } else {
+            tvMyCode.text = uid ?: "Not Signed In"
+        }
+
+        dialogView.findViewById<android.view.View>(R.id.iv_copy_code)?.setOnClickListener {
+            uid?.let { code ->
+                val clipboard = getSystemService(android.content.ClipboardManager::class.java)
+                val clip = android.content.ClipData.newPlainText("ZenMode Code", code)
+                clipboard.setPrimaryClip(clip)
+                ServiceLocator.analyticsTracker.trackBuddyCodeGenerated("copy_link")
+                android.widget.Toast.makeText(this, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
             }
         }
 
-        // 2. Setup Bottom Bar Actions
-        findViewById<ImageView>(R.id.iv_settings).setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
+        val etBuddyCode = dialogView.findViewById<android.widget.EditText>(R.id.et_buddy_code)
+        val btnAddBuddy = dialogView.findViewById<android.view.View>(R.id.btn_add_buddy)
 
-        findViewById<ImageView>(R.id.iv_google).setOnClickListener {
-            val intent = Intent(Intent.ACTION_WEB_SEARCH)
-            // Fallback if no web search app found (rare)
-            if (intent.resolveActivity(packageManager) != null) {
-                startActivity(intent)
-            } else {
-                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com")))
+        btnAddBuddy.isEnabled = false
+        btnAddBuddy.alpha = 0.5f
+
+        etBuddyCode.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val input = s.toString().trim()
+                btnAddBuddy.isEnabled = input.isNotEmpty()
+                btnAddBuddy.alpha = if (input.isNotEmpty()) 1.0f else 0.5f
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+
+        btnAddBuddy.setOnClickListener {
+            val targetUid = etBuddyCode.text.toString().trim()
+            if (targetUid.isEmpty()) return@setOnClickListener
+            if (targetUid == currentUserId) {
+                android.widget.Toast.makeText(this, "You cannot add yourself as a buddy.", android.widget.Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val firestoreDataSource = ServiceLocator.firestoreDataSource
+            btnAddBuddy.isEnabled = false
+            btnAddBuddy.alpha = 0.5f
+
+            lifecycleScope.launch {
+                try {
+                    val user = firestoreDataSource.getUser(targetUid)
+                    if (user != null) {
+                        val buddyName = user.displayName
+                        val myUid = currentUserId
+                        val isAlreadyBuddy = myUid?.let { firestoreDataSource.checkRelationshipExists(it, targetUid) } == true
+                        if (isAlreadyBuddy) {
+                            android.widget.Toast.makeText(this@MainActivity, "You are already buddies with $buddyName!", android.widget.Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+                        if (myUid != null) {
+                            firestoreDataSource.sendBuddyInvite(myUid, targetUid)
+                            repository.clearCachedBuddy()
+                            viewModel.fetchBuddyData()
+                            ServiceLocator.analyticsTracker.trackBuddyLinkAccepted("buddy")
+                            android.widget.Toast.makeText(this@MainActivity, "Successfully added $buddyName!", android.widget.Toast.LENGTH_SHORT).show()
+                            dialog.dismiss()
+                        }
+                    } else {
+                        android.widget.Toast.makeText(this@MainActivity, "User ID not found.", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(this@MainActivity, "Failed: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                } finally {
+                    btnAddBuddy.isEnabled = true
+                    btnAddBuddy.alpha = 1.0f
+                }
             }
         }
 
-        findViewById<ImageView>(R.id.iv_phone).setOnClickListener {
-            startActivity(Intent(Intent.ACTION_DIAL))
-        }
-
-        // 3. Setup RecyclerView and App Grid
-        val recyclerView = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recycler_view)
-        val indicatorLayout = findViewById<LinearLayout>(R.id.indicator_layout)
-        
-        AppGridManager(this, recyclerView, indicatorLayout)
-//
-//        // For debugging: Trigger an immediate ONE-TIME sync so you can see it work now.
-//        val testRequest = androidx.work.OneTimeWorkRequestBuilder<com.zenlauncher.zenmode.worker.StatSyncWorker>()
-//            .setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-//            .build()
-//        androidx.work.WorkManager.getInstance(this).enqueue(testRequest)
+        dialog.show()
     }
 
     override fun onDestroy() {

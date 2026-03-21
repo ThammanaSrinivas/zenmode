@@ -1,5 +1,12 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import android.content.Intent
+import android.os.Bundle
+import android.provider.Settings
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,43 +19,64 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.fragment.app.Fragment
+import androidx.viewpager2.widget.ViewPager2
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
+import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.Grey600
 import com.zenlauncher.zenmode.ui.theme.Grey800
 import com.zenlauncher.zenmode.ui.theme.White
 import com.zenlauncher.zenmode.ui.theme.ZenBase
 import com.zenlauncher.zenmode.ui.theme.ZenGlow
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 @Composable
 fun UsageAccessPermissionScreen(
-    onGrantAccessClick: () -> Unit
+    onGrantAccessClick: () -> Unit,
+    onBackClick: () -> Unit
 ) {
     OnboardingScreenLayout(
         progress = 0.5f,
         progressText = "50%",
         buttonText = "Grant access",
         onButtonClick = onGrantAccessClick,
+        showLogo = true,
+        onBackClick = onBackClick,
         bottomFooter = null
     ) {
         Spacer(modifier = Modifier.height(20.dp))
         
-        // App Icon (Show Zenmode Logo at top center)
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "Zenmode Logo",
+        UsageBarChartIcon(
             modifier = Modifier.size(60.dp)
         )
         
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Title
+        Text(
+            text = "Usage Access Permission",
+            color = White,
+            style = TextStyle(
+                fontFamily = CabinetGrotesque,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Center visual component natively built mimicking the Figma spec "usage_access_permission_overlay"
         Box(
             modifier = Modifier
-                .padding(horizontal = 32.dp)
-                .fillMaxWidth()
+                .width(286.dp)
                 .background(Grey800.copy(alpha = 0.8f), RoundedCornerShape(10.dp))
                 .border(1.dp, Grey800, RoundedCornerShape(10.dp))
                 .padding(20.dp)
@@ -139,8 +167,8 @@ fun UsageAccessPermissionScreen(
             }
         }
         
-        Spacer(modifier = Modifier.weight(1f))
-        
+        Spacer(modifier = Modifier.height(20.dp))
+
         // Text instructions
         Text(
             text = "We want to see which apps are eating your time. Not to judge just to help you reclaim it.",
@@ -148,7 +176,155 @@ fun UsageAccessPermissionScreen(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(horizontal = 40.dp)
         )
+
+        Spacer(modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+fun UsageBarChartIcon(modifier: Modifier = Modifier) {
+    val axisColor = ZenBase
+    val barColor = ZenBase
+
+    Canvas(modifier = modifier) {
+        val strokeWidth = 1.5.dp.toPx()
+
+        // Draw L axis
+        drawLine(
+            color = axisColor,
+            start = Offset(size.width * 0.15f, size.height * 0.15f),
+            end = Offset(size.width * 0.15f, size.height * 0.85f),
+            strokeWidth = strokeWidth
+        )
+        drawLine(
+            color = axisColor,
+            start = Offset(size.width * 0.15f, size.height * 0.85f),
+            end = Offset(size.width * 0.85f, size.height * 0.85f),
+            strokeWidth = strokeWidth
+        )
+
+        val barWidth = size.width * 0.14f
+        val gap = size.width * 0.08f
+
+        // Bar 1 (Short)
+        var startX = size.width * 0.25f
+        drawRect(
+            color = barColor,
+            topLeft = Offset(startX, size.height * 0.6f),
+            size = androidx.compose.ui.geometry.Size(barWidth, size.height * 0.25f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
+        )
+
+        // Bar 2 (Medium)
+        startX += barWidth + gap
+        drawRect(
+            color = barColor,
+            topLeft = Offset(startX, size.height * 0.4f),
+            size = androidx.compose.ui.geometry.Size(barWidth, size.height * 0.45f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
+        )
         
-        Spacer(modifier = Modifier.height(40.dp))
+        // Let's add diagonal lines to the second bar to match Figma loosely
+        val maxH2 = size.height * 0.4f
+        var yPos2 = size.height * 0.85f
+        while (yPos2 > maxH2) {
+            drawLine(
+                color = barColor,
+                start = Offset(startX, yPos2),
+                end = Offset(startX + barWidth, yPos2 - barWidth),
+                strokeWidth = strokeWidth / 2f
+            )
+            yPos2 -= barWidth * 0.6f
+        }
+
+        // Bar 3 (Tall)
+        startX += barWidth + gap
+        drawRect(
+            color = barColor,
+            topLeft = Offset(startX, size.height * 0.25f),
+            size = androidx.compose.ui.geometry.Size(barWidth, size.height * 0.6f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
+        )
+
+        // Add diagonal lines to the last bar
+        val maxH3 = size.height * 0.25f
+        var yPos3 = size.height * 0.85f
+        while (yPos3 > maxH3) {
+            drawLine(
+                color = barColor,
+                start = Offset(startX, yPos3),
+                end = Offset(startX + barWidth, yPos3 - barWidth),
+                strokeWidth = strokeWidth / 2f
+            )
+            yPos3 -= barWidth * 0.6f
+        }
+    }
+}
+
+class UsageAccessPermissionFragment : Fragment() {
+
+    private var hasOpenedSettings = false
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return androidx.compose.ui.platform.ComposeView(requireContext()).apply {
+            setContent {
+                ZenTheme {
+                    UsageAccessPermissionScreen(
+                        onGrantAccessClick = { handleGrantAccess() },
+                        onBackClick = { navigateTo(-1) }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun navigateTo(delta: Int) {
+        val viewPager = requireActivity().findViewById<ViewPager2>(R.id.viewPager) ?: return
+        viewPager.currentItem = (viewPager.currentItem + delta).coerceAtLeast(0)
+    }
+
+    private fun handleGrantAccess() {
+        if (hasUsageStatsPermission()) {
+            ServiceLocator.analyticsTracker.trackPermissionsGranted("usage_access")
+            val viewPager = requireActivity().findViewById<ViewPager2>(R.id.viewPager)
+            viewPager.currentItem = viewPager.currentItem + 1
+        } else {
+            hasOpenedSettings = true
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (hasOpenedSettings && hasUsageStatsPermission()) {
+            hasOpenedSettings = false
+            val viewPager = activity?.findViewById<ViewPager2>(R.id.viewPager)
+            if (viewPager != null && viewPager.adapter != null &&
+                viewPager.currentItem < (viewPager.adapter!!.itemCount - 1)) {
+                viewPager.currentItem = viewPager.currentItem + 1
+            }
+        }
+    }
+
+    private fun hasUsageStatsPermission(): Boolean {
+        val appOps = requireContext().getSystemService(android.content.Context.APP_OPS_SERVICE)
+            as android.app.AppOpsManager
+        val mode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            appOps.unsafeCheckOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                requireContext().packageName
+            )
+        } else {
+            appOps.checkOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                requireContext().packageName
+            )
+        }
+        return mode == android.app.AppOpsManager.MODE_ALLOWED
     }
 }
