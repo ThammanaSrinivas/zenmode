@@ -6,7 +6,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 
 class OnboardingAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapter(fragmentActivity) {
 
-    override fun getItemCount(): Int = 7
+    override fun getItemCount(): Int = 6
 
     override fun createFragment(position: Int): Fragment {
         return when (position) {
@@ -14,9 +14,8 @@ class OnboardingAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapt
             1 -> UsagePermissionFragment()
             2 -> OverlayPermissionFragment()
             3 -> NotificationPermissionFragment()
-            4 -> GoogleSignInFragment()
-            5 -> DefaultLauncherFragment()
-            6 -> com.zenlauncher.zenmode.AccessibilityFragment()
+            4 -> DefaultLauncherFragment()
+            5 -> com.zenlauncher.zenmode.AccessibilityFragment()
             else -> IntroFragment()
         }
     }

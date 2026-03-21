@@ -36,16 +36,16 @@
             android:text="Get your Buddy!"
             android:textSize="15sp"
             android:fontFamily="@font/cabinet_grotesk_extrabold"
-            android:textColor="@color/zen_text_primary"
+            android:textColor="@color/black"
             android:layout_marginBottom="4dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="You can see your buddy’s screen time &amp; unlocks here!! pick a wise one❤️"
-            android:fontFamily="@font/bricolage_grotesque_semi_bold"
+            android:fontFamily="@font/cabinet_grotesk_extrabold"
             android:textSize="9sp"
-            android:textColor="@color/zen_text_primary"
+            android:textColor="@color/black"
             android:lineSpacingExtra="2dp"
             android:layout_marginBottom="12dp" />
 
@@ -54,12 +54,12 @@
             android:layout_width="match_parent"
             android:layout_height="19dp"
             android:text="Invite buddy"
-            android:textColor="@color/zen_beige"
+            android:textColor="@color/white"
             android:textSize="12sp"
             android:textAllCaps="false"
             android:fontFamily="@font/cabinet_grotesk_bold"
             android:background="@drawable/bg_rounded_item"
-            android:backgroundTint="@color/zen_text_primary"
+            android:backgroundTint="@color/zen_base"
             android:layout_gravity="center_horizontal" />
 
     </LinearLayout>

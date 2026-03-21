@@ -11,4 +11,8 @@
     <color name="zen_base">#00C700</color>
     <color name="zen_glow">#24FF24</color>
     <color name="zen_dark">#007700</color>
+
+    <color name="zen_mindfulness_happy">#12B117</color>
+    <color name="zen_mindfulness_neutral">#EBDE27</color>
+    <color name="zen_mindfulness_annoyed">#F1634F</color>
 </resources>

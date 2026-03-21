@@ -12,7 +12,7 @@ class OnboardingActivity : AppCompatActivity() {
 
     companion object {
         /** Position of the Google Sign-In page (mandatory). */
-        private const val GOOGLE_SIGN_IN_PAGE = 4
+        private const val GOOGLE_SIGN_IN_PAGE = 0
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,10 +30,6 @@ class OnboardingActivity : AppCompatActivity() {
         viewPager.adapter = adapter
         viewPager.isUserInputEnabled = true // Allow swiping to freely navigate
         
-        val indicator = findViewById<TextView>(R.id.tv_page_indicator)
-        
-        val progressBar = findViewById<android.widget.ProgressBar>(R.id.pb_header)
-        
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
@@ -47,17 +43,6 @@ class OnboardingActivity : AppCompatActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                     return
-                }
-
-                indicator.text = "${position + 1}/7"
-                progressBar.progress = when (position) {
-                    0 -> 14
-                    1 -> 28
-                    2 -> 42
-                    3 -> 57
-                    4 -> 71
-                    5 -> 85
-                    else -> 100
                 }
                 // Persist the current page so we can restore it if the activity is re-created
                 repository.setOnboardingCurrentPage(position)

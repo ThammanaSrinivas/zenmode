@@ -24,7 +24,7 @@
         android:text="Do you really need mobile now?"
         android:textSize="20sp"
         android:fontFamily="@font/cabinet_grotesk_bold"
-        android:textColor="@color/zen_text_primary"
+        android:textColor="@color/black"
         android:layout_marginTop="32dp"
         android:textAlignment="center" />
 
@@ -55,7 +55,7 @@
                     android:text="Screen Time"
                     android:textSize="12sp"
                     android:fontFamily="@font/cabinet_grotesk_bold"
-                    android:textColor="@color/zen_text_primary"
+                    android:textColor="@color/white"
                     android:textStyle="bold"/>
                 <ProgressBar
                     android:id="@+id/progress_screen_time"
@@ -74,16 +74,16 @@
                 android:layout_marginStart="12dp"
                 android:text="66/120"
                 android:textSize="20sp"
-                android:fontFamily="@font/cabinet_grotesk"
-                android:textColor="@color/zen_text_primary"/>
+                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:textColor="@color/black"/>
             <TextView
                 android:id="@+id/txt_screen_time_stats_suffix"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="mins"
                 android:textSize="8sp"
-                android:fontFamily="@font/cabinet_grotesk"
-                android:textColor="@color/zen_text_primary"/>
+                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:textColor="@color/black"/>
 
         </LinearLayout>
 
@@ -106,7 +106,7 @@
                     android:text="Unlocks"
                     android:textSize="12sp"
                     android:fontFamily="@font/cabinet_grotesk_bold"
-                    android:textColor="@color/zen_text_primary"
+                    android:textColor="@color/black"
                     android:textStyle="bold"/>
                 <ProgressBar
                     android:id="@+id/progress_unlocks"
@@ -125,16 +125,16 @@
                 android:layout_marginStart="12dp"
                 android:text="10/60"
                 android:textSize="20sp"
-                android:fontFamily="@font/cabinet_grotesk"
-                android:textColor="@color/zen_text_primary"/>
+                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:textColor="@color/black"/>
             <TextView
                 android:id="@+id/txt_unlocks_stats_suffix"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="times"
                 android:textSize="8sp"
-                android:fontFamily="@font/cabinet_grotesk"
-                android:textColor="@color/zen_text_primary"/>
+                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:textColor="@color/black"/>
 
         </LinearLayout>
 
@@ -151,7 +151,7 @@
                 android:text="Mindfulness"
                 android:textSize="12sp"
                 android:fontFamily="@font/cabinet_grotesk_bold"
-                android:textColor="@color/zen_text_primary"
+                android:textColor="@color/black"
                 android:textStyle="bold"/>
             
              <!-- Using a segmented progress bar style idea here by just using a regular one for now, 
@@ -200,9 +200,9 @@
             android:layout_gravity="center"
             android:text="1"
             android:textSize="32sp"
-            android:fontFamily="@font/bricolage_grotesque"
+            android:fontFamily="@font/cabinet_grotesk_extrabold"
             android:textStyle="bold"
-            android:textColor="@color/zen_text_primary"/>
+            android:textColor="@color/black"/>
     </FrameLayout>
     
     <LinearLayout
@@ -215,7 +215,7 @@
         <ImageView
              android:layout_width="wrap_content"
              android:layout_height="28dp"
-             android:src="@drawable/logo_png"
+             android:src="@drawable/logo"
              android:layout_marginEnd="8dp"/>
              
     </LinearLayout>
@@ -227,8 +227,8 @@
         android:layout_height="wrap_content"
         android:text="Skip &amp; Open"
         android:textSize="12sp"
-        android:fontFamily="@font/bricolage_grotesque_semi_bold"
-        android:textColor="@color/zen_skip_and_open"
+        android:fontFamily="@font/cabinet_grotesk_extrabold"
+        android:textColor="@color/black"
         android:layout_centerInParent="true"
         android:padding="8dp"
         android:background="?attr/selectableItemBackground"
@@ -256,7 +256,7 @@
                 android:src="@drawable/ic_settings"
                 android:padding="10dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="@color/zen_text_primary"
+                app:tint="@color/black"
                 android:contentDescription="Settings" />
 
             <ImageView
@@ -278,7 +278,7 @@
             android:layout_alignParentEnd="true"
             android:padding="10dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="@color/zen_text_primary"
+            app:tint="@color/black"
             android:contentDescription="Phone" />
 
     </RelativeLayout>

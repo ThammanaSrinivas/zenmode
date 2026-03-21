@@ -35,7 +35,7 @@ Use these names in your Jetpack Compose `Theme.kt`. The app will automatically s
 
 ## 3. Typography Rules
 The font pairing strategy for ZenMode v2 is designed for high readability and a technical, "clean" aesthetic.
-Refer `Type.kt`
+Refer only `Type.kt` for accessing fonts
 
 ### Primary Font: Cabinet Grotesque
 * **Usage:** Used for all prose, headings, labels, and UI instructions.

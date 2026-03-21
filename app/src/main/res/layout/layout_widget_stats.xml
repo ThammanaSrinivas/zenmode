@@ -34,7 +34,7 @@
             android:text="My stats"
             android:textSize="15sp"
             android:fontFamily="@font/cabinet_grotesk_extrabold"
-            android:textColor="@color/zen_text_primary"
+            android:textColor="@color/black"
             android:layout_marginBottom="4dp" />
 
         <!-- Stats Row 1 Headers -->
@@ -51,8 +51,8 @@
                 android:textSize="9sp"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:fontFamily="@font/bricolage_grotesque_semi_bold"
-                android:textColor="@color/zen_text_primary" />
+                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:textColor="@color/black" />
                 
             <TextView
                 android:layout_width="0dp"
@@ -62,8 +62,8 @@
                 android:textSize="9sp"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:fontFamily="@font/bricolage_grotesque_semi_bold"
-                android:textColor="@color/zen_text_primary"/>
+                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:textColor="@color/black"/>
         </LinearLayout>
 
         <!-- Stats Row 1 Values -->
@@ -89,8 +89,8 @@
                     app:autoSizeMinTextSize="20sp"
                     app:autoSizeMaxTextSize="32sp"
                     app:autoSizeStepGranularity="2sp"
-                    android:fontFamily="@font/reddit_mono_600_normal"
-                    android:textColor="@color/zen_text_primary"
+                    android:fontFamily="@font/reddit_mono_200"
+                    android:textColor="@color/black"
                     android:gravity="bottom" />
                 <TextView
                     android:layout_width="wrap_content"
@@ -99,8 +99,8 @@
                     android:textSize="9sp"
                     android:layout_gravity="bottom"
                     android:paddingBottom="6dp"
-                    android:fontFamily="@font/reddit_mono_600_normal"
-                    android:textColor="@color/zen_text_primary" />
+                    android:fontFamily="@font/reddit_mono_200"
+                    android:textColor="@color/black" />
             </LinearLayout>
 
             <LinearLayout
@@ -119,8 +119,8 @@
                     app:autoSizeMinTextSize="20sp"
                     app:autoSizeMaxTextSize="32sp"
                     app:autoSizeStepGranularity="2sp"
-                    android:fontFamily="@font/reddit_mono_600_normal"
-                    android:textColor="@color/zen_text_primary" 
+                    android:fontFamily="@font/reddit_mono_400"
+                    android:textColor="@color/black"
                     android:gravity="bottom"/>
                 <TextView
                     android:layout_width="wrap_content"
@@ -129,8 +129,8 @@
                     android:textSize="9sp"
                     android:layout_gravity="bottom"
                     android:paddingBottom="6dp"
-                    android:fontFamily="@font/reddit_mono_600_normal"
-                    android:textColor="@color/zen_text_primary" />
+                    android:fontFamily="@font/reddit_mono_400"
+                    android:textColor="@color/black" />
             </LinearLayout>
         </LinearLayout>
 
@@ -147,7 +147,7 @@
                 android:text="Mindfulness"
                 android:textSize="12sp"
                 android:fontFamily="@font/cabinet_grotesk_bold"
-                android:textColor="@color/zen_text_primary"
+                android:textColor="@color/black"
                 android:layout_marginEnd="8dp"/>
                 
             <com.zenlauncher.zenmode.SegmentedProgressBar

@@ -15,35 +15,35 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 
-private val DarkColorScheme = darkColorScheme(
-    primary = ZenBase,
-    background = Black,
-    onBackground = White,
-    surface = Grey800,
-    onSurface = Grey400
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = ZenDark,
-    background = White,
-    onBackground = Black,
-    surface = Grey100,
-    onSurface = Grey600
-)
-
 @Composable
 fun ZenTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false, // Dynamic color is disabled by default for ZenLauncher styling
     content: @Composable () -> Unit
 ) {
+    val darkColorScheme = darkColorScheme(
+        primary = ZenBase,
+        background = Black,
+        onBackground = White,
+        surface = Grey800,
+        onSurface = Grey400
+    )
+
+    val lightColorScheme = lightColorScheme(
+        primary = ZenDark,
+        background = White,
+        onBackground = Black,
+        surface = Grey100,
+        onSurface = Grey600
+    )
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> darkColorScheme
+        else -> lightColorScheme
     }
 
     val zenColors = if (darkTheme) DarkZenColors else LightZenColors

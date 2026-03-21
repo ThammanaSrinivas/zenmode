@@ -1,0 +1,142 @@
+package com.zenlauncher.zenmode.ui.components
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.theme.Black
+import com.zenlauncher.zenmode.ui.theme.Grey600
+import com.zenlauncher.zenmode.ui.theme.White
+import com.zenlauncher.zenmode.ui.theme.ZenBase
+
+@Composable
+fun OnboardingScreenLayout(
+    progress: Float,
+    progressText: String,
+    buttonText: String,
+    onButtonClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    bottomFooter: (@Composable () -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Black)
+    ) {
+        // Decorative corner elements
+
+        // Top-left: Crystal
+        Image(
+            painter = painterResource(id = R.drawable.onboarding_crystal),
+            contentDescription = null,
+            modifier = Modifier
+                .size(160.dp)
+                .offset(x = (-62).dp, y = (-50).dp)
+                .align(Alignment.TopStart),
+            contentScale = ContentScale.Fit
+        )
+
+        // Top-right: Shuriken
+        Image(
+            painter = painterResource(id = R.drawable.onboarding_shuriken),
+            contentDescription = null,
+            modifier = Modifier
+                .size(120.dp)
+                .offset(x = 60.dp, y = (-60).dp)
+                .blur(15.9.dp)
+                .align(Alignment.TopEnd),
+            contentScale = ContentScale.Fit
+        )
+
+        // Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Main dynamic content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                content()
+            }
+
+            // Bottom section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 40.dp, start = 20.dp, end = 20.dp)
+            ) {
+                // Progress bar
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(4.dp)
+                            .background(Grey600, RoundedCornerShape(2.dp))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(progress)
+                                .fillMaxHeight()
+                                .background(White, RoundedCornerShape(2.dp))
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = progressText,
+                        color = com.zenlauncher.zenmode.ui.theme.ZenGlow,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Primary Action Button
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(ZenBase, RoundedCornerShape(28.dp))
+                        .clickable { onButtonClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = buttonText,
+                        color = Black,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+
+                // Optional bottom footer (like terms & config links)
+                if (bottomFooter != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    bottomFooter()
+                }
+            }
+        }
+    }
+}

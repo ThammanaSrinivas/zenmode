@@ -20,7 +20,7 @@ class SegmentedProgressBar @JvmOverloads constructor(
     
     private var progress = 100 // 0 to 100
     private var filledColor = ContextCompat.getColor(context, R.color.zen_mindfulness_happy)
-    private var emptyColor = ContextCompat.getColor(context, R.color.zen_mindfulness_track)
+    private var emptyColor = ContextCompat.getColor(context, R.color.white)
 
     fun setProgress(value: Int) {
         this.progress = value.coerceIn(0, 100)

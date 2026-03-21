@@ -13,7 +13,7 @@
         android:fontFamily="@font/cabinet_grotesk_bold"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="@color/zen_text_primary"
+        android:textColor="@color/black"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="20dp"/>
 
@@ -24,14 +24,14 @@
         android:text="Master your focus"
         android:fontFamily="@font/cabinet_grotesk_bold"
         android:textSize="16sp"
-        android:textColor="@color/zen_text_primary"
+        android:textColor="@color/black"
         android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@id/tv_title"/>
 
     <ImageView
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:src="@drawable/accessibility"
+        android:src="@drawable/onboarding_accessibility_service"
         app:layout_constraintTop_toBottomOf="@id/tv_subtitle"
         app:layout_constraintBottom_toTopOf="@id/tv_section_title"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,7 +45,7 @@
         android:fontFamily="@font/cabinet_grotesk_bold"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="@color/zen_text_primary"
+        android:textColor="@color/black"
         app:layout_constraintBottom_toTopOf="@id/tv_description"
         android:layout_marginBottom="8dp"/>
 
@@ -56,14 +56,14 @@
         android:text="This is where the magic happens. Fair warning: it requires a lot of trust from you. We won't let you down."
         android:fontFamily="@font/cabinet_grotesk_bold"
         android:layout_marginBottom="32dp"
-        android:textColor="@color/zen_text_primary"
+        android:textColor="@color/black"
         app:layout_constraintBottom_toTopOf="@id/btn_finish_setup"/>
 
     <ImageView
         android:id="@+id/btn_finish_setup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:src="@drawable/button_finish_setup"
+        android:src="@drawable/button_lets_goooo"
         android:adjustViewBounds="true"
         app:layout_constraintBottom_toBottomOf="parent"
         android:contentDescription="Finish Setup" />

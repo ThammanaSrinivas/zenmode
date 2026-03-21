@@ -16,27 +16,33 @@ class UsagePermissionFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_onboarding_usage, container, false)
+    ): View {
+        return androidx.compose.ui.platform.ComposeView(requireContext()).apply {
+            setContent {
+                com.zenlauncher.zenmode.ui.theme.ZenTheme {
+                    com.zenlauncher.zenmode.ui.screens.UsageAccessPermissionScreen(
+                        onGrantAccessClick = { handleGrantAccess() }
+                    )
+                }
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // Compose view handles its own interactions
+    }
+    
+    private fun handleGrantAccess() {
+        if (hasUsageStatsPermission()) {
+            // Analytics
+            com.zenlauncher.zenmode.coreapi.services.ServiceLocator.analyticsTracker.trackPermissionsGranted("usage_access")
 
-        val btnGrant = view.findViewById<android.widget.ImageView>(R.id.btn_action)
-
-        btnGrant.setOnClickListener {
-            // Check if already granted?
-             if (hasUsageStatsPermission()) {
-                 // Analytics
-                 com.zenlauncher.zenmode.coreapi.services.ServiceLocator.analyticsTracker.trackPermissionsGranted("usage_access")
-
-                 // Advance to next page
-                 val viewPager = requireActivity().findViewById<ViewPager2>(R.id.viewPager)
-                 viewPager.currentItem = viewPager.currentItem + 1
-             } else {
-                 startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-             }
+            // Advance to next page
+            val viewPager = requireActivity().findViewById<ViewPager2>(R.id.viewPager)
+            viewPager.currentItem = viewPager.currentItem + 1
+        } else {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
     }
     

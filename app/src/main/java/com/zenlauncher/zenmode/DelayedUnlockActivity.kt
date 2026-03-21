@@ -128,19 +128,19 @@ class DelayedUnlockActivity : AppCompatActivity() {
         when (AppLogic.getMoodState(minutes)) {
             MoodState.HAPPY -> {
                 // Happy State
-                colorRes = androidx.core.content.ContextCompat.getColor(this, R.color.zen_green)
+                colorRes = androidx.core.content.ContextCompat.getColor(this, R.color.zen_mindfulness_happy)
                 faceRes = R.drawable.face_happy
                 message = "You're being so mindful Today!💚"
             }
             MoodState.NEUTRAL -> {
                 // Neutral State
-                colorRes = androidx.core.content.ContextCompat.getColor(this, R.color.zen_yellow)
+                colorRes = androidx.core.content.ContextCompat.getColor(this, R.color.zen_mindfulness_neutral)
                 faceRes = R.drawable.face_neutral
                 message = "Free advice: Don't lose your peace"
             }
             MoodState.ANNOYED -> {
                 // Annoyed State
-                colorRes = androidx.core.content.ContextCompat.getColor(this, R.color.zen_red)
+                colorRes = androidx.core.content.ContextCompat.getColor(this, R.color.zen_mindfulness_annoyed)
                 faceRes = R.drawable.face_annoyed
                 message = "Put the phone down. Live.❤️"
             }

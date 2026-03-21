@@ -58,6 +58,37 @@ val Typography = Typography(
         fontSize = 11.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp
+    ),
+    displaySmall = TextStyle(
+        fontFamily = CabinetGrotesque,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 22.sp,
+        letterSpacing = 4.sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = CabinetGrotesque,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 26.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = CabinetGrotesque,
+        fontWeight = FontWeight.Medium,
+        fontSize = 18.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = CabinetGrotesque,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 18.sp
+    ),
+    labelMedium = TextStyle(
+        fontFamily = CabinetGrotesque,
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = CabinetGrotesque,
+        fontWeight = FontWeight.Light,
+        fontSize = 10.sp
     )
 )
 

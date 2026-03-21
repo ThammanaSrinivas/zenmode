@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/zen_beige"
+    android:background="@color/white"
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
@@ -25,7 +25,7 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="32dp"
-            android:src="@drawable/logo_png"
+            android:src="@drawable/logo"
             android:layout_marginStart="8dp"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
@@ -70,7 +70,7 @@
             android:text="Vs"
             android:textSize="14sp"
             android:fontFamily="@font/cabinet_grotesk_bold"
-            android:textColor="@color/zen_text_primary"
+            android:textColor="@color/black"
             android:layout_centerInParent="true" 
             android:elevation="8dp"
             android:padding="6dp"/>
@@ -120,7 +120,7 @@
                 android:layout_height="32dp"
                 android:src="@drawable/ic_settings"
                 android:contentDescription="Settings"
-                app:tint="@color/zen_text_primary" />
+                app:tint="@color/black" />
 
             <ImageView
                 android:id="@+id/iv_google"
@@ -129,7 +129,7 @@
                 android:layout_marginStart="32dp"
                 android:src="@drawable/ic_google"
                 android:contentDescription="Google"
-                app:tint="@color/zen_text_primary" />
+                app:tint="@color/black" />
         </LinearLayout>
 
         <ImageView
@@ -140,7 +140,7 @@
             android:layout_centerVertical="true"
             android:src="@drawable/ic_phone"
             android:contentDescription="Phone"
-            app:tint="@color/zen_text_primary" />
+            app:tint="@color/black" />
 
     </RelativeLayout>
 
