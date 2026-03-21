@@ -533,7 +533,7 @@ private fun AppGridPager(
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
-    // Every page: 1 lock + 11 apps
+    // Every page: 1 lock + 11 apps (4 columns x 3 rows)
     val appsPerPage = 11
     val pages = remember(apps) { apps.chunked(appsPerPage) }
     val totalPages = pages.size.coerceAtLeast(1)
@@ -558,12 +558,12 @@ private fun AppGridPager(
                 contentAlignment = Alignment.Center
             ) {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
+                    columns = GridCells.Fixed(4),
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight(),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(28.dp),
+                    verticalArrangement = Arrangement.spacedBy(44.dp),
                     userScrollEnabled = false
                 ) {
                     // Lock icon — always first on every page

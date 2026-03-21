@@ -115,6 +115,8 @@ class AccessibilityServiceFragment : Fragment() {
 
     private fun handleGrantAccess() {
         if (isAccessibilityServiceEnabled(requireContext())) {
+            com.zenlauncher.zenmode.coreapi.services.ServiceLocator.analyticsTracker
+                .trackPermissionsGranted("accessibility_service")
             navigateTo(+1)
         } else {
             hasOpenedSettings = true
@@ -126,6 +128,8 @@ class AccessibilityServiceFragment : Fragment() {
         super.onResume()
         if (hasOpenedSettings && isAccessibilityServiceEnabled(requireContext())) {
             hasOpenedSettings = false
+            com.zenlauncher.zenmode.coreapi.services.ServiceLocator.analyticsTracker
+                .trackPermissionsGranted("accessibility_service")
             navigateTo(+1)
         }
     }
@@ -134,7 +138,8 @@ class AccessibilityServiceFragment : Fragment() {
         val enabledServices = Settings.Secure.getString(
             context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        )
-        return enabledServices?.contains(context.packageName) == true
+        ) ?: return false
+        val expectedComponent = "${context.packageName}/${context.packageName}.ZenAccessibilityService"
+        return enabledServices.split(':').any { it.equals(expectedComponent, ignoreCase = true) }
     }
 }
