@@ -66,7 +66,7 @@ fun OnboardingScreenLayout(
         // Top-center: App logo (optional)
         if (showLogo) {
             Image(
-                painter = painterResource(id = R.drawable.logo),
+                painter = painterResource(id = R.drawable.app_icon),
                 contentDescription = "ZenMode logo",
                 modifier = Modifier
                     .size(60.dp)

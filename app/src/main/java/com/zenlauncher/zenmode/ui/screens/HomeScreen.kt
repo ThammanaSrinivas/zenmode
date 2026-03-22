@@ -47,6 +47,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -63,6 +69,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -161,24 +168,23 @@ fun HomeScreen(
 private fun HomeHeader(streaks: Int) {
     val colors = ZenTheme.colors
 
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.Center
     ) {
-        // Zen logo
+        // Zen logo — centered
         Image(
-            painter = painterResource(R.drawable.logo_only_pins),
+            painter = painterResource(R.drawable.app_icon),
             contentDescription = "ZenMode",
             modifier = Modifier.size(32.dp)
         )
 
-        // Streaks badge
-        // Streaks badge — Silkscreen font, green bg pill
+        // Streaks badge — pinned to end
         Box(
             modifier = Modifier
+                .align(Alignment.CenterEnd)
                 .clip(RoundedCornerShape(46.dp))
                 .background(colors.borderFocus)
                 .padding(horizontal = 12.dp, vertical = 7.dp)
@@ -238,6 +244,61 @@ private fun StatsCardsRow(
     }
 }
 
+// ── Inner Shadow Modifier ────────────────────────────────────────
+
+private fun Modifier.innerShadow(
+    color: Color,
+    cornerRadius: Dp,
+    blur: Dp,
+    offsetX: Dp = 0.dp,
+    offsetY: Dp = 0.dp,
+    spread: Dp = 0.dp
+) = drawWithContent {
+    drawContent()
+    drawIntoCanvas { canvas ->
+        val paint = android.graphics.Paint().apply {
+            this.color = color.toArgb()
+            this.isAntiAlias = true
+            if (blur.toPx() > 0) {
+                maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
+            }
+        }
+        val cornerRadiusPx = cornerRadius.toPx()
+        val spreadPx = spread.toPx()
+
+        canvas.nativeCanvas.save()
+
+        val clipPath = android.graphics.Path().apply {
+            addRoundRect(
+                android.graphics.RectF(0f, 0f, size.width, size.height),
+                cornerRadiusPx, cornerRadiusPx,
+                android.graphics.Path.Direction.CW
+            )
+        }
+        canvas.nativeCanvas.clipPath(clipPath)
+
+        val outerPath = android.graphics.Path().apply {
+            addRect(
+                android.graphics.RectF(-100f, -100f, size.width + 100f, size.height + 100f),
+                android.graphics.Path.Direction.CW
+            )
+            addRoundRect(
+                android.graphics.RectF(
+                    spreadPx + offsetX.toPx(),
+                    spreadPx + offsetY.toPx(),
+                    size.width - spreadPx + offsetX.toPx(),
+                    size.height - spreadPx + offsetY.toPx()
+                ),
+                cornerRadiusPx, cornerRadiusPx,
+                android.graphics.Path.Direction.CCW
+            )
+        }
+        canvas.nativeCanvas.drawPath(outerPath, paint)
+
+        canvas.nativeCanvas.restore()
+    }
+}
+
 // ── My Screen Time Card ───────────────────────────────────────────
 
 @Composable
@@ -254,18 +315,6 @@ private fun MyScreenTimeCard(
     val moodState = AppLogic.getMoodState(minutes)
     val mindfulnessProgress = AppLogic.getMindfulnessPercentage(minutes)
 
-    val cardBgColor = when (moodState) {
-        MoodState.HAPPY -> Color(0x3300C700)
-        MoodState.NEUTRAL -> Color(0x33EBDE27)
-        MoodState.ANNOYED -> Color(0x33F1634F)
-    }
-
-    val borderColor = when (moodState) {
-        MoodState.HAPPY -> colors.borderFocus
-        MoodState.NEUTRAL -> Color(0xFFEBDE27)
-        MoodState.ANNOYED -> Color(0xFFF1634F)
-    }
-
     val faceRes = when (moodState) {
         MoodState.HAPPY -> R.drawable.face_happy
         MoodState.NEUTRAL -> R.drawable.face_neutral
@@ -274,9 +323,13 @@ private fun MyScreenTimeCard(
 
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(cardBgColor)
-            .border(1.dp, borderColor.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
+            .background(colors.statsCardFill)
+            .innerShadow(
+                color = colors.innerShadow,
+                cornerRadius = 12.dp,
+                blur = 10.dp
+            )
             .padding(bottom = 10.dp)
     ) {
         // Face with king crown
@@ -289,9 +342,10 @@ private fun MyScreenTimeCard(
             Image(
                 painter = painterResource(faceRes),
                 contentDescription = "Mood face",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(2f)
+                    .aspectRatio(1.5f)
             )
             // King crown
             Image(
@@ -324,7 +378,7 @@ private fun MyScreenTimeCard(
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 8.sp,
-                        color = if (yesterdayChangePercent <= 0) colors.textBrand else Color(0xFFF1634F)
+                        color = if (yesterdayChangePercent <= 0) colors.textBrand else colors.moodAnnoyed
                     )
                 }
             }
@@ -358,7 +412,7 @@ private fun MyScreenTimeCard(
                     color = colors.textPrimary
                 )
                 Text(
-                    text = "MIN",
+                    text = "MINS",
                     fontFamily = RedditMono,
                     fontWeight = FontWeight.Normal,
                     fontSize = 8.sp,
@@ -390,8 +444,8 @@ private fun MindfulnessBar(
 
     val fillStartColor = when (moodState) {
         MoodState.HAPPY -> colors.borderFocus
-        MoodState.NEUTRAL -> Color(0xFFEBDE27)
-        MoodState.ANNOYED -> Color(0xFFF1634F)
+        MoodState.NEUTRAL -> colors.moodNeutral
+        MoodState.ANNOYED -> colors.moodAnnoyed
     }
 
     Column {

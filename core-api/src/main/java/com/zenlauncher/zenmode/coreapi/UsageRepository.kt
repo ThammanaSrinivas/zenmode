@@ -145,7 +145,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
     }
 
     fun isZenUnlocked(): Boolean {
-        return prefs.getBoolean("is_zen_unlocked", true)
+        return prefs.getBoolean("is_zen_unlocked", false)
     }
 
     fun isOnboardingComplete(): Boolean {

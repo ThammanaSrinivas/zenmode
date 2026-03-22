@@ -191,7 +191,7 @@ fun WelcomeScreen(
                 modifier = Modifier.align(Alignment.Center)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.logo),
+                    painter = painterResource(id = R.drawable.app_icon),
                     contentDescription = "Zenmode Logo",
                     modifier = Modifier.size(250.dp),
                     contentScale = ContentScale.Fit
