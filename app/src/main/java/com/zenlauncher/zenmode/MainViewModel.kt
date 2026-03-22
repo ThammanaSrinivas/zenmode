@@ -36,6 +36,11 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     private val UNLOCK_DEBOUNCE_MS = 2000L
 
     init {
+        // Reset zen unlock flag on fresh process start.
+        // When the OS kills our process, ACTION_SCREEN_OFF is never received,
+        // leaving is_zen_unlocked stuck at true in SharedPrefs. This ensures
+        // the resistance screen shows on every fresh launch.
+        repository.setZenUnlockFlag(false)
         refreshStats()
     }
 

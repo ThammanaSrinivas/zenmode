@@ -25,16 +25,17 @@ import android.provider.Settings
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModelProvider
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
+import com.zenlauncher.zenmode.ui.screens.ZenBuddyConnectBottomSheet
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 class MainActivity : AppCompatActivity() {
@@ -44,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     private var installedApps by mutableStateOf<List<AppInfo>>(emptyList())
     private var showSearch by mutableStateOf(false)
+    private var showBuddyConnect by mutableStateOf(false)
 
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
@@ -213,6 +215,10 @@ class MainActivity : AppCompatActivity() {
         setContent {
             ZenTheme(darkTheme = true) {
                 val usage by viewModel.stats.observeAsState()
+                val userCode = remember {
+                    repository.getUserUid()
+                        ?: ServiceLocator.authProvider.getCurrentUserId()
+                }
 
                 HomeScreen(
                     usage = usage,
@@ -240,7 +246,7 @@ class MainActivity : AppCompatActivity() {
                         lockScreen()
                     },
                     onInviteBuddyClick = {
-                        showBuddyInviteDialog()
+                        showBuddyConnect = true
                     },
                     onAppClick = { appInfo ->
                         val launchIntent = packageManager.getLaunchIntentForPackage(appInfo.packageName.toString())
@@ -250,6 +256,30 @@ class MainActivity : AppCompatActivity() {
                     },
                     apps = installedApps
                 )
+
+                // Zen Buddy Connect bottom sheet
+                if (showBuddyConnect) {
+                    ZenBuddyConnectBottomSheet(
+                        userCode = userCode,
+                        onCopyCode = {
+                            userCode?.let { code ->
+                                val clipboard = getSystemService(android.content.ClipboardManager::class.java)
+                                val clip = android.content.ClipData.newPlainText("ZenMode Code", code)
+                                clipboard.setPrimaryClip(clip)
+                                ServiceLocator.analyticsTracker.trackBuddyCodeGenerated("copy_link")
+                                android.widget.Toast.makeText(this, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        onAddBuddy = { targetUid -> addBuddy(targetUid) },
+                        onRandomConnect = {
+                            android.widget.Toast.makeText(this, "Coming soon!", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        onWatchVideo = {
+                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.YT_BUDDY_INVITE_URL)))
+                        },
+                        onDismiss = { showBuddyConnect = false }
+                    )
+                }
             }
         }
     }
@@ -263,95 +293,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showBuddyInviteDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_add_buddy, null)
-        val dialog = android.app.AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-
-        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
-
-        val analyticsManager = ServiceLocator.analyticsManager
+    private suspend fun addBuddy(targetUid: String): BuddyAddResult {
         val currentUserId = ServiceLocator.authProvider.getCurrentUserId()
-        val uid = repository.getUserUid() ?: currentUserId
 
-        val tvMyCode = dialogView.findViewById<android.widget.TextView>(R.id.tv_my_code_value)
-        if (uid != null && uid.length > 7) {
-            tvMyCode.text = "${uid.take(7)}..."
-        } else {
-            tvMyCode.text = uid ?: "Not Signed In"
+        if (targetUid == currentUserId) return BuddyAddResult.SelfAdd
+
+        val firestoreDataSource = ServiceLocator.firestoreDataSource
+        return try {
+            val user = firestoreDataSource.getUser(targetUid)
+                ?: return BuddyAddResult.Error("User ID not found.")
+
+            val myUid = currentUserId
+                ?: return BuddyAddResult.Error("Not signed in.")
+
+            if (firestoreDataSource.checkRelationshipExists(myUid, targetUid)) {
+                return BuddyAddResult.AlreadyBuddies(user.displayName)
+            }
+
+            firestoreDataSource.sendBuddyInvite(myUid, targetUid)
+            repository.clearCachedBuddy()
+            viewModel.fetchBuddyData()
+            ServiceLocator.analyticsTracker.trackBuddyLinkAccepted("buddy")
+
+            BuddyAddResult.Success(user.displayName)
+        } catch (e: Exception) {
+            BuddyAddResult.Error("Failed: ${e.message}")
         }
-
-        dialogView.findViewById<android.view.View>(R.id.iv_copy_code)?.setOnClickListener {
-            uid?.let { code ->
-                val clipboard = getSystemService(android.content.ClipboardManager::class.java)
-                val clip = android.content.ClipData.newPlainText("ZenMode Code", code)
-                clipboard.setPrimaryClip(clip)
-                ServiceLocator.analyticsTracker.trackBuddyCodeGenerated("copy_link")
-                android.widget.Toast.makeText(this, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        val etBuddyCode = dialogView.findViewById<android.widget.EditText>(R.id.et_buddy_code)
-        val btnAddBuddy = dialogView.findViewById<android.view.View>(R.id.btn_add_buddy)
-
-        btnAddBuddy.isEnabled = false
-        btnAddBuddy.alpha = 0.5f
-
-        etBuddyCode.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val input = s.toString().trim()
-                btnAddBuddy.isEnabled = input.isNotEmpty()
-                btnAddBuddy.alpha = if (input.isNotEmpty()) 1.0f else 0.5f
-            }
-            override fun afterTextChanged(s: android.text.Editable?) {}
-        })
-
-        btnAddBuddy.setOnClickListener {
-            val targetUid = etBuddyCode.text.toString().trim()
-            if (targetUid.isEmpty()) return@setOnClickListener
-            if (targetUid == currentUserId) {
-                android.widget.Toast.makeText(this, "You cannot add yourself as a buddy.", android.widget.Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val firestoreDataSource = ServiceLocator.firestoreDataSource
-            btnAddBuddy.isEnabled = false
-            btnAddBuddy.alpha = 0.5f
-
-            lifecycleScope.launch {
-                try {
-                    val user = firestoreDataSource.getUser(targetUid)
-                    if (user != null) {
-                        val buddyName = user.displayName
-                        val myUid = currentUserId
-                        val isAlreadyBuddy = myUid?.let { firestoreDataSource.checkRelationshipExists(it, targetUid) } == true
-                        if (isAlreadyBuddy) {
-                            android.widget.Toast.makeText(this@MainActivity, "You are already buddies with $buddyName!", android.widget.Toast.LENGTH_SHORT).show()
-                            return@launch
-                        }
-                        if (myUid != null) {
-                            firestoreDataSource.sendBuddyInvite(myUid, targetUid)
-                            repository.clearCachedBuddy()
-                            viewModel.fetchBuddyData()
-                            ServiceLocator.analyticsTracker.trackBuddyLinkAccepted("buddy")
-                            android.widget.Toast.makeText(this@MainActivity, "Successfully added $buddyName!", android.widget.Toast.LENGTH_SHORT).show()
-                            dialog.dismiss()
-                        }
-                    } else {
-                        android.widget.Toast.makeText(this@MainActivity, "User ID not found.", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    android.widget.Toast.makeText(this@MainActivity, "Failed: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                } finally {
-                    btnAddBuddy.isEnabled = true
-                    btnAddBuddy.alpha = 1.0f
-                }
-            }
-        }
-
-        dialog.show()
     }
 
     override fun onDestroy() {

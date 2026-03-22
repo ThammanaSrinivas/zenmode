@@ -555,23 +555,15 @@ private fun BuddyInviteCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Invite buddy button
-            Box(
+            Image(
+                painter = painterResource(R.drawable.button_invite_buddy),
+                contentDescription = "Invite buddy",
+                contentScale = ContentScale.FillWidth,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(colors.actionPrimary)
                     .clickable { onInviteBuddyClick() }
-                    .padding(vertical = 6.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Invite buddy",
-                    fontFamily = CabinetGrotesque,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = colors.actionPrimaryText
-                )
-            }
+            )
         }
     }
 }
@@ -606,13 +598,14 @@ private fun AppGridPager(
         ) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 20.dp)
+                modifier = Modifier.fillMaxSize()
             ) { page ->
                 val appsInPage = pages.getOrElse(page) { emptyList() }
 
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     LazyVerticalGrid(
