@@ -19,6 +19,10 @@ val CabinetGrotesque = FontFamily(
     Font(R.font.cabinet_grotesk_black, FontWeight.Black)
 )
 
+val Silkscreen = FontFamily(
+    Font(R.font.silkscreen_regular, FontWeight.Normal)
+)
+
 val RedditMono = FontFamily(
     Font(R.font.reddit_mono_200, FontWeight.ExtraLight),
     Font(R.font.reddit_mono_300, FontWeight.Light),

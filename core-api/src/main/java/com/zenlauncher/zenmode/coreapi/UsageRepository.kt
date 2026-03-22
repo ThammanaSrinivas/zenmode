@@ -237,4 +237,19 @@ class UsageRepository(private val context: Context, private val analyticsManager
     fun updateLastStatsProcessedTime(time: Long) {
         prefs.edit().putLong("last_stats_processed_timestamp", time).apply()
     }
+
+    fun getTodaySkipCount(): Int {
+        val savedDate = prefs.getString("last_date_skips", "")
+        return if (savedDate == getTodayDate()) prefs.getInt("daily_skip_count", 0) else 0
+    }
+
+    fun incrementSkipCount() {
+        val today = getTodayDate()
+        val savedDate = prefs.getString("last_date_skips", "")
+        val current = if (savedDate == today) prefs.getInt("daily_skip_count", 0) else 0
+        prefs.edit()
+            .putString("last_date_skips", today)
+            .putInt("daily_skip_count", current + 1)
+            .apply()
+    }
 }

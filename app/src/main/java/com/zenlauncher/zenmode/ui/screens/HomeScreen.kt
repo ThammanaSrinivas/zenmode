@@ -74,6 +74,7 @@ import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
+import com.zenlauncher.zenmode.ui.theme.Silkscreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 // ── Main Home Screen ──────────────────────────────────────────────
@@ -175,21 +176,20 @@ private fun HomeHeader(streaks: Int) {
         )
 
         // Streaks badge
+        // Streaks badge — Silkscreen font, green bg pill
         Box(
             modifier = Modifier
-                .border(
-                    width = 1.5.dp,
-                    color = colors.borderFocus,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .clip(RoundedCornerShape(46.dp))
+                .background(colors.borderFocus)
+                .padding(horizontal = 12.dp, vertical = 7.dp)
         ) {
             Text(
-                text = "STREAKS: $streaks",
-                fontFamily = CabinetGrotesque,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 12.sp,
-                color = colors.textBrand
+                text = "streaks: $streaks",
+                fontFamily = Silkscreen,
+                fontWeight = FontWeight.Normal,
+                fontSize = 11.sp,
+                letterSpacing = (-1.3).sp,
+                color = colors.bgPrimary
             )
         }
     }
@@ -533,7 +533,7 @@ private fun AppGridPager(
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
-    // Every page: 1 lock + 11 apps (4 columns x 3 rows)
+    // Every page: 11 apps (lock is fixed outside pager, takes 1 slot visually)
     val appsPerPage = 11
     val pages = remember(apps) { apps.chunked(appsPerPage) }
     val totalPages = pages.size.coerceAtLeast(1)
@@ -544,37 +544,42 @@ private fun AppGridPager(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        HorizontalPager(
-            state = pagerState,
+        Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 20.dp)
-        ) { page ->
-            val appsInPage = pages.getOrElse(page) { emptyList() }
-
-            Box(
+            contentAlignment = Alignment.Center
+        ) {
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(44.dp),
-                    userScrollEnabled = false
+                contentPadding = PaddingValues(horizontal = 20.dp)
+            ) { page ->
+                val appsInPage = pages.getOrElse(page) { emptyList() }
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Lock icon — always first on every page
-                    item {
-                        LockItem(onClick = onLockClick)
-                    }
-                    items(appsInPage.size) { index ->
-                        AppIconItem(
-                            appInfo = appsInPage[index],
-                            onClick = { onAppClick(appsInPage[index]) }
-                        )
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(4),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(44.dp),
+                        userScrollEnabled = false
+                    ) {
+                        // Lock is first item on every page so it stays persistent
+                        item {
+                            LockItem(onClick = onLockClick)
+                        }
+                        items(appsInPage.size) { index ->
+                            AppIconItem(
+                                appInfo = appsInPage[index],
+                                onClick = { onAppClick(appsInPage[index]) }
+                            )
+                        }
                     }
                 }
             }
@@ -773,7 +778,7 @@ private fun SearchOverlay(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 // Matching apps
-                items(filteredApps) { app ->
+                items(filteredApps, key = { it.packageName.toString() }) { app ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -788,6 +793,9 @@ private fun SearchOverlay(
                                     scaleType = ImageView.ScaleType.FIT_CENTER
                                     setImageDrawable(app.icon)
                                 }
+                            },
+                            update = { imageView ->
+                                imageView.setImageDrawable(app.icon)
                             },
                             modifier = Modifier.size(40.dp)
                         )

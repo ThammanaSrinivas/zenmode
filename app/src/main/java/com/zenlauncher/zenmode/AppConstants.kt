@@ -9,6 +9,10 @@ object AppConstants {
     const val MINDFULNESS_HAPPY_MIN_PERCENT = 70
     const val MINDFULNESS_NEUTRAL_MIN_PERCENT = 40
 
+    // Resistence Screen
+    const val COUNTDOWN_SECONDS = 7
+    const val MAX_DAILY_SKIPS = 7
+
     // Worker
     const val STATS_SYNC_INTERVAL_MINUTES = 10
 
