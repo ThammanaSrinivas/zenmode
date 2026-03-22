@@ -31,7 +31,12 @@ data class ZenColors(
     val textSecondary: Color,
     val textBrand: Color,
     val actionPrimary: Color,
-    val actionPrimaryText: Color
+    val actionPrimaryText: Color,
+    val moodHappy: Color,
+    val moodNeutral: Color,
+    val moodAnnoyed: Color,
+    val statsCardFill: Color,
+    val innerShadow: Color
 )
 
 val LightZenColors: ZenColors
@@ -46,7 +51,12 @@ val LightZenColors: ZenColors
         textSecondary = Grey600,
         textBrand = ZenBase,
         actionPrimary = ZenDark,
-        actionPrimaryText = White
+        actionPrimaryText = White,
+        moodHappy = Color(0xFF00C700),
+        moodNeutral = Color(0xFFEBDE27),
+        moodAnnoyed = Color(0xFFF1634F),
+        statsCardFill = Color(0x1AB9E234),
+        innerShadow = Color(0x40000000)
     )
 
 val DarkZenColors: ZenColors
@@ -61,7 +71,12 @@ val DarkZenColors: ZenColors
         textSecondary = Grey400,
         textBrand = ZenGlow,
         actionPrimary = ZenBase,
-        actionPrimaryText = Black
+        actionPrimaryText = Black,
+        moodHappy = Color(0xFF00C700),
+        moodNeutral = Color(0xFFEBDE27),
+        moodAnnoyed = Color(0xFFF1634F),
+        statsCardFill = Color(0x1AB9E234),
+        innerShadow = Color(0x40000000)
     )
 
 val LocalZenColors = staticCompositionLocalOf {
@@ -75,6 +90,11 @@ val LocalZenColors = staticCompositionLocalOf {
         textSecondary = Color.Unspecified,
         textBrand = Color.Unspecified,
         actionPrimary = Color.Unspecified,
-        actionPrimaryText = Color.Unspecified
+        actionPrimaryText = Color.Unspecified,
+        moodHappy = Color.Unspecified,
+        moodNeutral = Color.Unspecified,
+        moodAnnoyed = Color.Unspecified,
+        statsCardFill = Color.Unspecified,
+        innerShadow = Color.Unspecified
     )
 }
