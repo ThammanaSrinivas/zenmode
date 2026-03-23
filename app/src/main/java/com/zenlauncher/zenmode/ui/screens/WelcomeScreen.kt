@@ -209,7 +209,7 @@ fun WelcomeScreen(
                 Text(
                     text = "ZENMODE",
                     color = ZenGlow,
-                    style = MaterialTheme.typography.displaySmall
+                    style = MaterialTheme.typography.displaySmall.copy(fontSize = 18.sp)
                 )
             }
         }
@@ -218,25 +218,30 @@ fun WelcomeScreen(
         androidx.compose.animation.AnimatedVisibility(
             visible = state == WelcomeState.FULL_PAGE,
             enter = fadeIn(animationSpec = tween(800)),
-            modifier = Modifier.padding(bottom = 30.dp)
+            modifier = Modifier.padding(top = 40.dp, bottom = 30.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val firstStepText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = White)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(
+                        color = White,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )) {
                         append("Your first step ")
                     }
-                    withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = Grey400)) {
+                    withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = Grey400)) {
                         append("towards")
                     }
                 }
                 Text(text = firstStepText)
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Text(
                     text = "Mindful Digital time",
                     color = ZenBase,
                     style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = 24.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         shadow = androidx.compose.ui.graphics.Shadow(
                             color = ZenBase.copy(alpha = 0.5f),
                             blurRadius = 24.2f,
@@ -258,48 +263,60 @@ fun WelcomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 // "Bro, Hear me close," + heart
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // Offset by half of (spacer 8dp + heart 34dp) so only text is center-aligned
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.offset(x = 21.dp)
+                ) {
                     Text(
                         text = "Bro, Hear me close,",
                         color = White,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Image(
                         painter = painterResource(id = R.drawable.heart_byhand),
                         contentDescription = "Heart",
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(34.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // "Life is *too* short!"
                 val lifeText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White, fontSize = 14.sp)) {
                         append("Life is ")
                     }
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = ZenBase)) {
+                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = ZenBase, fontSize = 14.sp)) {
                         append("too")
                     }
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White, fontSize = 14.sp)) {
                         append(" short!")
                     }
                 }
-                Text(text = lifeText)
+                Text(
+                    text = lifeText,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // 'Just "4000 weeks", Let's make em count!'
                 val weeksText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White, fontSize = 16.sp)) {
                         append("Just \"4000 weeks\", ")
                     }
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = White)) {
+                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = White, fontSize = 16.sp)) {
                         append("Let's make em count!")
                     }
                 }
-                Text(text = weeksText)
+                Text(
+                    text = weeksText,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -28,7 +27,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -178,7 +176,7 @@ private fun HomeHeader(streaks: Int) {
         Image(
             painter = painterResource(R.drawable.app_icon),
             contentDescription = "ZenMode",
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(44.dp)
         )
 
         // Streaks badge — pinned to end
@@ -187,7 +185,7 @@ private fun HomeHeader(streaks: Int) {
                 .align(Alignment.CenterEnd)
                 .clip(RoundedCornerShape(46.dp))
                 .background(colors.borderFocus)
-                .padding(horizontal = 12.dp, vertical = 7.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
                 text = "streaks: $streaks",
@@ -212,7 +210,7 @@ private fun StatsCardsRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 32.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -222,13 +220,17 @@ private fun StatsCardsRow(
             MyScreenTimeCard(
                 usage = usage,
                 yesterdayChangePercent = yesterdayChangePercent,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
             )
 
             // Buddy Invite card
             BuddyInviteCard(
                 onInviteBuddyClick = onInviteBuddyClick,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp)
             )
         }
 
@@ -321,54 +323,42 @@ private fun MyScreenTimeCard(
         MoodState.ANNOYED -> R.drawable.face_annoyed
     }
 
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(colors.statsCardFill)
-            .innerShadow(
-                color = colors.innerShadow,
-                cornerRadius = 12.dp,
-                blur = 10.dp
-            )
-            .padding(bottom = 10.dp)
-    ) {
-        // Face with king crown
-        Box(
+    Box(modifier = modifier) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight(),
-            contentAlignment = Alignment.TopCenter
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.statsCardFill)
+                .innerShadow(
+                    color = colors.innerShadow,
+                    cornerRadius = 12.dp,
+                    blur = 10.dp
+                )
+                .padding(bottom = 10.dp)
         ) {
+            // Face
             Image(
                 painter = painterResource(faceRes),
                 contentDescription = "Mood face",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1.5f)
+                    .aspectRatio(2f)
             )
-            // King crown
-            Image(
-                painter = painterResource(R.drawable.king),
-                contentDescription = "King",
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.TopStart)
-                    .offset(x = 8.dp, y = 4.dp)
-            )
-        }
 
         Column(modifier = Modifier.padding(horizontal = 10.dp)) {
             // Title row with percentage change
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp)
             ) {
                 Text(
                     text = "My Screen Time",
                     fontFamily = CabinetGrotesque,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
                     color = colors.textPrimary
                 )
                 if (yesterdayChangePercent != null) {
@@ -376,18 +366,17 @@ private fun MyScreenTimeCard(
                     Text(
                         text = "${if (yesterdayChangePercent >= 0) "+" else ""}${yesterdayChangePercent}%",
                         fontFamily = RedditMono,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Normal,
                         fontSize = 8.sp,
                         color = if (yesterdayChangePercent <= 0) colors.textBrand else colors.moodAnnoyed
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
-
             // Time display: 00 HRS 37 MIN
             Row(
-                verticalAlignment = Alignment.Bottom
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.offset(y = (-4).dp)
             ) {
                 Text(
                     text = String.format("%02d", hours),
@@ -402,7 +391,7 @@ private fun MyScreenTimeCard(
                     fontWeight = FontWeight.Normal,
                     fontSize = 8.sp,
                     color = colors.textPrimary,
-                    modifier = Modifier.padding(bottom = 5.dp, start = 2.dp, end = 6.dp)
+                    modifier = Modifier.padding(start = 2.dp, end = 6.dp)
                 )
                 Text(
                     text = String.format("%02d", mins),
@@ -417,11 +406,11 @@ private fun MyScreenTimeCard(
                     fontWeight = FontWeight.Normal,
                     fontSize = 8.sp,
                     color = colors.textPrimary,
-                    modifier = Modifier.padding(bottom = 5.dp, start = 2.dp)
+                    modifier = Modifier.padding(start = 2.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             // Mindfulness bar
             MindfulnessBar(
@@ -429,6 +418,18 @@ private fun MyScreenTimeCard(
                 moodState = moodState
             )
         }
+        }
+
+        // King crown — pinned outside the card (above it)
+        Image(
+            painter = painterResource(R.drawable.king),
+            contentDescription = "King",
+            modifier = Modifier
+                .size(28.dp)
+                .align(Alignment.TopStart)
+                .offset(x = (-6).dp, y = (-18).dp)
+                .zIndex(1f)
+        )
     }
 }
 
@@ -448,38 +449,35 @@ private fun MindfulnessBar(
         MoodState.ANNOYED -> colors.moodAnnoyed
     }
 
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Mindfulness",
-                fontFamily = CabinetGrotesque,
-                fontWeight = FontWeight.Bold,
-                fontSize = 10.sp,
-                color = colors.textPrimary
-            )
-        }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Mindfulness",
+            fontFamily = CabinetGrotesque,
+            fontWeight = FontWeight.Medium,
+            fontSize = 10.sp,
+            color = colors.textPrimary
+        )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.width(6.dp))
 
-        // Gradient segmented bar
+        // Gradient segmented bar — thin bars, x width : x/2 gap
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .weight(1f)
                 .height(10.dp)
                 .drawBehind {
-                    val segmentCount = 15
-                    val gap = 3.dp.toPx()
-                    val totalGap = gap * (segmentCount - 1)
-                    val segmentWidth = (size.width - totalGap) / segmentCount
+                    val segmentCount = 12
+                    val barWidth = 3.dp.toPx()
+                    val gap = 2.dp.toPx()
                     val filledCount =
                         (progress.toFloat() / 100 * segmentCount).toInt().coerceAtLeast(0)
-                    val radius = CornerRadius(3.dp.toPx())
+                    val radius = CornerRadius(barWidth / 2f)
 
                     for (i in 0 until segmentCount) {
-                        val left = i * (segmentWidth + gap)
+                        val left = i * (barWidth + gap)
                         val fraction = if (filledCount > 0) i.toFloat() / filledCount else 0f
                         val color = if (i < filledCount) {
                             androidx.compose.ui.graphics.lerp(
@@ -493,7 +491,7 @@ private fun MindfulnessBar(
                         drawRoundRect(
                             color = color,
                             topLeft = Offset(left, 0f),
-                            size = Size(segmentWidth, size.height),
+                            size = Size(barWidth, size.height),
                             cornerRadius = radius
                         )
                     }
@@ -532,12 +530,10 @@ private fun BuddyInviteCard(
             Text(
                 text = "Get your Buddy!",
                 fontFamily = CabinetGrotesque,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp,
                 color = colors.textPrimary
             )
-
-            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = buildAnnotatedString {
@@ -549,7 +545,8 @@ private fun BuddyInviteCard(
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Medium,
                 fontSize = 9.sp,
-                color = colors.textSecondary
+                color = colors.textSecondary,
+                modifier = Modifier.offset(y = (-2).dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -632,24 +629,36 @@ private fun AppGridPager(
             }
         }
 
-        // Page indicators
+        // Page indicators — dynamic bar count, 4dp bar + 4dp gap
         if (totalPages > 1) {
-            Row(
-                modifier = Modifier.padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                repeat(totalPages) { index ->
-                    Box(
-                        modifier = Modifier
-                            .size(if (index == pagerState.currentPage) 8.dp else 6.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (index == pagerState.currentPage) colors.textBrand
-                                else colors.textSecondary.copy(alpha = 0.4f)
+            val litColor = colors.textBrand
+            val dimColor = colors.textSecondary.copy(alpha = 0.25f)
+            Box(
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                        .width(212.dp)
+                        .height(16.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .drawBehind {
+                            val barWidth = 2.dp.toPx()
+                            val gap = 4.dp.toPx()
+                            val barCount = ((size.width + gap) / (barWidth + gap)).toInt()
+                            if (barCount <= 0) return@drawBehind
+                            val barsPerPage = barCount / totalPages
+                            val litCount = if (pagerState.currentPage == totalPages - 1) barCount
+                                else (pagerState.currentPage + 1) * barsPerPage
+                            val cornerRadius = CornerRadius(barWidth / 2f)
+                        for (i in 0 until barCount) {
+                            val left = i * (barWidth + gap)
+                            drawRoundRect(
+                                color = if (i < litCount) litColor else dimColor,
+                                topLeft = Offset(left, 0f),
+                                size = Size(barWidth, size.height),
+                                cornerRadius = cornerRadius
                             )
-                    )
-                }
-            }
+                        }
+                    }
+            )
         }
     }
 }
@@ -921,25 +930,23 @@ private fun BottomDock(
         // Search bar
         Box(
             modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp)
+                .width(212.dp)
                 .border(
                     width = 1.5.dp,
                     color = colors.borderFocus,
-                    shape = RoundedCornerShape(20.dp)
+                    shape = RoundedCornerShape(18.dp)
                 )
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .clickable { onSearchClick() }
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            contentAlignment = Alignment.Center
+                .padding(start = 14.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
             Text(
                 text = "Search apps & everything",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.sp,
-                color = colors.textSecondary,
-                textAlign = TextAlign.Center
+                color = colors.textSecondary
             )
         }
 

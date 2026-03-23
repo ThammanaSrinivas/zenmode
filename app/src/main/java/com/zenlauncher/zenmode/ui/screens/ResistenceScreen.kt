@@ -1,8 +1,10 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -21,12 +23,19 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
@@ -44,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.MoodState
@@ -155,162 +165,255 @@ fun ResistenceScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ── Central Image with Q1-Q4 ──
+            // ── Central Image with Q1-Q4 (stepped highlight) ──
+            // Phase order: 0=q2, 1=q3, 2=q4, 3=q1
+            var rotationSteps by remember { mutableIntStateOf(0) }
+            LaunchedEffect(Unit) {
+                while (true) {
+                    delay(2000L)
+                    rotationSteps++
+                }
+            }
+            val currentPhase = rotationSteps % 4 // 0=q2, 1=q3, 2=q4, 3=q1
+
+            val dimAlpha = 0.5f
+            val q1Alpha = if (currentPhase == 3) 1f else dimAlpha
+            val q2Alpha = if (currentPhase == 0) 1f else dimAlpha
+            val q3Alpha = if (currentPhase == 1) 1f else dimAlpha
+            val q4Alpha = if (currentPhase == 2) 1f else dimAlpha
+
+            val shurikenRotation by animateFloatAsState(
+                targetValue = rotationSteps * 90f,
+                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                label = "shuriken_rotation"
+            )
+
+            // Glow: mood-colored tint for highlighted quadrant
+            val glowTint = ColorFilter.tint(moodColor.copy(alpha = 0.55f))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                // Q1-Q4 flush to left/right edges, centered on shuriken
                 // Q1 - upper left
-                Image(
-                    painter = painterResource(q1Res),
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
-                        .size(width = 202.dp, height = 172.dp)
+                        .size(width = 101.dp, height = 172.dp)
                         .align(Alignment.CenterStart)
                         .offset(y = (-86).dp)
-                )
+                ) {
+                    if (currentPhase == 3) {
+                        Image(
+                            painter = painterResource(q1Res),
+                            contentDescription = null,
+                            colorFilter = glowTint,
+                            modifier = Modifier.matchParentSize().blur(12.dp)
+                        )
+                    }
+                    Image(
+                        painter = painterResource(q1Res),
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize().alpha(q1Alpha)
+                    )
+                }
                 // Q2 - upper right
-                Image(
-                    painter = painterResource(q2Res),
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
-                        .size(width = 202.dp, height = 172.dp)
+                        .size(width = 101.dp, height = 172.dp)
                         .align(Alignment.CenterEnd)
                         .offset(y = (-86).dp)
-                )
+                ) {
+                    if (currentPhase == 0) {
+                        Image(
+                            painter = painterResource(q2Res),
+                            contentDescription = null,
+                            colorFilter = glowTint,
+                            modifier = Modifier.matchParentSize().blur(12.dp)
+                        )
+                    }
+                    Image(
+                        painter = painterResource(q2Res),
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize().alpha(q2Alpha)
+                    )
+                }
                 // Q3 - lower right
-                Image(
-                    painter = painterResource(q3Res),
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
-                        .size(width = 202.dp, height = 172.dp)
+                        .size(width = 101.dp, height = 172.dp)
                         .align(Alignment.CenterEnd)
                         .offset(y = 86.dp)
-                )
+                ) {
+                    if (currentPhase == 1) {
+                        Image(
+                            painter = painterResource(q3Res),
+                            contentDescription = null,
+                            colorFilter = glowTint,
+                            modifier = Modifier.matchParentSize().blur(12.dp)
+                        )
+                    }
+                    Image(
+                        painter = painterResource(q3Res),
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize().alpha(q3Alpha)
+                    )
+                }
                 // Q4 - lower left
-                Image(
-                    painter = painterResource(q4Res),
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
-                        .size(width = 202.dp, height = 172.dp)
+                        .size(width = 101.dp, height = 172.dp)
                         .align(Alignment.CenterStart)
                         .offset(y = 86.dp)
-                )
+                ) {
+                    if (currentPhase == 2) {
+                        Image(
+                            painter = painterResource(q4Res),
+                            contentDescription = null,
+                            colorFilter = glowTint,
+                            modifier = Modifier.matchParentSize().blur(12.dp)
+                        )
+                    }
+                    Image(
+                        painter = painterResource(q4Res),
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize().alpha(q4Alpha)
+                    )
+                }
 
-                // Central mood image — slow spin
-                val shurikenTransition = rememberInfiniteTransition(label = "shuriken_spin")
-                val shurikenRotation by shurikenTransition.animateFloat(
-                    initialValue = 0f,
-                    targetValue = 360f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(durationMillis = 12000, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "shuriken_rotation"
-                )
+                // Central shuriken — steps by 90° quarters
                 Image(
                     painter = painterResource(centralImageRes),
                     contentDescription = "Mood",
                     modifier = Modifier
-                        .size(220.dp)
+                        .size(260.dp)
                         .rotate(shurikenRotation)
                 )
             }
 
-            // ── My Screen Time ──
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 20.dp)
+            // ── Combined Stats Card ──
+            Column(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Text(
-                    text = "My Screen Time",
-                    fontFamily = CabinetGrotesque,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 16.sp,
-                    color = colors.textPrimary
-                )
-                if (yesterdayChangePercent != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                // ── My Screen Time ──
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "${if (yesterdayChangePercent >= 0) "+" else ""}${yesterdayChangePercent}%",
+                        text = "My Screen Time",
+                        fontFamily = CabinetGrotesque,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 20.sp,
+                        color = colors.textPrimary
+                    )
+                    if (yesterdayChangePercent != null) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${if (yesterdayChangePercent >= 0) "+" else ""}${yesterdayChangePercent}%",
+                            fontFamily = RedditMono,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = if (yesterdayChangePercent <= 0) colors.textBrand else Color(0xFFF1634F)
+                        )
+                    }
+                }
+
+                // ── Time Display ──
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier.offset(y = (-4).dp)
+                ) {
+                    Text(
+                        text = String.format("%02d", hours),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = if (yesterdayChangePercent <= 0) colors.textBrand else Color(0xFFF1634F)
+                        fontSize = 56.sp,
+                        color = colors.textPrimary,
+                        style = androidx.compose.ui.text.TextStyle(
+                            lineHeight = 42.sp,
+                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        )
+                    )
+                    Text(
+                        text = "HRS",
+                        fontFamily = RedditMono,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 10.sp,
+                        color = colors.textPrimary,
+                        modifier = Modifier
+                            .offset(y = (-8).dp)
+                            .padding(end = 10.dp),
+                        style = androidx.compose.ui.text.TextStyle(
+                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        )
+                    )
+                    Text(
+                        text = String.format("%02d", mins),
+                        fontFamily = RedditMono,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 56.sp,
+                        color = colors.textPrimary,
+                        style = androidx.compose.ui.text.TextStyle(
+                            lineHeight = 42.sp,
+                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        )
+                    )
+                    Text(
+                        text = "MINS",
+                        fontFamily = RedditMono,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 10.sp,
+                        color = colors.textPrimary,
+                        modifier = Modifier
+                            .offset(y = (-8).dp),
+                        style = androidx.compose.ui.text.TextStyle(
+                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                includeFontPadding = false
+                            )
+                        )
+                    )
+                    // Trend icon
+                    Image(
+                        painter = painterResource(trendRes),
+                        contentDescription = "Trend",
+                        modifier = Modifier
+                            .size(width = 60.dp, height = 56.dp)
+                            .padding(start = 2.dp)
+                            .offset(y = (-4).dp)
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Time Display ──
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            ) {
-                Text(
-                    text = String.format("%02d", hours),
-                    fontFamily = RedditMono,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 48.sp,
-                    color = colors.textPrimary
-                )
-                Text(
-                    text = "HRS",
-                    fontFamily = RedditMono,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 10.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.padding(bottom = 10.dp, start = 4.dp, end = 12.dp)
-                )
-                Text(
-                    text = String.format("%02d", mins),
-                    fontFamily = RedditMono,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 48.sp,
-                    color = colors.textPrimary
-                )
-                Text(
-                    text = "MINS",
-                    fontFamily = RedditMono,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 10.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.padding(bottom = 10.dp, start = 4.dp)
-                )
-                // Trend icon
-                Image(
-                    painter = painterResource(trendRes),
-                    contentDescription = "Trend",
-                    modifier = Modifier
-                        .size(width = 45.dp, height = 44.dp)
-                        .padding(bottom = 4.dp, start = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // ── Mindfulness ──
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 40.dp)
-            ) {
-                Text(
-                    text = "Mindfulness",
-                    fontFamily = CabinetGrotesque,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = colors.textPrimary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                ResistenceMindfulnessBar(
-                    progress = mindfulnessProgress,
-                    moodState = moodState,
-                    modifier = Modifier.weight(1f)
-                )
+                // ── Mindfulness ──
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Mindfulness",
+                        fontFamily = CabinetGrotesque,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = colors.textPrimary
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    ResistenceMindfulnessBar(
+                        progress = mindfulnessProgress,
+                        moodState = moodState,
+                        modifier = Modifier.width(100.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -366,14 +469,14 @@ private fun ResistenceHeader(streaks: Int) {
         Image(
             painter = painterResource(R.drawable.app_icon),
             contentDescription = "ZenMode",
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(44.dp)
         )
 
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(46.dp))
                 .background(colors.borderFocus)
-                .padding(horizontal = 12.dp, vertical = 7.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
                 text = "streaks: $streaks",
@@ -405,18 +508,17 @@ private fun ResistenceMindfulnessBar(
 
     Box(
         modifier = modifier
-            .height(18.dp)
+            .height(20.dp)
             .drawBehind {
-                val segmentCount = 15
-                val gap = 3.dp.toPx()
-                val totalGap = gap * (segmentCount - 1)
-                val segmentWidth = (size.width - totalGap) / segmentCount
+                val segmentCount = 12
+                val gap = 4.dp.toPx()
+                val barWidth = (size.width - (segmentCount - 1) * gap) / segmentCount
                 val filledCount =
                     (progress.toFloat() / 100 * segmentCount).toInt().coerceAtLeast(0)
-                val radius = CornerRadius(3.dp.toPx())
+                val radius = CornerRadius(barWidth / 2f)
 
                 for (i in 0 until segmentCount) {
-                    val left = i * (segmentWidth + gap)
+                    val left = i * (barWidth + gap)
                     val color = if (i < filledCount) {
                         val fraction = if (filledCount > 0) i.toFloat() / filledCount else 0f
                         androidx.compose.ui.graphics.lerp(fillColor, emptyColor, fraction)
@@ -426,7 +528,7 @@ private fun ResistenceMindfulnessBar(
                     drawRoundRect(
                         color = color,
                         topLeft = Offset(left, 0f),
-                        size = Size(segmentWidth, size.height),
+                        size = Size(barWidth, size.height),
                         cornerRadius = radius
                     )
                 }
@@ -520,7 +622,7 @@ private fun ResistenceBottomDock(
             text = if (canSkip) {
                 buildAnnotatedString {
                     append("Only ")
-                    withStyle(SpanStyle(color = moodColor, fontWeight = FontWeight.Bold)) {
+                    withStyle(SpanStyle(fontFamily = RedditMono, color = moodColor, fontWeight = FontWeight.Bold)) {
                         append("$skipsLeft")
                     }
                     withStyle(SpanStyle(color = moodColor, fontWeight = FontWeight.Bold)) {
