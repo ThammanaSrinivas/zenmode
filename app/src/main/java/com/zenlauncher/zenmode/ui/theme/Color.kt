@@ -36,7 +36,10 @@ data class ZenColors(
     val moodNeutral: Color,
     val moodAnnoyed: Color,
     val statsCardFill: Color,
-    val innerShadow: Color
+    val innerShadow: Color,
+    val strokeHappy: Color,
+    val strokeNeutral: Color,
+    val strokeAnnoyed: Color
 )
 
 val LightZenColors: ZenColors
@@ -56,7 +59,10 @@ val LightZenColors: ZenColors
         moodNeutral = Color(0xFFEBDE27),
         moodAnnoyed = Color(0xFFF1634F),
         statsCardFill = Color(0x1AB9E234),
-        innerShadow = Color(0x40000000)
+        innerShadow = Color(0x40000000),
+        strokeHappy = Color(0xFF006703),
+        strokeNeutral = Color(0xFFEBDE28),
+        strokeAnnoyed = Color(0xFFFF7C69)
     )
 
 val DarkZenColors: ZenColors
@@ -76,7 +82,10 @@ val DarkZenColors: ZenColors
         moodNeutral = Color(0xFFEBDE27),
         moodAnnoyed = Color(0xFFF1634F),
         statsCardFill = Color(0x1AB9E234),
-        innerShadow = Color(0x40000000)
+        innerShadow = Color(0x40000000),
+        strokeHappy = Color(0xFF006703),
+        strokeNeutral = Color(0xFFEBDE28),
+        strokeAnnoyed = Color(0xFFFF7C69)
     )
 
 val LocalZenColors = staticCompositionLocalOf {
@@ -95,6 +104,9 @@ val LocalZenColors = staticCompositionLocalOf {
         moodNeutral = Color.Unspecified,
         moodAnnoyed = Color.Unspecified,
         statsCardFill = Color.Unspecified,
-        innerShadow = Color.Unspecified
+        innerShadow = Color.Unspecified,
+        strokeHappy = Color.Unspecified,
+        strokeNeutral = Color.Unspecified,
+        strokeAnnoyed = Color.Unspecified
     )
 }

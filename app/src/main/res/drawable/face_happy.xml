@@ -1,58 +1,58 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="157dp"
-    android:height="83dp"
-    android:viewportWidth="157"
-    android:viewportHeight="83">
+    android:width="165dp"
+    android:height="89dp"
+    android:viewportWidth="165"
+    android:viewportHeight="89">
   <group>
     <clip-path
-        android:pathData="M0,16 a16,16 0 0 1 16,-16 h125 a16,16 0 0 1 16,16 v67 h-157 z"/>
+        android:pathData="M0,0h165v89h-165z"/>
     <path
-        android:pathData="M80,-18m-98,0a98,98 0,1 1,196 0a98,98 0,1 1,-196 0"
+        android:pathData="M78.6,-17.68m-96.28,0a96.28,96.28 0,1 1,192.56 0a96.28,96.28 0,1 1,-192.56 0"
         android:fillColor="#B9E234"/>
     <path
-        android:pathData="M80,-18m-97.57,0a97.57,97.57 0,1 1,195.14 0a97.57,97.57 0,1 1,-195.14 0"
-        android:strokeWidth="0.857456"
+        android:pathData="M78.6,-17.68m-95.86,0a95.86,95.86 0,1 1,191.72 0a95.86,95.86 0,1 1,-191.72 0"
+        android:strokeWidth="0.842413"
         android:fillColor="#00000000"
         android:strokeColor="#DCFF6A"/>
     <path
-        android:pathData="M140.18,37.02C125.85,52.25 104.21,61.95 80,61.95C55.79,61.95 34.15,52.25 19.82,37.02"
-        android:strokeWidth="20.5789"
+        android:pathData="M137.72,36.37C123.64,51.33 102.38,60.86 78.6,60.86C54.81,60.86 33.55,51.33 19.48,36.37"
+        android:strokeWidth="20.2179"
         android:fillColor="#00000000"
         android:strokeColor="#E3F3AE"
         android:strokeLineCap="round"/>
     <path
-        android:pathData="M140.18,37.02C125.85,52.25 104.21,61.95 80,61.95C55.79,61.95 34.15,52.25 19.82,37.02"
-        android:strokeWidth="10.2895"
+        android:pathData="M137.72,36.37C123.64,51.33 102.38,60.86 78.6,60.86C54.81,60.86 33.55,51.33 19.48,36.37"
+        android:strokeWidth="10.109"
         android:fillColor="#00000000"
         android:strokeColor="#101010"
         android:strokeLineCap="round"/>
     <group>
       <clip-path
-          android:pathData="M140.18,37.02C125.85,52.25 104.21,61.95 80,61.95C55.79,61.95 34.15,52.25 19.82,37.02"/>
+          android:pathData="M137.72,36.37C123.64,51.33 102.38,60.86 78.6,60.86C54.81,60.86 33.55,51.33 19.48,36.37"/>
       <path
-          android:pathData="M74.84,56.79m-5.16,0a5.16,5.16 0,1 1,10.32 0a5.16,5.16 0,1 1,-10.32 0"
+          android:pathData="M73.53,55.79m-5.07,0a5.07,5.07 0,1 1,10.13 0a5.07,5.07 0,1 1,-10.13 0"
           android:fillColor="#ffffff"/>
       <path
-          android:pathData="M85.16,56.79m-5.16,0a5.16,5.16 0,1 1,10.32 0a5.16,5.16 0,1 1,-10.32 0"
+          android:pathData="M83.66,55.79m-5.07,0a5.07,5.07 0,1 1,10.13 0a5.07,5.07 0,1 1,-10.13 0"
           android:fillColor="#ffffff"/>
     </group>
     <path
-        android:pathData="M61,23m-20,0a20,20 0,1 1,40 0a20,20 0,1 1,-40 0"
+        android:pathData="M59.93,22.6m-19.65,0a19.65,19.65 0,1 1,39.3 0a19.65,19.65 0,1 1,-39.3 0"
         android:fillColor="#F1F9D6"/>
     <path
-        android:pathData="M61,23m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0"
+        android:pathData="M59.93,22.6m-13.75,0a13.75,13.75 0,1 1,27.51 0a13.75,13.75 0,1 1,-27.51 0"
         android:fillColor="#101010"/>
     <path
-        android:pathData="M53,22m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"
+        android:pathData="M52.07,21.61m-2.95,0a2.95,2.95 0,1 1,5.89 0a2.95,2.95 0,1 1,-5.89 0"
         android:fillColor="#F1F9D6"/>
     <path
-        android:pathData="M99,23m-20,0a20,20 0,1 1,40 0a20,20 0,1 1,-40 0"
+        android:pathData="M97.26,22.6m-19.65,0a19.65,19.65 0,1 1,39.3 0a19.65,19.65 0,1 1,-39.3 0"
         android:fillColor="#F1F9D6"/>
     <path
-        android:pathData="M99,23m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0"
+        android:pathData="M97.26,22.6m-13.75,0a13.75,13.75 0,1 1,27.51 0a13.75,13.75 0,1 1,-27.51 0"
         android:fillColor="#101010"/>
     <path
-        android:pathData="M91,22m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"
+        android:pathData="M89.4,21.61m-2.95,0a2.95,2.95 0,1 1,5.89 0a2.95,2.95 0,1 1,-5.89 0"
         android:fillColor="#F1F9D6"/>
   </group>
 </vector>

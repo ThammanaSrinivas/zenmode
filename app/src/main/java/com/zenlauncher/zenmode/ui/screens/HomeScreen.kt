@@ -10,7 +10,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,6 +56,8 @@ import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -111,7 +115,14 @@ fun HomeScreen(
             // Header
             HomeHeader(streaks = streaks)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // King crown
+            Image(
+                painter = painterResource(R.drawable.king),
+                contentDescription = "King",
+                modifier = Modifier
+                    .padding(start = 26.dp, bottom = 8.dp)
+                    .size(28.dp)
+            )
 
             // Stats Cards
             StatsCardsRow(
@@ -213,7 +224,9 @@ private fun StatsCardsRow(
             .padding(horizontal = 32.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // My Screen Time card
@@ -222,6 +235,7 @@ private fun StatsCardsRow(
                 yesterdayChangePercent = yesterdayChangePercent,
                 modifier = Modifier
                     .weight(1f)
+                    .fillMaxHeight()
                     .padding(end = 8.dp)
             )
 
@@ -230,6 +244,7 @@ private fun StatsCardsRow(
                 onInviteBuddyClick = onInviteBuddyClick,
                 modifier = Modifier
                     .weight(1f)
+                    .fillMaxHeight()
                     .padding(start = 8.dp)
             )
         }
@@ -242,6 +257,40 @@ private fun StatsCardsRow(
                 .align(Alignment.Center)
                 .size(24.dp)
                 .zIndex(1f)
+        )
+    }
+}
+
+// ── Drop Shadow Modifier ────────────────────────────────────────
+
+private fun Modifier.dropShadow(
+    color: Color,
+    blur: Dp,
+    cornerRadius: Dp = 0.dp,
+    offsetX: Dp = 0.dp,
+    offsetY: Dp = 0.dp,
+    spread: Dp = 0.dp
+) = drawBehind {
+    drawIntoCanvas { canvas ->
+        val paint = android.graphics.Paint().apply {
+            this.color = color.toArgb()
+            this.isAntiAlias = true
+            if (blur.toPx() > 0) {
+                maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
+            }
+        }
+        val spreadPx = spread.toPx()
+        val cornerRadiusPx = cornerRadius.toPx()
+
+        val left = offsetX.toPx() - spreadPx
+        val top = offsetY.toPx() - spreadPx
+        val right = size.width + offsetX.toPx() + spreadPx
+        val bottom = size.height + offsetY.toPx() + spreadPx
+
+        canvas.nativeCanvas.drawRoundRect(
+            android.graphics.RectF(left, top, right, bottom),
+            cornerRadiusPx, cornerRadiusPx,
+            paint
         )
     }
 }
@@ -329,10 +378,20 @@ private fun MyScreenTimeCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .background(colors.statsCardFill)
+                .border(2.dp, when (moodState) {
+                    MoodState.HAPPY -> colors.strokeHappy
+                    MoodState.NEUTRAL -> colors.strokeNeutral
+                    MoodState.ANNOYED -> colors.strokeAnnoyed
+                }, RoundedCornerShape(12.dp))
                 .innerShadow(
-                    color = colors.innerShadow,
+                    color = when (moodState) {
+                        MoodState.HAPPY -> colors.strokeHappy
+                        MoodState.NEUTRAL -> colors.strokeNeutral
+                        MoodState.ANNOYED -> colors.strokeAnnoyed
+                    },
                     cornerRadius = 12.dp,
-                    blur = 10.dp
+                    blur = 30.dp,
+                    spread = (-9).dp
                 )
                 .padding(bottom = 10.dp)
         ) {
@@ -344,6 +403,18 @@ private fun MyScreenTimeCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(2f)
+                    .dropShadow(
+                        color = Color.Black.copy(alpha = 0.3f),
+                        blur = 13.48.dp,
+                        offsetY = 6.74.dp
+                    )
+                    .innerShadow(
+                        color = Color.Black.copy(alpha = 0.1f),
+                        cornerRadius = 0.dp,
+                        blur = 10.dp,
+                        spread = 1.68.dp,
+                        offsetY = (-1.68).dp
+                    )
             )
 
         Column(modifier = Modifier.padding(horizontal = 10.dp)) {
@@ -352,7 +423,7 @@ private fun MyScreenTimeCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp)
+                    .padding(top = 0.dp)
             ) {
                 Text(
                     text = "My Screen Time",
@@ -420,16 +491,6 @@ private fun MyScreenTimeCard(
         }
         }
 
-        // King crown — pinned outside the card (above it)
-        Image(
-            painter = painterResource(R.drawable.king),
-            contentDescription = "King",
-            modifier = Modifier
-                .size(28.dp)
-                .align(Alignment.TopStart)
-                .offset(x = (-6).dp, y = (-18).dp)
-                .zIndex(1f)
-        )
     }
 }
 
@@ -511,19 +572,53 @@ private fun BuddyInviteCard(
 
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(colors.bgSecondary)
-            .border(1.dp, colors.borderSubtle, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
+            .background(colors.borderSubtle)
+            .drawWithContent {
+                drawContent()
+                val strokeWidth = 1.dp.toPx()
+                val dash = 8.dp.toPx()
+                val gap = 8.dp.toPx()
+                val cr = 12.dp.toPx()
+                drawRoundRect(
+                    color = colors.textSecondary,
+                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
+                    size = Size(size.width - strokeWidth, size.height - strokeWidth),
+                    cornerRadius = CornerRadius(cr),
+                    style = Stroke(
+                        width = strokeWidth,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, gap), 0f)
+                    )
+                )
+            }
+            .innerShadow(
+                color = colors.textSecondary,
+                cornerRadius = 12.dp,
+                blur = 30.dp,
+                spread = (-9).dp
+            )
             .padding(bottom = 10.dp)
     ) {
         // Grey face
         Image(
-            painter = painterResource(R.drawable.face_neutral),
+            painter = painterResource(R.drawable.face_get_your_buddy),
             contentDescription = "Buddy face",
-            alpha = 0.4f,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(2f)
+                .dropShadow(
+                    color = Color.Black.copy(alpha = 0.3f),
+                    blur = 13.48.dp,
+                    offsetY = 6.74.dp
+                )
+                .innerShadow(
+                    color = Color.Black.copy(alpha = 0.1f),
+                    cornerRadius = 0.dp,
+                    blur = 10.dp,
+                    spread = 1.68.dp,
+                    offsetY = (-1.68).dp
+                )
         )
 
         Column(modifier = Modifier.padding(horizontal = 10.dp)) {
@@ -546,10 +641,10 @@ private fun BuddyInviteCard(
                 fontWeight = FontWeight.Medium,
                 fontSize = 9.sp,
                 color = colors.textSecondary,
-                modifier = Modifier.offset(y = (-2).dp)
+                modifier = Modifier.offset(y = (-4).dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Invite buddy button
             Image(
