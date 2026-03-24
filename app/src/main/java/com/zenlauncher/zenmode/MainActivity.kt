@@ -213,7 +213,7 @@ class MainActivity : AppCompatActivity() {
         loadInstalledApps()
 
         setContent {
-            ZenTheme(darkTheme = true) {
+            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@MainActivity)) {
                 val usage by viewModel.stats.observeAsState()
                 val userCode = remember {
                     repository.getUserUid()

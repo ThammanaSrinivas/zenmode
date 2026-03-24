@@ -1,7 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
-import android.content.Context
-import androidx.appcompat.app.AppCompatDelegate
+import com.zenlauncher.zenmode.ThemePreferences
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -60,9 +59,6 @@ import java.util.Locale
 
 // ── Constants ─────────────────────────────────────────────────────
 
-private const val PREFS_NAME = "zenmode_prefs"
-private const val KEY_DARK_MODE = "dark_mode_enabled"
-
 private const val GRAPH_OPACITY = 0.42f
 private const val MAX_GRAPH_HOURS = 6f
 private const val GRAPH_HOUR_LINES = 4 // 0h, 2h, 4h, 6h
@@ -83,8 +79,7 @@ fun SettingsScreen(
 ) {
     val colors = ZenTheme.colors
     val context = LocalContext.current
-    val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
-    var isDarkMode by remember { mutableStateOf(prefs.getBoolean(KEY_DARK_MODE, true)) }
+    var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
 
     Column(
         modifier = Modifier
@@ -107,11 +102,7 @@ fun SettingsScreen(
             isDarkMode = isDarkMode,
             onDarkModeChange = { enabled ->
                 isDarkMode = enabled
-                prefs.edit().putBoolean(KEY_DARK_MODE, enabled).apply()
-                AppCompatDelegate.setDefaultNightMode(
-                    if (enabled) AppCompatDelegate.MODE_NIGHT_YES
-                    else AppCompatDelegate.MODE_NIGHT_NO
-                )
+                ThemePreferences.setDarkMode(context, enabled)
             },
             onChangeDistractingAppsClick = onChangeDistractingAppsClick,
             onAccountabilityPartnerClick = onAccountabilityPartnerClick,

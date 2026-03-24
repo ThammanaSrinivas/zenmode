@@ -10,6 +10,9 @@ class ZenModeApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        // Restore persisted dark/light theme before any activity renders
+        ThemePreferences.applyStoredTheme(this)
+
         // Discover and run the private module initializer via ServiceLoader
         val initializers = ServiceLoader.load(AppInitializer::class.java)
         for (initializer in initializers) {

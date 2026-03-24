@@ -56,7 +56,7 @@ class DelayedUnlockActivity : AppCompatActivity() {
         startCountdown()
 
         setContent {
-            ZenTheme(darkTheme = true) {
+            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@DelayedUnlockActivity)) {
                 ResistenceScreen(
                     usage = usage,
                     streaks = 0, // TODO: wire up streak tracking

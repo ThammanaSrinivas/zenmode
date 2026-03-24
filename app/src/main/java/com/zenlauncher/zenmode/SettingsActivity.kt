@@ -14,7 +14,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            ZenTheme(darkTheme = true) {
+            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
                 SettingsScreen(
                     onBackClick = { finish() },
                     onChangeDistractingAppsClick = {

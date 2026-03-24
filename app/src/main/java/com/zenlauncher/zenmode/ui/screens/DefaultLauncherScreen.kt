@@ -1,6 +1,5 @@
 package com.zenlauncher.zenmode.ui.screens
 
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -9,7 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatDelegate
+import com.zenlauncher.zenmode.ThemePreferences
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,9 +55,6 @@ import com.zenlauncher.zenmode.ui.theme.ZenBase
 import com.zenlauncher.zenmode.ui.theme.ZenGlow
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
-private const val PREFS_NAME = "zenmode_prefs"
-private const val KEY_DARK_MODE = "dark_mode_enabled"
-
 @Composable
 fun DefaultLauncherScreen(
     onSetDefaultLauncherClick: () -> Unit,
@@ -67,8 +63,7 @@ fun DefaultLauncherScreen(
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val prefs = remember { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
-    var isDarkMode by remember { mutableStateOf(prefs.getBoolean(KEY_DARK_MODE, true)) }
+    var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
     val uriHandler = LocalUriHandler.current
 
     OnboardingScreenLayout(
@@ -163,11 +158,7 @@ fun DefaultLauncherScreen(
                     checked = isDarkMode,
                     onCheckedChange = { enabled ->
                         isDarkMode = enabled
-                        prefs.edit().putBoolean(KEY_DARK_MODE, enabled).apply()
-                        AppCompatDelegate.setDefaultNightMode(
-                            if (enabled) AppCompatDelegate.MODE_NIGHT_YES
-                            else AppCompatDelegate.MODE_NIGHT_NO
-                        )
+                        ThemePreferences.setDarkMode(context, enabled)
                     },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = White,
