@@ -5,6 +5,8 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
 import androidx.lifecycle.lifecycleScope
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
@@ -78,9 +80,13 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun performLogout(repository: UsageRepository) {
-        ServiceLocator.authProvider.signOut()
-        repository.clearUserData()
-        navigateToOnboarding()
+        lifecycleScope.launch {
+            ServiceLocator.authProvider.signOut()
+            CredentialManager.create(this@SettingsActivity)
+                .clearCredentialState(ClearCredentialStateRequest())
+            repository.clearUserData()
+            navigateToOnboarding()
+        }
     }
 
     private fun performDeleteAccount(repository: UsageRepository) {
@@ -94,6 +100,8 @@ class SettingsActivity : AppCompatActivity() {
             } catch (_: Exception) {
                 // Proceed with local cleanup even if remote deletion fails
             }
+            CredentialManager.create(this@SettingsActivity)
+                .clearCredentialState(ClearCredentialStateRequest())
             repository.clearAllData()
             ThemePreferences.clear(this@SettingsActivity)
             navigateToOnboarding()

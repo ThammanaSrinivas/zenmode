@@ -98,6 +98,7 @@ fun HomeScreen(
     yesterdayChangePercent: Int?,
     hasBuddies: Boolean,
     buddyStats: BuddyStats?,
+    isSignedIn: Boolean,
     showSearch: Boolean,
     onShowSearchChange: (Boolean) -> Unit,
     onSettingsClick: () -> Unit,
@@ -105,6 +106,7 @@ fun HomeScreen(
     onPhoneClick: () -> Unit,
     onLockClick: () -> Unit,
     onInviteBuddyClick: () -> Unit,
+    onSignInClick: () -> Unit,
     onAppClick: (AppInfo) -> Unit,
     apps: List<AppInfo>
 ) {
@@ -126,7 +128,9 @@ fun HomeScreen(
                 yesterdayChangePercent = yesterdayChangePercent,
                 hasBuddies = hasBuddies,
                 buddyStats = buddyStats,
-                onInviteBuddyClick = onInviteBuddyClick
+                isSignedIn = isSignedIn,
+                onInviteBuddyClick = onInviteBuddyClick,
+                onSignInClick = onSignInClick
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -216,7 +220,9 @@ private fun StatsCardsRow(
     yesterdayChangePercent: Int?,
     hasBuddies: Boolean,
     buddyStats: BuddyStats?,
-    onInviteBuddyClick: () -> Unit
+    isSignedIn: Boolean,
+    onInviteBuddyClick: () -> Unit,
+    onSignInClick: () -> Unit
 ) {
     val myMinutes = ((usage?.screenTimeInMillis ?: 0L) / 1000) / 60
     // King goes to whoever has less screen time; default to me if no buddy
@@ -249,15 +255,25 @@ private fun StatsCardsRow(
                     .height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // My Screen Time card
-                MyScreenTimeCard(
-                    usage = usage,
-                    yesterdayChangePercent = yesterdayChangePercent,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .padding(end = 8.dp)
-                )
+                // My Screen Time card (or Sign In card when logged out)
+                if (isSignedIn) {
+                    MyScreenTimeCard(
+                        usage = usage,
+                        yesterdayChangePercent = yesterdayChangePercent,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(end = 8.dp)
+                    )
+                } else {
+                    SignInCard(
+                        onSignInClick = onSignInClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(end = 8.dp)
+                    )
+                }
 
                 // Show buddy stats if connected, otherwise show invite card
                 if (hasBuddies && buddyStats != null) {
@@ -686,6 +702,100 @@ private fun BuddyInviteCard(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
                     .clickable { onInviteBuddyClick() }
+            )
+        }
+    }
+}
+
+// ── Sign In Card (Logged Out) ────────────────────────────────────
+
+@Composable
+private fun SignInCard(
+    onSignInClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = ZenTheme.colors
+
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(colors.borderSubtle)
+            .drawWithContent {
+                drawContent()
+                val strokeWidth = 1.dp.toPx()
+                val dash = 8.dp.toPx()
+                val gap = 8.dp.toPx()
+                val cr = 12.dp.toPx()
+                drawRoundRect(
+                    color = colors.textSecondary,
+                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
+                    size = Size(size.width - strokeWidth, size.height - strokeWidth),
+                    cornerRadius = CornerRadius(cr),
+                    style = Stroke(
+                        width = strokeWidth,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, gap), 0f)
+                    )
+                )
+            }
+            .innerShadow(
+                color = colors.textSecondary,
+                cornerRadius = 12.dp,
+                blur = 30.dp,
+                spread = (-9).dp
+            )
+            .padding(bottom = 10.dp)
+    ) {
+        // Grey face
+        Image(
+            painter = painterResource(R.drawable.face_get_your_buddy),
+            contentDescription = "Sign in face",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(2f)
+                .dropShadow(
+                    color = Color.Black.copy(alpha = 0.3f),
+                    blur = 13.48.dp,
+                    offsetY = 6.74.dp
+                )
+                .innerShadow(
+                    color = Color.Black.copy(alpha = 0.1f),
+                    cornerRadius = 0.dp,
+                    blur = 10.dp,
+                    spread = 1.68.dp,
+                    offsetY = (-1.68).dp
+                )
+        )
+
+        Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+            Text(
+                text = "Sign In",
+                fontFamily = CabinetGrotesque,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp,
+                color = colors.textPrimary
+            )
+
+            Text(
+                text = "to track & sync stats",
+                fontFamily = CabinetGrotesque,
+                fontWeight = FontWeight.Medium,
+                fontSize = 9.sp,
+                color = colors.textSecondary,
+                modifier = Modifier.offset(y = (-4).dp)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Sign in button
+            Image(
+                painter = painterResource(R.drawable.button_sign_in),
+                contentDescription = "Sign in with Google",
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onSignInClick() }
             )
         }
     }

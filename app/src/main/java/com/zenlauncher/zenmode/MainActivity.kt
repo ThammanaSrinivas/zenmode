@@ -218,6 +218,7 @@ class MainActivity : AppCompatActivity() {
                 val yesterdayChangePercent by viewModel.yesterdayChangePercent.observeAsState()
                 val hasBuddies by viewModel.hasBuddies.observeAsState(initial = false)
                 val buddyStats by viewModel.buddyStats.observeAsState()
+                val isSignedIn = remember { ServiceLocator.authProvider.isSignedIn() }
                 val userCode = remember {
                     repository.getUserUid()
                         ?: ServiceLocator.authProvider.getCurrentUserId()
@@ -229,6 +230,7 @@ class MainActivity : AppCompatActivity() {
                     yesterdayChangePercent = yesterdayChangePercent,
                     hasBuddies = hasBuddies,
                     buddyStats = buddyStats,
+                    isSignedIn = isSignedIn,
                     showSearch = showSearch,
                     onShowSearchChange = { showSearch = it },
                     onSettingsClick = {
@@ -252,6 +254,13 @@ class MainActivity : AppCompatActivity() {
                     },
                     onInviteBuddyClick = {
                         showBuddyConnect = true
+                    },
+                    onSignInClick = {
+                        val intent = Intent(this, OnboardingActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                        startActivity(intent)
+                        finish()
                     },
                     onAppClick = { appInfo ->
                         val launchIntent = packageManager.getLaunchIntentForPackage(appInfo.packageName.toString())

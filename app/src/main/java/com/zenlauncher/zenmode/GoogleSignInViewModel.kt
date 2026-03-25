@@ -16,10 +16,12 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
 
 sealed class SignInUiState {
     object Idle : SignInUiState()
@@ -35,6 +37,7 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
     val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
 
     private val context = application.applicationContext
+    private var credentialJob: Job? = null
 
     /**
      * Performs the entire getCredential flow inside viewModelScope.
@@ -43,19 +46,31 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
         _uiState.value = SignInUiState.Loading
 
         val request = buildCredentialRequest(redirectIfNoAccount) ?: return
-        val credentialManager = CredentialManager.create(activity.applicationContext)
+        val credentialManager = CredentialManager.create(context)
+        val activityRef = WeakReference(activity)
 
-        viewModelScope.launch {
+        credentialJob?.cancel()
+        credentialJob = viewModelScope.launch {
+            val activityContext = activityRef.get()
+            if (activityContext == null) {
+                _uiState.value = SignInUiState.Error("Activity no longer available")
+                return@launch
+            }
             try {
                 val result = credentialManager.getCredential(
                     request = request,
-                    context = activity,
+                    context = activityContext,
                 )
                 handleSignInResult(result)
             } catch (e: Exception) {
                 handleSignInError(e, redirectIfNoAccount)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        credentialJob?.cancel()
     }
 
     fun buildCredentialRequest(redirectIfNoAccount: Boolean = true): GetCredentialRequest? {
