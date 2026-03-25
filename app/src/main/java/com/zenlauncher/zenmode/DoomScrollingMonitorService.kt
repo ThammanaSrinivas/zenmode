@@ -24,6 +24,9 @@ class DoomScrollingMonitorService : Service() {
     companion object {
         var isRunning = false
             private set
+            
+        private const val DOOM_PREFS = "zenmode_doom_prefs"
+        private const val KEY_SNOOZE_UNTIL = "doom_snooze_until"
     }
 
     private lateinit var usageStatsManager: UsageStatsManager
@@ -31,8 +34,9 @@ class DoomScrollingMonitorService : Service() {
     private var overlayView: View? = null
     private val handler = Handler(Looper.getMainLooper())
     private val checkInterval = 30000L // 30 seconds
-    private val usageThreshold = 15 * 60 * 1000L // 15 minutes
+    private val usageThreshold = 20 * 60 * 1000L // 20 minutes
     private val USAGE_LOOKBACK_TIME = 1000 * 60 * 60L // 1 hour
+
 
     private val monitorRunnable = object : Runnable {
         override fun run() {
@@ -204,6 +208,14 @@ class DoomScrollingMonitorService : Service() {
 
         if (!Settings.canDrawOverlays(this)) return
 
+        // Check Snooze
+        val prefs = getSharedPreferences(DOOM_PREFS, Context.MODE_PRIVATE)
+        val snoozeUntil = prefs.getLong(KEY_SNOOZE_UNTIL, 0L)
+        if (System.currentTimeMillis() < snoozeUntil) {
+            resetTracking()
+            return
+        }
+
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.WRAP_CONTENT, // Or MATCH_PARENT to cover full screen? User said "bottom alert/overlay" but design looks full card.
@@ -227,15 +239,34 @@ class DoomScrollingMonitorService : Service() {
         val inflater = LayoutInflater.from(this)
         overlayView = inflater.inflate(R.layout.dialog_doom_scrolling, null)
 
-        val closeButton = overlayView?.findViewById<View>(R.id.btn_close)
-        closeButton?.setOnClickListener {
+        val actionButton = overlayView?.findViewById<android.widget.ImageView>(R.id.btn_action)
+        val checkbox = overlayView?.findViewById<android.widget.CheckBox>(R.id.cb_remember)
+
+        checkbox?.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                actionButton?.setImageResource(R.drawable.button_remember)
+            } else {
+                actionButton?.setImageResource(R.drawable.button_close_app)
+            }
+        }
+
+        actionButton?.setOnClickListener {
+            // Apply Snooze if checked
+            if (checkbox?.isChecked == true) {
+                val fourHoursMs = 4 * 60 * 60 * 1000L
+                prefs.edit().putLong(KEY_SNOOZE_UNTIL, System.currentTimeMillis() + fourHoursMs).apply()
+            }
+
             val startMain = Intent(Intent.ACTION_MAIN)
             startMain.addCategory(Intent.CATEGORY_HOME)
             startMain.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(startMain)
 
             // Analytics
-            ServiceLocator.analyticsTracker.trackMindfulScrollPromptResponse("pause_now", "social")
+            ServiceLocator.analyticsTracker.trackMindfulScrollPromptResponse(
+                if (checkbox?.isChecked == true) "remember_snooze" else "pause_now",
+                "social"
+            )
 
             resetTracking()
             removeOverlay()
