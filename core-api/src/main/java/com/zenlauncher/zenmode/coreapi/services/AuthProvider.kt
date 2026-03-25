@@ -8,11 +8,16 @@ import com.zenlauncher.zenmode.coreapi.SignInResult
 interface AuthProvider {
     fun getCurrentUserId(): String?
     fun isSignedIn(): Boolean
+    fun getPhotoUrl(): String?
 
     /**
      * Signs in with a Google ID token. Returns a [SignInResult] with user info.
      * The implementation handles Firebase Auth internally.
      */
     suspend fun signInWithGoogleToken(idToken: String): SignInResult
+
+    fun signOut()
+
+    suspend fun deleteAccount()
 }
 

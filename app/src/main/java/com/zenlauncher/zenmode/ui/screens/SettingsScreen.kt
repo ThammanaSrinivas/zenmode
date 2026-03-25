@@ -4,7 +4,6 @@ import com.zenlauncher.zenmode.ThemePreferences
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,12 +16,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
@@ -63,75 +68,103 @@ private const val GRAPH_OPACITY = 0.42f
 private const val MAX_GRAPH_HOURS = 6f
 private const val GRAPH_HOUR_LINES = 4 // 0h, 2h, 4h, 6h
 
-// Dummy weekly data (hours) — will be replaced with real logic later
-private val DUMMY_WEEKLY_HOURS = listOf(2.5f, 3.0f, 4.2f, 3.8f, 4.5f, 5.2f, 5.8f)
-
 // ── Main Settings Screen ──────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    weeklyHours: List<Float> = List(7) { 0f },
+    profilePhotoUrl: String? = null,
     onBackClick: () -> Unit,
     onChangeDistractingAppsClick: () -> Unit,
     onAccountabilityPartnerClick: () -> Unit,
     onContributeClick: () -> Unit,
     onRateClick: () -> Unit,
-    onShareClick: () -> Unit
+    onShareClick: () -> Unit,
+    onLogoutClick: () -> Unit = {},
+    onDeleteAccountClick: () -> Unit = {}
 ) {
     val colors = ZenTheme.colors
     val context = LocalContext.current
     var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
+    var showProfileSheet by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.bgPrimary)
-            .verticalScroll(rememberScrollState())
-    ) {
-        // ── Header ────────────────────────────────────────────────
-        SettingsHeader(onBackClick = onBackClick)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.bgPrimary)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // ── Header ────────────────────────────────────────────────
+            SettingsHeader(
+                onBackClick = onBackClick,
+                profilePhotoUrl = profilePhotoUrl,
+                onProfileClick = { showProfileSheet = true }
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        // ── My Weekly Stats ───────────────────────────────────────
-        WeeklyStatsSection()
+            // ── My Weekly Stats ───────────────────────────────────────
+            WeeklyStatsSection(weeklyHours = weeklyHours)
 
-        Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-        // ── Personalise, Your Way! ────────────────────────────────
-        PersonaliseSection(
-            isDarkMode = isDarkMode,
-            onDarkModeChange = { enabled ->
-                isDarkMode = enabled
-                ThemePreferences.setDarkMode(context, enabled)
-            },
-            onChangeDistractingAppsClick = onChangeDistractingAppsClick,
-            onAccountabilityPartnerClick = onAccountabilityPartnerClick,
-            onContributeClick = onContributeClick
-        )
+            // ── Personalise, Your Way! ────────────────────────────────
+            PersonaliseSection(
+                isDarkMode = isDarkMode,
+                onDarkModeChange = { enabled ->
+                    isDarkMode = enabled
+                    ThemePreferences.setDarkMode(context, enabled)
+                },
+                onChangeDistractingAppsClick = onChangeDistractingAppsClick,
+                onAccountabilityPartnerClick = onAccountabilityPartnerClick,
+                onContributeClick = onContributeClick
+            )
 
-        Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-        // ── You're the Hero! ─────────────────────────────────────
-        HeroSection()
+            // ── You're the Hero! ─────────────────────────────────────
+            HeroSection()
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        // ── Rate Us Button ────────────────────────────────────────
-        RateUsButton(onClick = onRateClick)
+            // ── Rate Us Button ────────────────────────────────────────
+            RateUsButton(onClick = onRateClick)
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // ── Share ZenMode ─────────────────────────────────────────
-        ShareZenModeRow(onClick = onShareClick)
+            // ── Share ZenMode ─────────────────────────────────────────
+            ShareZenModeRow(onClick = onShareClick)
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+
+        // ── Profile Bottom Sheet ──────────────────────────────────
+        if (showProfileSheet) {
+            ProfileBottomSheet(
+                onDismiss = { showProfileSheet = false },
+                onLogoutClick = {
+                    showProfileSheet = false
+                    onLogoutClick()
+                },
+                onDeleteAccountClick = {
+                    showProfileSheet = false
+                    onDeleteAccountClick()
+                }
+            )
+        }
     }
 }
 
 // ── Header ────────────────────────────────────────────────────────
 
 @Composable
-private fun SettingsHeader(onBackClick: () -> Unit) {
+private fun SettingsHeader(
+    onBackClick: () -> Unit,
+    profilePhotoUrl: String? = null,
+    onProfileClick: () -> Unit = {}
+) {
     val colors = ZenTheme.colors
 
     Box(
@@ -159,13 +192,27 @@ private fun SettingsHeader(onBackClick: () -> Unit) {
                 .align(Alignment.Center)
                 .size(36.dp)
         )
+
+        // Profile picture — right
+        if (profilePhotoUrl != null) {
+            AsyncImage(
+                model = profilePhotoUrl,
+                contentDescription = "Profile picture",
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .clickable { onProfileClick() },
+                contentScale = ContentScale.Crop
+            )
+        }
     }
 }
 
 // ── Weekly Stats Section ──────────────────────────────────────────
 
 @Composable
-private fun WeeklyStatsSection() {
+private fun WeeklyStatsSection(weeklyHours: List<Float>) {
     val colors = ZenTheme.colors
 
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
@@ -189,14 +236,14 @@ private fun WeeklyStatsSection() {
         Spacer(modifier = Modifier.height(12.dp))
 
         // Graph card
-        ScreenTimeGraphCard()
+        ScreenTimeGraphCard(weeklyHours = weeklyHours)
     }
 }
 
 // ── Screen Time Graph Card ────────────────────────────────────────
 
 @Composable
-private fun ScreenTimeGraphCard() {
+private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
     val colors = ZenTheme.colors
     val brandColor = colors.textBrand
 
@@ -275,9 +322,9 @@ private fun ScreenTimeGraphCard() {
                 }
 
                 // Build line path from data
-                val points = DUMMY_WEEKLY_HOURS.mapIndexed { index, hours ->
-                    val x = if (DUMMY_WEEKLY_HOURS.size <= 1) graphWidth / 2
-                    else graphWidth * index / (DUMMY_WEEKLY_HOURS.size - 1)
+                val points = weeklyHours.mapIndexed { index, hours ->
+                    val x = if (weeklyHours.size <= 1) graphWidth / 2
+                    else graphWidth * index / (weeklyHours.size - 1)
                     val y = graphHeight - (graphHeight * (hours / MAX_GRAPH_HOURS))
                     Offset(x, y)
                 }
@@ -400,9 +447,9 @@ private fun PersonaliseSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Dark  mode",
+                    text = "Dark mode",
                     fontFamily = CabinetGrotesque,
-                    fontWeight = FontWeight.Normal,
+                    fontWeight = FontWeight.Medium,
                     fontSize = 16.sp,
                     color = colors.textPrimary,
                     modifier = Modifier.weight(1f)
@@ -594,5 +641,207 @@ private fun ShareZenModeRow(onClick: () -> Unit) {
             modifier = Modifier.size(20.dp),
             contentScale = ContentScale.Fit
         )
+    }
+}
+
+// ── Profile Bottom Sheet ──────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProfileBottomSheet(
+    onDismiss: () -> Unit,
+    onLogoutClick: () -> Unit,
+    onDeleteAccountClick: () -> Unit
+) {
+    val colors = ZenTheme.colors
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = colors.bgSecondary,
+        scrimColor = Color.Black.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 8.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(colors.textSecondary.copy(alpha = 0.4f))
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            if (!showDeleteConfirmation) {
+                // Title row with app icon
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        // Main title
+                        Text(
+                            text = buildAnnotatedString {
+                                append("You\u2019re about to break my ")
+                                withStyle(SpanStyle(color = colors.textBrand)) {
+                                    append("\uD83D\uDC9A")
+                                }
+                            },
+                            fontFamily = CabinetGrotesque,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 22.sp,
+                            color = colors.textPrimary,
+                            lineHeight = 28.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Subtitle
+                        Text(
+                            text = "Hey though I\u2019m always here waiting to help you!",
+                            fontFamily = CabinetGrotesque,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 14.sp,
+                            color = colors.textSecondary,
+                            lineHeight = 20.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // App icon — top right
+                    Image(
+                        painter = painterResource(R.drawable.app_icon),
+                        contentDescription = "ZenMode",
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Delete account row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDeleteConfirmation = true }
+                        .padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.delete_account),
+                        contentDescription = "Delete account",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Delete account",
+                        fontFamily = CabinetGrotesque,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp,
+                        color = Color(0xFFE53935)
+                    )
+                }
+
+                // Divider
+                HorizontalDivider(
+                    color = colors.textSecondary.copy(alpha = 0.15f),
+                    thickness = 1.dp
+                )
+
+                // Log out row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onLogoutClick() }
+                        .padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.log_out),
+                        contentDescription = "Log out",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Log out",
+                        fontFamily = CabinetGrotesque,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                        color = colors.textPrimary
+                    )
+                }
+            } else {
+                // Delete confirmation view
+                Text(
+                    text = "Are you sure?",
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = colors.textPrimary
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "This will permanently delete your account and all associated data. This action cannot be undone.",
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = colors.textSecondary,
+                    lineHeight = 20.sp
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Delete button
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFE53935))
+                        .clickable { onDeleteAccountClick() }
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Delete my account",
+                        fontFamily = CabinetGrotesque,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Cancel button
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.bgPrimary)
+                        .clickable { showDeleteConfirmation = false }
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Cancel",
+                        fontFamily = CabinetGrotesque,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp,
+                        color = colors.textPrimary
+                    )
+                }
+            }
+        }
     }
 }

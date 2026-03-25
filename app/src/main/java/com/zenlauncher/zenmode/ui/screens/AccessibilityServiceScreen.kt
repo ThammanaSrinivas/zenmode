@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -25,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.White
@@ -135,11 +135,6 @@ class AccessibilityServiceFragment : Fragment() {
     }
 
     private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-        val enabledServices = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-        val expectedComponent = "${context.packageName}/${context.packageName}.ZenAccessibilityService"
-        return enabledServices.split(':').any { it.equals(expectedComponent, ignoreCase = true) }
+        return ZenAccessibilityService.isEnabledInSettings(context)
     }
 }

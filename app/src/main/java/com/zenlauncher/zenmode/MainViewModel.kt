@@ -24,6 +24,9 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     private val _navigateToDelayedUnlock = MutableLiveData<Boolean>()
     val navigateToDelayedUnlock: LiveData<Boolean> get() = _navigateToDelayedUnlock
 
+    private val _yesterdayChangePercent = MutableLiveData<Int?>()
+    val yesterdayChangePercent: LiveData<Int?> get() = _yesterdayChangePercent
+
     private val _buddyStats = MutableLiveData<BuddyStats>()
     val buddyStats: LiveData<BuddyStats> get() = _buddyStats
 
@@ -89,7 +92,15 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     }
 
     fun refreshStats() {
-        _stats.value = repository.getTodayUsage()
+        val todayUsage = repository.getTodayUsage()
+        _stats.value = todayUsage
+
+        val yesterdayMillis = repository.getYesterdayScreenTimeMillis()
+        _yesterdayChangePercent.value = if (yesterdayMillis > 0) {
+            (((todayUsage.screenTimeInMillis - yesterdayMillis).toDouble() / yesterdayMillis) * 100).toInt()
+        } else {
+            null
+        }
     }
 
     /** Refresh buddy stats UI from SharedPreferences cache only — no Firestore calls. */

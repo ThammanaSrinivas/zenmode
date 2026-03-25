@@ -215,6 +215,9 @@ class MainActivity : AppCompatActivity() {
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@MainActivity)) {
                 val usage by viewModel.stats.observeAsState()
+                val yesterdayChangePercent by viewModel.yesterdayChangePercent.observeAsState()
+                val hasBuddies by viewModel.hasBuddies.observeAsState(initial = false)
+                val buddyStats by viewModel.buddyStats.observeAsState()
                 val userCode = remember {
                     repository.getUserUid()
                         ?: ServiceLocator.authProvider.getCurrentUserId()
@@ -223,7 +226,9 @@ class MainActivity : AppCompatActivity() {
                 HomeScreen(
                     usage = usage,
                     streaks = 0, // TODO: wire up streak tracking
-                    yesterdayChangePercent = null, // TODO: wire up yesterday comparison
+                    yesterdayChangePercent = yesterdayChangePercent,
+                    hasBuddies = hasBuddies,
+                    buddyStats = buddyStats,
                     showSearch = showSearch,
                     onShowSearchChange = { showSearch = it },
                     onSettingsClick = {
@@ -287,6 +292,8 @@ class MainActivity : AppCompatActivity() {
     private fun lockScreen() {
         if (ZenAccessibilityService.isRunning()) {
             ZenAccessibilityService.lockScreen()
+        } else if (ZenAccessibilityService.isEnabledInSettings(this)) {
+            android.widget.Toast.makeText(this, "Accessibility service is reconnecting, please try again", android.widget.Toast.LENGTH_SHORT).show()
         } else {
             android.widget.Toast.makeText(this, "Please enable ZenMode accessibility service to lock screen", android.widget.Toast.LENGTH_SHORT).show()
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -298,10 +305,22 @@ class MainActivity : AppCompatActivity() {
 
         if (targetUid == currentUserId) return BuddyAddResult.SelfAdd
 
+        // Check network connectivity
+        val connectivityManager = getSystemService(android.net.ConnectivityManager::class.java)
+        val activeNetwork = connectivityManager?.activeNetwork
+        val networkCapabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
+        val isConnected = networkCapabilities?.hasCapability(
+            android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
+        ) == true
+
+        if (!isConnected) {
+            return BuddyAddResult.Error("No internet connection. Please check your network and try again.")
+        }
+
         val firestoreDataSource = ServiceLocator.firestoreDataSource
         return try {
             val user = firestoreDataSource.getUser(targetUid)
-                ?: return BuddyAddResult.Error("User ID not found.")
+                ?: return BuddyAddResult.Error("User ID not found. Please check the ID and try again.")
 
             val myUid = currentUserId
                 ?: return BuddyAddResult.Error("Not signed in.")
@@ -316,8 +335,15 @@ class MainActivity : AppCompatActivity() {
             ServiceLocator.analyticsTracker.trackBuddyLinkAccepted("buddy")
 
             BuddyAddResult.Success(user.displayName)
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            BuddyAddResult.Error("Connection timed out. Please check your network and try again.")
         } catch (e: Exception) {
-            BuddyAddResult.Error("Failed: ${e.message}")
+            val errorMessage = when {
+                e.message?.contains("offline", ignoreCase = true) == true ->
+                    "Unable to connect. Please check your internet and try again."
+                else -> "Failed: ${e.message}"
+            }
+            BuddyAddResult.Error(errorMessage)
         }
     }
 

@@ -3,6 +3,7 @@ package com.zenlauncher.zenmode.coreapi
 import android.content.Context
 import android.content.SharedPreferences
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -102,6 +103,109 @@ class UsageRepository(private val context: Context, private val analyticsManager
         }
         
         return totalTime
+    }
+
+    private fun getScreenTimeForDay(dateString: String): Long {
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE)
+            as? android.app.usage.UsageStatsManager ?: return 0L
+
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val date = dateFormat.parse(dateString) ?: return 0L
+
+        val calendar = Calendar.getInstance().apply {
+            time = date
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val startTime = calendar.timeInMillis
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        val endTime = calendar.timeInMillis
+
+        val events = usageStatsManager.queryEvents(startTime, endTime)
+        var totalTime = 0L
+        var lastEventTime = 0L
+        var isScreenOn = false
+
+        val event = android.app.usage.UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            if (event.eventType == android.app.usage.UsageEvents.Event.SCREEN_INTERACTIVE) {
+                lastEventTime = event.timeStamp
+                isScreenOn = true
+            } else if (event.eventType == android.app.usage.UsageEvents.Event.SCREEN_NON_INTERACTIVE) {
+                if (isScreenOn && lastEventTime > 0) {
+                    totalTime += (event.timeStamp - lastEventTime)
+                }
+                isScreenOn = false
+            }
+        }
+
+        return totalTime
+    }
+
+    fun getYesterdayScreenTimeMillis(): Long {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val yesterdayCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+        val yesterdayDate = dateFormat.format(yesterdayCal.time)
+
+        val cacheKey = "screen_time_$yesterdayDate"
+        return if (prefs.contains(cacheKey)) {
+            prefs.getLong(cacheKey, 0L)
+        } else {
+            val queried = getScreenTimeForDay(yesterdayDate)
+            prefs.edit().putLong(cacheKey, queried).apply()
+            queried
+        }
+    }
+
+    fun getWeeklyScreenTimeHours(): List<Float> {
+        val today = getTodayDate()
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val calendar = Calendar.getInstance()
+
+        val result = mutableListOf<Float>()
+
+        for (daysAgo in 6 downTo 0) {
+            val cal = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, -daysAgo)
+            }
+            val dateString = dateFormat.format(cal.time)
+
+            val millis: Long = if (dateString == today) {
+                getTodayUsage().screenTimeInMillis
+            } else {
+                val cacheKey = "screen_time_$dateString"
+                if (prefs.contains(cacheKey)) {
+                    prefs.getLong(cacheKey, 0L)
+                } else {
+                    val queried = getScreenTimeForDay(dateString)
+                    prefs.edit().putLong(cacheKey, queried).apply()
+                    queried
+                }
+            }
+
+            result.add(millis / 3_600_000f)
+        }
+
+        // Cleanup stale entries older than 7 days
+        val cutoffCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -7) }
+        val cutoffDate = dateFormat.format(cutoffCal.time)
+        val editor = prefs.edit()
+        var hasRemovals = false
+        for (key in prefs.all.keys) {
+            if (key.startsWith("screen_time_") && key.length == 22) {
+                val dateStr = key.removePrefix("screen_time_")
+                if (dateStr < cutoffDate) {
+                    editor.remove(key)
+                    hasRemovals = true
+                }
+            }
+        }
+        if (hasRemovals) editor.apply()
+
+        return result
     }
 
     fun getTodayUsage(): DailyUsage {
@@ -251,5 +355,18 @@ class UsageRepository(private val context: Context, private val analyticsManager
             .putString("last_date_skips", today)
             .putInt("daily_skip_count", current + 1)
             .apply()
+    }
+
+    fun clearUserData() {
+        prefs.edit()
+            .remove("user_uid")
+            .remove("buddy_uid")
+            .remove("buddy_screen_time")
+            .remove("buddy_unlocks")
+            .apply()
+    }
+
+    fun clearAllData() {
+        prefs.edit().clear().apply()
     }
 }

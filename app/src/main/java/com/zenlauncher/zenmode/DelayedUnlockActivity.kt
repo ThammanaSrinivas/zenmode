@@ -26,6 +26,7 @@ class DelayedUnlockActivity : AppCompatActivity() {
 
     // Compose state
     private var usage by mutableStateOf<DailyUsage?>(null)
+    private var yesterdayChangePercent by mutableStateOf<Int?>(null)
     private var countdownSeconds by mutableIntStateOf(1)
     private var countdownFinished by mutableStateOf(false)
     private var currentProgress by mutableIntStateOf(1)
@@ -44,6 +45,14 @@ class DelayedUnlockActivity : AppCompatActivity() {
         usage = repository.getTodayUsage()
         skipsLeft = (AppConstants.MAX_DAILY_SKIPS - repository.getTodaySkipCount()).coerceAtLeast(0)
 
+        val yesterdayMillis = repository.getYesterdayScreenTimeMillis()
+        val todayMillis = usage?.screenTimeInMillis ?: 0L
+        yesterdayChangePercent = if (yesterdayMillis > 0) {
+            (((todayMillis - yesterdayMillis).toDouble() / yesterdayMillis) * 100).toInt()
+        } else {
+            null
+        }
+
         // Back button handler
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -60,7 +69,7 @@ class DelayedUnlockActivity : AppCompatActivity() {
                 ResistenceScreen(
                     usage = usage,
                     streaks = 0, // TODO: wire up streak tracking
-                    yesterdayChangePercent = null, // TODO: wire up yesterday comparison
+                    yesterdayChangePercent = yesterdayChangePercent,
                     skipsLeft = skipsLeft,
                     countdownSeconds = countdownSeconds,
                     countdownFinished = countdownFinished,

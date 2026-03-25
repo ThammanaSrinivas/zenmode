@@ -32,13 +32,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import android.graphics.BlurMaskFilter
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -76,10 +77,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.launch
 import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
@@ -93,6 +96,8 @@ fun HomeScreen(
     usage: DailyUsage?,
     streaks: Int,
     yesterdayChangePercent: Int?,
+    hasBuddies: Boolean,
+    buddyStats: BuddyStats?,
     showSearch: Boolean,
     onShowSearchChange: (Boolean) -> Unit,
     onSettingsClick: () -> Unit,
@@ -115,19 +120,12 @@ fun HomeScreen(
             // Header
             HomeHeader(streaks = streaks)
 
-            // King crown
-            Image(
-                painter = painterResource(R.drawable.king),
-                contentDescription = "King",
-                modifier = Modifier
-                    .padding(start = 26.dp, bottom = 8.dp)
-                    .size(28.dp)
-            )
-
             // Stats Cards
             StatsCardsRow(
                 usage = usage,
                 yesterdayChangePercent = yesterdayChangePercent,
+                hasBuddies = hasBuddies,
+                buddyStats = buddyStats,
                 onInviteBuddyClick = onInviteBuddyClick
             )
 
@@ -216,48 +214,81 @@ private fun HomeHeader(streaks: Int) {
 private fun StatsCardsRow(
     usage: DailyUsage?,
     yesterdayChangePercent: Int?,
+    hasBuddies: Boolean,
+    buddyStats: BuddyStats?,
     onInviteBuddyClick: () -> Unit
 ) {
-    Box(
+    val myMinutes = ((usage?.screenTimeInMillis ?: 0L) / 1000) / 60
+    // King goes to whoever has less screen time; default to me if no buddy
+    val kingOnBuddy = hasBuddies && buddyStats != null && buddyStats.screenTimeMins < myMinutes
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 32.dp)
     ) {
-        Row(
+        // King crown positioned above the winning card (least screen time)
+        Image(
+            painter = painterResource(R.drawable.king),
+            contentDescription = "King",
             modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // My Screen Time card
-            MyScreenTimeCard(
-                usage = usage,
-                yesterdayChangePercent = yesterdayChangePercent,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(end = 8.dp)
-            )
+                .padding(bottom = 8.dp)
+                .size(28.dp)
+                .then(
+                    if (kingOnBuddy) Modifier.align(Alignment.CenterHorizontally).offset(x = 16.dp)
+                    else Modifier.align(Alignment.Start)
+                )
+        )
 
-            // Buddy Invite card
-            BuddyInviteCard(
-                onInviteBuddyClick = onInviteBuddyClick,
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(start = 8.dp)
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // My Screen Time card
+                MyScreenTimeCard(
+                    usage = usage,
+                    yesterdayChangePercent = yesterdayChangePercent,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(end = 8.dp)
+                )
+
+                // Show buddy stats if connected, otherwise show invite card
+                if (hasBuddies && buddyStats != null) {
+                    BuddyStatsCard(
+                        buddyStats = buddyStats,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(start = 8.dp)
+                    )
+                } else {
+                    BuddyInviteCard(
+                        onInviteBuddyClick = onInviteBuddyClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(start = 8.dp)
+                    )
+                }
+            }
+
+            // Flash icon between cards
+            Image(
+                painter = painterResource(R.drawable.flash),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(24.dp)
+                    .zIndex(1f)
             )
         }
-
-        // Flash icon between cards
-        Image(
-            painter = painterResource(R.drawable.flash),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(24.dp)
-                .zIndex(1f)
-        )
     }
 }
 
@@ -438,8 +469,8 @@ private fun MyScreenTimeCard(
                         text = "${if (yesterdayChangePercent >= 0) "+" else ""}${yesterdayChangePercent}%",
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 8.sp,
-                        color = if (yesterdayChangePercent <= 0) colors.textBrand else colors.moodAnnoyed
+                        fontSize = 11.sp,
+                        color = colors.actionPrimary
                     )
                 }
             }
@@ -453,7 +484,7 @@ private fun MyScreenTimeCard(
                     text = String.format("%02d", hours),
                     fontFamily = RedditMono,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp,
+                    fontSize = 25.sp,
                     color = colors.textPrimary
                 )
                 Text(
@@ -468,7 +499,7 @@ private fun MyScreenTimeCard(
                     text = String.format("%02d", mins),
                     fontFamily = RedditMono,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp,
+                    fontSize = 25.sp,
                     color = colors.textPrimary
                 )
                 Text(
@@ -660,6 +691,130 @@ private fun BuddyInviteCard(
     }
 }
 
+// ── Buddy Stats Card (Post-Connect) ──────────────────────────────
+
+@Composable
+private fun BuddyStatsCard(
+    buddyStats: BuddyStats,
+    modifier: Modifier = Modifier
+) {
+    val colors = ZenTheme.colors
+    val minutes = buddyStats.screenTimeMins
+    val hours = minutes / 60
+    val mins = minutes % 60
+    val moodState = AppLogic.getMoodState(minutes)
+    val mindfulnessProgress = AppLogic.getMindfulnessPercentage(minutes)
+
+    val faceRes = when (moodState) {
+        MoodState.HAPPY -> R.drawable.face_happy
+        MoodState.NEUTRAL -> R.drawable.face_neutral
+        MoodState.ANNOYED -> R.drawable.face_annoyed
+    }
+
+    Box(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(colors.statsCardFill)
+                .border(2.dp, when (moodState) {
+                    MoodState.HAPPY -> colors.strokeHappy
+                    MoodState.NEUTRAL -> colors.strokeNeutral
+                    MoodState.ANNOYED -> colors.strokeAnnoyed
+                }, RoundedCornerShape(12.dp))
+                .innerShadow(
+                    color = when (moodState) {
+                        MoodState.HAPPY -> colors.strokeHappy
+                        MoodState.NEUTRAL -> colors.strokeNeutral
+                        MoodState.ANNOYED -> colors.strokeAnnoyed
+                    },
+                    cornerRadius = 12.dp,
+                    blur = 30.dp,
+                    spread = (-9).dp
+                )
+                .padding(bottom = 10.dp)
+        ) {
+            // Face
+            Image(
+                painter = painterResource(faceRes),
+                contentDescription = "Buddy mood face",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(2f)
+                    .dropShadow(
+                        color = Color.Black.copy(alpha = 0.3f),
+                        blur = 13.48.dp,
+                        offsetY = 6.74.dp
+                    )
+                    .innerShadow(
+                        color = Color.Black.copy(alpha = 0.1f),
+                        cornerRadius = 0.dp,
+                        blur = 10.dp,
+                        spread = 1.68.dp,
+                        offsetY = (-1.68).dp
+                    )
+            )
+
+            Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+                // Title
+                Text(
+                    text = "My Buddy's Stats",
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    color = colors.textPrimary
+                )
+
+                // Time display
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier.offset(y = (-4).dp)
+                ) {
+                    Text(
+                        text = String.format("%02d", hours),
+                        fontFamily = RedditMono,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 25.sp,
+                        color = colors.textPrimary
+                    )
+                    Text(
+                        text = "HRS",
+                        fontFamily = RedditMono,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 8.sp,
+                        color = colors.textPrimary,
+                        modifier = Modifier.padding(start = 2.dp, end = 6.dp)
+                    )
+                    Text(
+                        text = String.format("%02d", mins),
+                        fontFamily = RedditMono,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 25.sp,
+                        color = colors.textPrimary
+                    )
+                    Text(
+                        text = "MINS",
+                        fontFamily = RedditMono,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 8.sp,
+                        color = colors.textPrimary,
+                        modifier = Modifier.padding(start = 2.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Mindfulness bar
+                MindfulnessBar(
+                    progress = mindfulnessProgress,
+                    moodState = moodState
+                )
+            }
+        }
+    }
+}
+
 // ── App Grid with Horizontal Pager ───────────────────────────────
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -671,32 +826,31 @@ private fun AppGridPager(
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
+    val coroutineScope = rememberCoroutineScope()
     // Every page: 11 apps (lock is fixed outside pager, takes 1 slot visually)
     val appsPerPage = 11
     val pages = remember(apps) { apps.chunked(appsPerPage) }
     val totalPages = pages.size.coerceAtLeast(1)
     val pagerState = rememberPagerState(pageCount = { totalPages })
 
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
             ) { page ->
                 val appsInPage = pages.getOrElse(page) { emptyList() }
 
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -722,38 +876,50 @@ private fun AppGridPager(
                     }
                 }
             }
-        }
 
-        // Page indicators — dynamic bar count, 4dp bar + 4dp gap
-        if (totalPages > 1) {
-            val litColor = colors.textBrand
-            val dimColor = colors.textSecondary.copy(alpha = 0.25f)
-            Box(
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
+            // Page indicators — directly below grid, draggable, only selected segment lit
+            if (totalPages > 1) {
+                val litColor = colors.textBrand
+                val dimColor = colors.textSecondary.copy(alpha = 0.25f)
+                Box(
+                    modifier = Modifier
+                        .padding(top = 36.dp)
                         .width(212.dp)
                         .height(16.dp)
-                        .align(Alignment.CenterHorizontally)
+                        .pointerInput(totalPages) {
+                            detectHorizontalDragGestures { change, _ ->
+                                change.consume()
+                                val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                                val targetPage = (fraction * totalPages).toInt().coerceIn(0, totalPages - 1)
+                                if (targetPage != pagerState.currentPage) {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(targetPage)
+                                    }
+                                }
+                            }
+                        }
                         .drawBehind {
                             val barWidth = 2.dp.toPx()
                             val gap = 4.dp.toPx()
                             val barCount = ((size.width + gap) / (barWidth + gap)).toInt()
                             if (barCount <= 0) return@drawBehind
                             val barsPerPage = barCount / totalPages
-                            val litCount = if (pagerState.currentPage == totalPages - 1) barCount
-                                else (pagerState.currentPage + 1) * barsPerPage
+                            val startLit = pagerState.currentPage * barsPerPage
+                            val endLit = if (pagerState.currentPage == totalPages - 1) barCount
+                                else startLit + barsPerPage
                             val cornerRadius = CornerRadius(barWidth / 2f)
-                        for (i in 0 until barCount) {
-                            val left = i * (barWidth + gap)
-                            drawRoundRect(
-                                color = if (i < litCount) litColor else dimColor,
-                                topLeft = Offset(left, 0f),
-                                size = Size(barWidth, size.height),
-                                cornerRadius = cornerRadius
-                            )
+                            for (i in 0 until barCount) {
+                                val left = i * (barWidth + gap)
+                                drawRoundRect(
+                                    color = if (i in startLit until endLit) litColor else dimColor,
+                                    topLeft = Offset(left, 0f),
+                                    size = Size(barWidth, size.height),
+                                    cornerRadius = cornerRadius
+                                )
+                            }
                         }
-                    }
-            )
+                )
+            }
         }
     }
 }

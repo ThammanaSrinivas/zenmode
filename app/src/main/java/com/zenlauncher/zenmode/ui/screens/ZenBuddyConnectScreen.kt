@@ -155,10 +155,14 @@ private fun ZenBuddyConnectContent(
                 isSuccess = isSuccess,
                 isAddingBuddy = isAddingBuddy,
                 onAddBuddy = {
-                    scope.launch {
+                    val trimmedCode = buddyCode.trim()
+                    if (trimmedCode == userCode) {
+                        isSuccess = false
+                        statusMessage = "You cannot add yourself as a buddy!"
+                    } else scope.launch {
                         isAddingBuddy = true
                         statusMessage = null
-                        val result = onAddBuddy(buddyCode.trim())
+                        val result = onAddBuddy(trimmedCode)
                         isAddingBuddy = false
                         when (result) {
                             is BuddyAddResult.Success -> {

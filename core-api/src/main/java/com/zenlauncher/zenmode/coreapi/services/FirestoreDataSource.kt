@@ -14,5 +14,6 @@ interface FirestoreDataSource {
     suspend fun checkRelationshipExists(myUid: String, otherUid: String): Boolean
     suspend fun sendBuddyInvite(myUid: String, targetUid: String)
     suspend fun initializeUser(uid: String, displayName: String?)
+    suspend fun deleteUser(uid: String)
 }
 

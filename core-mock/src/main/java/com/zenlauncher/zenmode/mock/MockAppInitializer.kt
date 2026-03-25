@@ -30,6 +30,7 @@ class MockAuthProvider : AuthProvider {
 
     override fun isSignedIn(): Boolean = signedIn
     override fun getCurrentUserId(): String? = if (signedIn) fakeUserId else null
+    override fun getPhotoUrl(): String? = null
 
     override suspend fun signInWithGoogleToken(idToken: String): SignInResult {
         signedIn = true
@@ -40,6 +41,14 @@ class MockAuthProvider : AuthProvider {
             isSuccess = true
         )
     }
+
+    override fun signOut() {
+        signedIn = false
+    }
+
+    override suspend fun deleteAccount() {
+        signedIn = false
+    }
 }
 
 class MockFirestoreDataSource : FirestoreDataSource {
@@ -49,6 +58,7 @@ class MockFirestoreDataSource : FirestoreDataSource {
     override suspend fun checkRelationshipExists(myUid: String, otherUid: String): Boolean = false
     override suspend fun sendBuddyInvite(myUid: String, targetUid: String) {}
     override suspend fun initializeUser(uid: String, displayName: String?) {}
+    override suspend fun deleteUser(uid: String) {}
 }
 
 class MockAnalyticsTracker : AnalyticsTrackerContract {

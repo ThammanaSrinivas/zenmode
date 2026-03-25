@@ -1,7 +1,9 @@
 package com.zenlauncher.zenmode
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Context
 import android.content.Intent
+import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
 
 class ZenAccessibilityService : AccessibilityService() {
@@ -15,6 +17,15 @@ class ZenAccessibilityService : AccessibilityService() {
         }
 
         fun isRunning(): Boolean = instance != null
+
+        fun isEnabledInSettings(context: Context): Boolean {
+            val enabledServices = Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: return false
+            val expectedComponent = "${context.packageName}/${context.packageName}.ZenAccessibilityService"
+            return enabledServices.split(':').any { it.equals(expectedComponent, ignoreCase = true) }
+        }
     }
 
     override fun onServiceConnected() {

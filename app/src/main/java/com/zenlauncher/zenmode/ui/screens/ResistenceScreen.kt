@@ -318,7 +318,7 @@ fun ResistenceScreen(
                             fontFamily = RedditMono,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
-                            color = if (yesterdayChangePercent <= 0) colors.textBrand else Color(0xFFF1634F)
+                            color = colors.actionPrimary
                         )
                     }
                 }

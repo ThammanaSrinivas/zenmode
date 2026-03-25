@@ -18,6 +18,6 @@ object AppConstants {
 
     // External URLs
     const val GITHUB_URL = "https://github.com/ThammanaSrinivas/zenmode"
-    const val YT_BUDDY_INVITE_URL = "https://www.youtube.com"   // TODO: replace with actual YT link
-    const val YT_BUDDY_CONFUSED_URL = "https://www.youtube.com" // TODO: replace with actual YT link
+    const val YT_BUDDY_INVITE_URL = "https://youtu.be/48M1x2ryhpI"   // TODO: replace with actual YT link
+    const val YT_BUDDY_CONFUSED_URL = "https://youtu.be/48M1x2ryhpI" // TODO: replace later
 }

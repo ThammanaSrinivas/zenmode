@@ -5,5 +5,6 @@ data class SignInResult(
     val displayName: String?,
     val isNewUser: Boolean,
     val isSuccess: Boolean,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val photoUrl: String? = null
 )
