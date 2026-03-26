@@ -130,31 +130,42 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun signInWithEmail(email: String, password: String) {
+        _uiState.value = SignInUiState.Loading
+        viewModelScope.launch {
+            val signInResult = ServiceLocator.authProvider.signInWithEmailAndPassword(email, password)
+            handleSignInResult(signInResult)
+        }
+    }
+
     private fun firebaseAuthWithGoogle(idToken: String) {
         viewModelScope.launch {
             val signInResult = ServiceLocator.authProvider.signInWithGoogleToken(idToken)
+            handleSignInResult(signInResult)
+        }
+    }
 
-            if (signInResult.isSuccess) {
-                val analyticsManager = ServiceLocator.analyticsManager
-                val repository = UsageRepository(context, analyticsManager)
-                val userId = signInResult.userId
+    private suspend fun handleSignInResult(signInResult: com.zenlauncher.zenmode.coreapi.SignInResult) {
+        if (signInResult.isSuccess) {
+            val analyticsManager = ServiceLocator.analyticsManager
+            val repository = UsageRepository(context, analyticsManager)
+            val userId = signInResult.userId
 
-                if (userId != null) {
-                    repository.saveUserUid(userId)
-                    analyticsManager.identifyUser(userId, mapOf(
-                        "name" to (signInResult.displayName ?: ""),
-                        "email" to (signInResult.email ?: "")
-                    ))
-                }
-
-                if (signInResult.isNewUser && userId != null) {
-                    initializeUserInFirestore(userId, signInResult.displayName)
-                } else {
-                    _uiState.value = SignInUiState.Success
-                }
-            } else {
-                _uiState.value = SignInUiState.Error("Authentication Failed")
+            if (userId != null) {
+                repository.saveUserUid(userId)
+                analyticsManager.identifyUser(userId, mapOf(
+                    "name" to (signInResult.displayName ?: ""),
+                    "email" to (signInResult.email ?: "")
+                ))
             }
+
+            if (signInResult.isNewUser && userId != null) {
+                initializeUserInFirestore(userId, signInResult.displayName)
+            } else {
+                _uiState.value = SignInUiState.Success
+            }
+        } else {
+            _uiState.value = SignInUiState.Error(signInResult.errorMessage ?: "Authentication Failed")
         }
     }
 

@@ -42,6 +42,17 @@ class MockAuthProvider : AuthProvider {
         )
     }
 
+    override suspend fun signInWithEmailAndPassword(email: String, password: String): SignInResult {
+        signedIn = true
+        return SignInResult(
+            userId = fakeUserId,
+            displayName = "Mock User",
+            isNewUser = false,
+            isSuccess = true,
+            email = email
+        )
+    }
+
     override fun signOut() {
         signedIn = false
     }

@@ -28,6 +28,9 @@ class IntroFragment : Fragment() {
                     com.zenlauncher.zenmode.ui.screens.WelcomeScreen(
                         onGoogleSignInClick = {
                             startSignInFlow(redirectIfNoAccount = true)
+                        },
+                        onEmailSignInClick = { email, password ->
+                            viewModel.signInWithEmail(email, password)
                         }
                     )
                 }

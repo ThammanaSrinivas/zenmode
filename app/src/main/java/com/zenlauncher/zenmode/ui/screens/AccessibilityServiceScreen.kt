@@ -9,11 +9,17 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -30,11 +36,40 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.White
+import com.zenlauncher.zenmode.ui.theme.ZenBase
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+
+@Composable
+fun AccessibilityDisclosureDialog(
+    onAccept: () -> Unit,
+    onDecline: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { /* Don't allow dismiss by tapping outside */ },
+        title = { Text("How ZenMode uses Accessibility") },
+        text = {
+            Text(
+                "ZenMode needs Accessibility permissions to lock the screen.\n\n" +
+                "We do not collect, store, or share any personal data or screen content. " +
+                "This is only used to enable the lock screen feature."
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onAccept,
+                colors = ButtonDefaults.buttonColors(containerColor = ZenBase)
+            ) { Text("I Agree") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDecline) { Text("No Thanks") }
+        }
+    )
+}
 
 @Composable
 fun AccessibilityServiceScreen(
     onGrantAccessClick: () -> Unit,
+    onSkipClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     OnboardingScreenLayout(
@@ -44,7 +79,14 @@ fun AccessibilityServiceScreen(
         onButtonClick = onGrantAccessClick,
         showLogo = true,
         onBackClick = onBackClick,
-        bottomFooter = null
+        bottomFooter = {
+            Text(
+                text = "Skip for now",
+                color = Color.Gray,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.clickable { onSkipClick() }
+            )
+        }
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -93,6 +135,7 @@ fun AccessibilityServiceScreen(
 class AccessibilityServiceFragment : Fragment() {
 
     private var hasOpenedSettings = false
+    private var showDisclosureDialog = mutableStateOf(false)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -104,8 +147,23 @@ class AccessibilityServiceFragment : Fragment() {
                 ZenTheme {
                     AccessibilityServiceScreen(
                         onGrantAccessClick = { handleGrantAccess() },
+                        onSkipClick = { navigateTo(+1) },
                         onBackClick = { navigateTo(-1) }
                     )
+
+                    if (showDisclosureDialog.value) {
+                        AccessibilityDisclosureDialog(
+                            onAccept = {
+                                showDisclosureDialog.value = false
+                                hasOpenedSettings = true
+                                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                            },
+                            onDecline = {
+                                showDisclosureDialog.value = false
+                                navigateTo(+1)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -120,8 +178,7 @@ class AccessibilityServiceFragment : Fragment() {
         if (isAccessibilityServiceEnabled(requireContext())) {
             trackPermissionAndNavigate()
         } else {
-            hasOpenedSettings = true
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            showDisclosureDialog.value = true
         }
     }
 

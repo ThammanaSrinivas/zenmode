@@ -161,7 +161,7 @@ fun OnboardingScreenLayout(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(64.dp),
+                        .heightIn(min = 64.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     if (bottomFooter != null) {

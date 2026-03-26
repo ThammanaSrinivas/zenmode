@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModelProvider
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureDialog
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
 import com.zenlauncher.zenmode.ui.screens.ZenBuddyConnectBottomSheet
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private var installedApps by mutableStateOf<List<AppInfo>>(emptyList())
     private var showSearch by mutableStateOf(false)
     private var showBuddyConnect by mutableStateOf(false)
+    private var showAccessibilityDisclosure by mutableStateOf(false)
 
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
@@ -256,6 +258,19 @@ class MainActivity : AppCompatActivity() {
                     apps = installedApps
                 )
 
+                // Accessibility disclosure dialog
+                if (showAccessibilityDisclosure) {
+                    AccessibilityDisclosureDialog(
+                        onAccept = {
+                            showAccessibilityDisclosure = false
+                            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        },
+                        onDecline = {
+                            showAccessibilityDisclosure = false
+                        }
+                    )
+                }
+
                 // Zen Buddy Connect bottom sheet
                 if (showBuddyConnect) {
                     ZenBuddyConnectBottomSheet(
@@ -289,8 +304,7 @@ class MainActivity : AppCompatActivity() {
         } else if (ZenAccessibilityService.isEnabledInSettings(this)) {
             android.widget.Toast.makeText(this, "Accessibility service is reconnecting, please try again", android.widget.Toast.LENGTH_SHORT).show()
         } else {
-            android.widget.Toast.makeText(this, "Please enable ZenMode accessibility service to lock screen", android.widget.Toast.LENGTH_SHORT).show()
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            showAccessibilityDisclosure = true
         }
     }
 

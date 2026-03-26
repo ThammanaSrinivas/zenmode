@@ -16,6 +16,8 @@ interface AuthProvider {
      */
     suspend fun signInWithGoogleToken(idToken: String): SignInResult
 
+    suspend fun signInWithEmailAndPassword(email: String, password: String): SignInResult
+
     fun signOut()
 
     suspend fun deleteAccount()

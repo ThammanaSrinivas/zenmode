@@ -46,6 +46,9 @@ import com.zenlauncher.zenmode.ui.theme.ZenDark
 import com.zenlauncher.zenmode.ui.theme.ZenGlow
 import kotlinx.coroutines.delay
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 
 enum class WelcomeState {
     PINS_6, PINS_12, PINS_24, LOGO_GLOW, BOTTOM_TEXT, FULL_PAGE
@@ -53,7 +56,8 @@ enum class WelcomeState {
 
 @Composable
 fun WelcomeScreen(
-    onGoogleSignInClick: () -> Unit
+    onGoogleSignInClick: () -> Unit,
+    onEmailSignInClick: (email: String, password: String) -> Unit = { _, _ -> }
 ) {
     var state by remember { mutableStateOf(WelcomeState.PINS_6) }
 
@@ -79,35 +83,111 @@ fun WelcomeScreen(
         buttonText = "Sign in with Google",
         onButtonClick = onGoogleSignInClick,
         bottomFooter = {
-            val footerText = buildAnnotatedString {
-                withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = Grey400)) {
-                    append("By continuing, you agree to the ")
+            var showReviewerFields by remember { mutableStateOf(false) }
+            var email by remember { mutableStateOf("") }
+            var password by remember { mutableStateOf("") }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val footerText = buildAnnotatedString {
+                    withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = Grey400)) {
+                        append("By continuing, you agree to the ")
+                    }
+                    pushStringAnnotation(
+                        tag = "URL",
+                        annotation = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"
+                    )
+                    withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(
+                        color = ZenDark,
+                        textDecoration = TextDecoration.Underline,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                    )) {
+                        append("Zenmode's policy and terms & conditions")
+                    }
+                    pop()
                 }
-                pushStringAnnotation(
-                    tag = "URL",
-                    annotation = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"
+                val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                androidx.compose.foundation.text.ClickableText(
+                    text = footerText,
+                    modifier = Modifier.padding(horizontal = 32.dp),
+                    style = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center),
+                    onClick = { offset ->
+                        footerText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                            .firstOrNull()?.let { annotation ->
+                                uriHandler.openUri(annotation.item)
+                            }
+                    }
                 )
-                withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(
-                    color = ZenDark,
-                    textDecoration = TextDecoration.Underline,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
-                )) {
-                    append("Zenmode's policy and terms & conditions")
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (!showReviewerFields) {
+                    Text(
+                        text = "Reviewer? Sign in here",
+                        color = Grey600,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                        modifier = Modifier.clickable { showReviewerFields = true }
+                    )
                 }
-                pop()
-            }
-            val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-            androidx.compose.foundation.text.ClickableText(
-                text = footerText,
-                modifier = Modifier.padding(horizontal = 32.dp),
-                style = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center),
-                onClick = { offset ->
-                    footerText.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                        .firstOrNull()?.let { annotation ->
-                            uriHandler.openUri(annotation.item)
+
+                AnimatedVisibility(visible = showReviewerFields) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            label = { Text("Email", style = MaterialTheme.typography.bodySmall) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            textStyle = MaterialTheme.typography.bodySmall.copy(color = White),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = ZenBase,
+                                unfocusedBorderColor = Grey600,
+                                focusedLabelColor = ZenBase,
+                                unfocusedLabelColor = Grey600,
+                                cursorColor = ZenBase
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            label = { Text("Password", style = MaterialTheme.typography.bodySmall) },
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            textStyle = MaterialTheme.typography.bodySmall.copy(color = White),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = ZenBase,
+                                unfocusedBorderColor = Grey600,
+                                focusedLabelColor = ZenBase,
+                                unfocusedLabelColor = Grey600,
+                                cursorColor = ZenBase
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp)
+                                .background(ZenBase, RoundedCornerShape(20.dp))
+                                .clickable {
+                                    if (email.isNotBlank() && password.isNotBlank()) {
+                                        onEmailSignInClick(email.trim(), password)
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Sign in",
+                                color = Black,
+                                style = MaterialTheme.typography.labelMedium
+                            )
                         }
+                    }
                 }
-            )
+            }
         }
     ) {
         // ── Main content for the center area ──

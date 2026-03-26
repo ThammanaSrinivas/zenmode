@@ -205,6 +205,23 @@ private fun SettingsHeader(
                     .clickable { onProfileClick() },
                 contentScale = ContentScale.Crop
             )
+        } else {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(colors.textSecondary.copy(alpha = 0.3f))
+                    .clickable { onProfileClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.log_out),
+                    contentDescription = "Profile",
+                    modifier = Modifier.size(18.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
         }
     }
 }
