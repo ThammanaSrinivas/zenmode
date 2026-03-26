@@ -38,9 +38,6 @@ class DelayedUnlockActivity : AppCompatActivity() {
         val analyticsManager = ServiceLocator.analyticsManager
         repository = UsageRepository(this, analyticsManager)
 
-        val tracker = ServiceLocator.analyticsTracker
-        tracker.trackScreenUnlockStarted("user_action")
-
         // Load stats
         usage = repository.getTodayUsage()
         skipsLeft = (AppConstants.MAX_DAILY_SKIPS - repository.getTodaySkipCount()).coerceAtLeast(0)
@@ -56,7 +53,6 @@ class DelayedUnlockActivity : AppCompatActivity() {
         // Back button handler
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                ServiceLocator.analyticsTracker.trackMindfulUnlockDismissed(getCurrentWaitedSec())
                 finish()
             }
         })
@@ -74,16 +70,10 @@ class DelayedUnlockActivity : AppCompatActivity() {
                     countdownSeconds = countdownSeconds,
                     countdownFinished = countdownFinished,
                     onSettingsClick = {
-                        ServiceLocator.analyticsTracker.trackMindfulUnlockSkipped(
-                            getCurrentWaitedSec(), "settings"
-                        )
                         startActivity(android.content.Intent(android.provider.Settings.ACTION_SETTINGS))
                         finishUnlock()
                     },
                     onPhoneClick = {
-                        ServiceLocator.analyticsTracker.trackMindfulUnlockSkipped(
-                            getCurrentWaitedSec(), "phone"
-                        )
                         val intent = android.content.Intent(android.content.Intent.ACTION_DIAL)
                         startActivity(intent)
                         finishUnlock()
@@ -92,9 +82,6 @@ class DelayedUnlockActivity : AppCompatActivity() {
                         if (skipsLeft > 0) {
                             repository.incrementSkipCount()
                             skipsLeft = (AppConstants.MAX_DAILY_SKIPS - repository.getTodaySkipCount()).coerceAtLeast(0)
-                            ServiceLocator.analyticsTracker.trackMindfulUnlockSkipped(
-                                getCurrentWaitedSec(), "skip_button"
-                            )
                             val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).apply {
                                 addCategory(android.content.Intent.CATEGORY_HOME)
                                 flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
@@ -133,11 +120,6 @@ class DelayedUnlockActivity : AppCompatActivity() {
     }
 
     private fun finishUnlock() {
-        val tracker = ServiceLocator.analyticsTracker
-        if (currentProgress >= AppConstants.COUNTDOWN_SECONDS) {
-            tracker.trackMindfulUnlockCompleted(AppConstants.COUNTDOWN_SECONDS)
-        }
-
         repository.setZenUnlockFlag(true)
 
         timer?.cancel()

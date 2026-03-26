@@ -210,6 +210,16 @@ class ZenShoutoutFragment : Fragment() {
     }
 
     private fun navigateTo(delta: Int) {
+        if (delta > 0) {
+            val repository = com.zenlauncher.zenmode.coreapi.UsageRepository(
+                requireContext(),
+                com.zenlauncher.zenmode.coreapi.services.ServiceLocator.analyticsManager
+            )
+            if (!repository.isOnboardingStartedTracked()) {
+                com.zenlauncher.zenmode.coreapi.services.ServiceLocator.analyticsTracker.trackOnboardingStarted()
+                repository.setOnboardingStartedTracked(true)
+            }
+        }
         val viewPager = activity?.findViewById<ViewPager2>(R.id.viewPager) ?: return
         viewPager.currentItem = (viewPager.currentItem + delta).coerceAtLeast(0)
     }

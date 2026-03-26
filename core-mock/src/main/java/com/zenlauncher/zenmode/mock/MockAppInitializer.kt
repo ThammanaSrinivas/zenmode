@@ -62,29 +62,19 @@ class MockFirestoreDataSource : FirestoreDataSource {
 }
 
 class MockAnalyticsTracker : AnalyticsTrackerContract {
-    override fun trackAppOpened() {}
-    override fun trackAppInstalled() {}
-    override fun trackSignInStatus(isSignedIn: Boolean) {}
-    override fun trackScreenUnlock() {}
-    override fun trackDelayStarted(delayDurationSec: Int) {}
-    override fun trackDelayCompleted() {}
-    override fun trackUnlockSuccessful(totalDelaySec: Int) {}
-    override fun trackDailyStatsSynced(screenTimeMin: Int, unlockCount: Int) {}
-    override fun trackServiceStatus(serviceName: String, isEnabled: Boolean) {}
-    override fun trackPermissionsGranted(permissionName: String) {}
-    override fun trackPermissionsDenied(permissionName: String) {}
-    override fun trackWidgetAdded() {}
-    override fun trackMindlessScrollDetected(durationSec: Long, appName: String, appCategory: String, nudgeShown: Boolean) {}
-    override fun trackMindfulScrollPromptShown(promptType: String) {}
-    override fun trackMindfulScrollPromptResponse(response: String, sessionCategory: String) {}
-    override fun trackFeatureEngagement(featureName: String, actionName: String) {}
-    override fun trackError(errorType: String, errorMessage: String, contextStr: String?) {}
-    override fun trackBuddyInviteSent() {}
-    override fun trackBuddyInviteAccepted() {}
-    override fun trackBuddyStatsViewed() {}
-    override fun trackDailySummaryViewed(dayStreak: Int, totalScreenTimeMin: Int, mindfulUnlockRate: Float) {}
-    override fun trackGoalSet(goalType: String, targetValue: Int) {}
-    override fun trackGoalAchieved(goalType: String) {}
+    override fun trackAppFirstOpen(source: String, device: String) {}
+    override fun trackOnboardingStarted() {}
+    override fun trackPermissionScreenViewed(permissionType: String) {}
+    override fun trackPermissionGranted(permissionType: String) {}
+    override fun trackSetupCompleted(timeTakenSec: Int, permissionsGrantedCount: Int) {}
+    override fun trackDoomScrollThresholdReached(appName: String) {}
+    override fun trackOverlayDismissed(type: String) {}
+    override fun trackRememberMeSelected(duration: String) {}
+    override fun trackOverlayActionTaken(action: String) {}
+    override fun trackBuddyShareStarted(mode: String) {}
+    override fun trackBuddyCodeCopied(mode: String) {}
+    override fun trackBuddyCodePasted(mode: String) {}
+    override fun trackBuddyConnected(mode: String) {}
 }
 
 class MockAnalyticsManager : AnalyticsManager {

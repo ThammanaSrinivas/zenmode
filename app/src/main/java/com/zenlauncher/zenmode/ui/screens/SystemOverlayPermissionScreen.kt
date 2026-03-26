@@ -203,6 +203,7 @@ class SystemOverlayPermissionFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        ServiceLocator.analyticsTracker.trackPermissionScreenViewed("overlay")
         return androidx.compose.ui.platform.ComposeView(requireContext()).apply {
             setContent {
                 ZenTheme {
@@ -222,9 +223,7 @@ class SystemOverlayPermissionFragment : Fragment() {
 
     private fun handleGrantAccess() {
         if (Settings.canDrawOverlays(requireContext())) {
-            ServiceLocator.analyticsTracker.trackPermissionsGranted("overlay")
-            val viewPager = requireActivity().findViewById<ViewPager2>(R.id.viewPager)
-            viewPager.currentItem = viewPager.currentItem + 1
+            trackPermissionAndNavigate()
         } else {
             hasOpenedSettings = true
             val intent = Intent(
@@ -239,10 +238,24 @@ class SystemOverlayPermissionFragment : Fragment() {
         super.onResume()
         if (hasOpenedSettings && Settings.canDrawOverlays(requireContext())) {
             hasOpenedSettings = false
-            val viewPager = activity?.findViewById<ViewPager2>(R.id.viewPager)
-            if (viewPager != null) {
-                viewPager.post { viewPager.currentItem = viewPager.currentItem + 1 }
-            }
+            trackPermissionAndNavigate()
+        }
+    }
+
+    private fun trackPermissionAndNavigate() {
+        val tracker = ServiceLocator.analyticsTracker
+        tracker.trackPermissionGranted("overlay")
+
+        // Record in repository for setup_completed count
+        val repository = com.zenlauncher.zenmode.coreapi.UsageRepository(
+            requireContext(),
+            ServiceLocator.analyticsManager
+        )
+        repository.recordPermissionGranted("overlay")
+
+        val viewPager = requireActivity().findViewById<ViewPager2>(R.id.viewPager)
+        if (viewPager != null) {
+            viewPager.post { viewPager.currentItem = viewPager.currentItem + 1 }
         }
     }
 }

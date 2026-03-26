@@ -19,16 +19,17 @@ class ZenModeApp : Application() {
             initializer.initialize(this)
         }
 
-        // Track App Open & Install (only if ServiceLocator was populated)
+        // Track App First Open (only if ServiceLocator was populated)
         if (ServiceLocator.isInitialized) {
             val analyticsTracker = ServiceLocator.analyticsTracker
-            analyticsTracker.trackAppOpened()
-
             val analyticsManager = ServiceLocator.analyticsManager
             val repository = UsageRepository(this, analyticsManager)
 
             if (repository.isFirstRun()) {
-                analyticsTracker.trackAppInstalled()
+                analyticsTracker.trackAppFirstOpen(
+                    source = "direct", // Placeholder source
+                    device = android.os.Build.MODEL
+                )
                 repository.setFirstRunComplete()
             }
         }

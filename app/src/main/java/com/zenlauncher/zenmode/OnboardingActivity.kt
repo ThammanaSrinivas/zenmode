@@ -20,10 +20,14 @@ class OnboardingActivity : AppCompatActivity() {
         setContentView(R.layout.activity_onboarding)
 
         val analyticsTracker = ServiceLocator.analyticsTracker
-        analyticsTracker.trackOnboardingStarted()
 
         val analyticsManager = ServiceLocator.analyticsManager
         val repository = UsageRepository(this, analyticsManager)
+        
+        // Record onboarding start time if not already set
+        if (repository.getOnboardingStartTime() == 0L) {
+            repository.setOnboardingStartTime(System.currentTimeMillis())
+        }
 
         val viewPager = findViewById<ViewPager2>(R.id.viewPager)
         val adapter = OnboardingAdapter(this)

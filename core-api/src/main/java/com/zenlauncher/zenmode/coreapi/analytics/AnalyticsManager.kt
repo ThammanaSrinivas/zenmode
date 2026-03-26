@@ -6,6 +6,6 @@ package com.zenlauncher.zenmode.coreapi.analytics
  */
 interface AnalyticsManager {
     fun trackEvent(eventName: String, properties: Map<String, Any>? = null)
-    fun identifyUser(userId: String)
+    fun identifyUser(userId: String, properties: Map<String, Any>? = null)
     fun reset()
 }

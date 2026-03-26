@@ -75,22 +75,6 @@ class MainActivity : AppCompatActivity() {
         checkAndStartDoomMonitor()
         loadInstalledApps()
 
-        // Analytics
-        val tracker = ServiceLocator.analyticsTracker
-
-        // Check Launcher Default
-        val intent = Intent(Intent.ACTION_MAIN)
-        intent.addCategory(Intent.CATEGORY_HOME)
-        val resolveInfo = packageManager.resolveActivity(intent, 0)
-        val currentLauncher = resolveInfo?.activityInfo?.packageName
-        val isDefault = currentLauncher == packageName
-        tracker.trackLauncherSetAsDefault(isDefault)
-
-        // Check Buddies
-        if (::viewModel.isInitialized && viewModel.hasBuddies.value == true) {
-            tracker.trackBuddyConnectionActive(1)
-        }
-
         // Stats Sync Check
         if (::repository.isInitialized) {
             val lastProcessed = repository.getLastStatsProcessedTime()
@@ -253,6 +237,7 @@ class MainActivity : AppCompatActivity() {
                         lockScreen()
                     },
                     onInviteBuddyClick = {
+                        ServiceLocator.analyticsTracker.trackBuddyShareStarted("manual")
                         showBuddyConnect = true
                     },
                     onSignInClick = {
@@ -280,7 +265,7 @@ class MainActivity : AppCompatActivity() {
                                 val clipboard = getSystemService(android.content.ClipboardManager::class.java)
                                 val clip = android.content.ClipData.newPlainText("ZenMode Code", code)
                                 clipboard.setPrimaryClip(clip)
-                                ServiceLocator.analyticsTracker.trackBuddyCodeGenerated("copy_link")
+                                ServiceLocator.analyticsTracker.trackBuddyCodeCopied("manual")
                                 android.widget.Toast.makeText(this, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         },
@@ -314,6 +299,8 @@ class MainActivity : AppCompatActivity() {
 
         if (targetUid == currentUserId) return BuddyAddResult.SelfAdd
 
+        ServiceLocator.analyticsTracker.trackBuddyCodePasted("manual")
+        
         // Check network connectivity
         val connectivityManager = getSystemService(android.net.ConnectivityManager::class.java)
         val activeNetwork = connectivityManager?.activeNetwork
@@ -341,7 +328,7 @@ class MainActivity : AppCompatActivity() {
             firestoreDataSource.sendBuddyInvite(myUid, targetUid)
             repository.clearCachedBuddy()
             viewModel.fetchBuddyData()
-            ServiceLocator.analyticsTracker.trackBuddyLinkAccepted("buddy")
+            ServiceLocator.analyticsTracker.trackBuddyConnected("manual")
 
             BuddyAddResult.Success(user.displayName)
         } catch (e: kotlinx.coroutines.TimeoutCancellationException) {

@@ -141,7 +141,10 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
 
                 if (userId != null) {
                     repository.saveUserUid(userId)
-                    analyticsManager.identifyUser(userId)
+                    analyticsManager.identifyUser(userId, mapOf(
+                        "name" to (signInResult.displayName ?: ""),
+                        "email" to (signInResult.email ?: "")
+                    ))
                 }
 
                 if (signInResult.isNewUser && userId != null) {

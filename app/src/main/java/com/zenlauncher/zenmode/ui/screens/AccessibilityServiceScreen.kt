@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenAccessibilityService
+import com.zenlauncher.zenmode.coreapi.UsageRepository
+import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.White
@@ -96,6 +98,7 @@ class AccessibilityServiceFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        ServiceLocator.analyticsTracker.trackPermissionScreenViewed("acc")
         return androidx.compose.ui.platform.ComposeView(requireContext()).apply {
             setContent {
                 ZenTheme {
@@ -115,9 +118,7 @@ class AccessibilityServiceFragment : Fragment() {
 
     private fun handleGrantAccess() {
         if (isAccessibilityServiceEnabled(requireContext())) {
-            com.zenlauncher.zenmode.coreapi.services.ServiceLocator.analyticsTracker
-                .trackPermissionsGranted("accessibility_service")
-            navigateTo(+1)
+            trackPermissionAndNavigate()
         } else {
             hasOpenedSettings = true
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -128,10 +129,19 @@ class AccessibilityServiceFragment : Fragment() {
         super.onResume()
         if (hasOpenedSettings && isAccessibilityServiceEnabled(requireContext())) {
             hasOpenedSettings = false
-            com.zenlauncher.zenmode.coreapi.services.ServiceLocator.analyticsTracker
-                .trackPermissionsGranted("accessibility_service")
-            navigateTo(+1)
+            trackPermissionAndNavigate()
         }
+    }
+
+    private fun trackPermissionAndNavigate() {
+        val tracker = ServiceLocator.analyticsTracker
+        tracker.trackPermissionGranted("acc")
+
+        // Record in repository
+        val repository = UsageRepository(requireContext(), ServiceLocator.analyticsManager)
+        repository.recordPermissionGranted("acc")
+
+        navigateTo(+1)
     }
 
     private fun isAccessibilityServiceEnabled(context: Context): Boolean {

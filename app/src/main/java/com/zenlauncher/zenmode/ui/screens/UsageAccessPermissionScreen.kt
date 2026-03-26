@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
@@ -269,6 +270,7 @@ class UsageAccessPermissionFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        ServiceLocator.analyticsTracker.trackPermissionScreenViewed("usage")
         return androidx.compose.ui.platform.ComposeView(requireContext()).apply {
             setContent {
                 ZenTheme {
@@ -288,9 +290,7 @@ class UsageAccessPermissionFragment : Fragment() {
 
     private fun handleGrantAccess() {
         if (hasUsageStatsPermission()) {
-            ServiceLocator.analyticsTracker.trackPermissionsGranted("usage_access")
-            val viewPager = requireActivity().findViewById<ViewPager2>(R.id.viewPager)
-            viewPager.currentItem = viewPager.currentItem + 1
+            trackPermissionAndNavigate()
         } else {
             hasOpenedSettings = true
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
@@ -301,11 +301,22 @@ class UsageAccessPermissionFragment : Fragment() {
         super.onResume()
         if (hasOpenedSettings && hasUsageStatsPermission()) {
             hasOpenedSettings = false
-            val viewPager = activity?.findViewById<ViewPager2>(R.id.viewPager)
-            if (viewPager != null && viewPager.adapter != null &&
-                viewPager.currentItem < (viewPager.adapter!!.itemCount - 1)) {
-                viewPager.currentItem = viewPager.currentItem + 1
-            }
+            trackPermissionAndNavigate()
+        }
+    }
+
+    private fun trackPermissionAndNavigate() {
+        val tracker = ServiceLocator.analyticsTracker
+        tracker.trackPermissionGranted("usage")
+
+        // Record in repository for setup_completed count
+        val repository = UsageRepository(requireContext(), ServiceLocator.analyticsManager)
+        repository.recordPermissionGranted("usage")
+
+        val viewPager = requireActivity().findViewById<ViewPager2>(R.id.viewPager)
+        if (viewPager != null && viewPager.adapter != null &&
+            viewPager.currentItem < (viewPager.adapter!!.itemCount - 1)) {
+            viewPager.currentItem = viewPager.currentItem + 1
         }
     }
 

@@ -277,6 +277,7 @@ class DefaultLauncherFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        ServiceLocator.analyticsTracker.trackPermissionScreenViewed("launcher_set_default")
         return androidx.compose.ui.platform.ComposeView(requireContext()).apply {
             setContent {
                 ZenTheme {
@@ -339,7 +340,20 @@ class DefaultLauncherFragment : Fragment() {
         val repository = UsageRepository(requireContext(), analyticsManager)
         repository.setOnboardingComplete(true)
         repository.clearOnboardingCurrentPage()
-        ServiceLocator.analyticsTracker.trackOnboardingCompleted()
+        
+        // Finalize metrics
+        val startTime = repository.getOnboardingStartTime()
+        val timeTakenSec = if (startTime > 0) ((System.currentTimeMillis() - startTime) / 1000).toInt() else 0
+        
+        // Launcher is also a permission in this context
+        repository.recordPermissionGranted("launcher_set_default")
+        ServiceLocator.analyticsTracker.trackPermissionGranted("launcher_set_default")
+        val grantedCount = repository.getGrantedPermissionsCount()
+
+        ServiceLocator.analyticsTracker.trackSetupCompleted(timeTakenSec, grantedCount)
+        
+        // Optional: clear metrics after successful track
+        repository.clearOnboardingMetrics()
 
         val mainIntent = Intent(requireContext(), MainActivity::class.java)
         mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)

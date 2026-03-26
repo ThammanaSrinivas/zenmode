@@ -272,6 +272,44 @@ class UsageRepository(private val context: Context, private val analyticsManager
         prefs.edit().remove("onboarding_current_page").apply()
     }
 
+    fun setOnboardingStartTime(timestamp: Long) {
+        prefs.edit().putLong("onboarding_start_time", timestamp).apply()
+    }
+
+    fun getOnboardingStartTime(): Long {
+        return prefs.getLong("onboarding_start_time", 0L)
+    }
+
+    fun recordPermissionGranted(permissionType: String) {
+        val granted = getGrantedPermissionsList().toMutableSet()
+        granted.add(permissionType)
+        prefs.edit().putStringSet("permissions_granted_list", granted).apply()
+    }
+
+    fun getGrantedPermissionsList(): Set<String> {
+        return prefs.getStringSet("permissions_granted_list", emptySet()) ?: emptySet()
+    }
+
+    fun getGrantedPermissionsCount(): Int {
+        return getGrantedPermissionsList().size
+    }
+
+    fun clearOnboardingMetrics() {
+        prefs.edit()
+            .remove("onboarding_start_time")
+            .remove("permissions_granted_list")
+            .remove("onboarding_started_tracked")
+            .apply()
+    }
+
+    fun setOnboardingStartedTracked(tracked: Boolean) {
+        prefs.edit().putBoolean("onboarding_started_tracked", tracked).apply()
+    }
+
+    fun isOnboardingStartedTracked(): Boolean {
+        return prefs.getBoolean("onboarding_started_tracked", false)
+    }
+
     fun isFirstRun(): Boolean {
         return prefs.getBoolean("is_first_run", true)
     }

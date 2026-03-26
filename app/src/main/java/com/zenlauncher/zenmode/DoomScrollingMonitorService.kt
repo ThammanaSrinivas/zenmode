@@ -29,6 +29,7 @@ class DoomScrollingMonitorService : Service() {
         private const val KEY_SNOOZE_UNTIL = "doom_snooze_until"
     }
 
+    private var wasActionTaken = false
     private lateinit var usageStatsManager: UsageStatsManager
     private lateinit var windowManager: WindowManager
     private var overlayView: View? = null
@@ -194,17 +195,11 @@ class DoomScrollingMonitorService : Service() {
 
     private fun showOverlay() {
         if (overlayView != null) return // Already showing
+        wasActionTaken = false
 
         // Analytics
         val tracker = ServiceLocator.analyticsTracker
-        val durationSec = (System.currentTimeMillis() - currentDoomSessionStart) / 1000
-        tracker.trackMindlessScrollDetected(
-            durationSec = durationSec,
-            appName = lastDoomPackage ?: "unknown",
-            appCategory = "social", // Simplified, as category isn't dynamically fetched for event here
-            nudgeShown = true
-        )
-        tracker.trackMindfulScrollPromptShown("duration_15_min")
+        tracker.trackDoomScrollThresholdReached(lastDoomPackage ?: "unknown")
 
         if (!Settings.canDrawOverlays(this)) return
 
@@ -245,6 +240,7 @@ class DoomScrollingMonitorService : Service() {
         checkbox?.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 actionButton?.setImageResource(R.drawable.button_remember)
+                ServiceLocator.analyticsTracker.trackRememberMeSelected("4h")
             } else {
                 actionButton?.setImageResource(R.drawable.button_close_app)
             }
@@ -263,10 +259,9 @@ class DoomScrollingMonitorService : Service() {
             startActivity(startMain)
 
             // Analytics
-            ServiceLocator.analyticsTracker.trackMindfulScrollPromptResponse(
-                if (checkbox?.isChecked == true) "remember_snooze" else "pause_now",
-                "social"
-            )
+            val action = if (checkbox?.isChecked == true) "app_open" else "mindful"
+            wasActionTaken = true
+            ServiceLocator.analyticsTracker.trackOverlayActionTaken(action)
 
             resetTracking()
             removeOverlay()
@@ -281,6 +276,9 @@ class DoomScrollingMonitorService : Service() {
 
     private fun removeOverlay() {
         if (overlayView != null) {
+            if (!wasActionTaken) {
+                ServiceLocator.analyticsTracker.trackOverlayDismissed("doom_scroll")
+            }
             try {
                 windowManager.removeView(overlayView)
             } catch (e: Exception) {
