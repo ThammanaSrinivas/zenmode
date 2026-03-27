@@ -9,6 +9,8 @@ interface AuthProvider {
     fun getCurrentUserId(): String?
     fun isSignedIn(): Boolean
     fun getPhotoUrl(): String?
+    fun getEmail(): String?
+    fun getDisplayName(): String?
 
     /**
      * Signs in with a Google ID token. Returns a [SignInResult] with user info.

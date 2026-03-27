@@ -395,12 +395,21 @@ class UsageRepository(private val context: Context, private val analyticsManager
             .apply()
     }
 
+    fun isPostHogIdentified(): Boolean {
+        return prefs.getBoolean("posthog_identified", false)
+    }
+
+    fun setPostHogIdentified(identified: Boolean) {
+        prefs.edit().putBoolean("posthog_identified", identified).apply()
+    }
+
     fun clearUserData() {
         prefs.edit()
             .remove("user_uid")
             .remove("buddy_uid")
             .remove("buddy_screen_time")
             .remove("buddy_unlocks")
+            .remove("posthog_identified")
             .apply()
     }
 

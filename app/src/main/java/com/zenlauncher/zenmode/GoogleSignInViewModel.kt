@@ -157,6 +157,7 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
                     "name" to (signInResult.displayName ?: ""),
                     "email" to (signInResult.email ?: "")
                 ))
+                repository.setPostHogIdentified(true)
             }
 
             if (signInResult.isNewUser && userId != null) {

@@ -32,6 +32,19 @@ class ZenModeApp : Application() {
                 )
                 repository.setFirstRunComplete()
             }
+
+            // Re-identify existing signed-in users (one-time backfill)
+            if (ServiceLocator.authProvider.isSignedIn() && !repository.isPostHogIdentified()) {
+                val authProvider = ServiceLocator.authProvider
+                val userId = authProvider.getCurrentUserId()
+                if (userId != null) {
+                    analyticsManager.identifyUser(userId, mapOf(
+                        "name" to (authProvider.getDisplayName() ?: ""),
+                        "email" to (authProvider.getEmail() ?: "")
+                    ))
+                    repository.setPostHogIdentified(true)
+                }
+            }
         }
     }
 }

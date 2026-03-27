@@ -31,6 +31,8 @@ class MockAuthProvider : AuthProvider {
     override fun isSignedIn(): Boolean = signedIn
     override fun getCurrentUserId(): String? = if (signedIn) fakeUserId else null
     override fun getPhotoUrl(): String? = null
+    override fun getEmail(): String? = null
+    override fun getDisplayName(): String? = if (signedIn) "Mock User" else null
 
     override suspend fun signInWithGoogleToken(idToken: String): SignInResult {
         signedIn = true

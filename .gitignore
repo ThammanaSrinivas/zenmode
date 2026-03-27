@@ -51,6 +51,7 @@ gradlew.bat
 .externalNativeBuild
 
 .claude
+CLAUDE.md
 
 # Opencore / Composite builds generated files
 core-*/.idea/
