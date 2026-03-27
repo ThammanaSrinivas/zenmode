@@ -88,6 +88,8 @@ import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.Silkscreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.percentageChangeColor
+import com.zenlauncher.zenmode.ui.theme.statsCardFill
 
 // ── Main Home Screen ──────────────────────────────────────────────
 
@@ -301,7 +303,8 @@ private fun StatsCardsRow(
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(24.dp)
+                    .width(21.dp)
+                    .height(35.dp)
                     .zIndex(1f)
             )
         }
@@ -424,7 +427,8 @@ private fun MyScreenTimeCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(colors.statsCardFill)
+                .background(colors.statsCardFill(moodState))
+
                 .border(2.dp, when (moodState) {
                     MoodState.HAPPY -> colors.strokeHappy
                     MoodState.NEUTRAL -> colors.strokeNeutral
@@ -486,7 +490,7 @@ private fun MyScreenTimeCard(
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
                         fontSize = 11.sp,
-                        color = colors.actionPrimary
+                        color = colors.percentageChangeColor(yesterdayChangePercent)
                     )
                 }
             }
@@ -826,7 +830,8 @@ private fun BuddyStatsCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(colors.statsCardFill)
+                .background(colors.statsCardFill(moodState))
+
                 .border(2.dp, when (moodState) {
                     MoodState.HAPPY -> colors.strokeHappy
                     MoodState.NEUTRAL -> colors.strokeNeutral
@@ -1054,7 +1059,7 @@ private fun LockItem(onClick: () -> Unit) {
             Image(
                 painter = painterResource(R.drawable.lock),
                 contentDescription = "Lock phone",
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(36.dp)
             )
         }
     }
@@ -1075,17 +1080,17 @@ private fun AppIconItem(
             modifier = Modifier
                 .size(52.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(ZenTheme.colors.bgSecondary),
+                .background(Color.Transparent),
             contentAlignment = Alignment.Center
         ) {
             AndroidView(
                 factory = { context ->
                     ImageView(context).apply {
-                        scaleType = ImageView.ScaleType.FIT_CENTER
+                        scaleType = ImageView.ScaleType.FIT_XY
                         setImageDrawable(appInfo.icon)
                     }
                 },
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
@@ -1214,18 +1219,27 @@ private fun SearchOverlay(
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        AndroidView(
-                            factory = { context ->
-                                ImageView(context).apply {
-                                    scaleType = ImageView.ScaleType.FIT_CENTER
-                                    setImageDrawable(app.icon)
-                                }
-                            },
-                            update = { imageView ->
-                                imageView.setImageDrawable(app.icon)
-                            },
-                            modifier = Modifier.size(40.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.Transparent),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AndroidView(
+                                factory = { context ->
+                                    ImageView(context).apply {
+                                        scaleType = ImageView.ScaleType.FIT_XY
+                                        setImageDrawable(app.icon)
+                                    }
+                                },
+                                update = { imageView ->
+                                    imageView.setImageDrawable(app.icon)
+                                    imageView.scaleType = ImageView.ScaleType.FIT_XY
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = app.label.toString(),

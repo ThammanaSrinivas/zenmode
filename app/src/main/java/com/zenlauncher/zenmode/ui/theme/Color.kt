@@ -6,6 +6,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.MoodState
+
 
 // Base Primitives
 val White: Color @Composable get() = colorResource(R.color.white)
@@ -35,12 +37,25 @@ data class ZenColors(
     val moodHappy: Color,
     val moodNeutral: Color,
     val moodAnnoyed: Color,
-    val statsCardFill: Color,
     val innerShadow: Color,
+    val statsCardFillHappy: Color,
+    val statsCardFillNeutral: Color,
+    val statsCardFillAnnoyed: Color,
     val strokeHappy: Color,
     val strokeNeutral: Color,
     val strokeAnnoyed: Color
 )
+
+fun ZenColors.statsCardFill(mood: MoodState): Color =
+    when (mood) {
+        MoodState.HAPPY -> statsCardFillHappy
+        MoodState.NEUTRAL -> statsCardFillNeutral
+        MoodState.ANNOYED -> statsCardFillAnnoyed
+    }
+
+
+fun ZenColors.percentageChangeColor(percent: Int): Color =
+    if (percent < 0) moodHappy else moodAnnoyed
 
 val LightZenColors: ZenColors
     @Composable
@@ -58,11 +73,14 @@ val LightZenColors: ZenColors
         moodHappy = Color(0xFF00C700),
         moodNeutral = Color(0xFFEBDE27),
         moodAnnoyed = Color(0xFFF1634F),
-        statsCardFill = Color(0x1AB9E234),
+        statsCardFillHappy = Color(0x1AB9E234),
+        statsCardFillNeutral = Color(0x1AEBDE28),
+        statsCardFillAnnoyed = Color(0x1AF1634F),
         innerShadow = Color(0x40000000),
         strokeHappy = Color(0xFF006703),
         strokeNeutral = Color(0xFFEBDE28),
         strokeAnnoyed = Color(0xFFFF7C69)
+
     )
 
 val DarkZenColors: ZenColors
@@ -81,11 +99,14 @@ val DarkZenColors: ZenColors
         moodHappy = Color(0xFF00C700),
         moodNeutral = Color(0xFFEBDE27),
         moodAnnoyed = Color(0xFFF1634F),
-        statsCardFill = Color(0x1AB9E234),
+        statsCardFillHappy = Color(0x1AB9E234),
+        statsCardFillNeutral = Color(0x1AEBDE28),
+        statsCardFillAnnoyed = Color(0x1AF1634F),
         innerShadow = Color(0x40000000),
         strokeHappy = Color(0xFF006703),
         strokeNeutral = Color(0xFFEBDE28),
         strokeAnnoyed = Color(0xFFFF7C69)
+
     )
 
 val LocalZenColors = staticCompositionLocalOf {
@@ -103,10 +124,13 @@ val LocalZenColors = staticCompositionLocalOf {
         moodHappy = Color.Unspecified,
         moodNeutral = Color.Unspecified,
         moodAnnoyed = Color.Unspecified,
-        statsCardFill = Color.Unspecified,
+        statsCardFillHappy = Color.Unspecified,
+        statsCardFillNeutral = Color.Unspecified,
+        statsCardFillAnnoyed = Color.Unspecified,
         innerShadow = Color.Unspecified,
         strokeHappy = Color.Unspecified,
         strokeNeutral = Color.Unspecified,
         strokeAnnoyed = Color.Unspecified
+
     )
 }

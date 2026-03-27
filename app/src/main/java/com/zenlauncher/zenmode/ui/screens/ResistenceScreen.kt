@@ -63,6 +63,7 @@ import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.Silkscreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.percentageChangeColor
 
 // ── Main Resistence Screen ──────────────────────────────────────────
 
@@ -318,7 +319,7 @@ fun ResistenceScreen(
                             fontFamily = RedditMono,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
-                            color = colors.actionPrimary
+                            color = colors.percentageChangeColor(yesterdayChangePercent)
                         )
                     }
                 }
