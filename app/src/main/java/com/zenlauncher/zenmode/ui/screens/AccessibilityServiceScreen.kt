@@ -2,6 +2,7 @@ package com.zenlauncher.zenmode.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
@@ -11,8 +12,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -20,50 +22,187 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
+import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
+import com.zenlauncher.zenmode.ui.theme.Black
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
+import com.zenlauncher.zenmode.ui.theme.Grey400
 import com.zenlauncher.zenmode.ui.theme.White
 import com.zenlauncher.zenmode.ui.theme.ZenBase
+import com.zenlauncher.zenmode.ui.theme.ZenDark
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 @Composable
-fun AccessibilityDisclosureDialog(
+fun AccessibilityDisclosureScreen(
     onAccept: () -> Unit,
     onDecline: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = { /* Don't allow dismiss by tapping outside */ },
-        title = { Text("How ZenMode uses Accessibility") },
-        text = {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Black)
+            .padding(horizontal = 20.dp)
+            .padding(top = 48.dp, bottom = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState)
+        ) {
             Text(
-                "ZenMode needs Accessibility permissions to lock the screen.\n\n" +
-                "We do not collect, store, or share any personal data or screen content. " +
-                "This is only used to enable the lock screen feature."
+                text = "Accessibility Service Disclosure",
+                color = White,
+                style = TextStyle(
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                )
             )
-        },
-        confirmButton = {
-            Button(
-                onClick = onAccept,
-                colors = ButtonDefaults.buttonColors(containerColor = ZenBase)
-            ) { Text("I Agree") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDecline) { Text("No Thanks") }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Section: Why
+            Text(
+                text = "Why ZenMode needs Accessibility Service",
+                color = ZenBase,
+                style = TextStyle(
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "ZenMode uses Android's Accessibility Service API solely to lock your screen " +
+                        "when you tap the lock button on the home screen. Android does not provide any " +
+                        "other way for a launcher app to lock the screen, so this permission is required " +
+                        "for the lock-screen feature to work.",
+                color = White,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Section: What it does
+            Text(
+                text = "What this service does",
+                color = ZenBase,
+                style = TextStyle(
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "• Uses the system lock-screen action (GLOBAL_ACTION_LOCK_SCREEN) to lock your device\n" +
+                        "• This action is triggered only when you manually tap the lock button\n" +
+                        "• The service does not perform any other actions",
+                color = White,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Section: What it does NOT do
+            Text(
+                text = "What this service does NOT do",
+                color = ZenBase,
+                style = TextStyle(
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "• Does NOT read, collect, or access any screen content\n" +
+                        "• Does NOT monitor or process any accessibility events\n" +
+                        "• Does NOT perform gestures or interact with other apps\n" +
+                        "• Does NOT collect, store, transmit, or share any personal data\n" +
+                        "• Does NOT run in the background to observe your activity",
+                color = White,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Section: Privacy
+            Text(
+                text = "Privacy",
+                color = ZenBase,
+                style = TextStyle(
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Your privacy is important to us. This service exists only to enable the lock button. " +
+                        "No data of any kind is accessed through this service.",
+                color = White,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Read our Privacy Policy",
+                color = ZenDark,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    textDecoration = TextDecoration.Underline,
+                    fontWeight = FontWeight.Medium
+                ),
+                modifier = Modifier.clickable {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.PRIVACY_POLICY_URL))
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
-    )
+
+        // Buttons at the bottom
+        Button(
+            onClick = onAccept,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = ZenBase),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = "I Understand and Agree",
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(
+            onClick = onDecline,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Text(text = "Decline", color = Grey400)
+        }
+    }
 }
 
 @Composable
@@ -122,7 +261,7 @@ fun AccessibilityServiceScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "This is where the magic happens. Fair warning: it requires a lot of trust from you. We won't let you down.",
+            text = "ZenMode needs the Accessibility Service permission to lock your screen when you tap the lock button. This is the only thing it does \u2014 it does not read your screen or collect any data.",
             color = White,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(horizontal = 20.dp)
@@ -145,14 +284,8 @@ class AccessibilityServiceFragment : Fragment() {
         return androidx.compose.ui.platform.ComposeView(requireContext()).apply {
             setContent {
                 ZenTheme {
-                    AccessibilityServiceScreen(
-                        onGrantAccessClick = { handleGrantAccess() },
-                        onSkipClick = { navigateTo(+1) },
-                        onBackClick = { navigateTo(-1) }
-                    )
-
                     if (showDisclosureDialog.value) {
-                        AccessibilityDisclosureDialog(
+                        AccessibilityDisclosureScreen(
                             onAccept = {
                                 showDisclosureDialog.value = false
                                 hasOpenedSettings = true
@@ -162,6 +295,12 @@ class AccessibilityServiceFragment : Fragment() {
                                 showDisclosureDialog.value = false
                                 navigateTo(+1)
                             }
+                        )
+                    } else {
+                        AccessibilityServiceScreen(
+                            onGrantAccessClick = { handleGrantAccess() },
+                            onSkipClick = { navigateTo(+1) },
+                            onBackClick = { navigateTo(-1) }
                         )
                     }
                 }

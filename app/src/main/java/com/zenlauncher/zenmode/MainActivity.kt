@@ -24,6 +24,9 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -33,7 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModelProvider
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
-import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureDialog
+import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
 import com.zenlauncher.zenmode.ui.screens.ZenBuddyConnectBottomSheet
@@ -258,17 +261,19 @@ class MainActivity : AppCompatActivity() {
                     apps = installedApps
                 )
 
-                // Accessibility disclosure dialog
+                // Accessibility disclosure full-screen
                 if (showAccessibilityDisclosure) {
-                    AccessibilityDisclosureDialog(
-                        onAccept = {
-                            showAccessibilityDisclosure = false
-                            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                        },
-                        onDecline = {
-                            showAccessibilityDisclosure = false
-                        }
-                    )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        AccessibilityDisclosureScreen(
+                            onAccept = {
+                                showAccessibilityDisclosure = false
+                                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                            },
+                            onDecline = {
+                                showAccessibilityDisclosure = false
+                            }
+                        )
+                    }
                 }
 
                 // Zen Buddy Connect bottom sheet

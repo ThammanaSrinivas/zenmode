@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.Black
 import com.zenlauncher.zenmode.ui.theme.Grey400
@@ -94,7 +95,7 @@ fun WelcomeScreen(
                     }
                     pushStringAnnotation(
                         tag = "URL",
-                        annotation = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"
+                        annotation = AppConstants.PRIVACY_POLICY_URL
                     )
                     withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(
                         color = ZenDark,
