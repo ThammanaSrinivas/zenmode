@@ -1,9 +1,74 @@
-# ZenMode Android Client
+<img width="8132" height="1828" alt="Github Repo Header" src="https://github.com/user-attachments/assets/b1dca957-e336-443b-abd5-d3eb69c4a3fb" />
+<p align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN">
+    <img src="https://img.shields.io/badge/Download%20on%20Play%20Store-00C700?style=for-the-badge&logo=google-play&logoColor=white"/>
+  </a>
+</p>
 
-Welcome to the open-source Android client for **ZenMode** - a mindful minimalist launcher designed to help you regain focus and reduce doomscrolling. 
+<p align="center">
 
-This repository contains the frontend application and public API definitions. It acts as the core interface through which users interact with ZenMode's functionality.
+  <!-- Stickers / Badges -->
+  <img src="https://img.shields.io/badge/India%20FOSS%20United-2026-00C700?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Open%20Source-Love-00C700?style=for-the-badge&logo=opensourceinitiative&logoColor=white" />
+  <img src="https://img.shields.io/badge/Built%20for-Focus-00C700?style=for-the-badge" />
 
+</p>
+
+## 🎬 Experience ZenMode
+
+<p align="center">
+  <a href="https://youtu.be/48M1x2ryhpI">
+    <img src="https://img.youtube.com/vi/48M1x2ryhpI/maxresdefault.jpg" width="100%" />
+  </a>
+</p>
+
+## Our story
+
+![Github](https://github.com/user-attachments/assets/de9a13cc-d8a0-472d-9e5c-1ca7e57d7b3f)
+
+In 2025, **[Kamal](https://github.com/Kamal007OLica)**, and **[Srinivas](https://github.com/ThammanaSrinivas)** met at India FOSS United 2025 Con,
+
+Today, we're building **ZenMode** a movement toward mindful technology that improves the lives of the next generation.
+
+
+
+<p align="center">
+  <b>Try Now!</b>
+</p>
+
+<p align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN">
+    <img src="https://img.shields.io/badge/Download%20on%20Play%20Store-00C700?style=for-the-badge&logo=google-play&logoColor=white"/>
+  </a>
+</p>
+
+---
+
+## ✨ Philosophy
+Less scrolling.
+More living.
+
+Less noise.
+More clarity.
+
+
+---
+
+## 🎥 Motion Experiences
+
+### 🌊 Mindful Scrolling  
+https://github.com/user-attachments/assets/c1bc3c23-9277-41d3-979e-64ebbec470f1
+
+
+### 🔓 Mindful Unlocks  
+https://github.com/user-attachments/assets/fc09f3cf-1519-428a-ae9e-6a5520182527
+
+
+### ⏳ Mindful Usage  
+https://github.com/user-attachments/assets/45d793b8-8db1-4083-b815-80cc4fbca0be
+
+
+---
 ## 🚀 Architecture Overview
 
 ZenMode uses a modular composite build architecture to separate open-source definitions from proprietary backend implementations:
@@ -43,6 +108,20 @@ UI Note: This project uses Cabinet Grotesque. To build the project with the inte
 2. If you add new backend requirements, you must define the interface in `core-api` and provide a mock implementation in `core-mock` so that other contributors' builds do not break.
 3. Ensure all tests and lint checks pass before submitting a Pull Request.
 
+
+
+## 💚 Support
+<p align="center"> Need help, feedback, or just want to say hi? </p> <p align="center"> 📩 <b>zenmode.help@gmail.com</b> </p> <p align="center"> Built with calm, care & clarity <br/> <span style="color:#00C700;">● ZenMode</span> </p>
+
+<p align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN">
+    <img src="https://img.shields.io/badge/Download%20on%20Play%20Store-00C700?style=for-the-badge&logo=google-play&logoColor=white"/>
+  </a>
+</p>
+
+
 ## 📜 License
 
 This project is licensed under the **GNU General Public License v3.0** (GPLv3). See the [LICENSE](LICENSE) file for more details.
+
+![image](https://github.com/user-attachments/assets/00800890-b75c-4970-b0fa-c72e8e574384)
