@@ -14,7 +14,7 @@
 
 </p>
 
-## 🎬 Experience ZenMode
+## 🎬 Experience ZenMode (Click to watch demo)
 
 <p align="center">
   <a href="https://youtu.be/48M1x2ryhpI">
