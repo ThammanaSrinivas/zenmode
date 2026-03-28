@@ -449,7 +449,6 @@ fun ResistenceScreen(
                 onPhoneClick = onPhoneClick
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -604,7 +603,8 @@ private fun ResistenceBottomDock(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp)
+            .padding(top = 8.dp, bottom = 32.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

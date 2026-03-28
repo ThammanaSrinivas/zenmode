@@ -1,6 +1,18 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import android.content.Intent
+import android.graphics.Bitmap
 import android.widget.ImageView
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.content.FileProvider
+import androidx.core.view.drawToBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -586,7 +598,11 @@ private fun StreakOverlay(
     onDismiss: () -> Unit
 ) {
     val colors = ZenTheme.colors
+    val context = LocalContext.current
+    val view = LocalView.current
+    val scope = rememberCoroutineScope()
     var offsetY by remember { mutableStateOf(0f) }
+    var cardBounds by remember { mutableStateOf<Rect?>(null) }
 
     // Map rolling 7-day data to current week (Mon-Sun)
     val today = LocalDate.now()
@@ -638,6 +654,9 @@ private fun StreakOverlay(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
+                .onGloballyPositioned { coords ->
+                    cardBounds = coords.boundsInWindow()
+                }
                 .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                 .background(colors.bgSecondary)
                 .clickable(
@@ -818,7 +837,55 @@ private fun StreakOverlay(
                     .fillMaxWidth()
                     .height(48.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { /* TODO: share streak */ },
+                    .clickable {
+                        scope.launch {
+                            try {
+                                // Capture on Main thread (required by drawToBitmap)
+                                val fullBitmap = view.drawToBitmap()
+
+                                // Crop to card bounds
+                                val bounds = cardBounds ?: return@launch
+                                val cropped = Bitmap.createBitmap(
+                                    fullBitmap,
+                                    bounds.left.toInt().coerceAtLeast(0),
+                                    bounds.top.toInt().coerceAtLeast(0),
+                                    bounds.width.toInt().coerceAtMost(fullBitmap.width - bounds.left.toInt().coerceAtLeast(0)),
+                                    bounds.height.toInt().coerceAtMost(fullBitmap.height - bounds.top.toInt().coerceAtLeast(0))
+                                )
+
+                                // Save on IO thread
+                                withContext(Dispatchers.IO) {
+                                    val imagesFolder = File(context.cacheDir, "shared_images")
+                                    imagesFolder.mkdirs()
+                                    val file = File(imagesFolder, "streak_share.png")
+                                    file.outputStream().use { out ->
+                                        cropped.compress(Bitmap.CompressFormat.PNG, 100, out)
+                                    }
+
+                                    // Share (back to Main for intent)
+                                    withContext(Dispatchers.Main) {
+                                        val uri = FileProvider.getUriForFile(
+                                            context,
+                                            "${context.packageName}.fileprovider",
+                                            file
+                                        )
+                                        val intent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "image/png"
+                                            putExtra(Intent.EXTRA_STREAM, uri)
+                                            putExtra(
+                                                Intent.EXTRA_TEXT,
+                                                "I'm on a $streaks-day mindfulness streak on ZenMode!"
+                                            )
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(
+                                            Intent.createChooser(intent, "Share Streak")
+                                        )
+                                    }
+                                }
+                            } catch (_: Exception) { }
+                        }
+                    },
                 contentScale = ContentScale.FillWidth
             )
         }
@@ -838,7 +905,8 @@ private fun BottomDock(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 20.dp)
+            .padding(top = 16.dp, bottom = 32.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
