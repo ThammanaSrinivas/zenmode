@@ -33,10 +33,6 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.Grey600
-import com.zenlauncher.zenmode.ui.theme.Grey800
-import com.zenlauncher.zenmode.ui.theme.White
-import com.zenlauncher.zenmode.ui.theme.ZenBase
-import com.zenlauncher.zenmode.ui.theme.ZenGlow
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 @Composable
@@ -44,6 +40,7 @@ fun UsageAccessPermissionScreen(
     onGrantAccessClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    val colors = ZenTheme.colors
     OnboardingScreenLayout(
         progress = 0.5f,
         progressText = "50%",
@@ -64,7 +61,7 @@ fun UsageAccessPermissionScreen(
         // Title
         Text(
             text = "Usage Access Permission",
-            color = White,
+            color = colors.textPrimary,
             style = TextStyle(
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
@@ -78,14 +75,14 @@ fun UsageAccessPermissionScreen(
         Box(
             modifier = Modifier
                 .width(286.dp)
-                .background(Grey800.copy(alpha = 0.8f), RoundedCornerShape(10.dp))
-                .border(1.dp, Grey800, RoundedCornerShape(10.dp))
+                .background(colors.bgSecondary.copy(alpha = 0.8f), RoundedCornerShape(10.dp))
+                .border(1.dp, colors.bgSecondary, RoundedCornerShape(10.dp))
                 .padding(20.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "Usage Access Permission",
-                    color = White,
+                    color = colors.textPrimary,
                     style = MaterialTheme.typography.titleMedium
                 )
                 
@@ -95,8 +92,8 @@ fun UsageAccessPermissionScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(com.zenlauncher.zenmode.ui.theme.Black, RoundedCornerShape(8.dp))
-                        .border(1.dp, Grey600.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                        .background(colors.bgPrimary, RoundedCornerShape(8.dp))
+                        .border(1.dp, colors.textSecondary.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                         .padding(vertical = 12.dp, horizontal = 16.dp)
                 ) {
                     // Row 1: App row
@@ -109,15 +106,15 @@ fun UsageAccessPermissionScreen(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(ZenGlow.copy(alpha = 0.2f))
-                                .border(2.dp, ZenGlow, CircleShape),
+                                .background(colors.textBrand.copy(alpha = 0.2f))
+                                .border(2.dp, colors.textBrand, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(12.dp)
                                     .clip(CircleShape)
-                                    .background(ZenBase)
+                                    .background(colors.textBrand)
                             )
                         }
                         
@@ -125,18 +122,18 @@ fun UsageAccessPermissionScreen(
                         
                         Text(
                             text = "Zenmode",
-                            color = White,
+                            color = colors.textPrimary,
                             style = MaterialTheme.typography.bodyLarge
                         )
                         
                         Spacer(modifier = Modifier.weight(1f))
                         
-                        // Fake chevron (using a simple text > for visual approximation)
-                        Text(text = ">", color = Grey600)
+                        // Fake chevron
+                        Text(text = ">", color = colors.textSecondary)
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
-                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Grey600.copy(alpha = 0.5f)))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.textSecondary.copy(alpha = 0.5f)))
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     // Row 2: Toggle row
@@ -148,7 +145,7 @@ fun UsageAccessPermissionScreen(
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
-                                .background(White, RoundedCornerShape(6.dp))
+                                .background(colors.textPrimary, RoundedCornerShape(6.dp))
                         )
                         
                         Spacer(modifier = Modifier.width(12.dp))
@@ -158,7 +155,7 @@ fun UsageAccessPermissionScreen(
                             modifier = Modifier
                                 .width(80.dp)
                                 .height(12.dp)
-                                .background(White.copy(alpha = 0.8f), RoundedCornerShape(6.dp))
+                                .background(colors.textPrimary.copy(alpha = 0.8f), RoundedCornerShape(6.dp))
                         )
                         
                         Spacer(modifier = Modifier.weight(1f))
@@ -173,7 +170,7 @@ fun UsageAccessPermissionScreen(
         // Text instructions
         Text(
             text = "We want to see which apps are eating your time. Not to judge just to help you reclaim it.",
-            color = White,
+            color = colors.textPrimary,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(horizontal = 40.dp)
         )
@@ -184,8 +181,9 @@ fun UsageAccessPermissionScreen(
 
 @Composable
 fun UsageBarChartIcon(modifier: Modifier = Modifier) {
-    val axisColor = ZenBase
-    val barColor = ZenBase
+    val colors = ZenTheme.colors
+    val axisColor = colors.textBrand
+    val barColor = colors.textBrand
 
     Canvas(modifier = modifier) {
         val strokeWidth = 1.5.dp.toPx()

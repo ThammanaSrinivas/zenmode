@@ -32,10 +32,6 @@ import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
-import com.zenlauncher.zenmode.ui.theme.Grey600
-import com.zenlauncher.zenmode.ui.theme.White
-import com.zenlauncher.zenmode.ui.theme.ZenBase
-import com.zenlauncher.zenmode.ui.theme.ZenGlow
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 @Composable
@@ -43,6 +39,7 @@ fun SystemOverlayPermissionScreen(
     onGrantAccessClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    val colors = ZenTheme.colors
     OnboardingScreenLayout(
         progress = 0.66f,
         progressText = "66%",
@@ -65,7 +62,7 @@ fun SystemOverlayPermissionScreen(
 
         Text(
             text = "System Overlay Permission",
-            color = White,
+            color = colors.textPrimary,
             style = TextStyle(
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
@@ -79,13 +76,13 @@ fun SystemOverlayPermissionScreen(
         Box(
             modifier = Modifier
                 .width(286.dp)
-                .background(Color(0x29494949), RoundedCornerShape(10.dp))
+                .background(colors.bgSecondary.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "System overlay Permission",
-                    color = Grey600,
+                    color = colors.textSecondary,
                     style = TextStyle(
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,
@@ -108,15 +105,15 @@ fun SystemOverlayPermissionScreen(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(ZenGlow.copy(alpha = 0.2f))
-                                .border(2.dp, ZenGlow, CircleShape),
+                                .background(colors.textBrand.copy(alpha = 0.2f))
+                                .border(2.dp, colors.textBrand, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(10.dp)
                                     .clip(CircleShape)
-                                    .background(ZenBase)
+                                    .background(colors.textBrand)
                             )
                         }
 
@@ -124,21 +121,21 @@ fun SystemOverlayPermissionScreen(
 
                         Text(
                             text = "Zenmode",
-                            color = White,
+                            color = colors.textPrimary,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold
                         )
 
                         Spacer(modifier = Modifier.weight(1f))
 
-                        Text(text = ">", color = Grey600, fontSize = 12.sp)
+                        Text(text = ">", color = colors.textSecondary, fontSize = 12.sp)
                     }
 
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(Grey600.copy(alpha = 0.5f))
+                            .background(colors.textSecondary.copy(alpha = 0.5f))
                     )
 
                     // Toggle row (showing "Allow display over other apps" off state)
@@ -153,14 +150,14 @@ fun SystemOverlayPermissionScreen(
                             modifier = Modifier
                                 .width(36.dp)
                                 .height(22.dp)
-                                .background(Grey600.copy(alpha = 0.6f), RoundedCornerShape(11.dp)),
+                                .background(colors.textSecondary.copy(alpha = 0.6f), RoundedCornerShape(11.dp)),
                             contentAlignment = Alignment.CenterStart
                         ) {
                             Box(
                                 modifier = Modifier
                                     .padding(start = 2.dp)
                                     .size(18.dp)
-                                    .background(White, CircleShape)
+                                    .background(colors.textPrimary, CircleShape)
                             )
                         }
 
@@ -171,12 +168,12 @@ fun SystemOverlayPermissionScreen(
                             modifier = Modifier
                                 .width(80.dp)
                                 .height(8.dp)
-                                .background(Grey600.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                                .background(colors.textSecondary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                         )
 
                         Spacer(modifier = Modifier.weight(1f))
 
-                        Text(text = ">", color = Grey600, fontSize = 12.sp)
+                        Text(text = ">", color = colors.textSecondary, fontSize = 12.sp)
                     }
                 }
             }
@@ -186,7 +183,7 @@ fun SystemOverlayPermissionScreen(
 
         Text(
             text = "Let us be the strict friend who won't let you doom scroll. You'll thank us later (probably).",
-            color = White,
+            color = colors.textPrimary,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(horizontal = 40.dp)
         )

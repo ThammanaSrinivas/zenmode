@@ -2,7 +2,7 @@ package com.zenlauncher.zenmode.ui.theme
 
 import android.app.Activity
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
+import com.zenlauncher.zenmode.ThemePreferences
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -17,7 +17,8 @@ import androidx.compose.ui.platform.LocalView
 
 @Composable
 fun ZenTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    context: android.content.Context = LocalContext.current,
+    darkTheme: Boolean = ThemePreferences.isDarkMode(context),
     dynamicColor: Boolean = false, // Dynamic color is disabled by default for ZenLauncher styling
     content: @Composable () -> Unit
 ) {

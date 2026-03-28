@@ -58,6 +58,7 @@ import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
 import java.time.LocalDate
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
@@ -264,6 +265,10 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
     val colors = ZenTheme.colors
     val brandColor = colors.textBrand
 
+    // Calculate dynamic max based on data (at least 6h, rounded to multiple of 3 for nice labels)
+    val maxOfData = weeklyHours.maxOrNull() ?: 0f
+    val dynamicMax = maxOf(6f, (kotlin.math.ceil(maxOfData / 3f) * 3f))
+
     // Compute last 7 day labels from today
     val dayLabels = remember {
         val today = LocalDate.now()
@@ -305,7 +310,7 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
                     .padding(end = 8.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                for (h in listOf(6, 4, 2, 0)) {
+                for (h in listOf(dynamicMax.toInt(), (dynamicMax * 2 / 3).toInt(), (dynamicMax / 3).toInt(), 0)) {
                     Text(
                         text = "${h}h",
                         fontFamily = RedditMono,
@@ -326,9 +331,9 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
                 val graphHeight = size.height
                 val dashEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
 
-                // Dashed horizontal lines at 2h, 4h, 6h
+                // Dashed horizontal lines at 1/3, 2/3, 3/3 of dynamicMax
                 for (i in 1..3) {
-                    val y = graphHeight - (graphHeight * (i * 2f / MAX_GRAPH_HOURS))
+                    val y = graphHeight - (graphHeight * (i / 3f))
                     drawLine(
                         color = brandColor.copy(alpha = 0.15f),
                         start = Offset(0f, y),
@@ -342,7 +347,7 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
                 val points = weeklyHours.mapIndexed { index, hours ->
                     val x = if (weeklyHours.size <= 1) graphWidth / 2
                     else graphWidth * index / (weeklyHours.size - 1)
-                    val y = graphHeight - (graphHeight * (hours / MAX_GRAPH_HOURS))
+                    val y = graphHeight - (graphHeight * (hours / dynamicMax))
                     Offset(x, y)
                 }
 
@@ -457,31 +462,12 @@ private fun PersonaliseSection(
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             // Dark mode toggle
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Dark mode",
-                    fontFamily = CabinetGrotesque,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.weight(1f)
-                )
-                Switch(
-                    checked = isDarkMode,
-                    onCheckedChange = onDarkModeChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = colors.textBrand,
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = colors.textSecondary
-                    )
-                )
-            }
+            ZenSettingToggleItem(
+                text = "Dark mode",
+                checked = isDarkMode,
+                onCheckedChange = onDarkModeChange,
+                modifier = Modifier.padding(vertical = 6.dp)
+            )
 
             // Change distracting app list
             SettingsClickableItem(

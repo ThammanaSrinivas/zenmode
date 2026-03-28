@@ -40,12 +40,8 @@ import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
-import com.zenlauncher.zenmode.ui.theme.Black
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
-import com.zenlauncher.zenmode.ui.theme.Grey400
 import com.zenlauncher.zenmode.ui.theme.White
-import com.zenlauncher.zenmode.ui.theme.ZenBase
-import com.zenlauncher.zenmode.ui.theme.ZenDark
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 @Composable
@@ -53,13 +49,14 @@ fun AccessibilityDisclosureScreen(
     onAccept: () -> Unit,
     onDecline: () -> Unit
 ) {
+    val colors = ZenTheme.colors
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Black)
+            .background(colors.bgPrimary)
             .padding(horizontal = 20.dp)
             .padding(top = 48.dp, bottom = 24.dp)
     ) {
@@ -70,7 +67,7 @@ fun AccessibilityDisclosureScreen(
         ) {
             Text(
                 text = "Accessibility Service Disclosure",
-                color = White,
+                color = colors.textPrimary,
                 style = TextStyle(
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
@@ -83,7 +80,7 @@ fun AccessibilityDisclosureScreen(
             // Section: Why
             Text(
                 text = "Why ZenMode needs Accessibility Service",
-                color = ZenBase,
+                color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
@@ -96,7 +93,7 @@ fun AccessibilityDisclosureScreen(
                         "when you tap the lock button on the home screen. Android does not provide any " +
                         "other way for a launcher app to lock the screen, so this permission is required " +
                         "for the lock-screen feature to work.",
-                color = White,
+                color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -105,7 +102,7 @@ fun AccessibilityDisclosureScreen(
             // Section: What it does
             Text(
                 text = "What this service does",
-                color = ZenBase,
+                color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
@@ -117,7 +114,7 @@ fun AccessibilityDisclosureScreen(
                 text = "• Uses the system lock-screen action (GLOBAL_ACTION_LOCK_SCREEN) to lock your device\n" +
                         "• This action is triggered only when you manually tap the lock button\n" +
                         "• The service does not perform any other actions",
-                color = White,
+                color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -126,7 +123,7 @@ fun AccessibilityDisclosureScreen(
             // Section: What it does NOT do
             Text(
                 text = "What this service does NOT do",
-                color = ZenBase,
+                color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
@@ -140,7 +137,7 @@ fun AccessibilityDisclosureScreen(
                         "• Does NOT perform gestures or interact with other apps\n" +
                         "• Does NOT collect, store, transmit, or share any personal data\n" +
                         "• Does NOT run in the background to observe your activity",
-                color = White,
+                color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -149,7 +146,7 @@ fun AccessibilityDisclosureScreen(
             // Section: Privacy
             Text(
                 text = "Privacy",
-                color = ZenBase,
+                color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
@@ -160,13 +157,13 @@ fun AccessibilityDisclosureScreen(
             Text(
                 text = "Your privacy is important to us. This service exists only to enable the lock button. " +
                         "No data of any kind is accessed through this service.",
-                color = White,
+                color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Read our Privacy Policy",
-                color = ZenDark,
+                color = colors.textBrand,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     textDecoration = TextDecoration.Underline,
                     fontWeight = FontWeight.Medium
@@ -185,7 +182,7 @@ fun AccessibilityDisclosureScreen(
         Button(
             onClick = onAccept,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = ZenBase),
+            colors = ButtonDefaults.buttonColors(containerColor = colors.textBrand),
             shape = RoundedCornerShape(8.dp)
         ) {
             Text(
@@ -200,7 +197,7 @@ fun AccessibilityDisclosureScreen(
             onClick = onDecline,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text(text = "Decline", color = Grey400)
+            Text(text = "Decline", color = colors.textSecondary)
         }
     }
 }
@@ -211,6 +208,7 @@ fun AccessibilityServiceScreen(
     onSkipClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    val colors = ZenTheme.colors
     OnboardingScreenLayout(
         progress = 0.83f,
         progressText = "83%",
@@ -221,7 +219,7 @@ fun AccessibilityServiceScreen(
         bottomFooter = {
             Text(
                 text = "Skip for now",
-                color = Color.Gray,
+                color = colors.textSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.clickable { onSkipClick() }
             )
@@ -255,14 +253,14 @@ fun AccessibilityServiceScreen(
             modifier = Modifier
                 .width(286.dp)
                 .height(187.dp)
-                .background(Color(0x29494949), RoundedCornerShape(10.dp))
+                .background(colors.bgSecondary.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             text = "ZenMode needs the Accessibility Service permission to lock your screen when you tap the lock button. This is the only thing it does \u2014 it does not read your screen or collect any data.",
-            color = White,
+            color = colors.textPrimary,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(horizontal = 20.dp)
         )

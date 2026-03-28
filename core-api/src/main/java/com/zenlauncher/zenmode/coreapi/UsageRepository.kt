@@ -160,12 +160,11 @@ class UsageRepository(private val context: Context, private val analyticsManager
         }
     }
 
-    fun getWeeklyScreenTimeHours(): List<Float> {
+    fun getWeeklyScreenTimeMillis(): List<Long> {
         val today = getTodayDate()
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val calendar = Calendar.getInstance()
 
-        val result = mutableListOf<Float>()
+        val result = mutableListOf<Long>()
 
         for (daysAgo in 6 downTo 0) {
             val cal = Calendar.getInstance().apply {
@@ -186,7 +185,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
                 }
             }
 
-            result.add(millis / 3_600_000f)
+            result.add(millis)
         }
 
         // Cleanup stale entries older than 7 days
@@ -206,6 +205,10 @@ class UsageRepository(private val context: Context, private val analyticsManager
         if (hasRemovals) editor.apply()
 
         return result
+    }
+
+    fun getWeeklyScreenTimeHours(): List<Float> {
+        return getWeeklyScreenTimeMillis().map { it / 3_600_000f }
     }
 
     fun getTodayUsage(): DailyUsage {

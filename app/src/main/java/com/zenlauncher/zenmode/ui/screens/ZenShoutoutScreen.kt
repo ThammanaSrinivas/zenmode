@@ -27,14 +27,11 @@ import androidx.viewpager2.widget.ViewPager2
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
-import com.zenlauncher.zenmode.ui.theme.Grey400
-import com.zenlauncher.zenmode.ui.theme.White
-import com.zenlauncher.zenmode.ui.theme.ZenBase
-import com.zenlauncher.zenmode.ui.theme.ZenGlow
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 @Composable
 fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
+    val colors = ZenTheme.colors
     OnboardingScreenLayout(
         progress = 0.33f,
         progressText = "33%",
@@ -63,7 +60,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
 
             Text(
                 text = "Zenmode",
-                color = White,
+                color = colors.textPrimary,
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center
             )
@@ -72,7 +69,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
 
             Text(
                 text = "An Open-source minimalist android launcher",
-                color = White,
+                color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center
             )
@@ -81,24 +78,24 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
 
             // Shoutout to Sharukhan
             val sharukhanText = buildAnnotatedString {
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = White)) {
+                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
                     append("Shout out, ")
                 }
                 withStyle(
                     MaterialTheme.typography.bodyLarge.toSpanStyle().copy(
-                        color = ZenGlow,
+                        color = colors.textBrand,
                         fontWeight = FontWeight.Medium
                     )
                 ) {
                     append("Sharukhan")
                 }
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = White)) {
+                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
                     append(" our early Zen who played important in building zenmode. You can write to us at ")
                 }
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = ZenBase)) {
+                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textBrand)) {
                     append("zenmode.help@gmail.com")
                 }
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = White)) {
+                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
                     append(" to get featured here")
                 }
             }
@@ -112,13 +109,13 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
 
             // Mission statement
             val missionText = buildAnnotatedString {
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = White)) {
+                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
                     append("It's our way of showing love towards world, ")
                 }
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = ZenBase)) {
+                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textBrand)) {
                     append("We are super happy, If we could make 1% people break their smartphone addiction, ")
                 }
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = White)) {
+                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
                     append("With truckloads of love")
                 }
             }
@@ -129,7 +126,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
             )
             Text(
                 text = "-Srini & Kamal",
-                color = White,
+                color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -142,14 +139,14 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
             val uriHandler = LocalUriHandler.current
             val githubText = buildAnnotatedString {
                 withStyle(
-                    MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White)
+                    MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary)
                 ) {
                     append("Help us build Zenmode, ")
                 }
                 pushStringAnnotation(tag = "URL", annotation = AppConstants.GITHUB_URL)
                 withStyle(
                     MaterialTheme.typography.titleMedium.toSpanStyle().copy(
-                        color = ZenGlow,
+                        color = colors.textBrand,
                         textDecoration = TextDecoration.Underline
                     )
                 ) {
@@ -181,7 +178,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
 
             Text(
                 text = "(You can star us, believe me we won't feel bad if not, iykyk)",
-                color = Grey400,
+                color = colors.textSecondary,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier
                     .fillMaxWidth()

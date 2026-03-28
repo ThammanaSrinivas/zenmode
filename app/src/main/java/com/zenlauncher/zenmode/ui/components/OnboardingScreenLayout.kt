@@ -11,15 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ui.theme.Black
-import com.zenlauncher.zenmode.ui.theme.Grey600
-import com.zenlauncher.zenmode.ui.theme.White
-import com.zenlauncher.zenmode.ui.theme.ZenBase
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 @Composable
 fun OnboardingScreenLayout(
@@ -33,10 +29,11 @@ fun OnboardingScreenLayout(
     bottomFooter: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val colors = ZenTheme.colors
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Black)
+            .background(colors.bgPrimary)
     ) {
         // Decorative corner elements
 
@@ -122,19 +119,19 @@ fun OnboardingScreenLayout(
                         modifier = Modifier
                             .weight(1f)
                             .height(4.dp)
-                            .background(Grey600, RoundedCornerShape(2.dp))
+                            .background(colors.bgSecondary, RoundedCornerShape(2.dp))
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(progress)
                                 .fillMaxHeight()
-                                .background(White, RoundedCornerShape(2.dp))
+                                .background(colors.textPrimary, RoundedCornerShape(2.dp))
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = progressText,
-                        color = com.zenlauncher.zenmode.ui.theme.ZenGlow,
+                        color = colors.textBrand,
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
@@ -146,13 +143,13 @@ fun OnboardingScreenLayout(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .background(ZenBase, RoundedCornerShape(28.dp))
+                        .background(colors.textBrand, RoundedCornerShape(28.dp))
                         .clickable { onButtonClick() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = buttonText,
-                        color = Black,
+                        color = colors.bgPrimary,
                         style = MaterialTheme.typography.labelLarge
                     )
                 }

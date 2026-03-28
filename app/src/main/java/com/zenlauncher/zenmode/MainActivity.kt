@@ -213,9 +213,23 @@ class MainActivity : AppCompatActivity() {
                         ?: ServiceLocator.authProvider.getCurrentUserId()
                 }
 
+                val weeklyMillis = remember { repository.getWeeklyScreenTimeMillis() }
+                val streakCount = remember {
+                    // Count streak backwards from today: HAPPY/NEUTRAL count, ANNOYED breaks
+                    var count = 0
+                    for (i in weeklyMillis.indices.reversed()) {
+                        val minutes = (weeklyMillis[i] / 1000) / 60
+                        val mood = AppLogic.getMoodState(minutes)
+                        if (mood == MoodState.ANNOYED) break
+                        count++
+                    }
+                    count
+                }
+
                 HomeScreen(
                     usage = usage,
-                    streaks = 0, // TODO: wire up streak tracking
+                    streaks = streakCount,
+                    weeklyScreenTimeMillis = weeklyMillis,
                     yesterdayChangePercent = yesterdayChangePercent,
                     hasBuddies = hasBuddies,
                     buddyStats = buddyStats,

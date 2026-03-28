@@ -10,14 +10,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -47,18 +44,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
-import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -66,17 +55,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.AppLogic
@@ -88,8 +72,13 @@ import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.Silkscreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
-import com.zenlauncher.zenmode.ui.theme.percentageChangeColor
-import com.zenlauncher.zenmode.ui.theme.statsCardFill
+import com.zenlauncher.zenmode.ui.components.StatsCardsRow
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.ContentScale
+import java.time.LocalDate
+import java.time.DayOfWeek
+import java.time.temporal.TemporalAdjusters
 
 // ── Main Home Screen ──────────────────────────────────────────────
 
@@ -97,6 +86,7 @@ import com.zenlauncher.zenmode.ui.theme.statsCardFill
 fun HomeScreen(
     usage: DailyUsage?,
     streaks: Int,
+    weeklyScreenTimeMillis: List<Long> = List(7) { 0L },
     yesterdayChangePercent: Int?,
     hasBuddies: Boolean,
     buddyStats: BuddyStats?,
@@ -113,6 +103,7 @@ fun HomeScreen(
     apps: List<AppInfo>
 ) {
     val colors = ZenTheme.colors
+    var showStreakOverlay by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -122,9 +113,11 @@ fun HomeScreen(
                 .padding(top = 48.dp)
         ) {
             // Header
-            HomeHeader(streaks = streaks)
+            HomeHeader(
+                streaks = streaks,
+                onStreakClick = { showStreakOverlay = true }
+            )
 
-            // Stats Cards
             StatsCardsRow(
                 usage = usage,
                 yesterdayChangePercent = yesterdayChangePercent,
@@ -132,7 +125,8 @@ fun HomeScreen(
                 buddyStats = buddyStats,
                 isSignedIn = isSignedIn,
                 onInviteBuddyClick = onInviteBuddyClick,
-                onSignInClick = onSignInClick
+                onSignInClick = onSignInClick,
+                modifier = Modifier.padding(horizontal = 32.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -172,13 +166,26 @@ fun HomeScreen(
                 onDismiss = { onShowSearchChange(false) }
             )
         }
+
+        // Streak overlay
+        AnimatedVisibility(
+            visible = showStreakOverlay,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            StreakOverlay(
+                streaks = streaks,
+                weeklyScreenTimeMillis = weeklyScreenTimeMillis,
+                onDismiss = { showStreakOverlay = false }
+            )
+        }
     }
 }
 
 // ── Header ────────────────────────────────────────────────────────
 
 @Composable
-private fun HomeHeader(streaks: Int) {
+private fun HomeHeader(streaks: Int, onStreakClick: () -> Unit) {
     val colors = ZenTheme.colors
 
     Box(
@@ -200,6 +207,7 @@ private fun HomeHeader(streaks: Int) {
                 .align(Alignment.CenterEnd)
                 .clip(RoundedCornerShape(46.dp))
                 .background(colors.borderFocus)
+                .clickable { onStreakClick() }
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
@@ -210,722 +218,6 @@ private fun HomeHeader(streaks: Int) {
                 letterSpacing = (-1.3).sp,
                 color = colors.bgPrimary
             )
-        }
-    }
-}
-
-// ── Stats Cards Row ───────────────────────────────────────────────
-
-@Composable
-private fun StatsCardsRow(
-    usage: DailyUsage?,
-    yesterdayChangePercent: Int?,
-    hasBuddies: Boolean,
-    buddyStats: BuddyStats?,
-    isSignedIn: Boolean,
-    onInviteBuddyClick: () -> Unit,
-    onSignInClick: () -> Unit
-) {
-    val myMinutes = ((usage?.screenTimeInMillis ?: 0L) / 1000) / 60
-    // King goes to whoever has less screen time; default to me if no buddy
-    val kingOnBuddy = hasBuddies && buddyStats != null && buddyStats.screenTimeMins < myMinutes
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp)
-    ) {
-        // King crown positioned above the winning card (least screen time)
-        Image(
-            painter = painterResource(R.drawable.king),
-            contentDescription = "King",
-            modifier = Modifier
-                .padding(bottom = 8.dp)
-                .size(28.dp)
-                .then(
-                    if (kingOnBuddy) Modifier.align(Alignment.CenterHorizontally).offset(x = 16.dp)
-                    else Modifier.align(Alignment.Start)
-                )
-        )
-
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // My Screen Time card (or Sign In card when logged out)
-                if (isSignedIn) {
-                    MyScreenTimeCard(
-                        usage = usage,
-                        yesterdayChangePercent = yesterdayChangePercent,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(end = 8.dp)
-                    )
-                } else {
-                    SignInCard(
-                        onSignInClick = onSignInClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(end = 8.dp)
-                    )
-                }
-
-                // Show buddy stats if connected, otherwise show invite card
-                if (hasBuddies && buddyStats != null) {
-                    BuddyStatsCard(
-                        buddyStats = buddyStats,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(start = 8.dp)
-                    )
-                } else {
-                    BuddyInviteCard(
-                        onInviteBuddyClick = onInviteBuddyClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(start = 8.dp)
-                    )
-                }
-            }
-
-            // Flash icon between cards
-            Image(
-                painter = painterResource(R.drawable.flash),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(21.dp)
-                    .height(35.dp)
-                    .zIndex(1f)
-            )
-        }
-    }
-}
-
-// ── Drop Shadow Modifier ────────────────────────────────────────
-
-private fun Modifier.dropShadow(
-    color: Color,
-    blur: Dp,
-    cornerRadius: Dp = 0.dp,
-    offsetX: Dp = 0.dp,
-    offsetY: Dp = 0.dp,
-    spread: Dp = 0.dp
-) = drawBehind {
-    drawIntoCanvas { canvas ->
-        val paint = android.graphics.Paint().apply {
-            this.color = color.toArgb()
-            this.isAntiAlias = true
-            if (blur.toPx() > 0) {
-                maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
-            }
-        }
-        val spreadPx = spread.toPx()
-        val cornerRadiusPx = cornerRadius.toPx()
-
-        val left = offsetX.toPx() - spreadPx
-        val top = offsetY.toPx() - spreadPx
-        val right = size.width + offsetX.toPx() + spreadPx
-        val bottom = size.height + offsetY.toPx() + spreadPx
-
-        canvas.nativeCanvas.drawRoundRect(
-            android.graphics.RectF(left, top, right, bottom),
-            cornerRadiusPx, cornerRadiusPx,
-            paint
-        )
-    }
-}
-
-// ── Inner Shadow Modifier ────────────────────────────────────────
-
-private fun Modifier.innerShadow(
-    color: Color,
-    cornerRadius: Dp,
-    blur: Dp,
-    offsetX: Dp = 0.dp,
-    offsetY: Dp = 0.dp,
-    spread: Dp = 0.dp
-) = drawWithContent {
-    drawContent()
-    drawIntoCanvas { canvas ->
-        val paint = android.graphics.Paint().apply {
-            this.color = color.toArgb()
-            this.isAntiAlias = true
-            if (blur.toPx() > 0) {
-                maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
-            }
-        }
-        val cornerRadiusPx = cornerRadius.toPx()
-        val spreadPx = spread.toPx()
-
-        canvas.nativeCanvas.save()
-
-        val clipPath = android.graphics.Path().apply {
-            addRoundRect(
-                android.graphics.RectF(0f, 0f, size.width, size.height),
-                cornerRadiusPx, cornerRadiusPx,
-                android.graphics.Path.Direction.CW
-            )
-        }
-        canvas.nativeCanvas.clipPath(clipPath)
-
-        val outerPath = android.graphics.Path().apply {
-            addRect(
-                android.graphics.RectF(-100f, -100f, size.width + 100f, size.height + 100f),
-                android.graphics.Path.Direction.CW
-            )
-            addRoundRect(
-                android.graphics.RectF(
-                    spreadPx + offsetX.toPx(),
-                    spreadPx + offsetY.toPx(),
-                    size.width - spreadPx + offsetX.toPx(),
-                    size.height - spreadPx + offsetY.toPx()
-                ),
-                cornerRadiusPx, cornerRadiusPx,
-                android.graphics.Path.Direction.CCW
-            )
-        }
-        canvas.nativeCanvas.drawPath(outerPath, paint)
-
-        canvas.nativeCanvas.restore()
-    }
-}
-
-// ── My Screen Time Card ───────────────────────────────────────────
-
-@Composable
-private fun MyScreenTimeCard(
-    usage: DailyUsage?,
-    yesterdayChangePercent: Int?,
-    modifier: Modifier = Modifier
-) {
-    val colors = ZenTheme.colors
-    val totalMillis = usage?.screenTimeInMillis ?: 0L
-    val minutes = (totalMillis / 1000) / 60
-    val hours = minutes / 60
-    val mins = minutes % 60
-    val moodState = AppLogic.getMoodState(minutes)
-    val mindfulnessProgress = AppLogic.getMindfulnessPercentage(minutes)
-
-    val faceRes = when (moodState) {
-        MoodState.HAPPY -> R.drawable.face_happy
-        MoodState.NEUTRAL -> R.drawable.face_neutral
-        MoodState.ANNOYED -> R.drawable.face_annoyed
-    }
-
-    Box(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(colors.statsCardFill(moodState))
-
-                .border(2.dp, when (moodState) {
-                    MoodState.HAPPY -> colors.strokeHappy
-                    MoodState.NEUTRAL -> colors.strokeNeutral
-                    MoodState.ANNOYED -> colors.strokeAnnoyed
-                }, RoundedCornerShape(12.dp))
-                .innerShadow(
-                    color = when (moodState) {
-                        MoodState.HAPPY -> colors.strokeHappy
-                        MoodState.NEUTRAL -> colors.strokeNeutral
-                        MoodState.ANNOYED -> colors.strokeAnnoyed
-                    },
-                    cornerRadius = 12.dp,
-                    blur = 30.dp,
-                    spread = (-9).dp
-                )
-                .padding(bottom = 10.dp)
-        ) {
-            // Face
-            Image(
-                painter = painterResource(faceRes),
-                contentDescription = "Mood face",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(2f)
-                    .dropShadow(
-                        color = Color.Black.copy(alpha = 0.3f),
-                        blur = 13.48.dp,
-                        offsetY = 6.74.dp
-                    )
-                    .innerShadow(
-                        color = Color.Black.copy(alpha = 0.1f),
-                        cornerRadius = 0.dp,
-                        blur = 10.dp,
-                        spread = 1.68.dp,
-                        offsetY = (-1.68).dp
-                    )
-            )
-
-        Column(modifier = Modifier.padding(horizontal = 10.dp)) {
-            // Title row with percentage change
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 0.dp)
-            ) {
-                Text(
-                    text = "My Screen Time",
-                    fontFamily = CabinetGrotesque,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp,
-                    color = colors.textPrimary
-                )
-                if (yesterdayChangePercent != null) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${if (yesterdayChangePercent >= 0) "+" else ""}${yesterdayChangePercent}%",
-                        fontFamily = RedditMono,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 11.sp,
-                        color = colors.percentageChangeColor(yesterdayChangePercent)
-                    )
-                }
-            }
-
-            // Time display: 00 HRS 37 MIN
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                modifier = Modifier.offset(y = (-4).dp)
-            ) {
-                Text(
-                    text = String.format("%02d", hours),
-                    fontFamily = RedditMono,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 25.sp,
-                    color = colors.textPrimary
-                )
-                Text(
-                    text = "HRS",
-                    fontFamily = RedditMono,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 8.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.padding(start = 2.dp, end = 6.dp)
-                )
-                Text(
-                    text = String.format("%02d", mins),
-                    fontFamily = RedditMono,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 25.sp,
-                    color = colors.textPrimary
-                )
-                Text(
-                    text = "MINS",
-                    fontFamily = RedditMono,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 8.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.padding(start = 2.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            // Mindfulness bar
-            MindfulnessBar(
-                progress = mindfulnessProgress,
-                moodState = moodState
-            )
-        }
-        }
-
-    }
-}
-
-// ── Mindfulness Bar ───────────────────────────────────────────────
-
-@Composable
-private fun MindfulnessBar(
-    progress: Int,
-    moodState: MoodState
-) {
-    val colors = ZenTheme.colors
-    val emptyColor = Color(0xFFD9D9D9)
-
-    val fillStartColor = when (moodState) {
-        MoodState.HAPPY -> colors.borderFocus
-        MoodState.NEUTRAL -> colors.moodNeutral
-        MoodState.ANNOYED -> colors.moodAnnoyed
-    }
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "Mindfulness",
-            fontFamily = CabinetGrotesque,
-            fontWeight = FontWeight.Medium,
-            fontSize = 10.sp,
-            color = colors.textPrimary
-        )
-
-        Spacer(modifier = Modifier.width(6.dp))
-
-        // Gradient segmented bar — thin bars, x width : x/2 gap
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(10.dp)
-                .drawBehind {
-                    val segmentCount = 12
-                    val barWidth = 3.dp.toPx()
-                    val gap = 2.dp.toPx()
-                    val filledCount =
-                        (progress.toFloat() / 100 * segmentCount).toInt().coerceAtLeast(0)
-                    val radius = CornerRadius(barWidth / 2f)
-
-                    for (i in 0 until segmentCount) {
-                        val left = i * (barWidth + gap)
-                        val fraction = if (filledCount > 0) i.toFloat() / filledCount else 0f
-                        val color = if (i < filledCount) {
-                            androidx.compose.ui.graphics.lerp(
-                                fillStartColor,
-                                emptyColor,
-                                fraction
-                            )
-                        } else {
-                            emptyColor.copy(alpha = 0.3f)
-                        }
-                        drawRoundRect(
-                            color = color,
-                            topLeft = Offset(left, 0f),
-                            size = Size(barWidth, size.height),
-                            cornerRadius = radius
-                        )
-                    }
-                }
-        )
-    }
-}
-
-// ── Buddy Invite Card (Pre-Connect) ──────────────────────────────
-
-@Composable
-private fun BuddyInviteCard(
-    onInviteBuddyClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colors = ZenTheme.colors
-
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(colors.borderSubtle)
-            .drawWithContent {
-                drawContent()
-                val strokeWidth = 1.dp.toPx()
-                val dash = 8.dp.toPx()
-                val gap = 8.dp.toPx()
-                val cr = 12.dp.toPx()
-                drawRoundRect(
-                    color = colors.textSecondary,
-                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
-                    size = Size(size.width - strokeWidth, size.height - strokeWidth),
-                    cornerRadius = CornerRadius(cr),
-                    style = Stroke(
-                        width = strokeWidth,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, gap), 0f)
-                    )
-                )
-            }
-            .innerShadow(
-                color = colors.textSecondary,
-                cornerRadius = 12.dp,
-                blur = 30.dp,
-                spread = (-9).dp
-            )
-            .padding(bottom = 10.dp)
-    ) {
-        // Grey face
-        Image(
-            painter = painterResource(R.drawable.face_get_your_buddy),
-            contentDescription = "Buddy face",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f)
-                .dropShadow(
-                    color = Color.Black.copy(alpha = 0.3f),
-                    blur = 13.48.dp,
-                    offsetY = 6.74.dp
-                )
-                .innerShadow(
-                    color = Color.Black.copy(alpha = 0.1f),
-                    cornerRadius = 0.dp,
-                    blur = 10.dp,
-                    spread = 1.68.dp,
-                    offsetY = (-1.68).dp
-                )
-        )
-
-        Column(modifier = Modifier.padding(horizontal = 10.dp)) {
-            Text(
-                text = "Get your Buddy!",
-                fontFamily = CabinetGrotesque,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                color = colors.textPrimary
-            )
-
-            Text(
-                text = buildAnnotatedString {
-                    append("pick a wise one!")
-                    withStyle(SpanStyle(fontSize = 10.sp)) {
-                        append("\u2764\uFE0F")
-                    }
-                },
-                fontFamily = CabinetGrotesque,
-                fontWeight = FontWeight.Medium,
-                fontSize = 9.sp,
-                color = colors.textSecondary,
-                modifier = Modifier.offset(y = (-4).dp)
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Invite buddy button
-            Image(
-                painter = painterResource(R.drawable.button_invite_buddy),
-                contentDescription = "Invite buddy",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onInviteBuddyClick() }
-            )
-        }
-    }
-}
-
-// ── Sign In Card (Logged Out) ────────────────────────────────────
-
-@Composable
-private fun SignInCard(
-    onSignInClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colors = ZenTheme.colors
-
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(colors.borderSubtle)
-            .drawWithContent {
-                drawContent()
-                val strokeWidth = 1.dp.toPx()
-                val dash = 8.dp.toPx()
-                val gap = 8.dp.toPx()
-                val cr = 12.dp.toPx()
-                drawRoundRect(
-                    color = colors.textSecondary,
-                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
-                    size = Size(size.width - strokeWidth, size.height - strokeWidth),
-                    cornerRadius = CornerRadius(cr),
-                    style = Stroke(
-                        width = strokeWidth,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, gap), 0f)
-                    )
-                )
-            }
-            .innerShadow(
-                color = colors.textSecondary,
-                cornerRadius = 12.dp,
-                blur = 30.dp,
-                spread = (-9).dp
-            )
-            .padding(bottom = 10.dp)
-    ) {
-        // Grey face
-        Image(
-            painter = painterResource(R.drawable.face_get_your_buddy),
-            contentDescription = "Sign in face",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f)
-                .dropShadow(
-                    color = Color.Black.copy(alpha = 0.3f),
-                    blur = 13.48.dp,
-                    offsetY = 6.74.dp
-                )
-                .innerShadow(
-                    color = Color.Black.copy(alpha = 0.1f),
-                    cornerRadius = 0.dp,
-                    blur = 10.dp,
-                    spread = 1.68.dp,
-                    offsetY = (-1.68).dp
-                )
-        )
-
-        Column(modifier = Modifier.padding(horizontal = 10.dp)) {
-            Text(
-                text = "Sign In",
-                fontFamily = CabinetGrotesque,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                color = colors.textPrimary
-            )
-
-            Text(
-                text = "to track & sync stats",
-                fontFamily = CabinetGrotesque,
-                fontWeight = FontWeight.Medium,
-                fontSize = 9.sp,
-                color = colors.textSecondary,
-                modifier = Modifier.offset(y = (-4).dp)
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Sign in button
-            Image(
-                painter = painterResource(R.drawable.button_sign_in),
-                contentDescription = "Sign in with Google",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onSignInClick() }
-            )
-        }
-    }
-}
-
-// ── Buddy Stats Card (Post-Connect) ──────────────────────────────
-
-@Composable
-private fun BuddyStatsCard(
-    buddyStats: BuddyStats,
-    modifier: Modifier = Modifier
-) {
-    val colors = ZenTheme.colors
-    val minutes = buddyStats.screenTimeMins
-    val hours = minutes / 60
-    val mins = minutes % 60
-    val moodState = AppLogic.getMoodState(minutes)
-    val mindfulnessProgress = AppLogic.getMindfulnessPercentage(minutes)
-
-    val faceRes = when (moodState) {
-        MoodState.HAPPY -> R.drawable.face_happy
-        MoodState.NEUTRAL -> R.drawable.face_neutral
-        MoodState.ANNOYED -> R.drawable.face_annoyed
-    }
-
-    Box(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(colors.statsCardFill(moodState))
-
-                .border(2.dp, when (moodState) {
-                    MoodState.HAPPY -> colors.strokeHappy
-                    MoodState.NEUTRAL -> colors.strokeNeutral
-                    MoodState.ANNOYED -> colors.strokeAnnoyed
-                }, RoundedCornerShape(12.dp))
-                .innerShadow(
-                    color = when (moodState) {
-                        MoodState.HAPPY -> colors.strokeHappy
-                        MoodState.NEUTRAL -> colors.strokeNeutral
-                        MoodState.ANNOYED -> colors.strokeAnnoyed
-                    },
-                    cornerRadius = 12.dp,
-                    blur = 30.dp,
-                    spread = (-9).dp
-                )
-                .padding(bottom = 10.dp)
-        ) {
-            // Face
-            Image(
-                painter = painterResource(faceRes),
-                contentDescription = "Buddy mood face",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(2f)
-                    .dropShadow(
-                        color = Color.Black.copy(alpha = 0.3f),
-                        blur = 13.48.dp,
-                        offsetY = 6.74.dp
-                    )
-                    .innerShadow(
-                        color = Color.Black.copy(alpha = 0.1f),
-                        cornerRadius = 0.dp,
-                        blur = 10.dp,
-                        spread = 1.68.dp,
-                        offsetY = (-1.68).dp
-                    )
-            )
-
-            Column(modifier = Modifier.padding(horizontal = 10.dp)) {
-                // Title
-                Text(
-                    text = "My Buddy's Stats",
-                    fontFamily = CabinetGrotesque,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp,
-                    color = colors.textPrimary
-                )
-
-                // Time display
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    modifier = Modifier.offset(y = (-4).dp)
-                ) {
-                    Text(
-                        text = String.format("%02d", hours),
-                        fontFamily = RedditMono,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
-                        color = colors.textPrimary
-                    )
-                    Text(
-                        text = "HRS",
-                        fontFamily = RedditMono,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 8.sp,
-                        color = colors.textPrimary,
-                        modifier = Modifier.padding(start = 2.dp, end = 6.dp)
-                    )
-                    Text(
-                        text = String.format("%02d", mins),
-                        fontFamily = RedditMono,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
-                        color = colors.textPrimary
-                    )
-                    Text(
-                        text = "MINS",
-                        fontFamily = RedditMono,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 8.sp,
-                        color = colors.textPrimary,
-                        modifier = Modifier.padding(start = 2.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(2.dp))
-
-                // Mindfulness bar
-                MindfulnessBar(
-                    progress = mindfulnessProgress,
-                    moodState = moodState
-                )
-            }
         }
     }
 }
@@ -1281,6 +573,254 @@ private fun SearchOverlay(
                     }
                 }
             }
+        }
+    }
+}
+
+// ── Streak Overlay ───────────────────────────────────────────────
+
+@Composable
+private fun StreakOverlay(
+    streaks: Int,
+    weeklyScreenTimeMillis: List<Long>,
+    onDismiss: () -> Unit
+) {
+    val colors = ZenTheme.colors
+    var offsetY by remember { mutableStateOf(0f) }
+
+    // Map rolling 7-day data to current week (Mon-Sun)
+    val today = LocalDate.now()
+    val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+    val todayDayIndex = today.dayOfWeek.value - 1 // 0=Mon, 6=Sun
+
+    // weeklyScreenTimeMillis is [6 days ago .. today] (7 items)
+    // Map to current week days
+    val currentWeekMillis = remember(weeklyScreenTimeMillis) {
+        val result = LongArray(7) { -1L } // -1 = future/no data
+        for (dayIdx in 0..6) {
+            val date = monday.plusDays(dayIdx.toLong())
+            val daysAgo = java.time.temporal.ChronoUnit.DAYS.between(date, today).toInt()
+            if (daysAgo in 0..6 && dayIdx <= todayDayIndex) {
+                // Index in weeklyScreenTimeMillis: last item is today (index 6), 1 day ago is index 5, etc.
+                val dataIdx = 6 - daysAgo
+                result[dayIdx] = weeklyScreenTimeMillis[dataIdx]
+            }
+        }
+        result.toList()
+    }
+
+    val dayLabels = listOf("Mon", "Tue", "Wed", "Thurs", "Fri", "Sat", "Sun")
+    val streakSubtitle = if (streaks > 0) "Your mindfulness at peak!!" else "Keep going, build your streak!"
+
+    BackHandler(enabled = true) { onDismiss() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .offset(y = offsetY.coerceAtLeast(0f).dp)
+            .background(Color.Black.copy(alpha = 0.6f))
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onDragEnd = {
+                        if (offsetY > 150f) onDismiss()
+                        offsetY = 0f
+                    },
+                    onVerticalDrag = { _, dragAmount -> offsetY += dragAmount }
+                )
+            }
+            .clickable(
+                indication = null,
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            ) { onDismiss() },
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                .background(colors.bgSecondary)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                ) { /* consume click */ }
+                .padding(horizontal = 20.dp)
+                .padding(top = 12.dp, bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Drag handle
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(colors.textSecondary.copy(alpha = 0.4f))
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Title row: "My Zenmode Streak" + top-right icon group
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "My Zenmode Streak",
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 26.sp,
+                    color = colors.textPrimary,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                )
+
+                // Top-right: blurred shuriken + app_icon + arrow
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .size(56.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Blurred shuriken behind
+                    Image(
+                        painter = painterResource(R.drawable.resistence_screen_happy_shuriken),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .blur(8.dp)
+                            .alpha(0.5f),
+                        contentScale = ContentScale.Fit
+                    )
+                    // App icon
+                    Image(
+                        painter = painterResource(R.drawable.app_icon),
+                        contentDescription = null,
+                        modifier = Modifier.size(47.dp)
+                    )
+                    // Arrow hitting the icon — tip touches center of app_icon
+                    Image(
+                        painter = painterResource(R.drawable.arrow),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .width(55.dp)
+                            .offset(x = -26.dp, y = 18.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Streak count row: king icon + "N Days Streak"
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.king),
+                    contentDescription = "Crown",
+                    modifier = Modifier.size(32.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = String.format("%02d Days Streak", streaks),
+                    fontFamily = CabinetGrotesque,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    color = colors.textPrimary
+                )
+            }
+
+            Text(
+                text = streakSubtitle,
+                fontFamily = CabinetGrotesque,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                color = colors.textPrimary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 40.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Weekly calendar row
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        width = 1.dp,
+                        color = colors.textSecondary,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(0.dp, 16.dp)
+                    ,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    for (dayIdx in 0..6) {
+                        val millis = currentWeekMillis[dayIdx]
+                        val isFuture = millis < 0
+                        val dayDate = monday.plusDays(dayIdx.toLong())
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = dayLabels[dayIdx],
+                                fontFamily = CabinetGrotesque,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 16.sp,
+                                color = colors.textPrimary
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (isFuture) {
+                                // Show date number for future days
+                                Text(
+                                    text = "${dayDate.dayOfMonth}",
+                                    fontFamily = RedditMono,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 16.sp,
+                                    color = colors.textPrimary,
+                                    modifier = Modifier.size(28.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            } else {
+                                // Show shuriken based on mood
+                                val minutes = (millis / 1000) / 60
+                                val mood = AppLogic.getMoodState(minutes)
+                                val dayShurikenRes = when (mood) {
+                                    MoodState.HAPPY -> R.drawable.resistence_screen_happy_shuriken
+                                    MoodState.NEUTRAL -> R.drawable.resistence_screen_neutral_shuriken
+                                    MoodState.ANNOYED -> R.drawable.resistence_screen_annoyed_shuriken
+                                }
+                                Image(
+                                    painter = painterResource(dayShurikenRes),
+                                    contentDescription = "$mood",
+                                    modifier = Modifier.size(32.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Share my streak button
+            Image(
+                painter = painterResource(R.drawable.button_share_my_streak),
+                contentDescription = "Share my streak",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { /* TODO: share streak */ },
+                contentScale = ContentScale.FillWidth
+            )
         }
     }
 }

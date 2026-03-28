@@ -43,17 +43,15 @@ import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.MainActivity
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.SettingsActivity
+import com.zenlauncher.zenmode.BuddyStats
+import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
-import com.zenlauncher.zenmode.ui.theme.Black
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
-import com.zenlauncher.zenmode.ui.theme.Grey400
-import com.zenlauncher.zenmode.ui.theme.Grey600
-import com.zenlauncher.zenmode.ui.theme.White
-import com.zenlauncher.zenmode.ui.theme.ZenBase
-import com.zenlauncher.zenmode.ui.theme.ZenGlow
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
+import com.zenlauncher.zenmode.ui.components.StatsCardsRow
+import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 
 @Composable
 fun DefaultLauncherScreen(
@@ -66,7 +64,9 @@ fun DefaultLauncherScreen(
     var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
     val uriHandler = LocalUriHandler.current
 
-    OnboardingScreenLayout(
+    ZenTheme(darkTheme = isDarkMode) {
+        val colors = ZenTheme.colors
+        OnboardingScreenLayout(
         progress = 0.99f,
         progressText = "99%",
         buttonText = "Set as default Launcher",
@@ -84,7 +84,7 @@ fun DefaultLauncherScreen(
             ) {
                 Text(
                     text = "Share zenmode",
-                    color = ZenGlow,
+                    color = colors.textBrand,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.width(7.dp))
@@ -118,7 +118,7 @@ fun DefaultLauncherScreen(
             // Title
             Text(
                 text = "One Last step to Experience Zen",
-                color = White,
+                color = colors.textPrimary,
                 style = TextStyle(
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
@@ -132,42 +132,22 @@ fun DefaultLauncherScreen(
             // Subtitle
             Text(
                 text = "Let's make it pretty personal, Ready?",
-                color = Grey400,
+                color = colors.textSecondary,
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Dark mode toggle card
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF1A1A1A), RoundedCornerShape(26.dp))
-                    .border(1.dp, Color(0xFF1A1A1A), RoundedCornerShape(26.dp))
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Dark  mode",
-                    color = White,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
-                )
-                Switch(
-                    checked = isDarkMode,
-                    onCheckedChange = { enabled ->
-                        isDarkMode = enabled
-                        ThemePreferences.setDarkMode(context, enabled)
-                    },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = White,
-                        checkedTrackColor = ZenGlow,
-                        uncheckedThumbColor = White,
-                        uncheckedTrackColor = Grey600
-                    )
-                )
-            }
+            // Dark mode toggle
+            ZenSettingToggleItem(
+                text = "Dark mode",
+                checked = isDarkMode,
+                onCheckedChange = { enabled ->
+                    isDarkMode = enabled
+                    ThemePreferences.setDarkMode(context, enabled)
+                }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -175,41 +155,43 @@ fun DefaultLauncherScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF1A1A1A), RoundedCornerShape(26.dp))
-                    .border(1.dp, Color(0xFF1A1A1A), RoundedCornerShape(26.dp))
+                    .background(colors.bgSecondary, RoundedCornerShape(26.dp))
+                    .border(1.dp, colors.bgSecondary, RoundedCornerShape(26.dp))
                     .clickable { onChangeDistractingAppsClick() }
                     .padding(horizontal = 16.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Change distracting app list",
-                    color = ZenBase,
+                    color = colors.textBrand,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Stats preview image
-            Image(
-                painter = painterResource(id = R.drawable.last_step_stats),
-                contentDescription = "Stats preview",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp)),
-                contentScale = ContentScale.FillWidth
+            // Stats preview
+            StatsCardsRow(
+                usage = DailyUsage(unlocks = 12, screenTimeInMillis = 2220000L), // 37 mins
+                yesterdayChangePercent = -12,
+                hasBuddies = true,
+                buddyStats = BuddyStats(screenTimeMins = 15, unlocks = 8),
+                isSignedIn = true,
+                onInviteBuddyClick = {},
+                onSignInClick = {},
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // "How to invite your zen buddy Watch video(↗)"
             val buddyInviteText = buildAnnotatedString {
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = White)) {
+                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
                     append("How to invite your zen buddy ")
                 }
                 pushStringAnnotation(tag = "URL", annotation = AppConstants.YT_BUDDY_INVITE_URL)
                 withStyle(
-                    MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = ZenGlow)
+                    MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textBrand)
                 ) {
                     append("Watch video(↗)")
                 }
@@ -228,26 +210,26 @@ fun DefaultLauncherScreen(
 
             // Numbered invite steps
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "1. Share", color = White, style = MaterialTheme.typography.bodyLarge)
-                Text(text = "2. ", color = White, style = MaterialTheme.typography.bodyLarge)
-                Text(text = "3. ", color = White, style = MaterialTheme.typography.bodyLarge)
+                Text(text = "1. Share", color = colors.textPrimary, style = MaterialTheme.typography.bodyLarge)
+                Text(text = "2. ", color = colors.textPrimary, style = MaterialTheme.typography.bodyLarge)
+                Text(text = "3. ", color = colors.textPrimary, style = MaterialTheme.typography.bodyLarge)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // "(Still confused? Watch video on how add your friend as zen buddy(↗))"
             val confusedText = buildAnnotatedString {
-                withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = White)) {
+                withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = colors.textPrimary)) {
                     append("(Still confused? ")
                 }
                 pushStringAnnotation(tag = "URL", annotation = AppConstants.YT_BUDDY_CONFUSED_URL)
                 withStyle(
-                    MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = ZenGlow)
+                    MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = colors.textBrand)
                 ) {
                     append("Watch video on how add your friend as zen buddy(↗)")
                 }
                 pop()
-                withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = White)) {
+                withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = colors.textPrimary)) {
                     append(")")
                 }
             }
@@ -260,6 +242,7 @@ fun DefaultLauncherScreen(
                 }
             )
         }
+    }
     }
 }
 

@@ -38,13 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ui.theme.Black
-import com.zenlauncher.zenmode.ui.theme.Grey400
-import com.zenlauncher.zenmode.ui.theme.Grey600
-import com.zenlauncher.zenmode.ui.theme.White
-import com.zenlauncher.zenmode.ui.theme.ZenBase
-import com.zenlauncher.zenmode.ui.theme.ZenDark
-import com.zenlauncher.zenmode.ui.theme.ZenGlow
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.delay
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -60,6 +54,7 @@ fun WelcomeScreen(
     onGoogleSignInClick: () -> Unit,
     onEmailSignInClick: (email: String, password: String) -> Unit = { _, _ -> }
 ) {
+    val colors = ZenTheme.colors
     var state by remember { mutableStateOf(WelcomeState.PINS_6) }
 
     LaunchedEffect(Unit) {
@@ -90,7 +85,7 @@ fun WelcomeScreen(
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val footerText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = Grey400)) {
+                    withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = colors.textSecondary)) {
                         append("By continuing, you agree to the ")
                     }
                     pushStringAnnotation(
@@ -98,7 +93,7 @@ fun WelcomeScreen(
                         annotation = AppConstants.PRIVACY_POLICY_URL
                     )
                     withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(
-                        color = ZenDark,
+                        color = colors.textBrand,
                         textDecoration = TextDecoration.Underline,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
                     )) {
@@ -124,7 +119,7 @@ fun WelcomeScreen(
                 if (!showReviewerFields) {
                     Text(
                         text = "Reviewer? Sign in here",
-                        color = Grey600,
+                        color = colors.textSecondary,
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         modifier = Modifier.clickable { showReviewerFields = true }
                     )
@@ -141,13 +136,13 @@ fun WelcomeScreen(
                             label = { Text("Email", style = MaterialTheme.typography.bodySmall) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth().height(52.dp),
-                            textStyle = MaterialTheme.typography.bodySmall.copy(color = White),
+                            textStyle = MaterialTheme.typography.bodySmall.copy(color = colors.textPrimary),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ZenBase,
-                                unfocusedBorderColor = Grey600,
-                                focusedLabelColor = ZenBase,
-                                unfocusedLabelColor = Grey600,
-                                cursorColor = ZenBase
+                                focusedBorderColor = colors.textBrand,
+                                unfocusedBorderColor = colors.textSecondary,
+                                focusedLabelColor = colors.textBrand,
+                                unfocusedLabelColor = colors.textSecondary,
+                                cursorColor = colors.textBrand
                             )
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -158,13 +153,13 @@ fun WelcomeScreen(
                             singleLine = true,
                             visualTransformation = PasswordVisualTransformation(),
                             modifier = Modifier.fillMaxWidth().height(52.dp),
-                            textStyle = MaterialTheme.typography.bodySmall.copy(color = White),
+                            textStyle = MaterialTheme.typography.bodySmall.copy(color = colors.textPrimary),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ZenBase,
-                                unfocusedBorderColor = Grey600,
-                                focusedLabelColor = ZenBase,
-                                unfocusedLabelColor = Grey600,
-                                cursorColor = ZenBase
+                                focusedBorderColor = colors.textBrand,
+                                unfocusedBorderColor = colors.textSecondary,
+                                focusedLabelColor = colors.textBrand,
+                                unfocusedLabelColor = colors.textSecondary,
+                                cursorColor = colors.textBrand
                             )
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -172,7 +167,7 @@ fun WelcomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(40.dp)
-                                .background(ZenBase, RoundedCornerShape(20.dp))
+                                .background(colors.textBrand, RoundedCornerShape(20.dp))
                                 .clickable {
                                     if (email.isNotBlank() && password.isNotBlank()) {
                                         onEmailSignInClick(email.trim(), password)
@@ -182,7 +177,7 @@ fun WelcomeScreen(
                         ) {
                             Text(
                                 text = "Sign in",
-                                color = Black,
+                                color = colors.bgPrimary,
                                 style = MaterialTheme.typography.labelMedium
                             )
                         }
@@ -229,7 +224,7 @@ fun WelcomeScreen(
             // Single Unified Canvas for faint outer glow and custom arc pins (only before final state)
             if (state < WelcomeState.LOGO_GLOW) {
                 val outerGlowColors = listOf(
-                    ZenGlow.copy(alpha = 0.3f), // faint glow behind pins
+                    colors.textBrand.copy(alpha = 0.3f), // faint glow behind pins
                     Color.Transparent
                 )
                 Canvas(
@@ -289,7 +284,7 @@ fun WelcomeScreen(
             ) {
                 Text(
                     text = "ZENMODE",
-                    color = ZenGlow,
+                    color = colors.textBrand,
                     style = MaterialTheme.typography.displaySmall.copy(fontSize = 18.sp)
                 )
             }
@@ -304,12 +299,12 @@ fun WelcomeScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val firstStepText = buildAnnotatedString {
                     withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(
-                        color = White,
+                        color = colors.textPrimary,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                     )) {
                         append("Your first step ")
                     }
-                    withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = Grey400)) {
+                    withStyle(MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = colors.textSecondary)) {
                         append("towards")
                     }
                 }
@@ -319,12 +314,12 @@ fun WelcomeScreen(
 
                 Text(
                     text = "Mindful Digital time",
-                    color = ZenBase,
+                    color = colors.textBrand,
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = 24.sp,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         shadow = androidx.compose.ui.graphics.Shadow(
-                            color = ZenBase.copy(alpha = 0.5f),
+                            color = colors.textBrand.copy(alpha = 0.5f),
                             blurRadius = 24.2f,
                             offset = Offset(0f, 16f)
                         )
@@ -351,7 +346,7 @@ fun WelcomeScreen(
                 ) {
                     Text(
                         text = "Bro, Hear me close,",
-                        color = White,
+                        color = colors.textPrimary,
                         style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -366,13 +361,13 @@ fun WelcomeScreen(
 
                 // "Life is *too* short!"
                 val lifeText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White, fontSize = 14.sp)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = 14.sp)) {
                         append("Life is ")
                     }
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = ZenBase, fontSize = 14.sp)) {
+                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textBrand, fontSize = 14.sp)) {
                         append("too")
                     }
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White, fontSize = 14.sp)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = 14.sp)) {
                         append(" short!")
                     }
                 }
@@ -386,10 +381,10 @@ fun WelcomeScreen(
 
                 // 'Just "4000 weeks", Let's make em count!'
                 val weeksText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = White, fontSize = 16.sp)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = 16.sp)) {
                         append("Just \"4000 weeks\", ")
                     }
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = White, fontSize = 16.sp)) {
+                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textPrimary, fontSize = 16.sp)) {
                         append("Let's make em count!")
                     }
                 }
