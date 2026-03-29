@@ -54,8 +54,10 @@ fun StatsCardsRow(
     hasBuddies: Boolean,
     buddyStats: BuddyStats?,
     isSignedIn: Boolean,
+    isWeekly: Boolean = false,
     onInviteBuddyClick: () -> Unit = {},
     onSignInClick: () -> Unit = {},
+    onBuddyCardClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val myMinutes = ((usage?.screenTimeInMillis ?: 0L) / 1000) / 60
@@ -92,6 +94,7 @@ fun StatsCardsRow(
                     MyScreenTimeCard(
                         usage = usage,
                         yesterdayChangePercent = yesterdayChangePercent,
+                        isWeekly = isWeekly,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
@@ -111,6 +114,7 @@ fun StatsCardsRow(
                 if (hasBuddies && buddyStats != null) {
                     BuddyStatsCard(
                         buddyStats = buddyStats,
+                        onCardClick = onBuddyCardClick,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
@@ -147,6 +151,7 @@ fun StatsCardsRow(
 fun MyScreenTimeCard(
     usage: DailyUsage?,
     yesterdayChangePercent: Int?,
+    isWeekly: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
@@ -154,8 +159,10 @@ fun MyScreenTimeCard(
     val minutes = (totalMillis / 1000) / 60
     val hours = minutes / 60
     val mins = minutes % 60
-    val moodState = AppLogic.getMoodState(minutes)
-    val mindfulnessProgress = AppLogic.getMindfulnessPercentage(minutes)
+    val moodState = if (isWeekly) AppLogic.getWeeklyMoodState(minutes)
+                    else AppLogic.getMoodState(minutes)
+    val mindfulnessProgress = if (isWeekly) AppLogic.getWeeklyMindfulnessPercentage(minutes)
+                              else AppLogic.getMindfulnessPercentage(minutes)
 
     val faceRes = when (moodState) {
         MoodState.HAPPY -> R.drawable.face_happy
@@ -217,7 +224,7 @@ fun MyScreenTimeCard(
                         .padding(top = 0.dp)
                 ) {
                     Text(
-                        text = "My Screen Time",
+                        text = if (isWeekly) "My Weekly Time" else "My Screen Time",
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,
                         fontSize = 12.sp,
@@ -289,6 +296,7 @@ fun MyScreenTimeCard(
 @Composable
 fun BuddyStatsCard(
     buddyStats: BuddyStats,
+    onCardClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
@@ -304,7 +312,11 @@ fun BuddyStatsCard(
         MoodState.ANNOYED -> R.drawable.face_annoyed
     }
 
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.then(
+            if (onCardClick != null) Modifier.clickable { onCardClick() } else Modifier
+        )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

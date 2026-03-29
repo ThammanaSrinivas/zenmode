@@ -11,8 +11,7 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import kotlinx.coroutines.launch
 
 data class BuddyStats(
-    val screenTimeMins: Long,
-    val unlocks: Int
+    val screenTimeMins: Long
 )
 
 class MainViewModel(private val repository: UsageRepository) : ViewModel() {
@@ -53,7 +52,6 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
         lastUnlockTimestamp = now
 
         sessionStartTime = now
-        repository.incrementUnlockCount()
         refreshStats()
         if (!hasTriggeredDelayedUnlock) {
             _navigateToDelayedUnlock.value = true
@@ -71,7 +69,7 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
             refreshStats()
         }
     }
-    
+
     fun onResumeCheck() {
          if (!repository.isZenUnlocked() && !hasTriggeredDelayedUnlock) {
              _navigateToDelayedUnlock.value = true
@@ -103,12 +101,13 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
         }
     }
 
-    /** Refresh buddy stats UI from SharedPreferences cache only — no Firestore calls. */
     fun refreshBuddyStatsFromCache() {
         if (repository.hasCachedBuddy()) {
-            val (cachedTime, cachedUnlocks) = repository.getBuddyStats()
+            val cachedTime = repository.getBuddyScreenTime()
             _hasBuddies.postValue(true)
-            _buddyStats.postValue(BuddyStats(cachedTime, cachedUnlocks))
+            _buddyStats.postValue(BuddyStats(cachedTime))
+        } else {
+            _hasBuddies.postValue(false)
         }
     }
 
@@ -119,12 +118,12 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
 
         viewModelScope.launch {
             // Load cache immediately for instant UI
-            val (cachedTime, cachedUnlocks) = repository.getBuddyStats()
             if (repository.hasCachedBuddy()) {
+                val cachedTime = repository.getBuddyScreenTime()
                  _hasBuddies.postValue(true)
-                 _buddyStats.postValue(BuddyStats(cachedTime, cachedUnlocks))
+                 _buddyStats.postValue(BuddyStats(cachedTime))
             }
-            
+
             try {
                 // Step 1: Get single buddy UID (from cache or Firestore)
                 val buddyUid: String?
@@ -143,16 +142,15 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
 
                 // Step 2: Fetch stats for the single buddy
                 val stat = firestoreDataSource.getBuddyStats(buddyUid)
-                
+
                 if (stat != null) {
                     val buddyStats = BuddyStats(
-                        screenTimeMins = stat.screenTime,
-                        unlocks = stat.unlocks
+                        screenTimeMins = stat.screenTime
                     )
-                    
+
                     // Save to cache
-                    repository.saveBuddyStats(buddyStats.screenTimeMins, buddyStats.unlocks)
-                    
+                    repository.saveBuddyScreenTime(buddyStats.screenTimeMins)
+
                     _buddyStats.postValue(buddyStats)
                 }
             } catch (e: Exception) {

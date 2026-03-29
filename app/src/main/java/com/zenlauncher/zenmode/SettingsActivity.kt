@@ -33,7 +33,11 @@ class SettingsActivity : AppCompatActivity() {
                         // TODO: navigate to distracting apps picker
                     },
                     onAccountabilityPartnerClick = {
-                        // TODO: navigate to accountability partner settings
+                        val intent = Intent(this, MainActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                            putExtra("SHOW_BUDDY_BATTLE", true)
+                        }
+                        startActivity(intent)
                     },
                     onContributeClick = { openGitHub() },
                     onRateClick = { openPlayStore() },

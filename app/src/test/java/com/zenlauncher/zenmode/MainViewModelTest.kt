@@ -31,22 +31,21 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `onScreenUnlocked increments count and triggers navigation`() {
+    fun `onScreenUnlocked triggers navigation`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
         val viewModel = MainViewModel(repository)
 
         viewModel.onScreenUnlocked()
 
-        verify(repository).incrementUnlockCount()
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
     }
 
     @Test
     fun `onScreenLocked updates screen time if session started`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
         val viewModel = MainViewModel(repository)
 
@@ -60,7 +59,7 @@ class MainViewModelTest {
     @Test
     fun `refreshStats updates stats LiveData`() {
         val repository = mock<UsageRepository>()
-        val expectedUsage = DailyUsage(10, 5000L)
+        val expectedUsage = DailyUsage(5000L)
         whenever(repository.getTodayUsage()).thenReturn(expectedUsage)
 
         val viewModel = MainViewModel(repository)
@@ -72,7 +71,7 @@ class MainViewModelTest {
     @Test
     fun `onResumeCheck triggers navigation if not unlocked`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
         val viewModel = MainViewModel(repository)
@@ -84,7 +83,7 @@ class MainViewModelTest {
     @Test
     fun `onDelayedUnlockNavigated resets event`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
         val viewModel = MainViewModel(repository)
         viewModel.onDelayedUnlockNavigated()
@@ -95,7 +94,7 @@ class MainViewModelTest {
     @Test
     fun `onResumeCheck does not double trigger after onScreenUnlocked`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
         val viewModel = MainViewModel(repository)
@@ -114,7 +113,7 @@ class MainViewModelTest {
     @Test
     fun `onScreenUnlocked does not double trigger after onResumeCheck`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
         val viewModel = MainViewModel(repository)
@@ -133,7 +132,7 @@ class MainViewModelTest {
     @Test
     fun `onScreenLocked resets hasTriggeredDelayedUnlock allowing next unlock to trigger`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
         val viewModel = MainViewModel(repository)
 
@@ -158,27 +157,27 @@ class MainViewModelTest {
     @Test
     fun `refreshBuddyStatsFromCache updates buddy LiveData when cached`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.hasCachedBuddy()).thenReturn(true)
-        whenever(repository.getBuddyStats()).thenReturn(Pair(45L, 12))
+        whenever(repository.getBuddyScreenTime()).thenReturn(45L)
 
         val viewModel = MainViewModel(repository)
         viewModel.refreshBuddyStatsFromCache()
 
         assertEquals(true, viewModel.hasBuddies.value)
-        assertEquals(BuddyStats(45L, 12), viewModel.buddyStats.value)
+        assertEquals(BuddyStats(45L), viewModel.buddyStats.value)
     }
 
     @Test
     fun `refreshBuddyStatsFromCache does nothing when no cached buddy`() {
         val repository = mock<UsageRepository>()
-        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0, 0L))
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.hasCachedBuddy()).thenReturn(false)
 
         val viewModel = MainViewModel(repository)
         viewModel.refreshBuddyStatsFromCache()
 
-        assertEquals(null, viewModel.hasBuddies.value)
+        assertEquals(false, viewModel.hasBuddies.value)
         assertEquals(null, viewModel.buddyStats.value)
     }
 

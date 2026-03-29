@@ -8,27 +8,40 @@ enum class MoodState {
 
 object AppLogic {
     fun getMoodState(minutes: Long): MoodState {
-        val percentage = getMindfulnessPercentage(minutes)
         return when {
-             percentage >= AppConstants.MINDFULNESS_HAPPY_MIN_PERCENT -> MoodState.HAPPY
-             percentage >= AppConstants.MINDFULNESS_NEUTRAL_MIN_PERCENT -> MoodState.NEUTRAL
+             minutes <= AppConstants.THRESHOLD_HAPPY_MINUTES -> MoodState.HAPPY
+             minutes <= AppConstants.THRESHOLD_NEUTRAL_MINUTES -> MoodState.NEUTRAL
              else -> MoodState.ANNOYED
         }
     }
 
     fun getMindfulnessPercentage(minutes: Long): Int {
-        // Starts at 100%, depleted by max neutral threshold
+        // Starts at 100%, depleted by annoyed threshold (3h30m)
         val maxMinutes = AppConstants.THRESHOLD_NEUTRAL_MINUTES
         val percentage = ((maxMinutes - minutes).toFloat() / maxMinutes * 100).toInt()
         return percentage.coerceIn(0, 100)
     }
 
     fun getMindfulnessColor(minutes: Long): Int {
-        val percentage = getMindfulnessPercentage(minutes)
         return when {
-             percentage >= AppConstants.MINDFULNESS_HAPPY_MIN_PERCENT -> R.color.zen_mindfulness_happy
-             percentage >= AppConstants.MINDFULNESS_NEUTRAL_MIN_PERCENT -> R.color.zen_mindfulness_neutral
+             minutes <= AppConstants.THRESHOLD_HAPPY_MINUTES -> R.color.zen_mindfulness_happy
+             minutes <= AppConstants.THRESHOLD_NEUTRAL_MINUTES -> R.color.zen_mindfulness_neutral
              else -> R.color.zen_mindfulness_annoyed
         }
+    }
+
+    // Weekly variants — thresholds are 7× the daily ones
+    fun getWeeklyMoodState(totalWeeklyMinutes: Long): MoodState {
+        return when {
+            totalWeeklyMinutes <= 7 * AppConstants.THRESHOLD_HAPPY_MINUTES -> MoodState.HAPPY
+            totalWeeklyMinutes <= 7 * AppConstants.THRESHOLD_NEUTRAL_MINUTES -> MoodState.NEUTRAL
+            else -> MoodState.ANNOYED
+        }
+    }
+
+    fun getWeeklyMindfulnessPercentage(totalWeeklyMinutes: Long): Int {
+        val maxMinutes = 7L * AppConstants.THRESHOLD_NEUTRAL_MINUTES
+        val percentage = ((maxMinutes - totalWeeklyMinutes).toFloat() / maxMinutes * 100).toInt()
+        return percentage.coerceIn(0, 100)
     }
 }

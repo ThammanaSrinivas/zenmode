@@ -111,6 +111,7 @@ fun HomeScreen(
     onLockClick: () -> Unit,
     onInviteBuddyClick: () -> Unit,
     onSignInClick: () -> Unit,
+    onBuddyCardClick: (() -> Unit)? = null,
     onAppClick: (AppInfo) -> Unit,
     apps: List<AppInfo>
 ) {
@@ -138,10 +139,9 @@ fun HomeScreen(
                 isSignedIn = isSignedIn,
                 onInviteBuddyClick = onInviteBuddyClick,
                 onSignInClick = onSignInClick,
-                modifier = Modifier.padding(horizontal = 32.dp)
+                onBuddyCardClick = onBuddyCardClick,
+                modifier = Modifier.padding(horizontal = 28.dp)
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             // App Grid
             AppGridPager(

@@ -172,10 +172,10 @@ fun DefaultLauncherScreen(
 
             // Stats preview
             StatsCardsRow(
-                usage = DailyUsage(unlocks = 12, screenTimeInMillis = 2220000L), // 37 mins
+                usage = DailyUsage(screenTimeInMillis = 2220000L), // 37 mins
                 yesterdayChangePercent = -12,
                 hasBuddies = true,
-                buddyStats = BuddyStats(screenTimeMins = 15, unlocks = 8),
+                buddyStats = BuddyStats(screenTimeMins = 15),
                 isSignedIn = true,
                 onInviteBuddyClick = {},
                 onSignInClick = {},

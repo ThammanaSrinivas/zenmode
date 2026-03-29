@@ -70,8 +70,11 @@ class MockFirestoreDataSource : FirestoreDataSource {
     override suspend fun getUser(uid: String): User? = User(uid, "Mock User")
     override suspend fun checkRelationshipExists(myUid: String, otherUid: String): Boolean = false
     override suspend fun sendBuddyInvite(myUid: String, targetUid: String) {}
+    override suspend fun disconnectBuddy(myUid: String, buddyUid: String) {}
+    override suspend fun findRandomBuddy(myUid: String): String? = null
     override suspend fun initializeUser(uid: String, displayName: String?) {}
     override suspend fun deleteUser(uid: String) {}
+    override suspend fun getRelationshipCreatedAt(myUid: String): Long? = null
 }
 
 class MockAnalyticsTracker : AnalyticsTrackerContract {

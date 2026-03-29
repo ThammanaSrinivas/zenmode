@@ -33,20 +33,6 @@ class UsageRepositoryTest {
     }
 
     @Test
-    fun `incrementUnlockCount increments count when already exists for today`() {
-        val (repository, prefs, editor) = createMockedRepository()
-
-        val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-        whenever(prefs.getString(eq("last_date_unlocks"), any())).thenReturn(today)
-        whenever(prefs.getInt("unlock_count", 0)).thenReturn(5)
-
-        repository.incrementUnlockCount()
-
-        verify(editor).putInt("unlock_count", 6)
-        verify(editor).apply()
-    }
-
-    @Test
     fun `updateScreenTime increases total time`() {
         val (repository, prefs, editor) = createMockedRepository()
 
@@ -161,18 +147,15 @@ class UsageRepositoryTest {
     }
 
     @Test
-    fun `buddy stats can be saved and retrieved`() {
+    fun `buddy screen time can be saved and retrieved`() {
         val (repository, prefs, editor) = createMockedRepository()
 
-        repository.saveBuddyStats(120L, 15)
+        repository.saveBuddyScreenTime(120L)
         verify(editor).putLong("buddy_screen_time", 120L)
-        verify(editor).putInt("buddy_unlocks", 15)
 
         whenever(prefs.getLong("buddy_screen_time", 0)).thenReturn(120L)
-        whenever(prefs.getInt("buddy_unlocks", 0)).thenReturn(15)
-        val (time, unlocks) = repository.getBuddyStats()
+        val time = repository.getBuddyScreenTime()
         assertEquals(120L, time)
-        assertEquals(15, unlocks)
     }
 
     @Test
@@ -183,7 +166,6 @@ class UsageRepositoryTest {
 
         verify(editor).remove("buddy_uid")
         verify(editor).remove("buddy_screen_time")
-        verify(editor).remove("buddy_unlocks")
         verify(editor).apply()
     }
 

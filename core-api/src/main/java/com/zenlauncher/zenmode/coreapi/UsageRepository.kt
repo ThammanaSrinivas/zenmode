@@ -13,26 +13,6 @@ class UsageRepository(private val context: Context, private val analyticsManager
 
     private val prefs: SharedPreferences = context.getSharedPreferences("zen_mode_stats", Context.MODE_PRIVATE)
 
-    fun incrementUnlockCount() {
-        val today = getTodayDate()
-        val savedDateUnlocks = prefs.getString("last_date_unlocks", "")
-        val editor = prefs.edit()
-        
-        var unlocks = 0
-        if (savedDateUnlocks != today) {
-            editor.putString("last_date_unlocks", today)
-            editor.putInt("unlock_count", 1)
-            unlocks = 1
-        } else {
-            val currentCount = prefs.getInt("unlock_count", 0)
-            unlocks = currentCount + 1
-            editor.putInt("unlock_count", unlocks)
-        }
-        editor.apply()
-        
-        analyticsManager.trackEvent("unlock_recorded", mapOf("count" to unlocks, "date" to today))
-    }
-
     fun updateScreenTime(duration: Long) {
         if (duration <= 0) return
 
@@ -213,12 +193,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
 
     fun getTodayUsage(): DailyUsage {
         val today = getTodayDate()
-        
-        // Unlocks
-        val savedDateUnlocks = prefs.getString("last_date_unlocks", "")
-        val unlocks = if (savedDateUnlocks == today) prefs.getInt("unlock_count", 0) else 0
 
-        // Screen Time
         val savedDateScreenTime = prefs.getString("last_date_screentime", "")
         var screenTimeInMillis = if (savedDateScreenTime == today) prefs.getLong("daily_screen_time", 0) else 0
 
@@ -229,7 +204,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
             // This handles the case where the user is actively using the device (so cache is stale/lower).
             if (realTimeFn > 0 && realTimeFn > screenTimeInMillis) {
                 screenTimeInMillis = realTimeFn
-                
+
                 // Sync back to prefs so UI and other components see it
                 prefs.edit()
                     .putLong("daily_screen_time", screenTimeInMillis)
@@ -240,7 +215,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
             e.printStackTrace()
         }
 
-        return DailyUsage(unlocks, screenTimeInMillis)
+        return DailyUsage(screenTimeInMillis)
     }
 
     fun resetZenUnlockFlag() {
@@ -342,35 +317,61 @@ class UsageRepository(private val context: Context, private val analyticsManager
     }
 
     fun clearCachedBuddy() {
-        prefs.edit().remove("buddy_uid").remove("buddy_screen_time").remove("buddy_unlocks").apply()
-    }
-
-    fun saveBuddyStats(screenTime: Long, unlocks: Int) {
         prefs.edit()
-            .putLong("buddy_screen_time", screenTime)
-            .putInt("buddy_unlocks", unlocks)
+            .remove("buddy_uid")
+            .remove("buddy_screen_time")
+            .remove("has_buddy_cached")
+            .remove("buddy_connection_date")
             .apply()
     }
 
-    fun getBuddyStats(): Pair<Long, Int> {
-        val time = prefs.getLong("buddy_screen_time", 0)
-        val unlocks = prefs.getInt("buddy_unlocks", 0)
-        return Pair(time, unlocks)
+    fun saveBuddyConnectionDate(epochMillis: Long) {
+        prefs.edit().putLong("buddy_connection_date", epochMillis).apply()
+    }
+
+    fun getBuddyConnectionDate(): Long? {
+        return if (prefs.contains("buddy_connection_date")) prefs.getLong("buddy_connection_date", 0L)
+        else null
+    }
+
+    /** Returns null if not yet cached, true/false if previously set by StatSyncWorker. */
+    fun getCachedHasBuddy(): Boolean? {
+        return if (prefs.contains("has_buddy_cached")) prefs.getBoolean("has_buddy_cached", false)
+        else null
+    }
+
+    fun saveHasBuddy(value: Boolean) {
+        prefs.edit().putBoolean("has_buddy_cached", value).apply()
+    }
+
+    fun getLastRandomConnectAttemptTime(): Long {
+        return prefs.getLong("random_connect_last_tried", 0L)
+    }
+
+    fun saveLastRandomConnectAttemptTime(time: Long) {
+        prefs.edit().putLong("random_connect_last_tried", time).apply()
+    }
+
+    fun saveBuddyScreenTime(screenTime: Long) {
+        prefs.edit()
+            .putLong("buddy_screen_time", screenTime)
+            .apply()
+    }
+
+    fun getBuddyScreenTime(): Long {
+        return prefs.getLong("buddy_screen_time", 0)
     }
 
     fun getTodayDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
 
-    fun getLastSyncedStats(): Pair<Long, Int> {
-        val time = prefs.getLong("last_synced_time", -1L)
-        val unlocks = prefs.getInt("last_synced_unlocks", -1)
-        return Pair(time, unlocks)
+    fun getLastSyncedScreenTime(): Long {
+        return prefs.getLong("last_synced_time", -1L)
     }
 
-    fun saveLastSyncedStats(screenTimeMins: Long, unlocks: Int) {
+    fun saveLastSyncedScreenTime(screenTimeMins: Long) {
         prefs.edit()
-            .putInt("last_synced_unlocks", unlocks)
             .putLong("last_synced_time", screenTimeMins)
             .apply()
     }
@@ -411,7 +412,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
             .remove("user_uid")
             .remove("buddy_uid")
             .remove("buddy_screen_time")
-            .remove("buddy_unlocks")
+            .remove("has_buddy_cached")
             .remove("posthog_identified")
             .apply()
     }

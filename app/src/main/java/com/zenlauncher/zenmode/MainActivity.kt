@@ -34,9 +34,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
+import com.zenlauncher.zenmode.ui.screens.AccountabilityScreen
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
 import com.zenlauncher.zenmode.ui.screens.ZenBuddyConnectBottomSheet
@@ -50,7 +53,9 @@ class MainActivity : AppCompatActivity() {
     private var installedApps by mutableStateOf<List<AppInfo>>(emptyList())
     private var showSearch by mutableStateOf(false)
     private var showBuddyConnect by mutableStateOf(false)
+    private var showBuddyBattle by mutableStateOf(false)
     private var showAccessibilityDisclosure by mutableStateOf(false)
+    private lateinit var accountabilityViewModel: AccountabilityViewModel
 
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
@@ -69,6 +74,12 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         // Home button pressed while already on launcher — dismiss search overlay
         showSearch = false
+        if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false)) {
+            showBuddyConnect = true
+        }
+        if (intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)) {
+            showBuddyBattle = true
+        }
     }
 
     override fun onResume() {
@@ -160,6 +171,9 @@ class MainActivity : AppCompatActivity() {
         repository = UsageRepository(this, analyticsManager)
         val factory = MainViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
+        accountabilityViewModel = ViewModelProvider(
+            this, AccountabilityViewModelFactory(repository)
+        )[AccountabilityViewModel::class.java]
 
         // for testing onboarding just remove !
         if (!repository.isOnboardingComplete()) {
@@ -201,6 +215,14 @@ class MainActivity : AppCompatActivity() {
         // Load apps initially
         loadInstalledApps()
 
+        // Handle cold-start intents
+        if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false)) {
+            showBuddyConnect = true
+        }
+        if (intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)) {
+            showBuddyBattle = true
+        }
+
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@MainActivity)) {
                 val usage by viewModel.stats.observeAsState()
@@ -211,6 +233,33 @@ class MainActivity : AppCompatActivity() {
                 val userCode = remember {
                     repository.getUserUid()
                         ?: ServiceLocator.authProvider.getCurrentUserId()
+                }
+                val accountabilityUiState by accountabilityViewModel.uiState.observeAsState(AccountabilityUiState())
+
+                // Reload accountability data whenever the overlay is opened
+                androidx.compose.runtime.LaunchedEffect(showBuddyBattle) {
+                    if (showBuddyBattle) accountabilityViewModel.reload()
+                }
+
+                // Handle disconnect result
+                androidx.compose.runtime.LaunchedEffect(accountabilityUiState.disconnectResult) {
+                    when (val result = accountabilityUiState.disconnectResult) {
+                        is DisconnectResult.Success -> {
+                            showBuddyBattle = false
+                            showBuddyConnect = true
+                            viewModel.refreshBuddyStatsFromCache()
+                            accountabilityViewModel.resetDisconnectResult()
+                        }
+                        is DisconnectResult.Error -> {
+                            android.widget.Toast.makeText(
+                                this@MainActivity,
+                                "Failed to disconnect: ${result.message}",
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                            accountabilityViewModel.resetDisconnectResult()
+                        }
+                        null -> Unit
+                    }
                 }
 
                 val weeklyMillis = remember { repository.getWeeklyScreenTimeMillis() }
@@ -259,6 +308,9 @@ class MainActivity : AppCompatActivity() {
                         ServiceLocator.analyticsTracker.trackBuddyShareStarted("manual")
                         showBuddyConnect = true
                     },
+                    onBuddyCardClick = if (hasBuddies) {
+                        { showBuddyBattle = true }
+                    } else null,
                     onSignInClick = {
                         val intent = Intent(this, OnboardingActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -290,6 +342,21 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
+                // Zen Buddy Battle summary overlay
+                if (showBuddyBattle) {
+                    AccountabilityScreen(
+                        uiState = accountabilityUiState,
+                        onBackClick = { showBuddyBattle = false },
+                        onCopyCode = { code ->
+                            val clipboard = getSystemService(android.content.ClipboardManager::class.java)
+                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("ZenMode Code", code))
+                            android.widget.Toast.makeText(this@MainActivity, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        onBackToHomeClick = { showBuddyBattle = false },
+                        onChangeBuddyConfirmed = { accountabilityViewModel.disconnectBuddy() }
+                    )
+                }
+
                 // Zen Buddy Connect bottom sheet
                 if (showBuddyConnect) {
                     ZenBuddyConnectBottomSheet(
@@ -305,7 +372,7 @@ class MainActivity : AppCompatActivity() {
                         },
                         onAddBuddy = { targetUid -> addBuddy(targetUid) },
                         onRandomConnect = {
-                            android.widget.Toast.makeText(this, "Coming soon!", android.widget.Toast.LENGTH_SHORT).show()
+                            lifecycleScope.launch { randomConnect() }
                         },
                         onWatchVideo = {
                             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.YT_BUDDY_INVITE_URL)))
@@ -373,6 +440,63 @@ class MainActivity : AppCompatActivity() {
                 else -> "Failed: ${e.message}"
             }
             BuddyAddResult.Error(errorMessage)
+        }
+    }
+
+    private suspend fun randomConnect() {
+        val currentUserId = ServiceLocator.authProvider.getCurrentUserId()
+        if (currentUserId == null) {
+            android.widget.Toast.makeText(this, "Not signed in.", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val connectivityManager = getSystemService(android.net.ConnectivityManager::class.java)
+        val isConnected = connectivityManager?.getNetworkCapabilities(connectivityManager.activeNetwork)
+            ?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        if (!isConnected) {
+            android.widget.Toast.makeText(this, "No internet connection.", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Cooldown: only allow retrying after 5 minutes if last attempt found no buddy
+        val lastTried = repository.getLastRandomConnectAttemptTime()
+        val cooldownMs = 30 * 1000L
+        val remaining = cooldownMs - (System.currentTimeMillis() - lastTried)
+        if (remaining > 0) {
+            val secs = (remaining / 1000).coerceAtLeast(1)
+            android.widget.Toast.makeText(
+                this,
+                "No buddies were available last time. Try again in ${secs}s.",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        try {
+            val buddyUid = ServiceLocator.firestoreDataSource.findRandomBuddy(currentUserId)
+            if (buddyUid == null) {
+                repository.saveLastRandomConnectAttemptTime(System.currentTimeMillis())
+                android.widget.Toast.makeText(
+                    this,
+                    "No buddies available right now. Try again in 30 seconds!",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            } else {
+                val buddy = ServiceLocator.firestoreDataSource.getUser(buddyUid)
+                repository.clearCachedBuddy()
+                repository.saveHasBuddy(true)
+                viewModel.fetchBuddyData()
+                ServiceLocator.analyticsTracker.trackBuddyConnected("random")
+                android.widget.Toast.makeText(
+                    this,
+                    "Connected with ${buddy?.displayName ?: "a Zen buddy"}!",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
+            android.widget.Toast.makeText(this, "Connection timed out. Please try again.", android.widget.Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "Something went wrong. Please try again.", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
