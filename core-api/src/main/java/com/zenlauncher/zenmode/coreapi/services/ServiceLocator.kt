@@ -12,6 +12,7 @@ object ServiceLocator {
     lateinit var analyticsTracker: AnalyticsTrackerContract
     lateinit var authProvider: AuthProvider
     lateinit var firestoreDataSource: FirestoreDataSource
+    lateinit var remoteConfigProvider: RemoteConfigProvider
 
     /**
      * Returns true if the ServiceLocator has been fully initialized.
@@ -20,5 +21,6 @@ object ServiceLocator {
         get() = ::analyticsManager.isInitialized &&
                 ::analyticsTracker.isInitialized &&
                 ::authProvider.isInitialized &&
-                ::firestoreDataSource.isInitialized
+                ::firestoreDataSource.isInitialized &&
+                ::remoteConfigProvider.isInitialized
 }

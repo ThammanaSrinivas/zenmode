@@ -41,8 +41,10 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
 import com.zenlauncher.zenmode.ui.screens.AccountabilityScreen
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
+import com.zenlauncher.zenmode.ui.screens.ForceUpdateDialog
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
 import com.zenlauncher.zenmode.ui.screens.ZenBuddyConnectBottomSheet
+import androidx.compose.runtime.collectAsState
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 class MainActivity : AppCompatActivity() {
@@ -235,6 +237,20 @@ class MainActivity : AppCompatActivity() {
                         ?: ServiceLocator.authProvider.getCurrentUserId()
                 }
                 val accountabilityUiState by accountabilityViewModel.uiState.observeAsState(AccountabilityUiState())
+                val showForceUpdate by viewModel.showForceUpdateDialog.collectAsState(initial = false)
+
+                if (showForceUpdate) {
+                    ForceUpdateDialog(
+                        onUpdateClick = {
+                            try {
+                                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")))
+                            } catch (e: android.content.ActivityNotFoundException) {
+                                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName")))
+                            }
+                        },
+                        onExitClick = { finish() }
+                    )
+                }
 
                 // Reload accountability data whenever the overlay is opened
                 androidx.compose.runtime.LaunchedEffect(showBuddyBattle) {
@@ -458,10 +474,9 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Cooldown: only allow retrying after 5 minutes if last attempt found no buddy
+        // Cooldown: only allow retrying after cooldown if last attempt found no buddy
         val lastTried = repository.getLastRandomConnectAttemptTime()
-        val cooldownMs = 30 * 1000L
-        val remaining = cooldownMs - (System.currentTimeMillis() - lastTried)
+        val remaining = AppConstants.RANDOM_CONNECT_COOLDOWN_MS - (System.currentTimeMillis() - lastTried)
         if (remaining > 0) {
             val secs = (remaining / 1000).coerceAtLeast(1)
             android.widget.Toast.makeText(

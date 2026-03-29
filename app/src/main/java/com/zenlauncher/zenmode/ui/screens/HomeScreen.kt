@@ -60,6 +60,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -412,6 +413,8 @@ private fun SearchOverlay(
     val colors = ZenTheme.colors
     var query by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+
 
     val filteredApps by remember(query, apps) {
         derivedStateOf {
@@ -456,7 +459,6 @@ private fun SearchOverlay(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp, vertical = 48.dp)
-                .clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }) { /* consume click */ }
         ) {
             // Search input
             Row(
@@ -471,7 +473,12 @@ private fun SearchOverlay(
                     onValueChange = { query = it },
                     modifier = Modifier
                         .weight(1f)
-                        .focusRequester(focusRequester),
+                        .focusRequester(focusRequester)
+                        .onFocusChanged { state ->
+                            if (state.isFocused) {
+                                keyboardController?.show()
+                            }
+                        },
                     textStyle = TextStyle(
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,

@@ -13,6 +13,10 @@ import com.zenlauncher.zenmode.coreapi.services.AuthProvider
 import com.zenlauncher.zenmode.coreapi.services.FirestoreDataSource
 import com.zenlauncher.zenmode.coreapi.services.AnalyticsTrackerContract
 
+import com.zenlauncher.zenmode.coreapi.services.RemoteConfigProvider
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
 class MockAppInitializer : AppInitializer {
     override fun initialize(application: Application) {
         Log.i("MockAppInitializer", "Initializing MOCK Core Services...")
@@ -21,8 +25,17 @@ class MockAppInitializer : AppInitializer {
         ServiceLocator.firestoreDataSource = MockFirestoreDataSource()
         ServiceLocator.analyticsTracker = MockAnalyticsTracker()
         ServiceLocator.analyticsManager = MockAnalyticsManager()
+        ServiceLocator.remoteConfigProvider = MockRemoteConfigProvider()
     }
 }
+
+class MockRemoteConfigProvider : RemoteConfigProvider {
+    override val minVersionCode: StateFlow<Long> = MutableStateFlow(0L)
+    override suspend fun initialize() {
+        Log.i("MockRemoteConfig", "MOCK Remote Config initialized. Defaulting to 0L.")
+    }
+}
+
 
 class MockAuthProvider : AuthProvider {
     private var signedIn = false

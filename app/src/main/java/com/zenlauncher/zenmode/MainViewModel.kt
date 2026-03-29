@@ -9,6 +9,9 @@ import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 data class BuddyStats(
     val screenTimeMins: Long
@@ -32,6 +35,9 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     private val _hasBuddies = MutableLiveData<Boolean>()
     val hasBuddies: LiveData<Boolean> get() = _hasBuddies
 
+    private val _showForceUpdateDialog = MutableStateFlow(false)
+    val showForceUpdateDialog: StateFlow<Boolean> = _showForceUpdateDialog.asStateFlow()
+
     private var sessionStartTime: Long = 0
     private var hasTriggeredDelayedUnlock = false
     private var lastUnlockTimestamp = 0L
@@ -44,6 +50,24 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
         // the resistance screen shows on every fresh launch.
         repository.setZenUnlockFlag(false)
         refreshStats()
+
+        // Collect remote config state immediately (reacts to cache before fetch completes)
+        viewModelScope.launch {
+            ServiceLocator.remoteConfigProvider.minVersionCode.collect { minVersion ->
+                // App's version code is generated in BuildConfig
+                val currentVersion = BuildConfig.VERSION_CODE
+                _showForceUpdateDialog.value = (minVersion > currentVersion)
+            }
+        }
+
+        // Setup remote config for forced updates independently
+        viewModelScope.launch {
+            try {
+                ServiceLocator.remoteConfigProvider.initialize()
+            } catch (e: Exception) {
+                // If it fails, we fall back to not blocking
+            }
+        }
     }
 
     fun onScreenUnlocked() {
