@@ -47,6 +47,8 @@ import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rdp
+import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.launch
 
 sealed class BuddyAddResult {
@@ -76,7 +78,7 @@ fun ZenBuddyConnectBottomSheet(
         dragHandle = {
             Box(
                 modifier = Modifier
-                    .padding(top = 12.dp, bottom = 8.dp)
+                    .padding(top = 12.rdp, bottom = 8.rdp)
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
@@ -121,8 +123,8 @@ private fun ZenBuddyConnectContent(
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .size(150.dp)
-                .offset(x = 40.dp, y = (-40).dp)
+                .size(150.rdp)
+                .offset(x = 40.rdp, y = (-40).rdp)
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
@@ -138,13 +140,13 @@ private fun ZenBuddyConnectContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 32.dp)
+                .padding(horizontal = 20.rdp)
+                .padding(bottom = 32.rdp)
         ) {
             // ── Title Row ──
             TitleRow(displayCode = displayCode, onCopyCode = onCopyCode)
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(28.rdp))
 
             // ── Section 1: Add Zen Buddy ──
             AddBuddySection(
@@ -186,17 +188,17 @@ private fun ZenBuddyConnectContent(
                 }
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(24.rdp))
 
             // ── Divider ──
             HorizontalDivider(color = colors.borderSubtle, thickness = 1.dp)
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(24.rdp))
 
             // ── Section 2: Random Connect ──
             RandomConnectSection(onRandomConnect = onRandomConnect)
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(28.rdp))
 
             // ── Footer Video Link ──
             VideoLink(onWatchVideo = onWatchVideo)
@@ -221,14 +223,14 @@ private fun TitleRow(displayCode: String, onCopyCode: () -> Unit) {
                     text = "Zen Buddy Connect",
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 24.sp,
+                    fontSize = 24.rsp,
                     color = colors.textPrimary
                 )
                 Spacer(Modifier.width(4.dp))
                 Image(
                     painter = painterResource(R.drawable.heart_sharukhan),
                     contentDescription = null,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(22.rdp)
                 )
             }
 
@@ -240,14 +242,14 @@ private fun TitleRow(displayCode: String, onCopyCode: () -> Unit) {
                     text = "My zenmode code: ",
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 14.rsp,
                     color = colors.textPrimary
                 )
                 Text(
                     text = displayCode,
                     fontFamily = RedditMono,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
+                    fontSize = 14.rsp,
                     color = colors.textSecondary
                 )
                 Spacer(Modifier.width(6.dp))
@@ -255,7 +257,7 @@ private fun TitleRow(displayCode: String, onCopyCode: () -> Unit) {
                     painter = painterResource(R.drawable.ic_content_copy),
                     contentDescription = "Copy code",
                     modifier = Modifier
-                        .size(16.dp)
+                        .size(16.rdp)
                         .clickable { onCopyCode() },
                     colorFilter = ColorFilter.tint(colors.textSecondary)
                 )
@@ -266,7 +268,7 @@ private fun TitleRow(displayCode: String, onCopyCode: () -> Unit) {
         Image(
             painter = painterResource(R.drawable.app_icon),
             contentDescription = "ZenMode",
-            modifier = Modifier.size(44.dp)
+            modifier = Modifier.size(44.rdp)
         )
     }
 }
@@ -287,24 +289,24 @@ private fun AddBuddySection(
     val isButtonEnabled = buddyCode.isNotBlank() && !isAddingBuddy
 
     Text(
-        text = "1. Single Forever? No Worries\uD83E\uDEE3",
+        text = "1. Experience Zen with a special one! \uD83E\uDD1D",
         fontFamily = CabinetGrotesque,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 18.sp,
+        fontSize = 18.rsp,
         color = colors.textPrimary
     )
 
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(12.rdp))
 
     Text(
         text = "ENTER YOUR BUDDY'S CODE:",
         fontFamily = CabinetGrotesque,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 12.sp,
+        fontSize = 12.rsp,
         color = colors.textBrand
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(8.rdp))
 
     // Input field
     BasicTextField(
@@ -314,11 +316,11 @@ private fun AddBuddySection(
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .background(colors.bgSecondary)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 16.rdp, vertical = 14.rdp),
         textStyle = TextStyle(
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 18.rsp,
             color = colors.textPrimary
         ),
         singleLine = true,
@@ -329,7 +331,7 @@ private fun AddBuddySection(
                     text = displayCode,
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    fontSize = 18.rsp,
                     color = colors.textSecondary.copy(alpha = 0.5f)
                 )
             }
@@ -337,7 +339,7 @@ private fun AddBuddySection(
         }
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(8.rdp))
 
     // Status / description message
     Text(
@@ -345,11 +347,11 @@ private fun AddBuddySection(
             ?: "Congrats for start accompanying your friend on mindful journey!!",
         fontFamily = CabinetGrotesque,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
+        fontSize = 14.rsp,
         color = if (isSuccess) colors.textBrand else colors.textSecondary
     )
 
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(16.rdp))
 
     // Add zen buddy button
     Image(
@@ -374,21 +376,21 @@ private fun RandomConnectSection(onRandomConnect: () -> Unit) {
         text = "2. Single Forever? No Worries\uD83E\uDEE3",
         fontFamily = CabinetGrotesque,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 18.sp,
+        fontSize = 18.rsp,
         color = colors.textPrimary
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(8.rdp))
 
     Text(
         text = "Our random connect, let\u2019s you connect with random people on their mindful journey!",
         fontFamily = CabinetGrotesque,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
+        fontSize = 14.rsp,
         color = colors.textSecondary
     )
 
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(16.rdp))
 
     // Random connect button (outlined)
     Image(
@@ -412,7 +414,7 @@ private fun VideoLink(onWatchVideo: () -> Unit) {
         text = "Watch video on how add your friend as zen buddy(\uD83D\uDCFA)",
         fontFamily = CabinetGrotesque,
         fontWeight = FontWeight.Medium,
-        fontSize = 13.sp,
+        fontSize = 13.rsp,
         color = colors.textBrand,
         modifier = Modifier.clickable { onWatchVideo() }
     )

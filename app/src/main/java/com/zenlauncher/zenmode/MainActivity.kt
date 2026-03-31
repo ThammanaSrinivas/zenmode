@@ -248,7 +248,7 @@ class MainActivity : AppCompatActivity() {
                                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName")))
                             }
                         },
-                        onExitClick = { finish() }
+                        onTomorrowClick = { viewModel.snoozeForceUpdateUntilTomorrow() }
                     )
                 }
 
@@ -279,17 +279,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val weeklyMillis = remember { repository.getWeeklyScreenTimeMillis() }
-                val streakCount = remember {
-                    // Count streak backwards from today: HAPPY/NEUTRAL count, ANNOYED breaks
-                    var count = 0
-                    for (i in weeklyMillis.indices.reversed()) {
-                        val minutes = (weeklyMillis[i] / 1000) / 60
-                        val mood = AppLogic.getMoodState(minutes)
-                        if (mood == MoodState.ANNOYED) break
-                        count++
-                    }
-                    count
-                }
+                val streakCount = remember { AppLogic.getStreakCount(weeklyMillis) }
 
                 HomeScreen(
                     usage = usage,

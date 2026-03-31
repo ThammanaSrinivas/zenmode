@@ -85,6 +85,8 @@ import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.Silkscreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.components.StatsCardsRow
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.alpha
@@ -141,7 +143,7 @@ fun HomeScreen(
                 onInviteBuddyClick = onInviteBuddyClick,
                 onSignInClick = onSignInClick,
                 onBuddyCardClick = onBuddyCardClick,
-                modifier = Modifier.padding(horizontal = 28.dp)
+                modifier = Modifier.padding(horizontal = 28.rdp)
             )
 
             // App Grid
@@ -227,7 +229,7 @@ private fun HomeHeader(streaks: Int, onStreakClick: () -> Unit) {
                 text = "streaks: $streaks",
                 fontFamily = Silkscreen,
                 fontWeight = FontWeight.Normal,
-                fontSize = 11.sp,
+                fontSize = 11.rsp,
                 letterSpacing = (-1.3).sp,
                 color = colors.bgPrimary
             )
@@ -304,7 +306,7 @@ private fun AppGridPager(
                 Box(
                     modifier = Modifier
                         .padding(top = 36.dp)
-                        .width(212.dp)
+                        .width(212.rdp)
                         .height(16.dp)
                         .pointerInput(totalPages) {
                             detectHorizontalDragGestures { change, _ ->
@@ -482,7 +484,7 @@ private fun SearchOverlay(
                     textStyle = TextStyle(
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp,
+                        fontSize = 16.rsp,
                         color = colors.textPrimary
                     ),
                     cursorBrush = SolidColor(colors.textBrand),
@@ -493,7 +495,7 @@ private fun SearchOverlay(
                                 text = "Search apps & everything",
                                 fontFamily = CabinetGrotesque,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp,
+                                fontSize = 16.rsp,
                                 color = colors.textSecondary
                             )
                         }
@@ -504,7 +506,7 @@ private fun SearchOverlay(
                 if (query.isNotEmpty()) {
                     Text(
                         text = "\u2715",
-                        fontSize = 18.sp,
+                        fontSize = 18.rsp,
                         color = colors.textSecondary,
                         modifier = Modifier
                             .clickable { query = "" }
@@ -556,7 +558,7 @@ private fun SearchOverlay(
                             text = app.label.toString(),
                             fontFamily = CabinetGrotesque,
                             fontWeight = FontWeight.Medium,
-                            fontSize = 15.sp,
+                            fontSize = 15.rsp,
                             color = colors.textPrimary
                         )
                     }
@@ -585,7 +587,7 @@ private fun SearchOverlay(
                                 text = "Search Google for \"$query\"",
                                 fontFamily = CabinetGrotesque,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp,
+                                fontSize = 14.rsp,
                                 color = colors.textSecondary
                             )
                         }
@@ -691,7 +693,7 @@ private fun StreakOverlay(
                     text = "My Zenmode Streak",
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 26.sp,
+                    fontSize = 26.rsp,
                     color = colors.textPrimary,
                     modifier = Modifier.align(Alignment.CenterStart)
                 )
@@ -747,7 +749,7 @@ private fun StreakOverlay(
                     text = String.format("%02d Days Streak", streaks),
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
+                    fontSize = 24.rsp,
                     color = colors.textPrimary
                 )
             }
@@ -756,7 +758,7 @@ private fun StreakOverlay(
                 text = streakSubtitle,
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                fontSize = 14.rsp,
                 color = colors.textPrimary,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -796,7 +798,7 @@ private fun StreakOverlay(
                                 text = dayLabels[dayIdx],
                                 fontFamily = CabinetGrotesque,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp,
+                                fontSize = 14.rsp,
                                 color = colors.textPrimary
                             )
 
@@ -808,7 +810,7 @@ private fun StreakOverlay(
                                     text = "${dayDate.dayOfMonth}",
                                     fontFamily = RedditMono,
                                     fontWeight = FontWeight.Normal,
-                                    fontSize = 16.sp,
+                                    fontSize = 14.rsp,
                                     color = colors.textPrimary,
                                     modifier = Modifier.size(28.dp),
                                     textAlign = TextAlign.Center
@@ -930,7 +932,8 @@ private fun BottomDock(
         // Search bar
         Box(
             modifier = Modifier
-                .width(212.dp)
+                .weight(1f)
+                .padding(horizontal = 16.dp)
                 .border(
                     width = 1.5.dp,
                     color = colors.borderFocus,
@@ -945,7 +948,7 @@ private fun BottomDock(
                 text = "Search apps & everything",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Medium,
-                fontSize = 13.sp,
+                fontSize = 13.rsp,
                 color = colors.textSecondary
             )
         }

@@ -50,6 +50,8 @@ class DelayedUnlockActivity : AppCompatActivity() {
             null
         }
 
+        val streakCount = AppLogic.getStreakCount(repository.getWeeklyScreenTimeMillis())
+
         // Back button handler
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -64,7 +66,7 @@ class DelayedUnlockActivity : AppCompatActivity() {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@DelayedUnlockActivity)) {
                 ResistenceScreen(
                     usage = usage,
-                    streaks = 0, // TODO: wire up streak tracking
+                    streaks = streakCount,
                     yesterdayChangePercent = yesterdayChangePercent,
                     skipsLeft = skipsLeft,
                     countdownSeconds = countdownSeconds,

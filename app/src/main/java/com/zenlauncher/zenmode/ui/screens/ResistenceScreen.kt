@@ -64,6 +64,8 @@ import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.Silkscreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.percentageChangeColor
+import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.ui.theme.rdp
 
 // ── Main Resistence Screen ──────────────────────────────────────────
 
@@ -133,12 +135,13 @@ fun ResistenceScreen(
         MoodState.ANNOYED -> R.drawable.resistence_screen_annoyed_layerblur
     }
 
+    val emojiSize = 12.rsp
     val adviceText = when (moodState) {
         MoodState.HAPPY -> buildAnnotatedString {
             append("You're in ")
             withStyle(SpanStyle(color = moodColor)) { append("zenmode") }
             append(" & being so mindful")
-            withStyle(SpanStyle(fontSize = 12.sp)) { append("\uD83D\uDC9A") }
+            withStyle(SpanStyle(fontSize = emojiSize)) { append("\uD83D\uDC9A") }
         }
         MoodState.NEUTRAL -> buildAnnotatedString {
             append("Free advice: Don't lose your ")
@@ -146,7 +149,7 @@ fun ResistenceScreen(
         }
         MoodState.ANNOYED -> buildAnnotatedString {
             append("Put the phone down BRO, Live LIFE ")
-            withStyle(SpanStyle(fontSize = 12.sp)) { append("\u2764\uFE0F") }
+            withStyle(SpanStyle(fontSize = emojiSize)) { append("\u2764\uFE0F") }
         }
     }
 
@@ -158,7 +161,7 @@ fun ResistenceScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 48.dp),
+                .padding(top = 48.rdp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // ── Header ──
@@ -201,9 +204,9 @@ fun ResistenceScreen(
                 // Q1 - upper left
                 Box(
                     modifier = Modifier
-                        .size(width = 101.dp, height = 172.dp)
+                        .size(width = 101.rdp, height = 172.rdp)
                         .align(Alignment.CenterStart)
-                        .offset(y = (-86).dp)
+                        .offset(y = (-86).rdp)
                 ) {
                     if (currentPhase == 3) {
                         Image(
@@ -222,9 +225,9 @@ fun ResistenceScreen(
                 // Q2 - upper right
                 Box(
                     modifier = Modifier
-                        .size(width = 101.dp, height = 172.dp)
+                        .size(width = 101.rdp, height = 172.rdp)
                         .align(Alignment.CenterEnd)
-                        .offset(y = (-86).dp)
+                        .offset(y = (-86).rdp)
                 ) {
                     if (currentPhase == 0) {
                         Image(
@@ -243,9 +246,9 @@ fun ResistenceScreen(
                 // Q3 - lower right
                 Box(
                     modifier = Modifier
-                        .size(width = 101.dp, height = 172.dp)
+                        .size(width = 101.rdp, height = 172.rdp)
                         .align(Alignment.CenterEnd)
-                        .offset(y = 86.dp)
+                        .offset(y = 86.rdp)
                 ) {
                     if (currentPhase == 1) {
                         Image(
@@ -264,9 +267,9 @@ fun ResistenceScreen(
                 // Q4 - lower left
                 Box(
                     modifier = Modifier
-                        .size(width = 101.dp, height = 172.dp)
+                        .size(width = 101.rdp, height = 172.rdp)
                         .align(Alignment.CenterStart)
-                        .offset(y = 86.dp)
+                        .offset(y = 86.rdp)
                 ) {
                     if (currentPhase == 2) {
                         Image(
@@ -288,7 +291,7 @@ fun ResistenceScreen(
                     painter = painterResource(centralImageRes),
                     contentDescription = "Mood",
                     modifier = Modifier
-                        .size(260.dp)
+                        .size(260.rdp)
                         .rotate(shurikenRotation)
                 )
             }
@@ -298,7 +301,7 @@ fun ResistenceScreen(
                 modifier = Modifier
                     .wrapContentWidth()
                     .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 12.dp),
+                    .padding(vertical = 12.rdp),
                 horizontalAlignment = Alignment.Start
             ) {
                 // ── My Screen Time ──
@@ -309,7 +312,7 @@ fun ResistenceScreen(
                         text = "My Screen Time",
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
+                        fontSize = 20.rsp,
                         color = colors.textPrimary
                     )
                     if (yesterdayChangePercent != null) {
@@ -318,7 +321,7 @@ fun ResistenceScreen(
                             text = "${if (yesterdayChangePercent >= 0) "+" else ""}${yesterdayChangePercent}%",
                             fontFamily = RedditMono,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
+                            fontSize = 12.rsp,
                             color = colors.percentageChangeColor(yesterdayChangePercent)
                         )
                     }
@@ -329,14 +332,15 @@ fun ResistenceScreen(
                     verticalAlignment = Alignment.Bottom,
                     modifier = Modifier.offset(y = (-4).dp)
                 ) {
+                    val timeLineHeight = 42.rsp
                     Text(
                         text = String.format("%02d", hours),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 56.sp,
+                        fontSize = 56.rsp,
                         color = colors.textPrimary,
                         style = androidx.compose.ui.text.TextStyle(
-                            lineHeight = 42.sp,
+                            lineHeight = timeLineHeight,
                             platformStyle = androidx.compose.ui.text.PlatformTextStyle(
                                 includeFontPadding = false
                             )
@@ -346,11 +350,11 @@ fun ResistenceScreen(
                         text = "HRS",
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 10.sp,
+                        fontSize = 10.rsp,
                         color = colors.textPrimary,
                         modifier = Modifier
-                            .offset(y = (-8).dp)
-                            .padding(end = 10.dp),
+                            .offset(y = (-8).rdp)
+                            .padding(end = 10.rdp),
                         style = androidx.compose.ui.text.TextStyle(
                             platformStyle = androidx.compose.ui.text.PlatformTextStyle(
                                 includeFontPadding = false
@@ -361,10 +365,10 @@ fun ResistenceScreen(
                         text = String.format("%02d", mins),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 56.sp,
+                        fontSize = 56.rsp,
                         color = colors.textPrimary,
                         style = androidx.compose.ui.text.TextStyle(
-                            lineHeight = 42.sp,
+                            lineHeight = timeLineHeight,
                             platformStyle = androidx.compose.ui.text.PlatformTextStyle(
                                 includeFontPadding = false
                             )
@@ -374,10 +378,10 @@ fun ResistenceScreen(
                         text = "MINS",
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 10.sp,
+                        fontSize = 10.rsp,
                         color = colors.textPrimary,
                         modifier = Modifier
-                            .offset(y = (-8).dp),
+                            .offset(y = (-8).rdp),
                         style = androidx.compose.ui.text.TextStyle(
                             platformStyle = androidx.compose.ui.text.PlatformTextStyle(
                                 includeFontPadding = false
@@ -389,7 +393,7 @@ fun ResistenceScreen(
                         painter = painterResource(trendRes),
                         contentDescription = "Trend",
                         modifier = Modifier
-                            .size(width = 60.dp, height = 56.dp)
+                            .size(width = 60.rdp, height = 56.rdp)
                             .padding(start = 2.dp)
                             .offset(y = (-4).dp)
                     )
@@ -405,14 +409,14 @@ fun ResistenceScreen(
                         text = "Mindfulness",
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp,
+                        fontSize = 22.rsp,
                         color = colors.textPrimary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     ResistenceMindfulnessBar(
                         progress = mindfulnessProgress,
                         moodState = moodState,
-                        modifier = Modifier.width(100.dp)
+                        modifier = Modifier.width(100.rdp)
                     )
                 }
             }
@@ -424,10 +428,10 @@ fun ResistenceScreen(
                 text = adviceText,
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Medium,
-                fontSize = 13.sp,
+                fontSize = 13.rsp,
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 20.dp)
+                modifier = Modifier.padding(horizontal = 20.rdp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -462,14 +466,14 @@ private fun ResistenceHeader(streaks: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = 20.rdp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
             painter = painterResource(R.drawable.app_icon),
             contentDescription = "ZenMode",
-            modifier = Modifier.size(44.dp)
+            modifier = Modifier.size(44.rdp)
         )
 
         Box(
@@ -482,7 +486,7 @@ private fun ResistenceHeader(streaks: Int) {
                 text = "streaks: $streaks",
                 fontFamily = Silkscreen,
                 fontWeight = FontWeight.Normal,
-                fontSize = 11.sp,
+                fontSize = 11.rsp,
                 letterSpacing = (-1.3).sp,
                 color = colors.bgPrimary
             )
@@ -568,12 +572,12 @@ private fun CountdownCircle(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(110.dp)
+        modifier = Modifier.size(110.rdp)
     ) {
         Image(
             painter = painterResource(aroundTimeRes),
             contentDescription = null,
-            modifier = Modifier.size(110.dp)
+            modifier = Modifier.size(110.rdp)
         )
 
         // Countdown number
@@ -581,7 +585,7 @@ private fun CountdownCircle(
             text = if (countdownFinished) AppConstants.COUNTDOWN_SECONDS.toString() else countdownSeconds.toString(),
             fontFamily = RedditMono,
             fontWeight = FontWeight.Bold,
-            fontSize = 36.sp,
+            fontSize = 36.rsp,
             color = colors.textPrimary
         )
     }
@@ -603,8 +607,8 @@ private fun ResistenceBottomDock(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(top = 8.dp, bottom = 32.dp),
+            .padding(horizontal = 20.rdp)
+            .padding(top = 8.dp, bottom = 32.rdp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -613,7 +617,7 @@ private fun ResistenceBottomDock(
             painter = painterResource(R.drawable.ic_settings),
             contentDescription = "Settings",
             modifier = Modifier
-                .size(32.dp)
+                .size(32.rdp)
                 .clickable { onSettingsClick() },
             colorFilter = ColorFilter.tint(colors.textBrand)
         )
@@ -638,7 +642,7 @@ private fun ResistenceBottomDock(
             },
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Medium,
-            fontSize = 12.sp,
+            fontSize = 12.rsp,
             color = if (canSkip) colors.textSecondary else colors.textSecondary.copy(alpha = 0.5f),
             textAlign = TextAlign.Center,
             modifier = if (canSkip) Modifier.clickable { onSkipClick() } else Modifier
@@ -649,7 +653,7 @@ private fun ResistenceBottomDock(
             painter = painterResource(R.drawable.ic_phone),
             contentDescription = "Phone",
             modifier = Modifier
-                .size(32.dp)
+                .size(32.rdp)
                 .clickable { onPhoneClick() },
             colorFilter = ColorFilter.tint(colors.textBrand)
         )

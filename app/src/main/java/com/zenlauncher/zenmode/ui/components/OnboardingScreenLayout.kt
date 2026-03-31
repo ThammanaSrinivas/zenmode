@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rdp
 
 @Composable
 fun OnboardingScreenLayout(
@@ -42,8 +43,8 @@ fun OnboardingScreenLayout(
             painter = painterResource(id = R.drawable.onboarding_crystal),
             contentDescription = null,
             modifier = Modifier
-                .size(160.dp)
-                .offset(x = (-62).dp, y = (-50).dp)
+                .size(160.rdp)
+                .offset(x = (-62).rdp, y = (-50).rdp)
                 .align(Alignment.TopStart),
             contentScale = ContentScale.Fit
         )
@@ -53,8 +54,8 @@ fun OnboardingScreenLayout(
             painter = painterResource(id = R.drawable.onboarding_shuriken),
             contentDescription = null,
             modifier = Modifier
-                .size(120.dp)
-                .offset(x = 60.dp, y = (-60).dp)
+                .size(120.rdp)
+                .offset(x = 60.rdp, y = (-60).rdp)
                 .blur(15.9.dp)
                 .align(Alignment.TopEnd),
             contentScale = ContentScale.Fit
@@ -66,8 +67,8 @@ fun OnboardingScreenLayout(
                 painter = painterResource(id = R.drawable.app_icon),
                 contentDescription = "ZenMode logo",
                 modifier = Modifier
-                    .size(60.dp)
-                    .offset(y = 16.dp)
+                    .size(60.rdp)
+                    .offset(y = 16.rdp)
                     .align(Alignment.TopCenter),
                 contentScale = ContentScale.Fit
             )
@@ -77,7 +78,7 @@ fun OnboardingScreenLayout(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = if (showLogo) 100.dp else 40.dp),
+                .padding(top = if (showLogo) 100.rdp else 40.rdp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Main dynamic content
@@ -95,21 +96,21 @@ fun OnboardingScreenLayout(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 40.dp, start = 20.dp, end = 20.dp)
+                    .padding(bottom = 40.rdp, start = 20.rdp, end = 20.rdp)
             ) {
                 // Progress bar
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
+                        .padding(horizontal = 20.rdp)
                 ) {
                     if (onBackClick != null) {
                         Image(
                             painter = painterResource(id = R.drawable.left_arrow),
                             contentDescription = "Back",
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(24.rdp)
                                 .clickable { onBackClick() },
                             contentScale = ContentScale.Fit
                         )
@@ -136,13 +137,13 @@ fun OnboardingScreenLayout(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.rdp))
 
                 // Primary Action Button
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
+                        .height(56.rdp)
                         .background(colors.textBrand, RoundedCornerShape(28.dp))
                         .clickable { onButtonClick() },
                     contentAlignment = Alignment.Center
@@ -158,7 +159,7 @@ fun OnboardingScreenLayout(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 64.dp),
+                        .heightIn(min = 64.rdp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     if (bottomFooter != null) {

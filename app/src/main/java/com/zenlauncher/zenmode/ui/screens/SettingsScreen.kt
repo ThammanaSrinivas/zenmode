@@ -58,6 +58,8 @@ import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
 import java.time.LocalDate
 import java.time.format.TextStyle as JavaTextStyle
@@ -104,12 +106,12 @@ fun SettingsScreen(
                 onProfileClick = { showProfileSheet = true }
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.rdp))
 
             // ── My Weekly Stats ───────────────────────────────────────
             WeeklyStatsSection(weeklyHours = weeklyHours)
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(28.rdp))
 
             // ── Personalise, Your Way! ────────────────────────────────
             PersonaliseSection(
@@ -123,22 +125,22 @@ fun SettingsScreen(
                 onContributeClick = onContributeClick
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(28.rdp))
 
             // ── You're the Hero! ─────────────────────────────────────
             HeroSection()
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.rdp))
 
             // ── Rate Us Button ────────────────────────────────────────
             RateUsButton(onClick = onRateClick)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.rdp))
 
             // ── Share ZenMode ─────────────────────────────────────────
             ShareZenModeRow(onClick = onShareClick)
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.rdp))
         }
 
         // ── Profile Bottom Sheet ──────────────────────────────────
@@ -171,7 +173,7 @@ private fun SettingsHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(horizontal = 20.rdp, vertical = 16.rdp)
     ) {
         // Back button — left
         Image(
@@ -181,7 +183,7 @@ private fun SettingsHeader(
                 .align(Alignment.CenterStart)
                 .clip(RoundedCornerShape(20.dp))
                 .clickable { onBackClick() }
-                .height(36.dp),
+                .height(36.rdp),
             contentScale = ContentScale.Fit
         )
 
@@ -191,7 +193,7 @@ private fun SettingsHeader(
             contentDescription = "ZenMode",
             modifier = Modifier
                 .align(Alignment.Center)
-                .size(36.dp)
+                .size(36.rdp)
         )
 
         // Profile picture — right
@@ -201,7 +203,7 @@ private fun SettingsHeader(
                 contentDescription = "Profile picture",
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .size(36.dp)
+                    .size(36.rdp)
                     .clip(CircleShape)
                     .clickable { onProfileClick() },
                 contentScale = ContentScale.Crop
@@ -210,7 +212,7 @@ private fun SettingsHeader(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .size(36.dp)
+                    .size(36.rdp)
                     .clip(CircleShape)
                     .background(colors.textSecondary.copy(alpha = 0.3f))
                     .clickable { onProfileClick() },
@@ -233,25 +235,25 @@ private fun SettingsHeader(
 private fun WeeklyStatsSection(weeklyHours: List<Float>) {
     val colors = ZenTheme.colors
 
-    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 20.rdp)) {
         // Section title row
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(R.drawable.onboarding_usage_access_permission),
                 contentDescription = null,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(28.rdp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "My Weekly stats",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 20.rsp,
                 color = colors.textPrimary
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.rdp))
 
         // Graph card
         ScreenTimeGraphCard(weeklyHours = weeklyHours)
@@ -284,24 +286,24 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(colors.bgSecondary)
-            .padding(16.dp)
+            .padding(16.rdp)
     ) {
         // Title
         Text(
             text = "My  Screen time",
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Medium,
-            fontSize = 14.sp,
+            fontSize = 14.rsp,
             color = colors.textPrimary
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.rdp))
 
         // Graph area
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(180.rdp)
         ) {
             // Y-axis labels
             Column(
@@ -315,7 +317,7 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
                         text = "${h}h",
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 10.sp,
+                        fontSize = 10.rsp,
                         color = colors.textSecondary
                     )
                 }
@@ -325,7 +327,7 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
             Canvas(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start = 28.dp)
+                    .padding(start = 28.rdp)
             ) {
                 val graphWidth = size.width
                 val graphHeight = size.height
@@ -403,7 +405,7 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 28.dp),
+                .padding(start = 28.rdp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             dayLabels.forEach { label ->
@@ -411,10 +413,10 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
                     text = label,
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Normal,
-                    fontSize = 10.sp,
+                    fontSize = 10.rsp,
                     color = colors.textSecondary,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.width(36.dp)
+                    modifier = Modifier.width(36.rdp)
                 )
             }
         }
@@ -433,25 +435,25 @@ private fun PersonaliseSection(
 ) {
     val colors = ZenTheme.colors
 
-    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 20.rdp)) {
         // Section title
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(R.drawable.star),
                 contentDescription = null,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(28.rdp)
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "Personalise, Your Way!",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 20.rsp,
                 color = colors.textPrimary
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.rdp))
 
         // Settings card
         Column(
@@ -503,7 +505,7 @@ private fun SettingsClickableItem(
         text = text,
         fontFamily = CabinetGrotesque,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
+        fontSize = 16.rsp,
         color = color,
         modifier = Modifier
             .fillMaxWidth()
@@ -518,27 +520,28 @@ private fun SettingsClickableItem(
 private fun HeroSection() {
     val colors = ZenTheme.colors
 
+    val missionLineHeight = 20.rsp
     Column(
-        modifier = Modifier.padding(horizontal = 20.dp)
+        modifier = Modifier.padding(horizontal = 20.rdp)
     ) {
         // Title row
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(R.drawable.king),
                 contentDescription = null,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(28.rdp)
             )
             Text(
                 text = "You're the Hero!",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 20.rsp,
                 color = colors.textPrimary
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "⭐",
-                fontSize = 14.sp
+                fontSize = 14.rsp
             )
         }
 
@@ -549,9 +552,9 @@ private fun HeroSection() {
             text = "You can be anywhere, but thanks for joining our journey to help people with mindful digital time.",
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Normal,
-            fontSize = 14.sp,
+            fontSize = 14.rsp,
             color = colors.textSecondary,
-            lineHeight = 20.sp
+            lineHeight = missionLineHeight
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -561,7 +564,7 @@ private fun HeroSection() {
             text = "\u00A9 2026 Zenmode. All rights reserved.",
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Normal,
-            fontSize = 12.sp,
+            fontSize = 12.rsp,
             color = colors.textSecondary
         )
 
@@ -582,13 +585,13 @@ private fun HeroSection() {
                     }
                 },
                 fontFamily = CabinetGrotesque,
-                fontSize = 14.sp
+                fontSize = 14.rsp
             )
             Spacer(modifier = Modifier.width(4.dp))
             Image(
                 painter = painterResource(R.drawable.heart_byhand),
                 contentDescription = null,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.rdp)
             )
         }
     }
@@ -601,7 +604,7 @@ private fun RateUsButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 20.rdp)
             .clip(RoundedCornerShape(12.dp))
             .background(ZenTheme.colors.actionPrimary)
             .clickable { onClick() }
@@ -612,7 +615,7 @@ private fun RateUsButton(onClick: () -> Unit) {
             text = "Rate us on play store",
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 18.rsp,
             color = ZenTheme.colors.actionPrimaryText
         )
     }
@@ -634,14 +637,14 @@ private fun ShareZenModeRow(onClick: () -> Unit) {
             text = "Share zenmode",
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Medium,
-            fontSize = 18.sp,
+            fontSize = 18.rsp,
             color = ZenTheme.colors.textBrand
         )
         Spacer(modifier = Modifier.width(8.dp))
         Image(
             painter = painterResource(R.drawable.share_zenmode),
             contentDescription = "Share",
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(20.rdp),
             contentScale = ContentScale.Fit
         )
     }
@@ -680,8 +683,8 @@ private fun ProfileBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+                .padding(horizontal = 24.rdp)
+                .padding(bottom = 32.rdp)
         ) {
             if (!showDeleteConfirmation) {
                 // Title row with app icon
@@ -701,9 +704,9 @@ private fun ProfileBottomSheet(
                             },
                             fontFamily = CabinetGrotesque,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp,
+                            fontSize = 22.rsp,
                             color = colors.textPrimary,
-                            lineHeight = 28.sp
+                            lineHeight = 28.rsp
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -713,9 +716,9 @@ private fun ProfileBottomSheet(
                             text = "Hey though I\u2019m always here waiting to help you!",
                             fontFamily = CabinetGrotesque,
                             fontWeight = FontWeight.Normal,
-                            fontSize = 14.sp,
+                            fontSize = 14.rsp,
                             color = colors.textSecondary,
-                            lineHeight = 20.sp
+                            lineHeight = 20.rsp
                         )
                     }
 
@@ -725,11 +728,11 @@ private fun ProfileBottomSheet(
                     Image(
                         painter = painterResource(R.drawable.app_icon),
                         contentDescription = "ZenMode",
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(48.rdp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(28.rdp))
 
                 // Delete account row
                 Row(
@@ -742,14 +745,14 @@ private fun ProfileBottomSheet(
                     Image(
                         painter = painterResource(R.drawable.delete_account),
                         contentDescription = "Delete account",
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.rdp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Delete account",
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp,
+                        fontSize = 16.rsp,
                         color = Color(0xFFE53935)
                     )
                 }
@@ -771,14 +774,14 @@ private fun ProfileBottomSheet(
                     Image(
                         painter = painterResource(R.drawable.log_out),
                         contentDescription = "Log out",
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.rdp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Log out",
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 16.sp,
+                        fontSize = 16.rsp,
                         color = colors.textPrimary
                     )
                 }
@@ -788,7 +791,7 @@ private fun ProfileBottomSheet(
                     text = "Are you sure?",
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
+                    fontSize = 22.rsp,
                     color = colors.textPrimary
                 )
 
@@ -798,12 +801,12 @@ private fun ProfileBottomSheet(
                     text = "This will permanently delete your account and all associated data. This action cannot be undone.",
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Normal,
-                    fontSize = 14.sp,
+                    fontSize = 14.rsp,
                     color = colors.textSecondary,
-                    lineHeight = 20.sp
+                    lineHeight = 20.rsp
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.rdp))
 
                 // Delete button
                 Box(
@@ -819,7 +822,7 @@ private fun ProfileBottomSheet(
                         text = "Delete my account",
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
+                        fontSize = 16.rsp,
                         color = Color.White
                     )
                 }
@@ -840,7 +843,7 @@ private fun ProfileBottomSheet(
                         text = "Cancel",
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp,
+                        fontSize = 16.rsp,
                         color = colors.textPrimary
                     )
                 }

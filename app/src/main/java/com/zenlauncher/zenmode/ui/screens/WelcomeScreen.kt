@@ -36,6 +36,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
@@ -104,7 +106,7 @@ fun WelcomeScreen(
                 val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
                 androidx.compose.foundation.text.ClickableText(
                     text = footerText,
-                    modifier = Modifier.padding(horizontal = 32.dp),
+                    modifier = Modifier.padding(horizontal = 32.rdp),
                     style = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center),
                     onClick = { offset ->
                         footerText.getStringAnnotations(tag = "URL", start = offset, end = offset)
@@ -114,13 +116,13 @@ fun WelcomeScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.rdp))
 
                 if (!showReviewerFields) {
                     Text(
                         text = "Reviewer? Sign in here",
                         color = colors.textSecondary,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.rsp),
                         modifier = Modifier.clickable { showReviewerFields = true }
                     )
                 }
@@ -128,14 +130,14 @@ fun WelcomeScreen(
                 AnimatedVisibility(visible = showReviewerFields) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(horizontal = 32.dp)
+                        modifier = Modifier.padding(horizontal = 32.rdp)
                     ) {
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
                             label = { Text("Email", style = MaterialTheme.typography.bodySmall) },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            modifier = Modifier.fillMaxWidth().height(52.rdp),
                             textStyle = MaterialTheme.typography.bodySmall.copy(color = colors.textPrimary),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = colors.textBrand,
@@ -152,7 +154,7 @@ fun WelcomeScreen(
                             label = { Text("Password", style = MaterialTheme.typography.bodySmall) },
                             singleLine = true,
                             visualTransformation = PasswordVisualTransformation(),
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            modifier = Modifier.fillMaxWidth().height(52.rdp),
                             textStyle = MaterialTheme.typography.bodySmall.copy(color = colors.textPrimary),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = colors.textBrand,
@@ -162,11 +164,11 @@ fun WelcomeScreen(
                                 cursorColor = colors.textBrand
                             )
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.rdp))
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(40.dp)
+                                .height(40.rdp)
                                 .background(colors.textBrand, RoundedCornerShape(20.dp))
                                 .clickable {
                                     if (email.isNotBlank() && password.isNotBlank()) {
@@ -198,9 +200,9 @@ fun WelcomeScreen(
                 painter = painterResource(id = R.drawable.logo_only_pins),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(303.dp)
+                    .size(303.rdp)
                     .align(Alignment.CenterEnd)
-                    .offset(x = 210.dp)
+                    .offset(x = 210.rdp)
                     .blur(9.7.dp),
                 contentScale = ContentScale.Fit
             )
@@ -228,7 +230,7 @@ fun WelcomeScreen(
                     Color.Transparent
                 )
                 Canvas(
-                    modifier = Modifier.size(250.dp)
+                    modifier = Modifier.size(250.rdp)
                 ) {
                     val centerPos = Offset(size.width / 2, size.height / 2)
                     val gradientRadius = size.width / 2
@@ -269,7 +271,7 @@ fun WelcomeScreen(
                 Image(
                     painter = painterResource(id = R.drawable.app_icon),
                     contentDescription = "Zenmode Logo",
-                    modifier = Modifier.size(250.dp),
+                    modifier = Modifier.size(250.rdp),
                     contentScale = ContentScale.Fit
                 )
             }
@@ -280,12 +282,12 @@ fun WelcomeScreen(
                 enter = fadeIn(animationSpec = tween(800)),
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .offset(y = 140.dp)
+                    .offset(y = 140.rdp)
             ) {
                 Text(
                     text = "ZENMODE",
                     color = colors.textBrand,
-                    style = MaterialTheme.typography.displaySmall.copy(fontSize = 18.sp)
+                    style = MaterialTheme.typography.displaySmall.copy(fontSize = 18.rsp)
                 )
             }
         }
@@ -294,7 +296,7 @@ fun WelcomeScreen(
         androidx.compose.animation.AnimatedVisibility(
             visible = state == WelcomeState.FULL_PAGE,
             enter = fadeIn(animationSpec = tween(800)),
-            modifier = Modifier.padding(top = 40.dp, bottom = 30.dp)
+            modifier = Modifier.padding(top = 40.rdp, bottom = 30.rdp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val firstStepText = buildAnnotatedString {
@@ -316,7 +318,7 @@ fun WelcomeScreen(
                     text = "Mindful Digital time",
                     color = colors.textBrand,
                     style = MaterialTheme.typography.headlineSmall.copy(
-                        fontSize = 24.sp,
+                        fontSize = 24.rsp,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         shadow = androidx.compose.ui.graphics.Shadow(
                             color = colors.textBrand.copy(alpha = 0.5f),
@@ -332,7 +334,7 @@ fun WelcomeScreen(
         androidx.compose.animation.AnimatedVisibility(
             visible = state >= WelcomeState.BOTTOM_TEXT,
             enter = fadeIn(animationSpec = tween(800)),
-            modifier = Modifier.padding(bottom = 40.dp, start = 20.dp, end = 20.dp)
+            modifier = Modifier.padding(bottom = 40.rdp, start = 20.rdp, end = 20.rdp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -342,32 +344,33 @@ fun WelcomeScreen(
                 // Offset by half of (spacer 8dp + heart 34dp) so only text is center-aligned
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.offset(x = 21.dp)
+                    modifier = Modifier.offset(x = 21.rdp)
                 ) {
                     Text(
                         text = "Bro, Hear me close,",
                         color = colors.textPrimary,
-                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp)
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.rsp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.rdp))
                     Image(
                         painter = painterResource(id = R.drawable.heart_byhand),
                         contentDescription = "Heart",
-                        modifier = Modifier.size(34.dp)
+                        modifier = Modifier.size(34.rdp)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 // "Life is *too* short!"
+                val fontSize14 = 14.rsp
                 val lifeText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = 14.sp)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize14)) {
                         append("Life is ")
                     }
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textBrand, fontSize = 14.sp)) {
+                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textBrand, fontSize = fontSize14)) {
                         append("too")
                     }
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = 14.sp)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize14)) {
                         append(" short!")
                     }
                 }
@@ -377,14 +380,15 @@ fun WelcomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(10.rdp))
 
                 // 'Just "4000 weeks", Let's make em count!'
+                val fontSize16 = 16.rsp
                 val weeksText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = 16.sp)) {
+                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize16)) {
                         append("Just \"4000 weeks\", ")
                     }
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textPrimary, fontSize = 16.sp)) {
+                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize16)) {
                         append("Let's make em count!")
                     }
                 }

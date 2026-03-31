@@ -38,6 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.ui.theme.rdp
+import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.AccountabilityUiState
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.R
@@ -104,8 +106,8 @@ fun AccountabilityScreen(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
                 ) { /* consume */ }
-                .padding(horizontal = 20.dp)
-                .padding(top = 12.dp, bottom = 32.dp),
+                .padding(horizontal = 20.rdp)
+                .padding(top = 12.rdp, bottom = 32.rdp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Drag handle
@@ -117,7 +119,7 @@ fun AccountabilityScreen(
                     .background(colors.textSecondary.copy(alpha = 0.4f))
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(20.rdp))
 
             // Title: "Zen Buddy Summary" with heart immediately after
             Row(
@@ -128,37 +130,37 @@ fun AccountabilityScreen(
                     text = "Zen Buddy Summary",
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 26.sp,
+                    fontSize = 26.rsp,
                     color = colors.textPrimary
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Image(
                     painter = painterResource(R.drawable.heart_sharukhan),
                     contentDescription = null,
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(26.rdp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.rdp))
 
             // User Code
             uiState.userCode?.let { code ->
                 UserCodeRow(code = code, onCopyCode = { onCopyCode(code) })
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(20.rdp))
 
             // Weekly Battle Heading
             Text(
                 text = "Zenmode Weekly Battle:",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                fontSize = 18.rsp,
                 color = colors.textPrimary,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.rdp))
 
             // Stats Cards (weekly mode)
             StatsCardsRow(
@@ -171,12 +173,12 @@ fun AccountabilityScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.rdp))
 
             // Lead / lag text
             LeadText(myUsage = uiState.myUsage, buddyStats = uiState.buddyStats)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.rdp))
 
             // Connection date
             uiState.connectionDateMillis?.let { millis ->
@@ -184,13 +186,13 @@ fun AccountabilityScreen(
                     text = "Buddy connection active since ${formatConnectionDate(millis)}",
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Normal,
-                    fontSize = 14.sp,
+                    fontSize = 14.rsp,
                     color = colors.textSecondary,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(28.rdp))
 
             // Back to Home Button
             Image(
@@ -203,20 +205,20 @@ fun AccountabilityScreen(
                     .clickable { onBackToHomeClick() }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.rdp))
 
             // Change My Buddy
             Text(
                 text = "Change my buddy",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                fontSize = 16.rsp,
                 color = colors.textBrand,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showChangeBuddyDialog = true }
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 8.rdp)
             )
         }
     }
@@ -237,23 +239,23 @@ private fun UserCodeRow(code: String, onCopyCode: () -> Unit) {
             text = "My zenmode code: ",
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Normal,
-            fontSize = 14.sp,
+            fontSize = 14.rsp,
             color = colors.textSecondary
         )
         Text(
             text = displayCode,
             fontFamily = RedditMono,
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
+            fontSize = 14.rsp,
             color = colors.textPrimary
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(8.rdp))
         Image(
             painter = painterResource(R.drawable.ic_content_copy),
             contentDescription = "Copy code",
             colorFilter = ColorFilter.tint(colors.textBrand),
             modifier = Modifier
-                .size(20.dp)
+                .size(20.rdp)
                 .clickable { onCopyCode() }
         )
     }
@@ -302,7 +304,7 @@ private fun LeadText(myUsage: DailyUsage?, buddyStats: BuddyStats?) {
             text = leadText,
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Medium,
-            fontSize = 15.sp,
+            fontSize = 15.rsp,
             color = colors.textPrimary
         )
         if (highlightText.isNotEmpty()) {
@@ -310,7 +312,7 @@ private fun LeadText(myUsage: DailyUsage?, buddyStats: BuddyStats?) {
                 text = highlightText,
                 fontFamily = RedditMono,
                 fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
+                fontSize = 15.rsp,
                 color = colors.textBrand
             )
         }
@@ -333,7 +335,7 @@ private fun ChangeBuddyConfirmDialog(
                 text = "Change buddy?",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 20.rsp,
                 color = colors.textPrimary
             )
         },
@@ -342,7 +344,7 @@ private fun ChangeBuddyConfirmDialog(
                 text = "Are you sure you want to disconnect with current buddy?",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
+                fontSize = 14.rsp,
                 color = colors.textSecondary
             )
         },
@@ -351,11 +353,11 @@ private fun ChangeBuddyConfirmDialog(
                 text = "Yes, disconnect",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
+                fontSize = 16.rsp,
                 color = colors.moodAnnoyed,
                 modifier = Modifier
                     .clickable { onConfirm() }
-                    .padding(8.dp)
+                    .padding(8.rdp)
             )
         },
         dismissButton = {
@@ -363,11 +365,11 @@ private fun ChangeBuddyConfirmDialog(
                 text = "Cancel",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                fontSize = 16.rsp,
                 color = colors.textPrimary,
                 modifier = Modifier
                     .clickable { onDismiss() }
-                    .padding(8.dp)
+                    .padding(8.rdp)
             )
         }
     )

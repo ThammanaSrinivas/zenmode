@@ -62,11 +62,13 @@ fun ZenTheme(
     CompositionLocalProvider(
         LocalZenColors provides zenColors
     ) {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = Typography,
-            content = content
-        )
+        ProvideScreenScale {
+            MaterialTheme(
+                colorScheme = colorScheme,
+                typography = Typography,
+                content = content
+            )
+        }
     }
 }
 

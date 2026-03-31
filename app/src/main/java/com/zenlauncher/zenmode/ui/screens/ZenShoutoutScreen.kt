@@ -28,6 +28,7 @@ import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rdp
 
 @Composable
 fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
@@ -44,19 +45,19 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(top = 16.dp, bottom = 24.dp),
+                .padding(horizontal = 20.rdp)
+                .padding(top = 16.rdp, bottom = 24.rdp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // heart_sharukhan icon above the title
             Image(
                 painter = painterResource(id = R.drawable.heart_sharukhan),
                 contentDescription = null,
-                modifier = Modifier.size(72.dp),
+                modifier = Modifier.size(72.rdp),
                 contentScale = ContentScale.Fit
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.rdp))
 
             Text(
                 text = "Zenmode",
@@ -74,7 +75,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(28.rdp))
 
             // Shoutout to Sharukhan
             val sharukhanText = buildAnnotatedString {
@@ -105,7 +106,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(20.rdp))
 
             // Mission statement
             val missionText = buildAnnotatedString {
@@ -133,7 +134,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
                     .padding(top = 4.dp)
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(28.rdp))
 
             // thumbs_up + "Help us build Zenmode, Github (↗)"
             val uriHandler = LocalUriHandler.current
@@ -161,7 +162,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
                 Image(
                     painter = painterResource(id = R.drawable.thumbs_up),
                     contentDescription = null,
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(28.rdp),
                     contentScale = ContentScale.Fit
                 )
                 Spacer(modifier = Modifier.width(8.dp))

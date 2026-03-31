@@ -43,6 +43,8 @@ import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.RedditMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.percentageChangeColor
+import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.statsCardFill
 
 // ── Shared Stats Row ──────────────────────────────────────────────
@@ -201,18 +203,6 @@ fun MyScreenTimeCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(2f)
-                    .dropShadow(
-                        color = Color.Black.copy(alpha = 0.3f),
-                        blur = 13.48.dp,
-                        offsetY = 6.74.dp
-                    )
-                    .innerShadow(
-                        color = Color.Black.copy(alpha = 0.1f),
-                        cornerRadius = 0.dp,
-                        blur = 10.dp,
-                        spread = 1.68.dp,
-                        offsetY = (-1.68).dp
-                    )
             )
 
             Column(modifier = Modifier.padding(horizontal = 10.dp)) {
@@ -227,7 +217,7 @@ fun MyScreenTimeCard(
                         text = if (isWeekly) "My Weekly Time" else "My Screen Time",
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 12.sp,
+                        fontSize = 12.rsp,
                         color = colors.textPrimary
                     )
                     if (yesterdayChangePercent != null) {
@@ -236,7 +226,7 @@ fun MyScreenTimeCard(
                             text = "${if (yesterdayChangePercent >= 0) "+" else ""}${yesterdayChangePercent}%",
                             fontFamily = RedditMono,
                             fontWeight = FontWeight.Normal,
-                            fontSize = 11.sp,
+                            fontSize = 11.rsp,
                             color = colors.percentageChangeColor(yesterdayChangePercent)
                         )
                     }
@@ -251,29 +241,29 @@ fun MyScreenTimeCard(
                         text = String.format("%02d", hours),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
+                        fontSize = 25.rsp,
                         color = colors.textPrimary
                     )
                     Text(
                         text = "HRS",
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 8.sp,
+                        fontSize = 8.rsp,
                         color = colors.textPrimary,
-                        modifier = Modifier.padding(start = 2.dp, end = 6.dp)
+                        modifier = Modifier.padding(start = 2.dp, end = 4.rdp)
                     )
                     Text(
                         text = String.format("%02d", mins),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
+                        fontSize = 25.rsp,
                         color = colors.textPrimary
                     )
                     Text(
                         text = "MINS",
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 8.sp,
+                        fontSize = 8.rsp,
                         color = colors.textPrimary,
                         modifier = Modifier.padding(start = 2.dp)
                     )
@@ -347,18 +337,6 @@ fun BuddyStatsCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(2f)
-                    .dropShadow(
-                        color = Color.Black.copy(alpha = 0.3f),
-                        blur = 13.48.dp,
-                        offsetY = 6.74.dp
-                    )
-                    .innerShadow(
-                        color = Color.Black.copy(alpha = 0.1f),
-                        cornerRadius = 0.dp,
-                        blur = 10.dp,
-                        spread = 1.68.dp,
-                        offsetY = (-1.68).dp
-                    )
             )
 
             Column(modifier = Modifier.padding(horizontal = 10.dp)) {
@@ -367,7 +345,7 @@ fun BuddyStatsCard(
                     text = "My Buddy's Stats",
                     fontFamily = CabinetGrotesque,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp,
+                    fontSize = 12.rsp,
                     color = colors.textPrimary
                 )
 
@@ -380,29 +358,29 @@ fun BuddyStatsCard(
                         text = String.format("%02d", hours),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
+                        fontSize = 25.rsp,
                         color = colors.textPrimary
                     )
                     Text(
                         text = "HRS",
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 8.sp,
+                        fontSize = 8.rsp,
                         color = colors.textPrimary,
-                        modifier = Modifier.padding(start = 2.dp, end = 6.dp)
+                        modifier = Modifier.padding(start = 2.dp, end = 4.rdp)
                     )
                     Text(
                         text = String.format("%02d", mins),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
+                        fontSize = 25.rsp,
                         color = colors.textPrimary
                     )
                     Text(
                         text = "MINS",
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 8.sp,
+                        fontSize = 8.rsp,
                         color = colors.textPrimary,
                         modifier = Modifier.padding(start = 2.dp)
                     )
@@ -444,7 +422,7 @@ fun MindfulnessBar(
             text = "Mindfulness",
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Medium,
-            fontSize = 10.sp,
+            fontSize = 10.rsp,
             color = colors.textPrimary
         )
 
@@ -533,18 +511,6 @@ fun BuddyInviteCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(2f)
-                .dropShadow(
-                    color = Color.Black.copy(alpha = 0.3f),
-                    blur = 13.48.dp,
-                    offsetY = 6.74.dp
-                )
-                .innerShadow(
-                    color = Color.Black.copy(alpha = 0.1f),
-                    cornerRadius = 0.dp,
-                    blur = 10.dp,
-                    spread = 1.68.dp,
-                    offsetY = (-1.68).dp
-                )
         )
 
         Column(modifier = Modifier.padding(horizontal = 10.dp)) {
@@ -552,20 +518,21 @@ fun BuddyInviteCard(
                 text = "Get your Buddy!",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
+                fontSize = 12.rsp,
                 color = colors.textPrimary
             )
 
+            val emojiSize = 10.rsp
             Text(
                 text = buildAnnotatedString {
                     append("pick a wise one!")
-                    withStyle(SpanStyle(fontSize = 10.sp)) {
+                    withStyle(SpanStyle(fontSize = emojiSize)) {
                         append("❤️")
                     }
                 },
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Medium,
-                fontSize = 9.sp,
+                fontSize = 9.rsp,
                 color = colors.textSecondary,
                 modifier = Modifier.offset(y = (-4).dp)
             )
@@ -632,18 +599,6 @@ fun SignInCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(2f)
-                .dropShadow(
-                    color = Color.Black.copy(alpha = 0.3f),
-                    blur = 13.48.dp,
-                    offsetY = 6.74.dp
-                )
-                .innerShadow(
-                    color = Color.Black.copy(alpha = 0.1f),
-                    cornerRadius = 0.dp,
-                    blur = 10.dp,
-                    spread = 1.68.dp,
-                    offsetY = (-1.68).dp
-                )
         )
 
         Column(modifier = Modifier.padding(horizontal = 10.dp)) {
@@ -651,7 +606,7 @@ fun SignInCard(
                 text = "Sign In",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
+                fontSize = 12.rsp,
                 color = colors.textPrimary
             )
 
@@ -659,7 +614,7 @@ fun SignInCard(
                 text = "to track & sync stats",
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Medium,
-                fontSize = 9.sp,
+                fontSize = 9.rsp,
                 color = colors.textSecondary,
                 modifier = Modifier.offset(y = (-4).dp)
             )

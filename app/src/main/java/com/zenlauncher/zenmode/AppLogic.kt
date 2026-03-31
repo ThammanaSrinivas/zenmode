@@ -44,4 +44,18 @@ object AppLogic {
         val percentage = ((maxMinutes - totalWeeklyMinutes).toFloat() / maxMinutes * 100).toInt()
         return percentage.coerceIn(0, 100)
     }
+
+    /**
+     * Count streak backwards from today: HAPPY/NEUTRAL count, ANNOYED breaks.
+     * @param weeklyScreenTimeMillis 7-element list where last item is today.
+     */
+    fun getStreakCount(weeklyScreenTimeMillis: List<Long>): Int {
+        var count = 0
+        for (i in weeklyScreenTimeMillis.indices.reversed()) {
+            val minutes = (weeklyScreenTimeMillis[i] / 1000) / 60
+            if (getMoodState(minutes) == MoodState.ANNOYED) break
+            count++
+        }
+        return count
+    }
 }

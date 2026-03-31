@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rsp
 
 @Composable
 fun ZenSettingToggleItem(
@@ -42,7 +43,7 @@ fun ZenSettingToggleItem(
             text = text,
             fontFamily = CabinetGrotesque,
             fontWeight = FontWeight.Medium,
-            fontSize = 16.sp,
+            fontSize = 16.rsp,
             color = colors.textPrimary,
             modifier = Modifier.weight(1f)
         )

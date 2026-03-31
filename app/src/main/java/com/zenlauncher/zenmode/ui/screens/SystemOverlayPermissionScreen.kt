@@ -33,6 +33,8 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rdp
+import com.zenlauncher.zenmode.ui.theme.rsp
 
 @Composable
 fun SystemOverlayPermissionScreen(
@@ -49,12 +51,12 @@ fun SystemOverlayPermissionScreen(
         onBackClick = onBackClick,
         bottomFooter = null
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(20.rdp))
 
         Image(
             painter = painterResource(id = R.drawable.onboarding_system_overlay_permission),
             contentDescription = null,
-            modifier = Modifier.size(65.dp),
+            modifier = Modifier.size(65.rdp),
             contentScale = ContentScale.Fit
         )
 
@@ -66,18 +68,18 @@ fun SystemOverlayPermissionScreen(
             style = TextStyle(
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
+                fontSize = 24.rsp
             )
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.rdp))
 
         // System overlay mockup card mimicking Android overlay settings panel
         Box(
             modifier = Modifier
-                .width(286.dp)
+                .width(286.rdp)
                 .background(colors.bgSecondary.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.rdp, vertical = 12.rdp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
@@ -86,11 +88,11 @@ fun SystemOverlayPermissionScreen(
                     style = TextStyle(
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp
+                        fontSize = 14.rsp
                     )
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.rdp))
 
                 Column(modifier = Modifier.fillMaxWidth()) {
                     // Zenmode row with divider
@@ -128,7 +130,7 @@ fun SystemOverlayPermissionScreen(
 
                         Spacer(modifier = Modifier.weight(1f))
 
-                        Text(text = ">", color = colors.textSecondary, fontSize = 12.sp)
+                        Text(text = ">", color = colors.textSecondary, fontSize = 12.rsp)
                     }
 
                     Box(
@@ -173,7 +175,7 @@ fun SystemOverlayPermissionScreen(
 
                         Spacer(modifier = Modifier.weight(1f))
 
-                        Text(text = ">", color = colors.textSecondary, fontSize = 12.sp)
+                        Text(text = ">", color = colors.textSecondary, fontSize = 12.rsp)
                     }
                 }
             }

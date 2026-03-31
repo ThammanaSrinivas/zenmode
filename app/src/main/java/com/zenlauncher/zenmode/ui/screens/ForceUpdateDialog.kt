@@ -15,7 +15,7 @@ import androidx.compose.ui.window.DialogProperties
 @Composable
 fun ForceUpdateDialog(
     onUpdateClick: () -> Unit,
-    onExitClick: () -> Unit
+    onTomorrowClick: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = { /* Cannot dismiss */ },
@@ -50,10 +50,10 @@ fun ForceUpdateDialog(
                 }
                 
                 OutlinedButton(
-                    onClick = onExitClick,
+                    onClick = onTomorrowClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Exit App")
+                    Text("Tomorrow")
                 }
             }
         }

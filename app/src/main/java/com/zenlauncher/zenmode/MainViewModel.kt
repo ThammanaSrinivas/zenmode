@@ -56,7 +56,7 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
             ServiceLocator.remoteConfigProvider.minVersionCode.collect { minVersion ->
                 // App's version code is generated in BuildConfig
                 val currentVersion = BuildConfig.VERSION_CODE
-                _showForceUpdateDialog.value = (minVersion > currentVersion)
+                _showForceUpdateDialog.value = (minVersion > currentVersion) && !repository.isForceUpdateSnoozed()
             }
         }
 
@@ -123,6 +123,11 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
         } else {
             null
         }
+    }
+
+    fun snoozeForceUpdateUntilTomorrow() {
+        repository.snoozeForceUpdate()
+        _showForceUpdateDialog.value = false
     }
 
     fun refreshBuddyStatsFromCache() {

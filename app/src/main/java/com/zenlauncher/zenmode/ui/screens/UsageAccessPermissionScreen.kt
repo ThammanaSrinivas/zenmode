@@ -34,6 +34,7 @@ import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
 import com.zenlauncher.zenmode.ui.theme.Grey600
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rsp
 
 @Composable
 fun UsageAccessPermissionScreen(
@@ -65,7 +66,7 @@ fun UsageAccessPermissionScreen(
             style = TextStyle(
                 fontFamily = CabinetGrotesque,
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
+                fontSize = 24.rsp
             )
         )
 

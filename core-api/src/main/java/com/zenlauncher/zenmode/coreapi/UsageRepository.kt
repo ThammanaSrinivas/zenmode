@@ -417,6 +417,15 @@ class UsageRepository(private val context: Context, private val analyticsManager
             .apply()
     }
 
+    fun snoozeForceUpdate() {
+        prefs.edit().putString("force_update_snoozed_date", getTodayDate()).apply()
+    }
+
+    fun isForceUpdateSnoozed(): Boolean {
+        val snoozedDate = prefs.getString("force_update_snoozed_date", null) ?: return false
+        return snoozedDate == getTodayDate()
+    }
+
     fun clearAllData() {
         prefs.edit().clear().apply()
     }
