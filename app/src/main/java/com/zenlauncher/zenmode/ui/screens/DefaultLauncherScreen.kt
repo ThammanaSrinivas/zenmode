@@ -52,6 +52,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
 import com.zenlauncher.zenmode.ui.components.StatsCardsRow
 import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
+import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 
 @Composable
@@ -96,7 +97,10 @@ fun DefaultLauncherScreen(
                     contentScale = ContentScale.Fit
                 )
             }
-        }
+        },
+        showBgShuriken = true,
+        bgShurikenOffsetX = (-130).rdp,
+        bgShurikenOffsetY = 150.rdp,
     ) {
         Column(
             modifier = Modifier

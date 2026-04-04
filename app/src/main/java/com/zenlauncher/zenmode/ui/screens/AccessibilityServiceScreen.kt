@@ -227,12 +227,15 @@ fun AccessibilityServiceScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.clickable { onSkipClick() }
             )
-        }
+        },
+        showBgShuriken = true,
+        bgShurikenOffsetX = 80.rdp,
+        bgShurikenOffsetY = 200.rdp,
     ) {
         Spacer(modifier = Modifier.height(20.rdp))
 
         Image(
-            painter = painterResource(id = R.drawable.onboarding_accessibility_service_permission),
+            painter = painterResource(id = R.drawable.accessibility_service_icon),
             contentDescription = null,
             modifier = Modifier.size(65.rdp),
             contentScale = ContentScale.Fit

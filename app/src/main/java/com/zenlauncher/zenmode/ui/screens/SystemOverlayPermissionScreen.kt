@@ -49,7 +49,10 @@ fun SystemOverlayPermissionScreen(
         onButtonClick = onGrantAccessClick,
         showLogo = true,
         onBackClick = onBackClick,
-        bottomFooter = null
+        bottomFooter = null,
+        showBgShuriken = true,
+        bgShurikenOffsetX = (80).rdp,
+        bgShurikenOffsetY = (200).rdp,
     ) {
         Spacer(modifier = Modifier.height(20.rdp))
 

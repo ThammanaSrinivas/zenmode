@@ -20,12 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
+import com.zenlauncher.zenmode.ui.theme.rdp
 import androidx.viewpager2.widget.ViewPager2
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.UsageRepository
@@ -49,7 +48,10 @@ fun UsageAccessPermissionScreen(
         onButtonClick = onGrantAccessClick,
         showLogo = true,
         onBackClick = onBackClick,
-        bottomFooter = null
+        bottomFooter = null,
+        showBgShuriken = true,
+        bgShurikenOffsetX = 80.rdp,
+        bgShurikenOffsetY = 200.rdp,
     ) {
         Spacer(modifier = Modifier.height(20.dp))
         

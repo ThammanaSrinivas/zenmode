@@ -19,7 +19,18 @@ class UsageRepository(private val context: Context, private val analyticsManager
 
         val today = getTodayDate()
         val savedDate = prefs.getString("last_date_screentime", "")
-        
+
+        // Archive previous day's screen time before resetting
+        if (savedDate != null && savedDate.isNotEmpty() && savedDate != today) {
+            val archiveKey = "screen_time_$savedDate"
+            if (!prefs.contains(archiveKey)) {
+                val previousDayTotal = prefs.getLong("daily_screen_time", 0L)
+                if (previousDayTotal > 0) {
+                    prefs.edit().putLong(archiveKey, previousDayTotal).apply()
+                }
+            }
+        }
+
         // Try to get real-time stats first
         val realTimeFn = getRealTimeScreenTime()
         val currentCachedParams = if (savedDate == today) prefs.getLong("daily_screen_time", 0) else 0
@@ -132,13 +143,14 @@ class UsageRepository(private val context: Context, private val analyticsManager
         val yesterdayDate = dateFormat.format(yesterdayCal.time)
 
         val cacheKey = "screen_time_$yesterdayDate"
-        return if (prefs.contains(cacheKey)) {
-            prefs.getLong(cacheKey, 0L)
-        } else {
-            val queried = getScreenTimeForDay(yesterdayDate)
+        val cached = prefs.getLong(cacheKey, 0L)
+        if (cached > 0L) return cached
+
+        val queried = getScreenTimeForDay(yesterdayDate)
+        if (queried > 0L) {
             prefs.edit().putLong(cacheKey, queried).apply()
-            queried
         }
+        return queried
     }
 
     fun getWeeklyScreenTimeMillis(): List<Long> {
@@ -157,11 +169,14 @@ class UsageRepository(private val context: Context, private val analyticsManager
                 getTodayUsage().screenTimeInMillis
             } else {
                 val cacheKey = "screen_time_$dateString"
-                if (prefs.contains(cacheKey)) {
-                    prefs.getLong(cacheKey, 0L)
+                val cached = prefs.getLong(cacheKey, 0L)
+                if (cached > 0L) {
+                    cached
                 } else {
                     val queried = getScreenTimeForDay(dateString)
-                    prefs.edit().putLong(cacheKey, queried).apply()
+                    if (queried > 0L) {
+                        prefs.edit().putLong(cacheKey, queried).apply()
+                    }
                     queried
                 }
             }

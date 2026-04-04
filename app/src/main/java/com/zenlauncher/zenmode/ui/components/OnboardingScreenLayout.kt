@@ -11,8 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
@@ -28,6 +30,11 @@ fun OnboardingScreenLayout(
     showLogo: Boolean = false,
     onBackClick: (() -> Unit)? = null,
     bottomFooter: (@Composable () -> Unit)? = null,
+    bgShurikenOffsetX: Dp = 0.dp,
+    bgShurikenOffsetY: Dp = 0.dp,
+    bgShurikenBlur: Dp = 128.6.dp,
+    bgShurikenScale: Float = 1.2f,
+    showBgShuriken: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val colors = ZenTheme.colors
@@ -61,7 +68,22 @@ fun OnboardingScreenLayout(
             contentScale = ContentScale.Fit
         )
 
-        // Top-center: App logo (optional)
+        // Background shuriken pattern
+        if (showBgShuriken) {
+            Image(
+                painter = painterResource(id = R.drawable.onboarding_bg_shuriken),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { scaleX = bgShurikenScale; scaleY = bgShurikenScale }
+                    .offset(x = bgShurikenOffsetX, y = bgShurikenOffsetY)
+                    .align(Alignment.TopCenter)
+                    .blur(bgShurikenBlur),
+                contentScale = ContentScale.FillWidth
+            )
+        }
+
+        // Top-center: App logo
         if (showLogo) {
             Image(
                 painter = painterResource(id = R.drawable.app_icon),

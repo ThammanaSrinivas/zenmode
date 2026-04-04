@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,7 +41,10 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
         buttonText = "Let's Goooo!",
         onButtonClick = onNextClick,
         showLogo = true,
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        showBgShuriken = true,
+        bgShurikenOffsetX = (-80).rdp,
+        bgShurikenOffsetY = 50.rdp,
     ) {
         Column(
             modifier = Modifier
@@ -71,7 +76,13 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
             Text(
                 text = "An Open-source minimalist android launcher",
                 color = colors.textPrimary,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    shadow = Shadow(
+                        color = colors.textPrimary,
+                        offset = Offset(0f, 4f),
+                        blurRadius = 20f
+                    )
+                ),
                 textAlign = TextAlign.Center
             )
 
