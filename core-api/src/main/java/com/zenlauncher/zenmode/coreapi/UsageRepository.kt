@@ -2,6 +2,7 @@ package com.zenlauncher.zenmode.coreapi
 
 import android.content.Context
 import android.content.SharedPreferences
+import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -424,6 +425,41 @@ class UsageRepository(private val context: Context, private val analyticsManager
     fun isForceUpdateSnoozed(): Boolean {
         val snoozedDate = prefs.getString("force_update_snoozed_date", null) ?: return false
         return snoozedDate == getTodayDate()
+    }
+
+    // ── Pinned Apps ────────────────────────────────────────────────
+
+    fun getPinnedApps(): List<String> {
+        val json = prefs.getString("pinned_apps", null) ?: return emptyList()
+        return try {
+            val array = JSONArray(json)
+            (0 until array.length()).map { array.getString(it) }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun savePinnedApps(packageNames: List<String>) {
+        val array = JSONArray(packageNames)
+        prefs.edit().putString("pinned_apps", array.toString()).apply()
+    }
+
+    fun togglePinnedApp(packageName: String): Boolean {
+        val current = getPinnedApps().toMutableList()
+        return if (current.contains(packageName)) {
+            current.remove(packageName)
+            savePinnedApps(current)
+            false
+        } else {
+            if (current.size >= MAX_PINNED_APPS) return false
+            current.add(packageName)
+            savePinnedApps(current)
+            true
+        }
+    }
+
+    companion object {
+        const val MAX_PINNED_APPS = 4
     }
 
     fun clearAllData() {

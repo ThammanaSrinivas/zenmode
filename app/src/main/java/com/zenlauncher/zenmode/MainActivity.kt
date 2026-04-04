@@ -22,6 +22,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -156,13 +157,25 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_MAIN, null)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
         val activities = packageManager.queryIntentActivities(intent, 0)
-        installedApps = activities.map { resolveInfo ->
+        val pinnedPackages = repository.getPinnedApps()
+        val pinnedSet = pinnedPackages.toSet()
+
+        val allApps = activities.map { resolveInfo ->
+            val pkg = resolveInfo.activityInfo.packageName
             AppInfo(
                 label = resolveInfo.loadLabel(packageManager),
-                packageName = resolveInfo.activityInfo.packageName,
-                icon = resolveInfo.loadIcon(packageManager)
+                packageName = pkg,
+                icon = resolveInfo.loadIcon(packageManager),
+                isPinned = pkg in pinnedSet
             )
-        }.sortedBy { it.label.toString() }
+        }.distinctBy { it.packageName.toString() }
+
+        val appsByPackage = allApps.associateBy { it.packageName.toString() }
+        val pinned = pinnedPackages.mapNotNull { appsByPackage[it] }
+        val unpinned = allApps.filter { it.packageName.toString() !in pinnedSet }
+            .sortedBy { it.label.toString() }
+
+        installedApps = pinned + unpinned
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -329,6 +342,25 @@ class MainActivity : AppCompatActivity() {
                         if (launchIntent != null) {
                             startActivity(launchIntent)
                         }
+                    },
+                    onAppLongClick = { appInfo ->
+                        val pinned = repository.getPinnedApps()
+                        val isCurrentlyPinned = pinned.contains(appInfo.packageName.toString())
+                        val toggled = repository.togglePinnedApp(appInfo.packageName.toString())
+                        if (!isCurrentlyPinned && !toggled) {
+                            Toast.makeText(
+                                this,
+                                "Only ${UsageRepository.MAX_PINNED_APPS} apps can be pinned",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        loadInstalledApps()
+                    },
+                    onAppInfoClick = { appInfo ->
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:${appInfo.packageName}")
+                        }
+                        startActivity(intent)
                     },
                     apps = installedApps
                 )

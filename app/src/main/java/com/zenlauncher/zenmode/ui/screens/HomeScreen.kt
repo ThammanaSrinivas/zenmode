@@ -22,6 +22,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +44,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -116,6 +119,8 @@ fun HomeScreen(
     onSignInClick: () -> Unit,
     onBuddyCardClick: (() -> Unit)? = null,
     onAppClick: (AppInfo) -> Unit,
+    onAppLongClick: (AppInfo) -> Unit = {},
+    onAppInfoClick: (AppInfo) -> Unit = {},
     apps: List<AppInfo>
 ) {
     val colors = ZenTheme.colors
@@ -150,6 +155,8 @@ fun HomeScreen(
             AppGridPager(
                 apps = apps,
                 onAppClick = onAppClick,
+                onAppLongClick = onAppLongClick,
+                onAppInfoClick = onAppInfoClick,
                 onLockClick = onLockClick,
                 modifier = Modifier.weight(1f)
             )
@@ -244,6 +251,8 @@ private fun HomeHeader(streaks: Int, onStreakClick: () -> Unit) {
 private fun AppGridPager(
     apps: List<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
+    onAppLongClick: (AppInfo) -> Unit = {},
+    onAppInfoClick: (AppInfo) -> Unit = {},
     onLockClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -289,10 +298,12 @@ private fun AppGridPager(
                         item {
                             LockItem(onClick = onLockClick)
                         }
-                        items(appsInPage.size) { index ->
+                        items(appsInPage.size, key = { index -> appsInPage[index].packageName.toString() }) { index ->
                             AppIconItem(
                                 appInfo = appsInPage[index],
-                                onClick = { onAppClick(appsInPage[index]) }
+                                onClick = { onAppClick(appsInPage[index]) },
+                                onLongClick = { onAppLongClick(appsInPage[index]) },
+                                onAppInfoClick = { onAppInfoClick(appsInPage[index]) }
                             )
                         }
                     }
@@ -374,20 +385,29 @@ private fun LockItem(onClick: () -> Unit) {
 
 // ── App Icon Item ─────────────────────────────────────────────────
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppIconItem(
     appInfo: AppInfo,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {},
+    onAppInfoClick: () -> Unit = {}
 ) {
+    val view = LocalView.current
+    var showMenu by remember { mutableStateOf(false) }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
+        modifier = Modifier.combinedClickable(
+            onClick = onClick,
+            onLongClick = {
+                view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                showMenu = true
+            }
+        )
     ) {
         Box(
-            modifier = Modifier
-                .size(52.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Transparent),
+            modifier = Modifier.size(52.dp),
             contentAlignment = Alignment.Center
         ) {
             AndroidView(
@@ -397,7 +417,51 @@ private fun AppIconItem(
                         setImageDrawable(appInfo.icon)
                     }
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(12.dp))
+            )
+
+            // Pin star indicator — bottom-right of icon (outside clip)
+            if (appInfo.isPinned) {
+                Image(
+                    painter = painterResource(id = R.drawable.star),
+                    contentDescription = "Pinned",
+                    modifier = Modifier
+                        .size(14.dp)
+                        .align(Alignment.BottomEnd)
+                )
+            }
+        }
+
+        // Long-press context menu
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = if (appInfo.isPinned) "Unpin" else "Pin",
+                        fontFamily = CabinetGrotesque
+                    )
+                },
+                onClick = {
+                    showMenu = false
+                    onLongClick()
+                }
+            )
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "App Info",
+                        fontFamily = CabinetGrotesque
+                    )
+                },
+                onClick = {
+                    showMenu = false
+                    onAppInfoClick()
+                }
             )
         }
     }
