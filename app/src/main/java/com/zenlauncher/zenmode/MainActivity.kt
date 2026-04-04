@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity() {
 
         // Initialize ViewModel
         val analyticsManager = ServiceLocator.analyticsManager
-        repository = UsageRepository(this, analyticsManager)
+        repository = UsageRepository(applicationContext, analyticsManager)
         val factory = MainViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
         accountabilityViewModel = ViewModelProvider(
@@ -362,7 +362,13 @@ class MainActivity : AppCompatActivity() {
                         }
                         startActivity(intent)
                     },
-                    apps = installedApps
+                    apps = run {
+                        val notifCounts = ZenNotificationListenerService.notificationCounts
+                        installedApps.map { app ->
+                            val count = notifCounts[app.packageName.toString()] ?: 0
+                            if (count != app.notificationCount) app.copy(notificationCount = count) else app
+                        }
+                    }
                 )
 
                 // Accessibility disclosure full-screen

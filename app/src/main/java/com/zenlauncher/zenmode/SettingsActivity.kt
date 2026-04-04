@@ -5,6 +5,9 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.lifecycle.lifecycleScope
@@ -16,18 +19,30 @@ import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
 
+    private var notificationBadgesEnabled by mutableStateOf(false)
+
+    override fun onResume() {
+        super.onResume()
+        notificationBadgesEnabled = ZenNotificationListenerService.isEnabledInSettings(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val repository = UsageRepository(this, ServiceLocator.analyticsManager)
+        val repository = UsageRepository(applicationContext, ServiceLocator.analyticsManager)
         val weeklyHours = repository.getWeeklyScreenTimeHours()
         val profilePhotoUrl = ServiceLocator.authProvider.getPhotoUrl()
+        notificationBadgesEnabled = ZenNotificationListenerService.isEnabledInSettings(this)
 
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
                 SettingsScreen(
                     weeklyHours = weeklyHours,
                     profilePhotoUrl = profilePhotoUrl,
+                    isNotificationBadgesEnabled = notificationBadgesEnabled,
+                    onNotificationBadgesClick = {
+                        startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+                    },
                     onBackClick = { finish() },
                     onChangeDistractingAppsClick = {
                         // TODO: navigate to distracting apps picker

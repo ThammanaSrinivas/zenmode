@@ -78,6 +78,8 @@ private const val GRAPH_HOUR_LINES = 4 // 0h, 2h, 4h, 6h
 fun SettingsScreen(
     weeklyHours: List<Float> = List(7) { 0f },
     profilePhotoUrl: String? = null,
+    isNotificationBadgesEnabled: Boolean = false,
+    onNotificationBadgesClick: () -> Unit = {},
     onBackClick: () -> Unit,
     onChangeDistractingAppsClick: () -> Unit,
     onAccountabilityPartnerClick: () -> Unit,
@@ -120,6 +122,8 @@ fun SettingsScreen(
                     isDarkMode = enabled
                     ThemePreferences.setDarkMode(context, enabled)
                 },
+                isNotificationBadgesEnabled = isNotificationBadgesEnabled,
+                onNotificationBadgesClick = onNotificationBadgesClick,
                 onChangeDistractingAppsClick = onChangeDistractingAppsClick,
                 onAccountabilityPartnerClick = onAccountabilityPartnerClick,
                 onContributeClick = onContributeClick
@@ -429,6 +433,8 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
 private fun PersonaliseSection(
     isDarkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit,
+    isNotificationBadgesEnabled: Boolean,
+    onNotificationBadgesClick: () -> Unit,
     onChangeDistractingAppsClick: () -> Unit,
     onAccountabilityPartnerClick: () -> Unit,
     onContributeClick: () -> Unit
@@ -468,6 +474,18 @@ private fun PersonaliseSection(
                 text = "Dark mode",
                 checked = isDarkMode,
                 onCheckedChange = onDarkModeChange,
+                modifier = Modifier.padding(vertical = 6.dp)
+            )
+
+            // Notification badges toggle
+            ZenSettingToggleItem(
+                text = "Notification badges",
+                checked = isNotificationBadgesEnabled,
+                onCheckedChange = { enabled ->
+                    if (enabled) {
+                        onNotificationBadgesClick()
+                    }
+                },
                 modifier = Modifier.padding(vertical = 6.dp)
             )
 

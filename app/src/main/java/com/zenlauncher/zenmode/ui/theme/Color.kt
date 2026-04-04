@@ -43,7 +43,8 @@ data class ZenColors(
     val statsCardFillAnnoyed: Color,
     val strokeHappy: Color,
     val strokeNeutral: Color,
-    val strokeAnnoyed: Color
+    val strokeAnnoyed: Color,
+    val notificationBadgeStroke: Color
 )
 
 fun ZenColors.statsCardFill(mood: MoodState): Color =
@@ -79,8 +80,8 @@ val LightZenColors: ZenColors
         innerShadow = Color(0x40000000),
         strokeHappy = Color(0xFF006703),
         strokeNeutral = Color(0xFFEBDE28),
-        strokeAnnoyed = Color(0xFFFF7C69)
-
+        strokeAnnoyed = Color(0xFFFF7C69),
+        notificationBadgeStroke = Color(0xFF000000)
     )
 
 val DarkZenColors: ZenColors
@@ -105,8 +106,8 @@ val DarkZenColors: ZenColors
         innerShadow = Color(0x40000000),
         strokeHappy = Color(0xFF006703),
         strokeNeutral = Color(0xFFEBDE28),
-        strokeAnnoyed = Color(0xFFFF7C69)
-
+        strokeAnnoyed = Color(0xFFFF7C69),
+        notificationBadgeStroke = Color(0xFFF6F6F6)
     )
 
 val LocalZenColors = staticCompositionLocalOf {
@@ -130,7 +131,7 @@ val LocalZenColors = staticCompositionLocalOf {
         innerShadow = Color.Unspecified,
         strokeHappy = Color.Unspecified,
         strokeNeutral = Color.Unspecified,
-        strokeAnnoyed = Color.Unspecified
-
+        strokeAnnoyed = Color.Unspecified,
+        notificationBadgeStroke = Color.Unspecified
     )
 }

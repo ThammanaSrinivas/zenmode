@@ -42,6 +42,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.DropdownMenu
@@ -71,6 +72,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -407,7 +409,9 @@ private fun AppIconItem(
         )
     ) {
         Box(
-            modifier = Modifier.size(52.dp),
+            modifier = Modifier
+                .padding(top = 6.dp, end = 6.dp)
+                .size(52.dp),
             contentAlignment = Alignment.Center
         ) {
             AndroidView(
@@ -431,6 +435,37 @@ private fun AppIconItem(
                         .size(14.dp)
                         .align(Alignment.BottomEnd)
                 )
+            }
+
+            // Notification badge — top-right of icon
+            if (appInfo.notificationCount > 0) {
+                val badgeStrokeColor = ZenTheme.colors.notificationBadgeStroke
+                Box(
+                    modifier = Modifier
+                        .size(18.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 6.dp, y = (-6).dp)
+                        .border(width = 1.5.dp, color = badgeStrokeColor, shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.notification_circle),
+                        contentDescription = "${appInfo.notificationCount} notifications",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Text(
+                        text = if (appInfo.notificationCount > 99) "99+" else appInfo.notificationCount.toString(),
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = CabinetGrotesque,
+                        lineHeight = 9.sp,
+                        maxLines = 1,
+                        style = TextStyle(
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        )
+                    )
+                }
             }
         }
 
