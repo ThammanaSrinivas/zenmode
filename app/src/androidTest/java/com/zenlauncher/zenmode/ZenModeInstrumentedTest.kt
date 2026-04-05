@@ -36,12 +36,11 @@ class ZenModeInstrumentedTest {
         val prefs = context.getSharedPreferences("zen_mode_stats", android.content.Context.MODE_PRIVATE)
         prefs.edit().putBoolean("is_onboarding_complete", false).commit()
 
-        // Launch MainActivity — it should redirect to OnboardingActivity and finish
+        // Launch MainActivity — it should redirect to OnboardingActivity and finish itself
         val scenario = ActivityScenario.launch(MainActivity::class.java)
-        scenario.onActivity { activity ->
-            // MainActivity finishes itself after starting OnboardingActivity
-            assert(activity.isFinishing)
-        }
+        // Activity finishes quickly, so check state instead of using onActivity
+        Thread.sleep(2000)
+        assert(scenario.state == androidx.lifecycle.Lifecycle.State.DESTROYED)
         scenario.close()
 
         // Restore onboarding flag for other tests

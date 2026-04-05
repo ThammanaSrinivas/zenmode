@@ -97,7 +97,7 @@ fun ZenBuddyConnectBottomSheet(
 }
 
 @Composable
-private fun ZenBuddyConnectContent(
+internal fun ZenBuddyConnectContent(
     userCode: String?,
     onCopyCode: () -> Unit,
     onAddBuddy: suspend (String) -> BuddyAddResult,
