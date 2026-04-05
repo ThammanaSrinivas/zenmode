@@ -11,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import com.zenlauncher.zenmode.ui.components.WeightSpacer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -54,8 +55,6 @@ fun SystemOverlayPermissionScreen(
         bgShurikenOffsetX = (80).rdp,
         bgShurikenOffsetY = (200).rdp,
     ) {
-        Spacer(modifier = Modifier.height(20.rdp))
-
         Image(
             painter = painterResource(id = R.drawable.onboarding_system_overlay_permission),
             contentDescription = null,
@@ -63,7 +62,7 @@ fun SystemOverlayPermissionScreen(
             contentScale = ContentScale.Fit
         )
 
-        Spacer(modifier = Modifier.height(9.dp))
+        WeightSpacer(1f)
 
         Text(
             text = "System Overlay Permission",
@@ -75,7 +74,7 @@ fun SystemOverlayPermissionScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(16.rdp))
+        WeightSpacer(1f)
 
         // System overlay mockup card mimicking Android overlay settings panel
         Box(
@@ -184,7 +183,7 @@ fun SystemOverlayPermissionScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        WeightSpacer(2f)
 
         Text(
             text = "Let us be the strict friend who won't let you doom scroll. You'll thank us later (probably).",
@@ -193,7 +192,7 @@ fun SystemOverlayPermissionScreen(
             modifier = Modifier.padding(horizontal = 40.dp)
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        WeightSpacer(2f)
     }
 }
 

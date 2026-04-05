@@ -93,6 +93,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.components.StatsCardsRow
+import com.zenlauncher.zenmode.ui.components.WeightSpacer
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
@@ -133,13 +134,16 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.bgPrimary)
-                .padding(top = 48.dp)
         ) {
+            WeightSpacer(1f)
+
             // Header
             HomeHeader(
                 streaks = streaks,
                 onStreakClick = { showStreakOverlay = true }
             )
+
+            WeightSpacer(1f)
 
             StatsCardsRow(
                 usage = usage,
@@ -153,6 +157,8 @@ fun HomeScreen(
                 modifier = Modifier.padding(horizontal = 28.rdp)
             )
 
+            WeightSpacer(1f)
+
             // App Grid
             AppGridPager(
                 apps = apps,
@@ -160,8 +166,10 @@ fun HomeScreen(
                 onAppLongClick = onAppLongClick,
                 onAppInfoClick = onAppInfoClick,
                 onLockClick = onLockClick,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
             )
+
+            WeightSpacer(1f)
 
             // Bottom Dock
             BottomDock(

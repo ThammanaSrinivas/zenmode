@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import com.zenlauncher.zenmode.ui.components.WeightSpacer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -232,8 +233,6 @@ fun AccessibilityServiceScreen(
         bgShurikenOffsetX = 80.rdp,
         bgShurikenOffsetY = 200.rdp,
     ) {
-        Spacer(modifier = Modifier.height(20.rdp))
-
         Image(
             painter = painterResource(id = R.drawable.accessibility_service_icon),
             contentDescription = null,
@@ -241,7 +240,7 @@ fun AccessibilityServiceScreen(
             contentScale = ContentScale.Fit
         )
 
-        Spacer(modifier = Modifier.height(9.dp))
+        WeightSpacer(1f)
 
         Text(
             text = "Accessibility Service",
@@ -253,7 +252,7 @@ fun AccessibilityServiceScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(16.rdp))
+        WeightSpacer(1f)
 
         // Accessibility service permission mockup card mimicking Android accessibility settings panel
         Box(
@@ -362,7 +361,7 @@ fun AccessibilityServiceScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.rdp))
+        WeightSpacer(2f)
 
         Text(
             text = "ZenMode needs the Accessibility Service permission to lock your screen when you tap the lock button. This is the only thing it does \u2014 it does not read your screen or collect any data.",
@@ -371,7 +370,7 @@ fun AccessibilityServiceScreen(
             modifier = Modifier.padding(horizontal = 20.rdp)
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        WeightSpacer(2f)
     }
 }
 

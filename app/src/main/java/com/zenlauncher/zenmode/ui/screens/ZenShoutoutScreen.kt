@@ -6,8 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import com.zenlauncher.zenmode.ui.components.WeightSpacer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,47 +47,48 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.rdp)
-                .padding(top = 16.rdp, bottom = 24.rdp),
+                .fillMaxSize()
+                .padding(horizontal = 20.rdp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // heart_sharukhan icon above the title
-            Image(
-                painter = painterResource(id = R.drawable.heart_sharukhan),
-                contentDescription = null,
-                modifier = Modifier.size(72.rdp),
-                contentScale = ContentScale.Fit
-            )
+            // Group 1
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // heart_sharukhan icon above the title
+                Image(
+                    painter = painterResource(id = R.drawable.heart_sharukhan),
+                    contentDescription = null,
+                    modifier = Modifier.size(72.rdp),
+                    contentScale = ContentScale.Fit
+                )
 
-            Spacer(modifier = Modifier.height(12.rdp))
+                Spacer(modifier = Modifier.height(12.rdp))
 
-            Text(
-                text = "Zenmode",
-                color = colors.textPrimary,
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center
-            )
+                Text(
+                    text = "Zenmode",
+                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center
+                )
 
-            Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = "An Open-source minimalist android launcher",
-                color = colors.textPrimary,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    shadow = Shadow(
-                        color = colors.textPrimary,
-                        offset = Offset(0f, 4f),
-                        blurRadius = 20f
-                    )
-                ),
-                textAlign = TextAlign.Center
-            )
+                Text(
+                    text = "An Open-source minimalist android launcher",
+                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        shadow = Shadow(
+                            color = colors.textPrimary,
+                            offset = Offset(0f, 4f),
+                            blurRadius = 20f
+                        )
+                    ),
+                    textAlign = TextAlign.Center
+                )
+            }
 
-            Spacer(modifier = Modifier.height(28.rdp))
+            WeightSpacer(1f)
 
-            // Shoutout to Sharukhan
+            // Group 2 (Shoutout to Sharukhan)
             val sharukhanText = buildAnnotatedString {
                 withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
                     append("Shout out, ")
@@ -117,76 +117,80 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(20.rdp))
+            WeightSpacer(1f)
 
-            // Mission statement
-            val missionText = buildAnnotatedString {
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
-                    append("It's our way of showing love towards world, ")
-                }
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textBrand)) {
-                    append("We are super happy, If we could make 1% people break their smartphone addiction, ")
-                }
-                withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
-                    append("With truckloads of love")
-                }
-            }
-            Text(
-                text = missionText,
-                textAlign = TextAlign.Justify,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = "-Srini & Kamal",
-                color = colors.textPrimary,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp)
-            )
-
-            Spacer(modifier = Modifier.height(28.rdp))
-
-            // thumbs_up + "Help us build Zenmode, Github (↗)"
-            val uriHandler = LocalUriHandler.current
-            val githubText = buildAnnotatedString {
-                withStyle(
-                    MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary)
-                ) {
-                    append("Help us build Zenmode, ")
-                }
-                pushStringAnnotation(tag = "URL", annotation = AppConstants.GITHUB_URL)
-                withStyle(
-                    MaterialTheme.typography.titleMedium.toSpanStyle().copy(
-                        color = colors.textBrand,
-                        textDecoration = TextDecoration.Underline
-                    )
-                ) {
-                    append("Github (↗)")
-                }
-                pop()
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.thumbs_up),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.rdp),
-                    contentScale = ContentScale.Fit
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                androidx.compose.foundation.text.ClickableText(
-                    text = githubText,
-                    onClick = { offset ->
-                        githubText.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                            .firstOrNull()?.let { uriHandler.openUri(it.item) }
+            // Group 3 (Mission statement)
+            Column(horizontalAlignment = Alignment.Start) {
+                val missionText = buildAnnotatedString {
+                    withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
+                        append("It's our way of showing love towards world, ")
                     }
+                    withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textBrand)) {
+                        append("We are super happy, If we could make 1% people break their smartphone addiction, ")
+                    }
+                    withStyle(MaterialTheme.typography.bodyLarge.toSpanStyle().copy(color = colors.textPrimary)) {
+                        append("With truckloads of love")
+                    }
+                }
+                Text(
+                    text = missionText,
+                    textAlign = TextAlign.Justify,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = "-Srini & Kamal",
+                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            WeightSpacer(1f)
+
+            // Group 4 (thumbs_up + "Help us build Zenmode, Github (↗)")
+            Column(horizontalAlignment = Alignment.Start) {
+                val uriHandler = LocalUriHandler.current
+                val githubText = buildAnnotatedString {
+                    withStyle(
+                        MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary)
+                    ) {
+                        append("Help us build Zenmode, ")
+                    }
+                    pushStringAnnotation(tag = "URL", annotation = AppConstants.GITHUB_URL)
+                    withStyle(
+                        MaterialTheme.typography.titleMedium.toSpanStyle().copy(
+                            color = colors.textBrand,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    ) {
+                        append("Github (↗)")
+                    }
+                    pop()
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.thumbs_up),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.rdp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    androidx.compose.foundation.text.ClickableText(
+                        text = githubText,
+                        onClick = { offset ->
+                            githubText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                                .firstOrNull()?.let { uriHandler.openUri(it.item) }
+                        }
+                    )
+                }
+            }
+
+            WeightSpacer(2f)
 
             Text(
                 text = "(You can star us, believe me we won't feel bad if not, iykyk)",
@@ -196,6 +200,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
                     .fillMaxWidth()
                     .padding(start = 36.dp)
             )
+            
         }
     }
 }

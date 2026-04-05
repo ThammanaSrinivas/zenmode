@@ -9,9 +9,10 @@ import android.view.ViewGroup
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
+import com.zenlauncher.zenmode.ui.components.WeightSpacer
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,13 +54,11 @@ fun UsageAccessPermissionScreen(
         bgShurikenOffsetX = 80.rdp,
         bgShurikenOffsetY = 200.rdp,
     ) {
-        Spacer(modifier = Modifier.height(20.dp))
-        
         UsageBarChartIcon(
             modifier = Modifier.size(60.dp)
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        WeightSpacer(1f)
 
         // Title
         Text(
@@ -72,7 +71,7 @@ fun UsageAccessPermissionScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        WeightSpacer(1f)
 
         // Center visual component natively built mimicking the Figma spec "usage_access_permission_overlay"
         Box(
@@ -168,7 +167,7 @@ fun UsageAccessPermissionScreen(
             }
         }
         
-        Spacer(modifier = Modifier.height(20.dp))
+        WeightSpacer(2f)
 
         // Text instructions
         Text(
@@ -178,7 +177,7 @@ fun UsageAccessPermissionScreen(
             modifier = Modifier.padding(horizontal = 40.dp)
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        WeightSpacer(2f)
     }
 }
 
