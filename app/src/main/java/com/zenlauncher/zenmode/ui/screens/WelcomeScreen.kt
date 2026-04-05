@@ -46,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.zenlauncher.zenmode.ui.components.WeightSpacer
 
 enum class WelcomeState {
     PINS_6, PINS_12, PINS_24, LOGO_GLOW, BOTTOM_TEXT, FULL_PAGE
@@ -121,7 +122,7 @@ fun WelcomeScreen(
                 if (!showReviewerFields) {
                     Text(
                         text = "Reviewer? Sign in here",
-                        color = colors.textSecondary,
+                        color = colors.textSecondary.copy(alpha = 0.5f),
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.rsp),
                         modifier = Modifier.clickable { showReviewerFields = true }
                     )
@@ -189,10 +190,10 @@ fun WelcomeScreen(
         }
     ) {
         // ── Main content for the center area ──
+        WeightSpacer(1f)
+
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+            modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             // Background decorative blurred pins
@@ -292,11 +293,12 @@ fun WelcomeScreen(
             }
         }
 
+        WeightSpacer(2f)
+
         // ── Middle Text (fades in at FULL_PAGE) ──
         androidx.compose.animation.AnimatedVisibility(
             visible = state == WelcomeState.FULL_PAGE,
-            enter = fadeIn(animationSpec = tween(800)),
-            modifier = Modifier.padding(top = 40.rdp, bottom = 30.rdp)
+            enter = fadeIn(animationSpec = tween(800))
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val firstStepText = buildAnnotatedString {
@@ -330,74 +332,85 @@ fun WelcomeScreen(
             }
         }
 
+        WeightSpacer(2f)
+
         // ── Bottom Content (fades in at BOTTOM_TEXT) ──
         androidx.compose.animation.AnimatedVisibility(
             visible = state >= WelcomeState.BOTTOM_TEXT,
             enter = fadeIn(animationSpec = tween(800)),
-            modifier = Modifier.padding(bottom = 40.rdp, start = 20.rdp, end = 20.rdp)
+            modifier = Modifier.padding(horizontal = 20.rdp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+            // "Bro, Hear me close," + heart
+            // Offset by half of (spacer 8dp + heart 34dp) so only text is center-aligned
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.offset(x = 21.rdp)
             ) {
-                // "Bro, Hear me close," + heart
-                // Offset by half of (spacer 8dp + heart 34dp) so only text is center-aligned
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.offset(x = 21.rdp)
-                ) {
-                    Text(
-                        text = "Bro, Hear me close,",
-                        color = colors.textPrimary,
-                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.rsp)
-                    )
-                    Spacer(modifier = Modifier.width(8.rdp))
-                    Image(
-                        painter = painterResource(id = R.drawable.heart_byhand),
-                        contentDescription = "Heart",
-                        modifier = Modifier.size(34.rdp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // "Life is *too* short!"
-                val fontSize14 = 14.rsp
-                val lifeText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize14)) {
-                        append("Life is ")
-                    }
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textBrand, fontSize = fontSize14)) {
-                        append("too")
-                    }
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize14)) {
-                        append(" short!")
-                    }
-                }
                 Text(
-                    text = lifeText,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    text = "Bro, Hear me close,",
+                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.rsp)
                 )
-
-                Spacer(modifier = Modifier.height(10.rdp))
-
-                // 'Just "4000 weeks", Let's make em count!'
-                val fontSize16 = 16.rsp
-                val weeksText = buildAnnotatedString {
-                    withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize16)) {
-                        append("Just \"4000 weeks\", ")
-                    }
-                    withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize16)) {
-                        append("Let's make em count!")
-                    }
-                }
-                Text(
-                    text = weeksText,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                Spacer(modifier = Modifier.width(8.rdp))
+                Image(
+                    painter = painterResource(id = R.drawable.heart_byhand),
+                    contentDescription = "Heart",
+                    modifier = Modifier.size(34.rdp)
                 )
             }
         }
+
+        WeightSpacer(0.5f)
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = state >= WelcomeState.BOTTOM_TEXT,
+            enter = fadeIn(animationSpec = tween(800)),
+            modifier = Modifier.padding(horizontal = 20.rdp)
+        ) {
+            // "Life is *too* short!"
+            val fontSize14 = 14.rsp
+            val lifeText = buildAnnotatedString {
+                withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize14)) {
+                    append("Life is ")
+                }
+                withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textBrand, fontSize = fontSize14)) {
+                    append("too")
+                }
+                withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize14)) {
+                    append(" short!")
+                }
+            }
+            Text(
+                text = lifeText,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        WeightSpacer(0.5f)
+
+        androidx.compose.animation.AnimatedVisibility(
+            visible = state >= WelcomeState.BOTTOM_TEXT,
+            enter = fadeIn(animationSpec = tween(800)),
+            modifier = Modifier.padding(horizontal = 20.rdp)
+        ) {
+            // 'Just "4000 weeks", Let's make em count!'
+            val fontSize16 = 16.rsp
+            val weeksText = buildAnnotatedString {
+                withStyle(MaterialTheme.typography.titleMedium.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize16)) {
+                    append("Just \"4000 weeks\", ")
+                }
+                withStyle(MaterialTheme.typography.labelLarge.toSpanStyle().copy(color = colors.textPrimary, fontSize = fontSize16)) {
+                    append("Let's make em count!")
+                }
+            }
+            Text(
+                text = weeksText,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        WeightSpacer(2f)
     }
 }
