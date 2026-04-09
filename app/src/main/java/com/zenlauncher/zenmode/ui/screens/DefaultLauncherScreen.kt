@@ -42,7 +42,6 @@ import androidx.viewpager2.widget.ViewPager2
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.MainActivity
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.SettingsActivity
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.coreapi.UsageRepository
@@ -59,11 +58,11 @@ import com.zenlauncher.zenmode.ui.theme.rsp
 fun DefaultLauncherScreen(
     onSetDefaultLauncherClick: () -> Unit,
     onShareClick: () -> Unit,
-    onChangeDistractingAppsClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
     var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
+    var showDistractingSheet by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
 
     ZenTheme(darkTheme = isDarkMode) {
@@ -162,7 +161,7 @@ fun DefaultLauncherScreen(
                     .fillMaxWidth()
                     .background(colors.bgSecondary, RoundedCornerShape(26.dp))
                     .border(1.dp, colors.bgSecondary, RoundedCornerShape(26.dp))
-                    .clickable { onChangeDistractingAppsClick() }
+                    .clickable { showDistractingSheet = true }
                     .padding(horizontal = 16.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -247,6 +246,9 @@ fun DefaultLauncherScreen(
                 }
             )
         }
+        if (showDistractingSheet) {
+            DistractingAppsBottomSheet(onDismiss = { showDistractingSheet = false })
+        }
     }
     }
 }
@@ -272,9 +274,6 @@ class DefaultLauncherFragment : Fragment() {
                     DefaultLauncherScreen(
                         onSetDefaultLauncherClick = { handleSetDefaultLauncher() },
                         onShareClick = { shareZenMode() },
-                        onChangeDistractingAppsClick = {
-                            startActivity(Intent(requireContext(), SettingsActivity::class.java))
-                        },
                         onBackClick = { navigateTo(-1) }
                     )
                 }

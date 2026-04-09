@@ -87,7 +87,7 @@
             android:id="@+id/tv_subtitle_2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="20 minutes in life spent!"
+            android:text="15 minutes in life spent!"
             android:textSize="24sp"
             android:fontFamily="@font/cabinet_grotesk_bold"
             android:textColor="@color/white"

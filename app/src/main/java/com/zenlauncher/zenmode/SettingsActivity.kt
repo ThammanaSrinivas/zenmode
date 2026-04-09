@@ -7,12 +7,14 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.lifecycle.lifecycleScope
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.ui.screens.DistractingAppsBottomSheet
 import com.zenlauncher.zenmode.ui.screens.SettingsScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.launch
@@ -36,6 +38,7 @@ class SettingsActivity : AppCompatActivity() {
 
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
+                var showDistractingSheet by remember { mutableStateOf(false) }
                 SettingsScreen(
                     weeklyHours = weeklyHours,
                     profilePhotoUrl = profilePhotoUrl,
@@ -44,9 +47,7 @@ class SettingsActivity : AppCompatActivity() {
                         startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
                     },
                     onBackClick = { finish() },
-                    onChangeDistractingAppsClick = {
-                        // TODO: navigate to distracting apps picker
-                    },
+                    onChangeDistractingAppsClick = { showDistractingSheet = true },
                     onAccountabilityPartnerClick = {
                         val intent = Intent(this, MainActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -60,6 +61,9 @@ class SettingsActivity : AppCompatActivity() {
                     onLogoutClick = { performLogout(repository) },
                     onDeleteAccountClick = { performDeleteAccount(repository) }
                 )
+                if (showDistractingSheet) {
+                    DistractingAppsBottomSheet(onDismiss = { showDistractingSheet = false })
+                }
             }
         }
     }

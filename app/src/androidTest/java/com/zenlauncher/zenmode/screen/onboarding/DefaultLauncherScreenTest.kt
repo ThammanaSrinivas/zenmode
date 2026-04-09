@@ -23,7 +23,6 @@ class DefaultLauncherScreenTest {
     private fun setContent(
         onSetDefaultLauncherClick: () -> Unit = {},
         onShareClick: () -> Unit = {},
-        onChangeDistractingAppsClick: () -> Unit = {},
         onBackClick: () -> Unit = {}
     ) {
         composeTestRule.setContent {
@@ -31,7 +30,6 @@ class DefaultLauncherScreenTest {
                 DefaultLauncherScreen(
                     onSetDefaultLauncherClick = onSetDefaultLauncherClick,
                     onShareClick = onShareClick,
-                    onChangeDistractingAppsClick = onChangeDistractingAppsClick,
                     onBackClick = onBackClick
                 )
             }

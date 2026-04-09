@@ -5,8 +5,6 @@ import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.Handler
@@ -35,7 +33,7 @@ class DoomScrollingMonitorService : Service() {
     private var overlayView: View? = null
     private val handler = Handler(Looper.getMainLooper())
     private val checkInterval = 30000L // 30 seconds
-    private val usageThreshold = 20 * 60 * 1000L // 20 minutes
+    private val usageThreshold = 15 * 60 * 1000L // 15 minutes
     private val USAGE_LOOKBACK_TIME = 1000 * 60 * 60L // 1 hour
 
 
@@ -163,35 +161,8 @@ class DoomScrollingMonitorService : Service() {
         lastDoomPackage = null
     }
 
-    private fun isDoomApp(packageName: String): Boolean {
-        // Explicit list
-        val doomPackages = listOf(
-            "com.instagram.android",
-            "com.facebook.katana",
-            "com.twitter.android",
-            "com.zhiliaoapp.musically", // TikTok
-            "com.google.android.youtube",
-            "com.netflix.mediaclient"
-        )
-        if (doomPackages.contains(packageName)) return true
-
-        // Category check
-        return try {
-            val info = packageManager.getApplicationInfo(packageName, 0)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                when (info.category) {
-                    ApplicationInfo.CATEGORY_SOCIAL,
-                    ApplicationInfo.CATEGORY_VIDEO,
-                    ApplicationInfo.CATEGORY_GAME -> true
-                    else -> false
-                }
-            } else {
-                false
-            }
-        } catch (e: PackageManager.NameNotFoundException) {
-            false
-        }
-    }
+    private fun isDoomApp(packageName: String): Boolean =
+        DistractingAppsRepository.isDistracting(this, packageManager, packageName)
 
     private fun showOverlay() {
         if (overlayView != null) return // Already showing
