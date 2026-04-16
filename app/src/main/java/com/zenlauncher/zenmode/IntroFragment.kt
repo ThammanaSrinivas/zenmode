@@ -29,6 +29,7 @@ class IntroFragment : Fragment() {
                         onGoogleSignInClick = {
                             startSignInFlow(redirectIfNoAccount = true)
                         },
+                        onSkipClick = { navigateToNextPage() },
                         onEmailSignInClick = { email, password ->
                             viewModel.signInWithEmail(email, password)
                         }

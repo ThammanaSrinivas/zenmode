@@ -55,6 +55,7 @@ enum class WelcomeState {
 @Composable
 fun WelcomeScreen(
     onGoogleSignInClick: () -> Unit,
+    onSkipClick: () -> Unit = {},
     onEmailSignInClick: (email: String, password: String) -> Unit = { _, _ -> }
 ) {
     val colors = ZenTheme.colors
@@ -81,6 +82,8 @@ fun WelcomeScreen(
         progressText = "17%",
         buttonText = "Sign in with Google",
         onButtonClick = onGoogleSignInClick,
+        secondaryButtonText = "Skip for now",
+        onSecondaryButtonClick = onSkipClick,
         bottomFooter = {
             var showReviewerFields by remember { mutableStateOf(false) }
             var email by remember { mutableStateOf("") }

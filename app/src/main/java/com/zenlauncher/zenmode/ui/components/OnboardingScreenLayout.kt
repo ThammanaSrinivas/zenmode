@@ -35,6 +35,8 @@ fun OnboardingScreenLayout(
     bgShurikenBlur: Dp = 128.6.dp,
     bgShurikenScale: Float = 1.2f,
     showBgShuriken: Boolean = false,
+    secondaryButtonText: String? = null,
+    onSecondaryButtonClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val colors = ZenTheme.colors
@@ -174,6 +176,17 @@ fun OnboardingScreenLayout(
                         text = buttonText,
                         color = colors.bgPrimary,
                         style = MaterialTheme.typography.labelLarge
+                    )
+                }
+
+                // Optional secondary action (e.g. "Skip for now")
+                if (secondaryButtonText != null && onSecondaryButtonClick != null) {
+                    Spacer(modifier = Modifier.height(12.rdp))
+                    Text(
+                        text = secondaryButtonText,
+                        color = colors.textSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.clickable { onSecondaryButtonClick() }
                     )
                 }
 

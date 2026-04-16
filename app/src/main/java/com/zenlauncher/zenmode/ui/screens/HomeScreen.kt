@@ -485,7 +485,7 @@ private fun AppIconItem(
             DropdownMenuItem(
                 text = {
                     Text(
-                        text = if (appInfo.isPinned) "Unpin" else "Pin",
+                        text = if (appInfo.isPinned) "Unpin" else "Pin app",
                         fontFamily = CabinetGrotesque
                     )
                 },
@@ -497,7 +497,7 @@ private fun AppIconItem(
             DropdownMenuItem(
                 text = {
                     Text(
-                        text = "App Info",
+                        text = "App info",
                         fontFamily = CabinetGrotesque
                     )
                 },
