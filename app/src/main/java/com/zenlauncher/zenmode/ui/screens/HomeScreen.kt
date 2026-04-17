@@ -102,6 +102,12 @@ import java.time.LocalDate
 import java.time.DayOfWeek
 import java.time.temporal.TemporalAdjusters
 
+// ── Constants ─────────────────────────────────────────────────────
+
+private val AppGridIconSize = 52.dp
+private val AppGridIconTopPadding = 6.dp
+private val AppGridIconEndPadding = 6.dp
+
 // ── Main Home Screen ──────────────────────────────────────────────
 
 @Composable
@@ -332,7 +338,7 @@ private fun AppGridPager(
                         // This prevents the pager from shrinking and shifting the StatsCardsRow down
                         val emptySlots = appsPerPage - appsInPage.size
                         items(emptySlots) {
-                            Spacer(modifier = Modifier.height(58.dp)) // Matches AppIconItem max height
+                            Spacer(modifier = Modifier.height(AppGridIconSize + AppGridIconTopPadding))
                         }
                     }
                 }
@@ -397,7 +403,7 @@ private fun LockItem(onClick: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(52.dp)
+                .size(AppGridIconSize)
                 .clip(RoundedCornerShape(12.dp))
                 .background(colors.bgSecondary),
             contentAlignment = Alignment.Center
@@ -436,8 +442,8 @@ private fun AppIconItem(
     ) {
         Box(
             modifier = Modifier
-                .padding(top = 6.dp, end = 6.dp)
-                .size(52.dp),
+                .padding(top = AppGridIconTopPadding, end = AppGridIconEndPadding)
+                .size(AppGridIconSize),
             contentAlignment = Alignment.Center
         ) {
             AndroidView(
