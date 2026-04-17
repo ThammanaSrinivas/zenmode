@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +59,9 @@ fun StatsCardsRow(
     buddyStats: BuddyStats?,
     isSignedIn: Boolean,
     isWeekly: Boolean = false,
+    myLikes: Long = 0L,
+    buddyLikes: Long = 0L,
+    onLikeClick: () -> Unit = {},
     onInviteBuddyClick: () -> Unit = {},
     onSignInClick: () -> Unit = {},
     onBuddyCardClick: (() -> Unit)? = null,
@@ -97,6 +102,7 @@ fun StatsCardsRow(
                         usage = usage,
                         yesterdayChangePercent = yesterdayChangePercent,
                         isWeekly = isWeekly,
+                        buddyLikes = if (hasBuddies) buddyLikes else 0L,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
@@ -117,6 +123,8 @@ fun StatsCardsRow(
                     BuddyStatsCard(
                         buddyStats = buddyStats,
                         onCardClick = onBuddyCardClick,
+                        myLikes = myLikes,
+                        onLikeClick = onLikeClick,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
@@ -154,6 +162,7 @@ fun MyScreenTimeCard(
     usage: DailyUsage?,
     yesterdayChangePercent: Int?,
     isWeekly: Boolean = false,
+    buddyLikes: Long = 0L,
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
@@ -218,7 +227,8 @@ fun MyScreenTimeCard(
                         fontFamily = CabinetGrotesque,
                         fontWeight = FontWeight.Medium,
                         fontSize = 12.rsp,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        modifier = Modifier.weight(1f)
                     )
                     if (yesterdayChangePercent != null) {
                         Spacer(modifier = Modifier.width(4.dp))
@@ -227,7 +237,9 @@ fun MyScreenTimeCard(
                             fontFamily = RedditMono,
                             fontWeight = FontWeight.Normal,
                             fontSize = 11.rsp,
-                            color = colors.percentageChangeColor(yesterdayChangePercent)
+                            color = colors.percentageChangeColor(yesterdayChangePercent),
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }
@@ -242,7 +254,9 @@ fun MyScreenTimeCard(
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 25.rsp,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        softWrap = false
                     )
                     Text(
                         text = "HRS",
@@ -250,14 +264,18 @@ fun MyScreenTimeCard(
                         fontWeight = FontWeight.Normal,
                         fontSize = 8.rsp,
                         color = colors.textPrimary,
-                        modifier = Modifier.padding(start = 2.dp, end = 4.rdp)
+                        modifier = Modifier.padding(start = 2.dp, end = 4.rdp),
+                        maxLines = 1,
+                        softWrap = false
                     )
                     Text(
                         text = String.format("%02d", mins),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 25.rsp,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        softWrap = false
                     )
                     Text(
                         text = "MINS",
@@ -265,7 +283,9 @@ fun MyScreenTimeCard(
                         fontWeight = FontWeight.Normal,
                         fontSize = 8.rsp,
                         color = colors.textPrimary,
-                        modifier = Modifier.padding(start = 2.dp)
+                        modifier = Modifier.padding(start = 2.dp),
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
 
@@ -278,6 +298,15 @@ fun MyScreenTimeCard(
                 )
             }
         }
+
+        ReactBadge(
+            count = buddyLikes,
+            clickable = false,
+            onClick = {},
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 10.dp, y = (-10).dp)
+        )
     }
 }
 
@@ -287,6 +316,8 @@ fun MyScreenTimeCard(
 fun BuddyStatsCard(
     buddyStats: BuddyStats,
     onCardClick: (() -> Unit)? = null,
+    myLikes: Long = 0L,
+    onLikeClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
@@ -359,7 +390,9 @@ fun BuddyStatsCard(
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 25.rsp,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        softWrap = false
                     )
                     Text(
                         text = "HRS",
@@ -367,14 +400,18 @@ fun BuddyStatsCard(
                         fontWeight = FontWeight.Normal,
                         fontSize = 8.rsp,
                         color = colors.textPrimary,
-                        modifier = Modifier.padding(start = 2.dp, end = 4.rdp)
+                        modifier = Modifier.padding(start = 2.dp, end = 4.rdp),
+                        maxLines = 1,
+                        softWrap = false
                     )
                     Text(
                         text = String.format("%02d", mins),
                         fontFamily = RedditMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 25.rsp,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        softWrap = false
                     )
                     Text(
                         text = "MINS",
@@ -382,7 +419,9 @@ fun BuddyStatsCard(
                         fontWeight = FontWeight.Normal,
                         fontSize = 8.rsp,
                         color = colors.textPrimary,
-                        modifier = Modifier.padding(start = 2.dp)
+                        modifier = Modifier.padding(start = 2.dp),
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
 
@@ -392,6 +431,79 @@ fun BuddyStatsCard(
                 MindfulnessBar(
                     progress = mindfulnessProgress,
                     moodState = moodState
+                )
+            }
+        }
+
+        ReactBadge(
+            count = myLikes,
+            clickable = true,
+            onClick = onLikeClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 10.dp, y = 10.dp)
+        )
+    }
+}
+
+// ── React Badge ───────────────────────────────────────────────────
+
+@Composable
+fun ReactBadge(
+    count: Long,
+    clickable: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = ZenTheme.colors
+    val size = 40.dp
+
+    Box(
+        modifier = modifier.size(size + 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        // Circular heart badge
+        Box(
+            modifier = Modifier
+                .size(size)
+                .align(Alignment.Center)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(colors.borderSubtle)
+                .border(1.dp, colors.borderFocus, androidx.compose.foundation.shape.CircleShape)
+                .then(
+                    if (clickable) Modifier.clickable(onClick = onClick) else Modifier
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(R.drawable.heart_react),
+                contentDescription = "React",
+                modifier = Modifier.size(size * 0.6f),
+                contentScale = ContentScale.Fit
+            )
+        }
+
+        // Count badge top-right
+        if (count > 0) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(18.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(colors.borderFocus),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = count.toString(),
+                    fontFamily = RedditMono,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.rsp,
+                    lineHeight = 10.rsp,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    style = LocalTextStyle.current.copy(
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    )
                 )
             }
         }

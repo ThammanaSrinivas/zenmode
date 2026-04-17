@@ -30,6 +30,9 @@ class AccountabilityActivity : AppCompatActivity() {
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@AccountabilityActivity)) {
                 val uiState by viewModel.uiState.observeAsState(AccountabilityUiState())
+                val myLikes by viewModel.myLikes.observeAsState(initial = 0L)
+                val buddyLikes by viewModel.buddyLikes.observeAsState(initial = 0L)
+                val likeToast by viewModel.likeToast.observeAsState()
 
                 LaunchedEffect(uiState.disconnectResult) {
                     when (val result = uiState.disconnectResult) {
@@ -45,6 +48,13 @@ class AccountabilityActivity : AppCompatActivity() {
                     }
                 }
 
+                LaunchedEffect(likeToast) {
+                    likeToast?.let { msg ->
+                        Toast.makeText(this@AccountabilityActivity, msg, Toast.LENGTH_SHORT).show()
+                        viewModel.clearLikeToast()
+                    }
+                }
+
                 AccountabilityScreen(
                     uiState = uiState,
                     onBackClick = { finish() },
@@ -54,7 +64,10 @@ class AccountabilityActivity : AppCompatActivity() {
                         Toast.makeText(this@AccountabilityActivity, "Code copied!", Toast.LENGTH_SHORT).show()
                     },
                     onBackToHomeClick = { finish() },
-                    onChangeBuddyConfirmed = { viewModel.disconnectBuddy() }
+                    onChangeBuddyConfirmed = { viewModel.disconnectBuddy() },
+                    myLikes = myLikes,
+                    buddyLikes = buddyLikes,
+                    onLikeClick = { viewModel.sendLike() }
                 )
             }
         }

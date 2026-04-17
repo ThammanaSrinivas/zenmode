@@ -58,7 +58,10 @@ fun AccountabilityScreen(
     onBackClick: () -> Unit,
     onCopyCode: (String) -> Unit,
     onBackToHomeClick: () -> Unit,
-    onChangeBuddyConfirmed: () -> Unit
+    onChangeBuddyConfirmed: () -> Unit,
+    myLikes: Long = 0L,
+    buddyLikes: Long = 0L,
+    onLikeClick: () -> Unit = {}
 ) {
     val colors = ZenTheme.colors
     var showChangeBuddyDialog by remember { mutableStateOf(false) }
@@ -170,6 +173,9 @@ fun AccountabilityScreen(
                 buddyStats = uiState.buddyStats,
                 isSignedIn = true,
                 isWeekly = true,
+                myLikes = myLikes,
+                buddyLikes = buddyLikes,
+                onLikeClick = onLikeClick,
                 modifier = Modifier.fillMaxWidth()
             )
 

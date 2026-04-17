@@ -38,6 +38,15 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     private val _showForceUpdateDialog = MutableStateFlow(false)
     val showForceUpdateDialog: StateFlow<Boolean> = _showForceUpdateDialog.asStateFlow()
 
+    private val _myLikes = MutableLiveData<Long>(0L)
+    val myLikes: LiveData<Long> get() = _myLikes
+
+    private val _buddyLikes = MutableLiveData<Long>(0L)
+    val buddyLikes: LiveData<Long> get() = _buddyLikes
+
+    private val _likeToast = MutableLiveData<String?>()
+    val likeToast: LiveData<String?> get() = _likeToast
+
     private var sessionStartTime: Long = 0
     private var hasTriggeredDelayedUnlock = false
     private var lastUnlockTimestamp = 0L
@@ -66,6 +75,15 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
                 ServiceLocator.remoteConfigProvider.initialize()
             } catch (e: Exception) {
                 // If it fails, we fall back to not blocking
+            }
+        }
+
+        // Live-refresh likes when a buddy_react FCM push arrives while app is foregrounded.
+        viewModelScope.launch {
+            ServiceLocator.buddyReactedEvents.collect {
+                val myUid = repository.getUserUid() ?: return@collect
+                val buddyUid = repository.getBuddyUid() ?: return@collect
+                fetchLikes(myUid, buddyUid)
             }
         }
     }
@@ -182,11 +200,65 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
 
                     _buddyStats.postValue(buddyStats)
                 }
+
+                fetchLikes(myUid, buddyUid)
             } catch (e: Exception) {
                 // On failure, still check if we have cached buddy
                 _hasBuddies.postValue(repository.hasCachedBuddy())
             }
         }
+    }
+
+    private suspend fun fetchLikes(myUid: String, buddyUid: String) {
+        try {
+            val relId = firestoreDataSource.getRelationshipId(myUid, buddyUid)
+            val (mine, buddy) = firestoreDataSource.getTodayLikes(relId, myUid, buddyUid)
+            _myLikes.postValue(mine)
+            _buddyLikes.postValue(buddy)
+        } catch (_: Exception) {
+        }
+    }
+
+    fun sendLike() {
+        val myUid = repository.getUserUid()
+            ?: ServiceLocator.authProvider.getCurrentUserId()
+            ?: return
+        val buddyUid = repository.getBuddyUid() ?: return
+
+        val recent = repository.getRecentLikeTimestamps()
+        if (recent.size >= UsageRepository.LIKE_MAX_COUNT) {
+            val oldest = recent.first()
+            val waitMs = (oldest + UsageRepository.LIKE_WINDOW_MS) - System.currentTimeMillis()
+            _likeToast.postValue(formatWaitToast(waitMs))
+            return
+        }
+
+        val previous = _myLikes.value ?: 0L
+        _myLikes.postValue(previous + 1)
+        repository.recordLikeSent()
+
+        viewModelScope.launch {
+            val relId = firestoreDataSource.getRelationshipId(myUid, buddyUid)
+            val ok = firestoreDataSource.sendLike(relId, myUid)
+            if (!ok) {
+                _myLikes.postValue(previous)
+                repository.removeLastLikeTimestamp()
+                _likeToast.postValue("Failed to react")
+            }
+        }
+    }
+
+    fun clearLikeToast() {
+        _likeToast.value = null
+    }
+
+    private fun formatWaitToast(waitMs: Long): String {
+        val safe = waitMs.coerceAtLeast(0L)
+        val totalSec = (safe + 999L) / 1000L
+        val mins = totalSec / 60L
+        val secs = totalSec % 60L
+        return if (mins > 0) "Wait ${mins}m ${secs}s to react again"
+        else "Wait ${secs}s to react again"
     }
 }
 

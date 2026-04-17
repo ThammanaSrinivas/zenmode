@@ -25,6 +25,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
@@ -36,7 +37,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
@@ -154,32 +157,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadInstalledApps() {
-        val intent = Intent(Intent.ACTION_MAIN, null)
-        intent.addCategory(Intent.CATEGORY_LAUNCHER)
-        val activities = packageManager.queryIntentActivities(intent, 0)
-        val pinnedPackages = repository.getPinnedApps()
-        val pinnedSet = pinnedPackages.toSet()
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                val intent = Intent(Intent.ACTION_MAIN, null)
+                intent.addCategory(Intent.CATEGORY_LAUNCHER)
+                val activities = packageManager.queryIntentActivities(intent, 0)
+                val pinnedPackages = repository.getPinnedApps()
+                val pinnedSet = pinnedPackages.toSet()
 
-        val allApps = activities.map { resolveInfo ->
-            val pkg = resolveInfo.activityInfo.packageName
-            AppInfo(
-                label = resolveInfo.loadLabel(packageManager),
-                packageName = pkg,
-                icon = resolveInfo.loadIcon(packageManager),
-                isPinned = pkg in pinnedSet
-            )
-        }.distinctBy { it.packageName.toString() }
+                val allApps = activities.map { resolveInfo ->
+                    val pkg = resolveInfo.activityInfo.packageName
+                    AppInfo(
+                        label = resolveInfo.loadLabel(packageManager),
+                        packageName = pkg,
+                        icon = resolveInfo.loadIcon(packageManager),
+                        isPinned = pkg in pinnedSet
+                    )
+                }.distinctBy { it.packageName.toString() }
 
-        val appsByPackage = allApps.associateBy { it.packageName.toString() }
-        val pinned = pinnedPackages.mapNotNull { appsByPackage[it] }
-        val unpinned = allApps.filter { it.packageName.toString() !in pinnedSet }
-            .sortedBy { it.label.toString() }
+                val appsByPackage = allApps.associateBy { it.packageName.toString() }
+                val pinned = pinnedPackages.mapNotNull { appsByPackage[it] }
+                val unpinned = allApps.filter { it.packageName.toString() !in pinnedSet }
+                    .sortedBy { it.label.toString() }
 
-        installedApps = pinned + unpinned
+                pinned + unpinned
+            }
+            installedApps = result
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        requestPostNotificationsIfNeeded()
 
         // Initialize ViewModel
         val analyticsManager = ServiceLocator.analyticsManager
@@ -244,6 +255,9 @@ class MainActivity : AppCompatActivity() {
                 val yesterdayChangePercent by viewModel.yesterdayChangePercent.observeAsState()
                 val hasBuddies by viewModel.hasBuddies.observeAsState(initial = false)
                 val buddyStats by viewModel.buddyStats.observeAsState()
+                val myLikes by viewModel.myLikes.observeAsState(initial = 0L)
+                val buddyLikes by viewModel.buddyLikes.observeAsState(initial = 0L)
+                val likeToast by viewModel.likeToast.observeAsState()
                 val isSignedIn = remember { ServiceLocator.authProvider.isSignedIn() }
                 val userCode = remember {
                     repository.getUserUid()
@@ -268,6 +282,18 @@ class MainActivity : AppCompatActivity() {
                 // Reload accountability data whenever the overlay is opened
                 androidx.compose.runtime.LaunchedEffect(showBuddyBattle) {
                     if (showBuddyBattle) accountabilityViewModel.reload()
+                }
+
+                // Show like toast messages
+                androidx.compose.runtime.LaunchedEffect(likeToast) {
+                    likeToast?.let { msg ->
+                        android.widget.Toast.makeText(
+                            this@MainActivity,
+                            msg,
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                        viewModel.clearLikeToast()
+                    }
                 }
 
                 // Handle disconnect result
@@ -303,6 +329,9 @@ class MainActivity : AppCompatActivity() {
                     buddyStats = buddyStats,
                     isSignedIn = isSignedIn,
                     showSearch = showSearch,
+                    myLikes = myLikes,
+                    buddyLikes = buddyLikes,
+                    onLikeClick = { viewModel.sendLike() },
                     onShowSearchChange = { showSearch = it },
                     onSettingsClick = {
                         startActivity(Intent(this, SettingsActivity::class.java))
@@ -388,6 +417,19 @@ class MainActivity : AppCompatActivity() {
 
                 // Zen Buddy Battle summary overlay
                 if (showBuddyBattle) {
+                    val accMyLikes by accountabilityViewModel.myLikes.observeAsState(initial = 0L)
+                    val accBuddyLikes by accountabilityViewModel.buddyLikes.observeAsState(initial = 0L)
+                    val accLikeToast by accountabilityViewModel.likeToast.observeAsState()
+                    androidx.compose.runtime.LaunchedEffect(accLikeToast) {
+                        accLikeToast?.let { msg ->
+                            android.widget.Toast.makeText(
+                                this@MainActivity,
+                                msg,
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                            accountabilityViewModel.clearLikeToast()
+                        }
+                    }
                     AccountabilityScreen(
                         uiState = accountabilityUiState,
                         onBackClick = { showBuddyBattle = false },
@@ -397,7 +439,10 @@ class MainActivity : AppCompatActivity() {
                             android.widget.Toast.makeText(this@MainActivity, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
                         },
                         onBackToHomeClick = { showBuddyBattle = false },
-                        onChangeBuddyConfirmed = { accountabilityViewModel.disconnectBuddy() }
+                        onChangeBuddyConfirmed = { accountabilityViewModel.disconnectBuddy() },
+                        myLikes = accMyLikes,
+                        buddyLikes = accBuddyLikes,
+                        onLikeClick = { accountabilityViewModel.sendLike() }
                     )
                 }
 
@@ -425,6 +470,21 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+        }
+    }
+
+    private fun requestPostNotificationsIfNeeded() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            androidx.core.app.ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                1001
+            )
         }
     }
 

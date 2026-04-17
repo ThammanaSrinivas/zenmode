@@ -88,6 +88,11 @@ class MockFirestoreDataSource : FirestoreDataSource {
     override suspend fun initializeUser(uid: String, displayName: String?) {}
     override suspend fun deleteUser(uid: String) {}
     override suspend fun getRelationshipCreatedAt(myUid: String): Long? = null
+    override fun getRelationshipId(user1: String, user2: String): String =
+        if (user1 < user2) "${user1}_${user2}" else "${user2}_${user1}"
+    override suspend fun sendLike(relationshipId: String, senderUid: String): Boolean = true
+    override suspend fun getTodayLikes(relationshipId: String, myUid: String, buddyUid: String): Pair<Long, Long> = 0L to 0L
+    override suspend fun saveFcmToken(uid: String, token: String) {}
 }
 
 class MockAnalyticsTracker : AnalyticsTrackerContract {

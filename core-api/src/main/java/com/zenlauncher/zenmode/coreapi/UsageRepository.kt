@@ -473,8 +473,39 @@ class UsageRepository(private val context: Context, private val analyticsManager
         }
     }
 
+    // ── React Rate Limit ──────────────────────────────────────────────
+
+    /** Returns like-send timestamps that still fall within the rate-limit window, oldest first. */
+    fun getRecentLikeTimestamps(): List<Long> {
+        val raw = prefs.getString(KEY_RECENT_LIKE_TIMESTAMPS, "") ?: ""
+        if (raw.isEmpty()) return emptyList()
+        val now = System.currentTimeMillis()
+        return raw.split(",")
+            .mapNotNull { it.toLongOrNull() }
+            .filter { now - it < LIKE_WINDOW_MS }
+            .sorted()
+    }
+
+    /** Records a like send at `now` and prunes anything outside the window. */
+    fun recordLikeSent() {
+        val pruned = (getRecentLikeTimestamps() + System.currentTimeMillis()).joinToString(",")
+        prefs.edit().putString(KEY_RECENT_LIKE_TIMESTAMPS, pruned).apply()
+    }
+
+    /** Removes the most recent like timestamp. Used to roll back after a failed send. */
+    fun removeLastLikeTimestamp() {
+        val current = getRecentLikeTimestamps().toMutableList()
+        if (current.isEmpty()) return
+        current.removeAt(current.size - 1)
+        prefs.edit().putString(KEY_RECENT_LIKE_TIMESTAMPS, current.joinToString(",")).apply()
+    }
+
     companion object {
         const val MAX_PINNED_APPS = 4
+
+        private const val KEY_RECENT_LIKE_TIMESTAMPS = "recent_like_timestamps"
+        const val LIKE_WINDOW_MS: Long = 20L * 60_000L  // 20 minutes
+        const val LIKE_MAX_COUNT: Int = 4
     }
 
     fun clearAllData() {

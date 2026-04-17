@@ -254,9 +254,6 @@ fun DefaultLauncherScreen(
 }
 
 class DefaultLauncherFragment : Fragment() {
-
-    private var hasOpenedSettings = false
-
     private val settingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -283,8 +280,7 @@ class DefaultLauncherFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        if (hasOpenedSettings && isDefaultLauncher()) {
-            hasOpenedSettings = false
+        if (isDefaultLauncher()) {
             completeOnboarding()
         }
     }
@@ -293,7 +289,6 @@ class DefaultLauncherFragment : Fragment() {
         if (isDefaultLauncher()) {
             completeOnboarding()
         } else {
-            hasOpenedSettings = true
             settingsLauncher.launch(Intent(Settings.ACTION_HOME_SETTINGS))
         }
     }

@@ -24,5 +24,20 @@ interface FirestoreDataSource {
      * [myUid] and their buddy was created, or null if not found / on error.
      */
     suspend fun getRelationshipCreatedAt(myUid: String): Long?
+
+    /** Canonical relationship document ID for two users (lexicographically ordered). */
+    fun getRelationshipId(user1: String, user2: String): String
+
+    /** Atomically increment the sender's like count for today. Returns true on success. */
+    suspend fun sendLike(relationshipId: String, senderUid: String): Boolean
+
+    /**
+     * Fetch today's like counts for both users in the relationship.
+     * Returns Pair(mySent, buddySent). Returns Pair(0, 0) if no document exists or on error.
+     */
+    suspend fun getTodayLikes(relationshipId: String, myUid: String, buddyUid: String): Pair<Long, Long>
+
+    /** Persist the FCM device token for [uid] so Cloud Functions can target notifications. */
+    suspend fun saveFcmToken(uid: String, token: String)
 }
 

@@ -13,6 +13,7 @@ import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
@@ -45,7 +46,7 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
     fun performGetCredential(activity: Activity, redirectIfNoAccount: Boolean = true) {
         _uiState.value = SignInUiState.Loading
 
-        val request = buildCredentialRequest(redirectIfNoAccount) ?: return
+        val primaryRequest = buildSignInWithGoogleRequest() ?: return
         val credentialManager = CredentialManager.create(context)
         val activityRef = WeakReference(activity)
 
@@ -58,10 +59,25 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
             }
             try {
                 val result = credentialManager.getCredential(
-                    request = request,
+                    request = primaryRequest,
                     context = activityContext,
                 )
                 handleSignInResult(result)
+            } catch (primaryError: NoCredentialException) {
+                val fallbackRequest = buildGoogleIdRequest()
+                if (fallbackRequest == null) {
+                    handleSignInError(primaryError, redirectIfNoAccount)
+                    return@launch
+                }
+                try {
+                    val result = credentialManager.getCredential(
+                        request = fallbackRequest,
+                        context = activityContext,
+                    )
+                    handleSignInResult(result)
+                } catch (fallbackError: Exception) {
+                    handleSignInError(fallbackError, redirectIfNoAccount)
+                }
             } catch (e: Exception) {
                 handleSignInError(e, redirectIfNoAccount)
             }
@@ -73,23 +89,33 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
         credentialJob?.cancel()
     }
 
-    fun buildCredentialRequest(redirectIfNoAccount: Boolean = true): GetCredentialRequest? {
-        val webClientId = BuildConfig.WEB_CLIENT_ID
+    fun buildSignInWithGoogleRequest(): GetCredentialRequest? {
+        val webClientId = resolveWebClientId() ?: return null
+        val option = GetSignInWithGoogleOption.Builder(webClientId).build()
+        return GetCredentialRequest.Builder()
+            .addCredentialOption(option)
+            .build()
+    }
 
+    fun buildGoogleIdRequest(): GetCredentialRequest? {
+        val webClientId = resolveWebClientId() ?: return null
+        val option = GetGoogleIdOption.Builder()
+            .setServerClientId(webClientId)
+            .setFilterByAuthorizedAccounts(false)
+            .setAutoSelectEnabled(false)
+            .build()
+        return GetCredentialRequest.Builder()
+            .addCredentialOption(option)
+            .build()
+    }
+
+    private fun resolveWebClientId(): String? {
+        val webClientId = BuildConfig.WEB_CLIENT_ID
         if (webClientId == "YOUR_WEB_CLIENT_ID" || webClientId.isEmpty()) {
             _uiState.value = SignInUiState.Error("Web Client ID is missing. Check local.properties")
             return null
         }
-
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(webClientId)
-            .setAutoSelectEnabled(false)
-            .build()
-
-        return GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
+        return webClientId
     }
 
     fun handleSignInResult(result: GetCredentialResponse) {

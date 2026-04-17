@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -113,6 +114,9 @@ fun HomeScreen(
     buddyStats: BuddyStats?,
     isSignedIn: Boolean,
     showSearch: Boolean,
+    myLikes: Long = 0L,
+    buddyLikes: Long = 0L,
+    onLikeClick: () -> Unit = {},
     onShowSearchChange: (Boolean) -> Unit,
     onSettingsClick: () -> Unit,
     onGoogleSearch: (String) -> Unit,
@@ -129,11 +133,15 @@ fun HomeScreen(
     val colors = ZenTheme.colors
     var showStreakOverlay by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.bgPrimary)
+            .systemBarsPadding()
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.bgPrimary)
         ) {
             WeightSpacer(1f)
 
@@ -151,6 +159,9 @@ fun HomeScreen(
                 hasBuddies = hasBuddies,
                 buddyStats = buddyStats,
                 isSignedIn = isSignedIn,
+                myLikes = myLikes,
+                buddyLikes = buddyLikes,
+                onLikeClick = onLikeClick,
                 onInviteBuddyClick = onInviteBuddyClick,
                 onSignInClick = onSignInClick,
                 onBuddyCardClick = onBuddyCardClick,
@@ -308,7 +319,7 @@ private fun AppGridPager(
                         item {
                             LockItem(onClick = onLockClick)
                         }
-                        items(appsInPage.size, key = { index -> appsInPage[index].packageName.toString() }) { index ->
+                        items(appsInPage.size) { index ->
                             AppIconItem(
                                 appInfo = appsInPage[index],
                                 onClick = { onAppClick(appsInPage[index]) },
@@ -428,6 +439,10 @@ private fun AppIconItem(
                         scaleType = ImageView.ScaleType.FIT_XY
                         setImageDrawable(appInfo.icon)
                     }
+                },
+                update = { imageView ->
+                    imageView.setImageDrawable(appInfo.icon)
+                    imageView.scaleType = ImageView.ScaleType.FIT_XY
                 },
                 modifier = Modifier
                     .fillMaxSize()
@@ -630,7 +645,7 @@ private fun SearchOverlay(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 // Matching apps
-                items(filteredApps, key = { it.packageName.toString() }) { app ->
+                items(filteredApps) { app ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
