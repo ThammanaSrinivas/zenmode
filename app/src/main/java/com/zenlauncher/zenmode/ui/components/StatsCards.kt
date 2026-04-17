@@ -469,7 +469,10 @@ fun ReactBadge(
                 .align(Alignment.Center)
                 .clip(androidx.compose.foundation.shape.CircleShape)
                 .background(colors.borderSubtle)
-                .border(1.dp, colors.borderFocus, androidx.compose.foundation.shape.CircleShape)
+                .then(
+                    if (clickable) Modifier.border(1.dp, colors.borderFocus, androidx.compose.foundation.shape.CircleShape)
+                    else Modifier
+                )
                 .then(
                     if (clickable) Modifier.clickable(onClick = onClick) else Modifier
                 ),

@@ -327,6 +327,13 @@ private fun AppGridPager(
                                 onAppInfoClick = { onAppInfoClick(appsInPage[index]) }
                             )
                         }
+                        
+                        // Fill remaining slots with empty spaces to maintain consistent 3-row structure across pages
+                        // This prevents the pager from shrinking and shifting the StatsCardsRow down
+                        val emptySlots = appsPerPage - appsInPage.size
+                        items(emptySlots) {
+                            Spacer(modifier = Modifier.height(58.dp)) // Matches AppIconItem max height
+                        }
                     }
                 }
             }
