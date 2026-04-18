@@ -5,8 +5,6 @@ import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.Handler
@@ -24,8 +22,12 @@ class DoomScrollingMonitorService : Service() {
     companion object {
         var isRunning = false
             private set
+            
+        private const val DOOM_PREFS = "zenmode_doom_prefs"
+        private const val KEY_SNOOZE_UNTIL = "doom_snooze_until"
     }
 
+    private var wasActionTaken = false
     private lateinit var usageStatsManager: UsageStatsManager
     private lateinit var windowManager: WindowManager
     private var overlayView: View? = null
@@ -33,6 +35,7 @@ class DoomScrollingMonitorService : Service() {
     private val checkInterval = 30000L // 30 seconds
     private val usageThreshold = 15 * 60 * 1000L // 15 minutes
     private val USAGE_LOOKBACK_TIME = 1000 * 60 * 60L // 1 hour
+
 
     private val monitorRunnable = object : Runnable {
         override fun run() {
@@ -158,51 +161,26 @@ class DoomScrollingMonitorService : Service() {
         lastDoomPackage = null
     }
 
-    private fun isDoomApp(packageName: String): Boolean {
-        // Explicit list
-        val doomPackages = listOf(
-            "com.instagram.android",
-            "com.facebook.katana",
-            "com.twitter.android",
-            "com.zhiliaoapp.musically", // TikTok
-            "com.google.android.youtube",
-            "com.netflix.mediaclient"
-        )
-        if (doomPackages.contains(packageName)) return true
-
-        // Category check
-        return try {
-            val info = packageManager.getApplicationInfo(packageName, 0)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                when (info.category) {
-                    ApplicationInfo.CATEGORY_SOCIAL,
-                    ApplicationInfo.CATEGORY_VIDEO,
-                    ApplicationInfo.CATEGORY_GAME -> true
-                    else -> false
-                }
-            } else {
-                false
-            }
-        } catch (e: PackageManager.NameNotFoundException) {
-            false
-        }
-    }
+    private fun isDoomApp(packageName: String): Boolean =
+        DistractingAppsRepository.isDistracting(this, packageManager, packageName)
 
     private fun showOverlay() {
         if (overlayView != null) return // Already showing
+        wasActionTaken = false
 
         // Analytics
         val tracker = ServiceLocator.analyticsTracker
-        val durationSec = (System.currentTimeMillis() - currentDoomSessionStart) / 1000
-        tracker.trackMindlessScrollDetected(
-            durationSec = durationSec,
-            appName = lastDoomPackage ?: "unknown",
-            appCategory = "social", // Simplified, as category isn't dynamically fetched for event here
-            nudgeShown = true
-        )
-        tracker.trackMindfulScrollPromptShown("duration_15_min")
+        tracker.trackDoomScrollThresholdReached(lastDoomPackage ?: "unknown")
 
         if (!Settings.canDrawOverlays(this)) return
+
+        // Check Snooze
+        val prefs = getSharedPreferences(DOOM_PREFS, Context.MODE_PRIVATE)
+        val snoozeUntil = prefs.getLong(KEY_SNOOZE_UNTIL, 0L)
+        if (System.currentTimeMillis() < snoozeUntil) {
+            resetTracking()
+            return
+        }
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -227,15 +205,34 @@ class DoomScrollingMonitorService : Service() {
         val inflater = LayoutInflater.from(this)
         overlayView = inflater.inflate(R.layout.dialog_doom_scrolling, null)
 
-        val closeButton = overlayView?.findViewById<View>(R.id.btn_close)
-        closeButton?.setOnClickListener {
+        val actionButton = overlayView?.findViewById<android.widget.ImageView>(R.id.btn_action)
+        val checkbox = overlayView?.findViewById<android.widget.CheckBox>(R.id.cb_remember)
+
+        checkbox?.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                actionButton?.setImageResource(R.drawable.button_remember)
+                ServiceLocator.analyticsTracker.trackRememberMeSelected("4h")
+            } else {
+                actionButton?.setImageResource(R.drawable.button_close_app)
+            }
+        }
+
+        actionButton?.setOnClickListener {
+            // Apply Snooze if checked
+            if (checkbox?.isChecked == true) {
+                val fourHoursMs = 4 * 60 * 60 * 1000L
+                prefs.edit().putLong(KEY_SNOOZE_UNTIL, System.currentTimeMillis() + fourHoursMs).apply()
+            }
+
             val startMain = Intent(Intent.ACTION_MAIN)
             startMain.addCategory(Intent.CATEGORY_HOME)
             startMain.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(startMain)
 
             // Analytics
-            ServiceLocator.analyticsTracker.trackMindfulScrollPromptResponse("pause_now", "social")
+            val action = if (checkbox?.isChecked == true) "app_open" else "mindful"
+            wasActionTaken = true
+            ServiceLocator.analyticsTracker.trackOverlayActionTaken(action)
 
             resetTracking()
             removeOverlay()
@@ -250,6 +247,9 @@ class DoomScrollingMonitorService : Service() {
 
     private fun removeOverlay() {
         if (overlayView != null) {
+            if (!wasActionTaken) {
+                ServiceLocator.analyticsTracker.trackOverlayDismissed("doom_scroll")
+            }
             try {
                 windowManager.removeView(overlayView)
             } catch (e: Exception) {

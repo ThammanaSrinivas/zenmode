@@ -1,0 +1,86 @@
+package com.zenlauncher.zenmode.ui.theme
+
+import android.app.Activity
+import android.os.Build
+import com.zenlauncher.zenmode.ThemePreferences
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+
+@Composable
+fun ZenTheme(
+    context: android.content.Context = LocalContext.current,
+    darkTheme: Boolean = ThemePreferences.isDarkMode(context),
+    dynamicColor: Boolean = false, // Dynamic color is disabled by default for ZenLauncher styling
+    content: @Composable () -> Unit
+) {
+    val darkColorScheme = darkColorScheme(
+        primary = ZenBase,
+        background = Black,
+        onBackground = White,
+        surface = Grey800,
+        onSurface = Grey400
+    )
+
+    val lightColorScheme = lightColorScheme(
+        primary = ZenDark,
+        background = White,
+        onBackground = Black,
+        surface = Grey100,
+        onSurface = Grey600
+    )
+
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        darkTheme -> darkColorScheme
+        else -> lightColorScheme
+    }
+
+    val zenColors = if (darkTheme) DarkZenColors else LightZenColors
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
+        }
+    }
+
+    // Wrap Material theme with our custom CompositionLocal
+    CompositionLocalProvider(
+        LocalZenColors provides zenColors
+    ) {
+        ProvideScreenScale {
+            MaterialTheme(
+                colorScheme = colorScheme,
+                typography = Typography,
+                content = content
+            )
+        }
+    }
+}
+
+// Accessor for the custom design tokens
+object ZenTheme {
+    val colors: ZenColors
+        @Composable
+        get() = LocalZenColors.current
+    
+    val typography: ZenTypography
+        get() = ZenTypography
+}

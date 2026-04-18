@@ -21,7 +21,7 @@
         android:gravity="center"
         android:maxLines="2"
         android:textSize="14sp"
-        android:fontFamily="@font/bricolage_grotesque"
+        android:fontFamily="@font/cabinet_grotesk_extrabold"
         android:textColor="@android:color/black" />
 
 </LinearLayout>

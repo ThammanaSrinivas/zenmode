@@ -3,124 +3,150 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="@color/doom_background"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="0dp">
+    app:cardBackgroundColor="#1A1A1A"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="8dp"
+    android:layout_margin="16dp">
 
-    <androidx.core.widget.NestedScrollView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:padding="24dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="24dp">
-
-        <LinearLayout
-            android:id="@+id/bars_container"
-            android:layout_width="wrap_content"
-            android:layout_height="24dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
+        <!-- Handle Bar -->
+        <View
+            android:id="@+id/handle_bar"
+            android:layout_width="60dp"
+            android:layout_height="4dp"
+            android:background="#40FFFFFF"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/logo_container"
-            app:layout_constraintBottom_toBottomOf="@id/logo_container">
+            app:layout_constraintEnd_toEndOf="parent" />
 
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="@color/zen_mindfulness_annoyed"/>
-            
-            <!-- Inactive bars -->
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="#B0C4DE"/> 
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="#B0C4DE"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="#B0C4DE"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="#B0C4DE"/>
-            <View android:layout_width="6dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:background="@drawable/bg_doom_bar" android:backgroundTint="#B0C4DE"/>
-
-        </LinearLayout>
-        
-        <LinearLayout
-            android:id="@+id/logo_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:layout_marginTop="-35dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-            
-            <ImageView
-                android:layout_width="82dp"
-                android:layout_height="wrap_content"
-                android:alpha="0.25"
-                android:src="@drawable/logo_png" />
-                
-        </LinearLayout>
-
+        <!-- Title row -->
         <TextView
             android:id="@+id/tv_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="You’re losing your zen"
+            android:text="Bro, We're losing zen🥺"
             android:textSize="32sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
-            android:lineSpacingExtra="-4dp"
-            android:layout_marginTop="32dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/bars_container" />
-
-        <TextView
-            android:id="@+id/tv_subtitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="15 minutes in life spent!"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
-            android:layout_marginTop="8dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_title" />
-
-        <TextView
-            android:id="@+id/tv_body"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="“Bro, we’ve doom-scrolled enough dinosaurs to extinction. Enter Zenmode code or close me, reclaim your life!”"
-            android:textSize="18sp"
-            android:lineSpacingMultiplier="1.2"
-            android:textColor="#2D2D2D"
+            android:fontFamily="@font/cabinet_grotesk_bold"
+            android:textColor="@color/white"
+            android:lineHeight="38sp"
             android:layout_marginTop="24dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_subtitle" />
+            app:layout_constraintEnd_toStartOf="@+id/iv_app_icon_glow"
+            app:layout_constraintTop_toBottomOf="@id/handle_bar" />
 
+        <!-- Red Bars -->
         <ImageView
-            android:id="@+id/btn_close"
-            android:layout_width="0dp"
+            android:id="@+id/iv_app_icon_glow"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:alpha="0.8"
+            android:src="@drawable/app_icon"
+            app:layout_constraintBottom_toBottomOf="@id/tv_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tv_title"
+            app:layout_constraintVertical_bias="0.0"/>
+
+        <LinearLayout
+            android:id="@+id/bars_container"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:orientation="horizontal"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_title">
+
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="4dp" android:background="@drawable/bg_doom_bar_red" />
+            <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@drawable/bg_doom_bar_red" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_subtitle_1"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="52dp"
+            android:text="Zenmode kidnapped by scrolls"
+            android:textSize="22sp"
+            android:fontFamily="@font/cabinet_grotesk_medium"
+            android:textColor="#E0E0E0"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/bars_container" />
+
+        <TextView
+            android:id="@+id/tv_subtitle_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="15 minutes in life spent!"
+            android:textSize="24sp"
+            android:fontFamily="@font/cabinet_grotesk_bold"
+            android:textColor="@color/white"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_subtitle_1" />
+
+        <TextView
+            android:id="@+id/tv_body_quote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="“Bro, we’ve doom-scrolled enough dinosaurs to extinction. close me, reclaim your life!”"
+            android:textSize="18sp"
+            android:fontFamily="@font/cabinet_grotesk_regular"
+            android:textColor="#B0B0B0"
+            android:alpha="0.8"
+            android:lineHeight="26sp"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_subtitle_2" />
+
+        <!-- Checkbox -->
+        <LinearLayout
+            android:id="@+id/checkbox_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_body_quote">
+
+            <CheckBox
+                android:id="@+id/cb_remember"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/white"
+                android:minWidth="0dp"
+                android:minHeight="0dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Remember, don't remind for next 4 hours"
+                android:textSize="16sp"
+                android:fontFamily="@font/cabinet_grotesk_regular"
+                android:textColor="#E0E0E0"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- Main Button -->
+        <ImageView
+            android:id="@+id/btn_action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="45dp"
             android:src="@drawable/button_close_app"
             android:scaleType="fitXY"
-            android:layout_marginTop="48dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_body" />
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/checkbox_container" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.core.widget.NestedScrollView>
 </androidx.cardview.widget.CardView>

@@ -25,6 +25,7 @@ local.properties
 **/.kotlin/
 
 # Android / Logs
+app/release/
 *.apk
 *.ap_
 *.aab
@@ -49,6 +50,9 @@ gradlew.bat
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
+
+.claude
+CLAUDE.md
 
 # Opencore / Composite builds generated files
 core-*/.idea/

@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="64sp"
-        android:fontFamily="@font/bricolage_grotesque"
+        android:fontFamily="@font/cabinet_grotesk_extrabold"
         android:textColor="@android:color/black"
         android:format12Hour="h:mm a"
         android:format24Hour="H:mm" />
@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textSize="20sp"
-        android:fontFamily="@font/bricolage_grotesque"
+        android:fontFamily="@font/cabinet_grotesk_extrabold"
         android:textColor="@android:color/darker_gray"
         android:format12Hour="EEE, MMM d"
         android:format24Hour="EEE, MMM d" />

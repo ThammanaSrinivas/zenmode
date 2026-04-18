@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:text="100%"
         android:textSize="24sp"
-        android:fontFamily="@font/bricolage_grotesque"
+        android:fontFamily="@font/cabinet_grotesk_extrabold"
         android:textColor="@android:color/black" />
 
     <ProgressBar

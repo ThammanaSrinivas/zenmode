@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.coreapi.services
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+
 /**
  * Central service registry for the Open Core architecture.
  *
@@ -12,6 +14,10 @@ object ServiceLocator {
     lateinit var analyticsTracker: AnalyticsTrackerContract
     lateinit var authProvider: AuthProvider
     lateinit var firestoreDataSource: FirestoreDataSource
+    lateinit var remoteConfigProvider: RemoteConfigProvider
+
+    /** Emitted when FCM delivers a buddy-reaction push while app is running. */
+    val buddyReactedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
 
     /**
      * Returns true if the ServiceLocator has been fully initialized.
@@ -20,5 +26,6 @@ object ServiceLocator {
         get() = ::analyticsManager.isInitialized &&
                 ::analyticsTracker.isInitialized &&
                 ::authProvider.isInitialized &&
-                ::firestoreDataSource.isInitialized
+                ::firestoreDataSource.isInitialized &&
+                ::remoteConfigProvider.isInitialized
 }

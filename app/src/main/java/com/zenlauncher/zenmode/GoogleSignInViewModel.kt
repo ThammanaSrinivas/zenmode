@@ -13,13 +13,16 @@ import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
 
 sealed class SignInUiState {
     object Idle : SignInUiState()
@@ -35,6 +38,7 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
     val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
 
     private val context = application.applicationContext
+    private var credentialJob: Job? = null
 
     /**
      * Performs the entire getCredential flow inside viewModelScope.
@@ -42,39 +46,76 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
     fun performGetCredential(activity: Activity, redirectIfNoAccount: Boolean = true) {
         _uiState.value = SignInUiState.Loading
 
-        val request = buildCredentialRequest(redirectIfNoAccount) ?: return
-        val credentialManager = CredentialManager.create(activity.applicationContext)
+        val primaryRequest = buildSignInWithGoogleRequest() ?: return
+        val credentialManager = CredentialManager.create(context)
+        val activityRef = WeakReference(activity)
 
-        viewModelScope.launch {
+        credentialJob?.cancel()
+        credentialJob = viewModelScope.launch {
+            val activityContext = activityRef.get()
+            if (activityContext == null) {
+                _uiState.value = SignInUiState.Error("Activity no longer available")
+                return@launch
+            }
             try {
                 val result = credentialManager.getCredential(
-                    request = request,
-                    context = activity,
+                    request = primaryRequest,
+                    context = activityContext,
                 )
                 handleSignInResult(result)
+            } catch (primaryError: NoCredentialException) {
+                val fallbackRequest = buildGoogleIdRequest()
+                if (fallbackRequest == null) {
+                    handleSignInError(primaryError, redirectIfNoAccount)
+                    return@launch
+                }
+                try {
+                    val result = credentialManager.getCredential(
+                        request = fallbackRequest,
+                        context = activityContext,
+                    )
+                    handleSignInResult(result)
+                } catch (fallbackError: Exception) {
+                    handleSignInError(fallbackError, redirectIfNoAccount)
+                }
             } catch (e: Exception) {
                 handleSignInError(e, redirectIfNoAccount)
             }
         }
     }
 
-    fun buildCredentialRequest(redirectIfNoAccount: Boolean = true): GetCredentialRequest? {
-        val webClientId = BuildConfig.WEB_CLIENT_ID
+    override fun onCleared() {
+        super.onCleared()
+        credentialJob?.cancel()
+    }
 
+    fun buildSignInWithGoogleRequest(): GetCredentialRequest? {
+        val webClientId = resolveWebClientId() ?: return null
+        val option = GetSignInWithGoogleOption.Builder(webClientId).build()
+        return GetCredentialRequest.Builder()
+            .addCredentialOption(option)
+            .build()
+    }
+
+    fun buildGoogleIdRequest(): GetCredentialRequest? {
+        val webClientId = resolveWebClientId() ?: return null
+        val option = GetGoogleIdOption.Builder()
+            .setServerClientId(webClientId)
+            .setFilterByAuthorizedAccounts(false)
+            .setAutoSelectEnabled(false)
+            .build()
+        return GetCredentialRequest.Builder()
+            .addCredentialOption(option)
+            .build()
+    }
+
+    private fun resolveWebClientId(): String? {
+        val webClientId = BuildConfig.WEB_CLIENT_ID
         if (webClientId == "YOUR_WEB_CLIENT_ID" || webClientId.isEmpty()) {
             _uiState.value = SignInUiState.Error("Web Client ID is missing. Check local.properties")
             return null
         }
-
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(webClientId)
-            .setAutoSelectEnabled(false)
-            .build()
-
-        return GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
+        return webClientId
     }
 
     fun handleSignInResult(result: GetCredentialResponse) {
@@ -115,28 +156,43 @@ class GoogleSignInViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun signInWithEmail(email: String, password: String) {
+        _uiState.value = SignInUiState.Loading
+        viewModelScope.launch {
+            val signInResult = ServiceLocator.authProvider.signInWithEmailAndPassword(email, password)
+            handleSignInResult(signInResult)
+        }
+    }
+
     private fun firebaseAuthWithGoogle(idToken: String) {
         viewModelScope.launch {
             val signInResult = ServiceLocator.authProvider.signInWithGoogleToken(idToken)
+            handleSignInResult(signInResult)
+        }
+    }
 
-            if (signInResult.isSuccess) {
-                val analyticsManager = ServiceLocator.analyticsManager
-                val repository = UsageRepository(context, analyticsManager)
-                val userId = signInResult.userId
+    private suspend fun handleSignInResult(signInResult: com.zenlauncher.zenmode.coreapi.SignInResult) {
+        if (signInResult.isSuccess) {
+            val analyticsManager = ServiceLocator.analyticsManager
+            val repository = UsageRepository(context, analyticsManager)
+            val userId = signInResult.userId
 
-                if (userId != null) {
-                    repository.saveUserUid(userId)
-                    analyticsManager.identifyUser(userId)
-                }
-
-                if (signInResult.isNewUser && userId != null) {
-                    initializeUserInFirestore(userId, signInResult.displayName)
-                } else {
-                    _uiState.value = SignInUiState.Success
-                }
-            } else {
-                _uiState.value = SignInUiState.Error("Authentication Failed")
+            if (userId != null) {
+                repository.saveUserUid(userId)
+                analyticsManager.identifyUser(userId, mapOf(
+                    "name" to (signInResult.displayName ?: ""),
+                    "email" to (signInResult.email ?: "")
+                ))
+                repository.setPostHogIdentified(true)
             }
+
+            if (signInResult.isNewUser && userId != null) {
+                initializeUserInFirestore(userId, signInResult.displayName)
+            } else {
+                _uiState.value = SignInUiState.Success
+            }
+        } else {
+            _uiState.value = SignInUiState.Error(signInResult.errorMessage ?: "Authentication Failed")
         }
     }
 

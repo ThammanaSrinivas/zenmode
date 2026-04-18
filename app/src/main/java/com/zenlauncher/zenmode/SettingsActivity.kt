@@ -1,98 +1,141 @@
 package com.zenlauncher.zenmode
 
 import android.content.Intent
-import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
-import android.text.style.StyleSpan
-import android.widget.ImageView
-import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.lifecycle.lifecycleScope
+import com.zenlauncher.zenmode.coreapi.UsageRepository
+import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.ui.screens.DistractingAppsBottomSheet
+import com.zenlauncher.zenmode.ui.screens.SettingsScreen
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
+
+    private var notificationBadgesEnabled by mutableStateOf(false)
+
+    override fun onResume() {
+        super.onResume()
+        notificationBadgesEnabled = ZenNotificationListenerService.isEnabledInSettings(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_settings)
 
-        setupUI()
+        val repository = UsageRepository(applicationContext, ServiceLocator.analyticsManager)
+        val weeklyHours = repository.getWeeklyScreenTimeHours()
+        val profilePhotoUrl = ServiceLocator.authProvider.getPhotoUrl()
+        notificationBadgesEnabled = ZenNotificationListenerService.isEnabledInSettings(this)
+
+        setContent {
+            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
+                var showDistractingSheet by remember { mutableStateOf(false) }
+                SettingsScreen(
+                    weeklyHours = weeklyHours,
+                    profilePhotoUrl = profilePhotoUrl,
+                    isNotificationBadgesEnabled = notificationBadgesEnabled,
+                    onNotificationBadgesClick = {
+                        startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+                    },
+                    onBackClick = { finish() },
+                    onChangeDistractingAppsClick = { showDistractingSheet = true },
+                    onAccountabilityPartnerClick = {
+                        val intent = Intent(this, MainActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                            putExtra("SHOW_BUDDY_BATTLE", true)
+                        }
+                        startActivity(intent)
+                    },
+                    onContributeClick = { openGitHub() },
+                    onRateClick = { openPlayStore() },
+                    onShareClick = { shareZenMode() },
+                    onLogoutClick = { performLogout(repository) },
+                    onDeleteAccountClick = { performDeleteAccount(repository) }
+                )
+                if (showDistractingSheet) {
+                    DistractingAppsBottomSheet(onDismiss = { showDistractingSheet = false })
+                }
+            }
+        }
     }
 
-    private fun setupUI() {
-        // Back Button
-        findViewById<ImageView>(R.id.iv_back).setOnClickListener {
-            finish()
-        }
-
-        // Back to Home Button
-        findViewById<ImageView>(R.id.btn_back_home).setOnClickListener {
-            finish()
-        }
-
-        // Share Launcher Button
-        findViewById<ImageView>(R.id.btn_share_launcher).setOnClickListener {
-            shareLauncher()
-        }
-
-        // Mission Text Styling
-        val missionText = "Our mission to create a Million Focused one\nwith zen mode on. Help us build Zenmode,\ntalk to the builders Srinivas & Kamal."
-        val spannable = SpannableString(missionText)
-
-        // Bold "create a Million Focused one"
-        val boldStart1 = missionText.indexOf("create a Million Focused one")
-        if (boldStart1 != -1) {
-            spannable.setSpan(
-                StyleSpan(android.graphics.Typeface.BOLD),
-                boldStart1,
-                boldStart1 + "create a Million Focused one".length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-
-        // Bold "with zen mode on"
-        val boldStart2 = missionText.indexOf("with zen mode on")
-        if (boldStart2 != -1) {
-            spannable.setSpan(
-                StyleSpan(android.graphics.Typeface.BOLD),
-                boldStart2,
-                boldStart2 + "with zen mode on".length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-
-        // Green "Srinivas"
-        val greenColor = Color.parseColor("#12B117") // zen_mindfulness_happy
-        val srinivasStart = missionText.indexOf("Srinivas")
-        if (srinivasStart != -1) {
-            spannable.setSpan(
-                ForegroundColorSpan(greenColor),
-                srinivasStart,
-                srinivasStart + "Srinivas".length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-
-        // Green "Kamal"
-        val kamalStart = missionText.indexOf("Kamal")
-        if (kamalStart != -1) {
-            spannable.setSpan(
-                ForegroundColorSpan(greenColor),
-                kamalStart,
-                kamalStart + "Kamal".length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-
-        findViewById<TextView>(R.id.tv_mission).text = spannable
+    private fun openGitHub() {
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.GITHUB_URL)))
     }
 
-    private fun shareLauncher() {
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+    private fun openPlayStore() {
+        try {
+            startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("market://details?id=$packageName")
+                )
+            )
+        } catch (e: android.content.ActivityNotFoundException) {
+            startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
+                )
+            )
+        }
+    }
+
+    private fun shareZenMode() {
+        val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_SUBJECT, "ZenMode Launcher")
-            putExtra(Intent.EXTRA_TEXT, "Check out ZenMode, a mindful minimalist launcher: https://example.com") // Replace with actual link if known
+            putExtra(
+                Intent.EXTRA_TEXT,
+                "Check out ZenMode - a minimalist open-source android launcher! ${AppConstants.GITHUB_URL}"
+            )
         }
-        startActivity(Intent.createChooser(shareIntent, "Share via"))
+        startActivity(Intent.createChooser(intent, "Share ZenMode"))
+    }
+
+    private fun performLogout(repository: UsageRepository) {
+        lifecycleScope.launch {
+            ServiceLocator.authProvider.signOut()
+            CredentialManager.create(this@SettingsActivity)
+                .clearCredentialState(ClearCredentialStateRequest())
+            repository.clearUserData()
+            navigateToOnboarding()
+        }
+    }
+
+    private fun performDeleteAccount(repository: UsageRepository) {
+        val uid = ServiceLocator.authProvider.getCurrentUserId()
+        lifecycleScope.launch {
+            try {
+                if (uid != null) {
+                    ServiceLocator.firestoreDataSource.deleteUser(uid)
+                }
+                ServiceLocator.authProvider.deleteAccount()
+            } catch (_: Exception) {
+                // Proceed with local cleanup even if remote deletion fails
+            }
+            CredentialManager.create(this@SettingsActivity)
+                .clearCredentialState(ClearCredentialStateRequest())
+            repository.clearAllData()
+            ThemePreferences.clear(this@SettingsActivity)
+            navigateToOnboarding()
+        }
+    }
+
+    private fun navigateToOnboarding() {
+        val intent = Intent(this, OnboardingActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+        finish()
     }
 }

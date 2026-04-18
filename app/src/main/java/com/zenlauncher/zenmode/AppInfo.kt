@@ -5,5 +5,7 @@ import android.graphics.drawable.Drawable
 data class AppInfo(
     val label: CharSequence,
     val packageName: CharSequence,
-    val icon: Drawable
+    val icon: Drawable,
+    val isPinned: Boolean = false,
+    val notificationCount: Int = 0
 )

@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep Compose-compiler-generated lambda classes from being stripped by R8
+-keep class com.zenlauncher.zenmode.**$$ExternalSyntheticLambda* { *; }
+-keepclassmembers class com.zenlauncher.zenmode.** {
+    ** invoke$lambda$*(...);
+}

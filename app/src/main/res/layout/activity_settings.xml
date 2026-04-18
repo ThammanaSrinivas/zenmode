@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="@color/zen_beige">
+    android:background="@color/white">
 
     <!-- Header -->
     <ImageView
@@ -13,7 +13,7 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:src="@drawable/ic_arrow_back"
-        app:tint="@color/zen_text_primary"
+        app:tint="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:contentDescription="Back" />
@@ -22,7 +22,7 @@
         android:id="@+id/iv_logo"
         android:layout_width="wrap_content"
         android:layout_height="32dp"
-        android:src="@drawable/logo_png"
+        android:src="@drawable/app_icon"
         android:adjustViewBounds="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -51,7 +51,7 @@
         android:layout_marginTop="32dp"
         android:layout_marginBottom="32dp"
         android:fontFamily="@font/cabinet_grotesk_bold"
-        android:textColor="@color/zen_text_primary"
+        android:textColor="@color/black"
         app:layout_constraintTop_toBottomOf="@+id/divider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -60,7 +60,7 @@
         android:id="@+id/iv_support"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:src="@drawable/support"
+        android:src="@drawable/app_icon"
         android:scaleType="fitCenter"
         android:layout_marginTop="32dp"
         app:layout_constraintTop_toBottomOf="@+id/tv_mission"
@@ -76,7 +76,7 @@
         android:text="Doesn't your mom\ntell you that?"
         android:textAlignment="viewStart"
         android:textSize="32sp"
-        android:textColor="@color/zen_text_primary"
+        android:textColor="@color/black"
         android:fontFamily="@font/cabinet_grotesk_bold"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/tv_sharing"
@@ -90,8 +90,8 @@
         android:text="“Sharing is caring”"
         android:textAlignment="center"
         android:textSize="32sp"
-        android:textColor="@color/zen_text_primary"
-        android:fontFamily="@font/cabinet_grotesk"
+        android:textColor="@color/black"
+        android:fontFamily="@font/cabinet_grotesk_extrabold"
         android:layout_marginBottom="32dp"
         app:layout_constraintBottom_toTopOf="@+id/btn_share_launcher"
         app:layout_constraintStart_toStartOf="parent"
@@ -114,7 +114,7 @@
         android:id="@+id/btn_back_home"
         android:layout_width="0dp"
         android:layout_height="52dp"
-        android:src="@drawable/button_back_to_home"
+        android:src="@drawable/button_lets_goooo"
         android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="16dp"
         android:scaleType="fitCenter"
