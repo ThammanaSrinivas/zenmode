@@ -1,4 +1,4 @@
-<img width="8132" height="1828" alt="Github Repo Header" src="https://github.com/user-attachments/assets/b1dca957-e336-443b-abd5-d3eb69c4a3fb" />
+<img alt="Github Repo Header" src="https://github.com/user-attachments/assets/b1dca957-e336-443b-abd5-d3eb69c4a3fb" />
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN">
     <img src="https://img.shields.io/badge/Download%20on%20Play%20Store-00C700?style=for-the-badge&logo=google-play&logoColor=white"/>
