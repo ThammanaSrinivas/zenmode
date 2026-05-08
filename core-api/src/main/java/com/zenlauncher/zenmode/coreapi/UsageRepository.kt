@@ -392,6 +392,22 @@ class UsageRepository(private val context: Context, private val analyticsManager
             .apply()
     }
 
+    fun getLastDailyTrackedDate(): String {
+        return prefs.getString("last_daily_tracked_date", "") ?: ""
+    }
+
+    fun setLastDailyTrackedDate(date: String) {
+        prefs.edit().putString("last_daily_tracked_date", date).apply()
+    }
+
+    fun getLastWeeklyTrackedDate(): String {
+        return prefs.getString("last_weekly_tracked_date", "") ?: ""
+    }
+
+    fun setLastWeeklyTrackedDate(date: String) {
+        prefs.edit().putString("last_weekly_tracked_date", date).apply()
+    }
+
     fun getLastStatsProcessedTime(): Long {
         return prefs.getLong("last_stats_processed_timestamp", 0L)
     }

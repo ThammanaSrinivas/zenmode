@@ -113,7 +113,7 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     }
 
     fun onResumeCheck() {
-         if (!repository.isZenUnlocked() && !hasTriggeredDelayedUnlock) {
+         if (!repository.isZenUnlocked()) {
              _navigateToDelayedUnlock.value = true
              hasTriggeredDelayedUnlock = true
          }

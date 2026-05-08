@@ -109,6 +109,8 @@ class MockAnalyticsTracker : AnalyticsTrackerContract {
     override fun trackBuddyCodeCopied(mode: String) {}
     override fun trackBuddyCodePasted(mode: String) {}
     override fun trackBuddyConnected(mode: String) {}
+    override fun trackDailyScreenTime(minutes: Long) {}
+    override fun trackWeeklyScreenTime(minutes: Long) {}
 }
 
 class MockAnalyticsManager : AnalyticsManager {

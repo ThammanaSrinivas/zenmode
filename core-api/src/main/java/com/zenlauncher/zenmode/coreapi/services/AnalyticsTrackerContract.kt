@@ -18,4 +18,6 @@ interface AnalyticsTrackerContract {
     fun trackBuddyCodeCopied(mode: String)
     fun trackBuddyCodePasted(mode: String)
     fun trackBuddyConnected(mode: String)
+    fun trackDailyScreenTime(minutes: Long)
+    fun trackWeeklyScreenTime(minutes: Long)
 }

@@ -54,6 +54,15 @@ gradlew.bat
 .claude
 CLAUDE.md
 
+.graphify*
+graphify-out/*
+run_ast.py
+gen_html.py
+label_communities.py
+merge_extract.py
+merge_semantic.py
+tasks.txt
+
 # Opencore / Composite builds generated files
 core-*/.idea/
 core-*/.kotlin/

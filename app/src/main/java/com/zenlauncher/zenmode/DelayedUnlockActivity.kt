@@ -52,10 +52,9 @@ class DelayedUnlockActivity : AppCompatActivity() {
 
         val streakCount = AppLogic.getStreakCount(repository.getWeeklyScreenTimeMillis())
 
-        // Back button handler
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                finish()
+                // Block back — user must wait for countdown
             }
         })
 
@@ -132,6 +131,13 @@ class DelayedUnlockActivity : AppCompatActivity() {
             @Suppress("DEPRECATION")
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        startActivity(android.content.Intent(this, DelayedUnlockActivity::class.java).apply {
+            addFlags(android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        })
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
