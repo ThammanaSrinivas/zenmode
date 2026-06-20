@@ -47,6 +47,15 @@ class ZenNotificationListenerService : NotificationListenerService() {
         notificationCounts.clear()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        // onListenerDisconnected() is not guaranteed before teardown; without clearing the
+        // static reference here the destroyed service stays retained (LeakCanary leak).
+        if (instance === this) {
+            instance = null
+        }
+    }
+
     private fun rebuildCounts() {
         val active = try {
             activeNotifications

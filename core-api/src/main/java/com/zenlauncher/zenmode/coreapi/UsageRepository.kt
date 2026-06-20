@@ -31,8 +31,8 @@ class UsageRepository(private val context: Context, private val analyticsManager
             }
         }
 
-        // Try to get real-time stats first
-        val realTimeFn = getRealTimeScreenTime()
+        // Try to get real-time stats first (only meaningful when usage access is granted)
+        val realTimeFn = if (UsageAccess.isGranted(context)) getRealTimeScreenTime() else 0L
         val currentCachedParams = if (savedDate == today) prefs.getLong("daily_screen_time", 0) else 0
 
         var totalTime: Long
@@ -56,54 +56,107 @@ class UsageRepository(private val context: Context, private val analyticsManager
         }
     }
 
-    private fun getRealTimeScreenTime(): Long {
-        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as? android.app.usage.UsageStatsManager ?: return 0L
-        
-        // Check for permission - if not granted, queryEvents usually returns empty
-        // We rely on the fact that existing logic handles fallback if this returns 0 or fails
-
-        val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        val startTime = calendar.timeInMillis
-        val endTime = System.currentTimeMillis()
-
-        val events = usageStatsManager.queryEvents(startTime, endTime)
-        var totalTime = 0L
-        var lastEventTime = 0L
-        var isScreenOn = false
-
-        val event = android.app.usage.UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(event)
-             if (event.eventType == android.app.usage.UsageEvents.Event.SCREEN_INTERACTIVE) {
-                 lastEventTime = event.timeStamp
-                 isScreenOn = true
-             } else if (event.eventType == android.app.usage.UsageEvents.Event.SCREEN_NON_INTERACTIVE) {
-                 if (isScreenOn && lastEventTime > 0) {
-                     totalTime += (event.timeStamp - lastEventTime)
-                 }
-                 isScreenOn = false
-             }
-        }
-        
-        // If still on, add time from last interactive to now
-        if (isScreenOn && lastEventTime > 0) {
-            totalTime += (System.currentTimeMillis() - lastEventTime)
-        }
-        
-        return totalTime
-    }
+    private fun getRealTimeScreenTime(): Long =
+        computeForegroundScreenTime(startOfTodayMillis(), System.currentTimeMillis())
 
     private fun getScreenTimeForDay(dateString: String): Long {
-        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE)
+        val bounds = dayBoundsMillis(dateString) ?: return 0L
+        return computeForegroundScreenTime(bounds.first, bounds.second)
+    }
+
+    /**
+     * Total foreground app time in `[start, end)`.
+     *
+     * Primary signal: pairing per-app resume/pause events (reliable across OEMs). The previous
+     * implementation summed SCREEN_INTERACTIVE/SCREEN_NON_INTERACTIVE durations, but MIUI/HyperOS
+     * frequently withholds those screen on/off events from third-party apps, so the total stayed 0.
+     *
+     * Fallback: when event pairing yields 0 (events withheld), aggregate totalTimeInForeground from
+     * queryUsageStats(INTERVAL_DAILY), which is exposed even when raw events are not.
+     */
+    private fun computeForegroundScreenTime(start: Long, end: Long): Long {
+        val usm = context.getSystemService(Context.USAGE_STATS_SERVICE)
             as? android.app.usage.UsageStatsManager ?: return 0L
+        val fromEvents = sumForegroundFromEvents(usm, start, end)
+        return if (fromEvents > 0L) fromEvents else sumForegroundFromStats(usm, start, end)
+    }
 
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val date = dateFormat.parse(dateString) ?: return 0L
+    private fun sumForegroundFromEvents(
+        usm: android.app.usage.UsageStatsManager,
+        start: Long,
+        end: Long
+    ): Long {
+        val events = usm.queryEvents(start, end)
+        val event = android.app.usage.UsageEvents.Event()
 
+        // Per-package resume timestamps so interleaved apps (split-screen, quick switches)
+        // are not cross-attributed or double counted.
+        val resumeAt = HashMap<String, Long>()
+        var total = 0L
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            val pkg = event.packageName ?: continue
+            when (event.eventType) {
+                // ACTIVITY_RESUMED (API 29+) and legacy MOVE_TO_FOREGROUND (==1)
+                android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED,
+                android.app.usage.UsageEvents.Event.MOVE_TO_FOREGROUND -> {
+                    // Overwrite any dangling resume (resume without a matching pause): drop the
+                    // stale open session instead of counting it twice.
+                    resumeAt[pkg] = event.timeStamp
+                }
+                // ACTIVITY_PAUSED (API 29+) and legacy MOVE_TO_BACKGROUND (==2)
+                android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED,
+                android.app.usage.UsageEvents.Event.MOVE_TO_BACKGROUND -> {
+                    val started = resumeAt.remove(pkg)
+                    // First event being a pause => started == null => ignored, because the matching
+                    // resume happened before `start` (it belongs to the previous day).
+                    if (started != null && event.timeStamp > started) {
+                        total += event.timeStamp - started
+                    }
+                }
+            }
+        }
+
+        // Any app still in the foreground at `end`: close the open session(s) at `end`.
+        for (started in resumeAt.values) {
+            if (end > started) total += end - started
+        }
+        return total
+    }
+
+    private fun sumForegroundFromStats(
+        usm: android.app.usage.UsageStatsManager,
+        start: Long,
+        end: Long
+    ): Long {
+        val stats = usm.queryUsageStats(
+            android.app.usage.UsageStatsManager.INTERVAL_DAILY, start, end
+        ) ?: return 0L
+        var total = 0L
+        for (s in stats) {
+            var t = s.totalTimeInForeground
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                // totalTimeVisible covers PiP / visible-but-not-resumed; take the larger,
+                // which better matches Digital Wellbeing on MIUI.
+                t = maxOf(t, s.totalTimeVisible)
+            }
+            total += t
+        }
+        return total
+    }
+
+    private fun startOfTodayMillis(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    private fun dayBoundsMillis(dateString: String): Pair<Long, Long>? {
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateString) ?: return null
         val calendar = Calendar.getInstance().apply {
             time = date
             set(Calendar.HOUR_OF_DAY, 0)
@@ -113,28 +166,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
         }
         val startTime = calendar.timeInMillis
         calendar.add(Calendar.DAY_OF_YEAR, 1)
-        val endTime = calendar.timeInMillis
-
-        val events = usageStatsManager.queryEvents(startTime, endTime)
-        var totalTime = 0L
-        var lastEventTime = 0L
-        var isScreenOn = false
-
-        val event = android.app.usage.UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(event)
-            if (event.eventType == android.app.usage.UsageEvents.Event.SCREEN_INTERACTIVE) {
-                lastEventTime = event.timeStamp
-                isScreenOn = true
-            } else if (event.eventType == android.app.usage.UsageEvents.Event.SCREEN_NON_INTERACTIVE) {
-                if (isScreenOn && lastEventTime > 0) {
-                    totalTime += (event.timeStamp - lastEventTime)
-                }
-                isScreenOn = false
-            }
-        }
-
-        return totalTime
+        return startTime to calendar.timeInMillis
     }
 
     fun getYesterdayScreenTimeMillis(): Long {
@@ -208,30 +240,34 @@ class UsageRepository(private val context: Context, private val analyticsManager
     }
 
     fun getTodayUsage(): DailyUsage {
+        val granted = UsageAccess.isGranted(context)
         val today = getTodayDate()
 
         val savedDateScreenTime = prefs.getString("last_date_screentime", "")
         var screenTimeInMillis = if (savedDateScreenTime == today) prefs.getLong("daily_screen_time", 0) else 0
 
-        // Try to get real-time stats
-        try {
-            val realTimeFn = getRealTimeScreenTime()
-            // If we have valid real-time data that is MORE than our cached data, use it.
-            // This handles the case where the user is actively using the device (so cache is stale/lower).
-            if (realTimeFn > 0 && realTimeFn > screenTimeInMillis) {
-                screenTimeInMillis = realTimeFn
+        // Only read real-time stats when usage access is granted; otherwise queryEvents/queryUsageStats
+        // return empty and we keep the last cached value (rather than overwriting with a misleading 0).
+        if (granted) {
+            try {
+                val realTimeFn = getRealTimeScreenTime()
+                // If we have valid real-time data that is MORE than our cached data, use it.
+                // This handles the case where the user is actively using the device (so cache is stale/lower).
+                if (realTimeFn > 0 && realTimeFn > screenTimeInMillis) {
+                    screenTimeInMillis = realTimeFn
 
-                // Sync back to prefs so UI and other components see it
-                prefs.edit()
-                    .putLong("daily_screen_time", screenTimeInMillis)
-                    .putString("last_date_screentime", today)
-                    .apply()
+                    // Sync back to prefs so UI and other components see it
+                    prefs.edit()
+                        .putLong("daily_screen_time", screenTimeInMillis)
+                        .putString("last_date_screentime", today)
+                        .apply()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
 
-        return DailyUsage(screenTimeInMillis)
+        return DailyUsage(screenTimeInMillis, usagePermissionGranted = granted)
     }
 
     fun resetZenUnlockFlag() {

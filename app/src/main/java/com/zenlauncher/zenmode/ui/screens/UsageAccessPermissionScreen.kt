@@ -28,6 +28,7 @@ import androidx.fragment.app.Fragment
 import com.zenlauncher.zenmode.ui.theme.rdp
 import androidx.viewpager2.widget.ViewPager2
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.coreapi.UsageAccess
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
@@ -289,7 +290,7 @@ class UsageAccessPermissionFragment : Fragment() {
     }
 
     private fun handleGrantAccess() {
-        if (hasUsageStatsPermission()) {
+        if (UsageAccess.isGranted(requireContext())) {
             trackPermissionAndNavigate()
         } else {
             hasOpenedSettings = true
@@ -299,7 +300,7 @@ class UsageAccessPermissionFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        if (hasOpenedSettings && hasUsageStatsPermission()) {
+        if (hasOpenedSettings && UsageAccess.isGranted(requireContext())) {
             hasOpenedSettings = false
             trackPermissionAndNavigate()
         }
@@ -320,22 +321,4 @@ class UsageAccessPermissionFragment : Fragment() {
         }
     }
 
-    private fun hasUsageStatsPermission(): Boolean {
-        val appOps = requireContext().getSystemService(android.content.Context.APP_OPS_SERVICE)
-            as android.app.AppOpsManager
-        val mode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                requireContext().packageName
-            )
-        } else {
-            appOps.checkOpNoThrow(
-                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                requireContext().packageName
-            )
-        }
-        return mode == android.app.AppOpsManager.MODE_ALLOWED
-    }
 }

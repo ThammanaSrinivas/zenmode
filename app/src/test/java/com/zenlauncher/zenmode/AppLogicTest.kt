@@ -6,49 +6,56 @@ import org.junit.Test
 class AppLogicTest {
 
     @Test
-    fun `getMoodState returns HAPPY when minutes are low (high mindfulness)`() {
-        // 30 mins → percentage = (120-30)/120*100 = 75% → >= 70% HAPPY threshold
-        val mood = AppLogic.getMoodState(30L)
-        assertEquals(MoodState.HAPPY, mood)
+    fun `getMoodState returns HAPPY at or below happy threshold`() {
+        // <= THRESHOLD_HAPPY_MINUTES (120) → HAPPY
+        assertEquals(MoodState.HAPPY, AppLogic.getMoodState(30L))
+        assertEquals(MoodState.HAPPY, AppLogic.getMoodState(AppConstants.THRESHOLD_HAPPY_MINUTES.toLong()))
     }
 
     @Test
-    fun `getMoodState returns NEUTRAL when minutes are moderate`() {
-        // 60 mins → percentage = (120-60)/120*100 = 50% → >= 40% NEUTRAL but < 70% HAPPY
-        val mood = AppLogic.getMoodState(60L)
-        assertEquals(MoodState.NEUTRAL, mood)
+    fun `getMoodState returns NEUTRAL between happy and neutral thresholds`() {
+        // (120, 210] → NEUTRAL
+        val moderate = (AppConstants.THRESHOLD_HAPPY_MINUTES + 1).toLong()
+        assertEquals(MoodState.NEUTRAL, AppLogic.getMoodState(moderate))
+        assertEquals(MoodState.NEUTRAL, AppLogic.getMoodState(AppConstants.THRESHOLD_NEUTRAL_MINUTES.toLong()))
     }
 
     @Test
-    fun `getMoodState returns ANNOYED when minutes above neutral threshold`() {
-        val mood = AppLogic.getMoodState(AppConstants.THRESHOLD_NEUTRAL_MINUTES.toLong())
-        assertEquals(MoodState.ANNOYED, mood)
+    fun `getMoodState returns ANNOYED above neutral threshold`() {
+        val aboveNeutral = (AppConstants.THRESHOLD_NEUTRAL_MINUTES + 1).toLong()
+        assertEquals(MoodState.ANNOYED, AppLogic.getMoodState(aboveNeutral))
     }
 
     @Test
     fun `getMindfulnessPercentage calcultes correctly`() {
-        // 0 minutes -> 100%
+        // Depletes linearly from 100% at 0 min to 0% at THRESHOLD_NEUTRAL_MINUTES (210).
         assertEquals(100, AppLogic.getMindfulnessPercentage(0L))
-        
-        // 60 minutes -> 50%
-        assertEquals(50, AppLogic.getMindfulnessPercentage(60L))
-        
-        // 120 minutes -> 0%
-        assertEquals(0, AppLogic.getMindfulnessPercentage(120L))
-        
-        // > 120 minutes -> 0%
-        assertEquals(0, AppLogic.getMindfulnessPercentage(150L))
+
+        // Half the neutral threshold (105 min) -> 50%
+        assertEquals(50, AppLogic.getMindfulnessPercentage((AppConstants.THRESHOLD_NEUTRAL_MINUTES / 2).toLong()))
+
+        // At neutral threshold -> 0%
+        assertEquals(0, AppLogic.getMindfulnessPercentage(AppConstants.THRESHOLD_NEUTRAL_MINUTES.toLong()))
+
+        // Beyond neutral threshold -> clamped to 0%
+        assertEquals(0, AppLogic.getMindfulnessPercentage((AppConstants.THRESHOLD_NEUTRAL_MINUTES + 40).toLong()))
     }
 
     @Test
     fun `getMindfulnessColor returns correct color resource`() {
-        // High percentage -> Happy color
+        // <= happy threshold -> happy color
         assertEquals(R.color.zen_mindfulness_happy, AppLogic.getMindfulnessColor(0L))
-        
-        // Medium percentage -> Neutral color (Assuming logic from AppLogic)
-        // Let's check boundary. If 100% is happy.
-        
-        // Low percentage -> Annoyed color
-        assertEquals(R.color.zen_mindfulness_annoyed, AppLogic.getMindfulnessColor(120L))
+
+        // between thresholds -> neutral color
+        assertEquals(
+            R.color.zen_mindfulness_neutral,
+            AppLogic.getMindfulnessColor((AppConstants.THRESHOLD_HAPPY_MINUTES + 1).toLong())
+        )
+
+        // above neutral threshold -> annoyed color
+        assertEquals(
+            R.color.zen_mindfulness_annoyed,
+            AppLogic.getMindfulnessColor((AppConstants.THRESHOLD_NEUTRAL_MINUTES + 1).toLong())
+        )
     }
 }

@@ -28,7 +28,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -40,6 +44,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.zenlauncher.zenmode.coreapi.UsageAccess
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
@@ -121,7 +126,7 @@ class MainActivity : AppCompatActivity() {
     private fun checkAndStartDoomMonitor() {
         if (DoomScrollingMonitorService.isRunning) return
 
-        val hasUsageStats = hasUsageStatsPermission()
+        val hasUsageStats = UsageAccess.isGranted(this)
         val hasOverlayPermission = Settings.canDrawOverlays(this)
 
         if (hasUsageStats && hasOverlayPermission) {
@@ -136,24 +141,6 @@ class MainActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
         }
-    }
-
-    private fun hasUsageStatsPermission(): Boolean {
-        val appOps = getSystemService(android.content.Context.APP_OPS_SERVICE) as android.app.AppOpsManager
-        val mode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                packageName
-            )
-        } else {
-            appOps.checkOpNoThrow(
-                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                packageName
-            )
-        }
-        return mode == android.app.AppOpsManager.MODE_ALLOWED
     }
 
     private fun loadInstalledApps() {
@@ -252,6 +239,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@MainActivity)) {
                 val usage by viewModel.stats.observeAsState()
+                val usagePermissionMissing by viewModel.usagePermissionMissing.observeAsState(initial = false)
                 val yesterdayChangePercent by viewModel.yesterdayChangePercent.observeAsState()
                 val hasBuddies by viewModel.hasBuddies.observeAsState(initial = false)
                 val buddyStats by viewModel.buddyStats.observeAsState()
@@ -399,6 +387,21 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 )
+
+                // Re-grant banner: only when usage access was revoked (e.g. MIUI auto-revoke).
+                if (usagePermissionMissing) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        com.zenlauncher.zenmode.ui.screens.UsageAccessBanner(
+                            onGrantClick = {
+                                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .statusBarsPadding()
+                                .padding(16.dp)
+                        )
+                    }
+                }
 
                 // Accessibility disclosure full-screen
                 if (showAccessibilityDisclosure) {

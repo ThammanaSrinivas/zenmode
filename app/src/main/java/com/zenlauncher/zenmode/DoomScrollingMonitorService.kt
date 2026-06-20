@@ -15,6 +15,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
+import com.zenlauncher.zenmode.coreapi.UsageAccess
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 
 class DoomScrollingMonitorService : Service() {
@@ -96,7 +97,7 @@ class DoomScrollingMonitorService : Service() {
     private var currentDoomSessionStart: Long = 0
     private var lastDoomPackage: String? = null
     private fun checkForegroundApp() {
-        if (!hasUsageStatsPermission()) return
+        if (!UsageAccess.isGranted(this)) return
         
         // If screen is off, pause/stop tracking (or just don't increment)
         if (!powerManager.isInteractive) {
@@ -257,24 +258,6 @@ class DoomScrollingMonitorService : Service() {
             }
             overlayView = null
         }
-    }
-
-    private fun hasUsageStatsPermission(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                packageName
-            )
-        } else {
-             appOps.checkOpNoThrow(
-                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                packageName
-            )
-        }
-        return mode == android.app.AppOpsManager.MODE_ALLOWED
     }
 
     override fun onBind(intent: Intent?): IBinder? {

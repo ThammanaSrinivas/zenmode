@@ -29,6 +29,9 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     private val _yesterdayChangePercent = MutableLiveData<Int?>()
     val yesterdayChangePercent: LiveData<Int?> get() = _yesterdayChangePercent
 
+    private val _usagePermissionMissing = MutableLiveData(false)
+    val usagePermissionMissing: LiveData<Boolean> get() = _usagePermissionMissing
+
     private val _buddyStats = MutableLiveData<BuddyStats>()
     val buddyStats: LiveData<BuddyStats> get() = _buddyStats
 
@@ -134,6 +137,7 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     fun refreshStats() {
         val todayUsage = repository.getTodayUsage()
         _stats.value = todayUsage
+        _usagePermissionMissing.value = !todayUsage.usagePermissionGranted
 
         val yesterdayMillis = repository.getYesterdayScreenTimeMillis()
         _yesterdayChangePercent.value = if (yesterdayMillis > 0) {

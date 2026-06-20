@@ -97,7 +97,8 @@ class UsageRepositoryTest {
         repository.resetZenUnlockFlag()
         verify(editor).putBoolean("is_zen_unlocked", false)
 
-        whenever(prefs.getBoolean("is_zen_unlocked", true)).thenReturn(true)
+        // isZenUnlocked() reads with default `false` — stub must match that default arg.
+        whenever(prefs.getBoolean("is_zen_unlocked", false)).thenReturn(true)
         assertEquals(true, repository.isZenUnlocked())
     }
 

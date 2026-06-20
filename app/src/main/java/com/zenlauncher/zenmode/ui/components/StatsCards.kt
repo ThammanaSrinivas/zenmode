@@ -299,14 +299,16 @@ fun MyScreenTimeCard(
             }
         }
 
-        ReactBadge(
-            count = buddyLikes,
-            clickable = false,
-            onClick = {},
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = 10.dp, y = (-10).dp)
-        )
+        if (buddyLikes > 0) {
+            ReactBadge(
+                count = buddyLikes,
+                clickable = false,
+                onClick = {},
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 10.dp, y = (-10).dp)
+            )
+        }
     }
 }
 
