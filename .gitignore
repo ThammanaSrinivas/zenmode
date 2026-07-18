@@ -55,6 +55,7 @@ gradlew.bat
 CLAUDE.md
 .codex
 AGENTS.md
+TODO.md
 
 .graphify*
 graphify-out/*
