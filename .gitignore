@@ -53,6 +53,8 @@ gradlew.bat
 
 .claude
 CLAUDE.md
+.codex
+AGENTS.md
 
 .graphify*
 graphify-out/*
