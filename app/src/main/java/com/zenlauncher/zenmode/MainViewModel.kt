@@ -17,7 +17,10 @@ data class BuddyStats(
     val screenTimeMins: Long
 )
 
-class MainViewModel(private val repository: UsageRepository) : ViewModel() {
+class MainViewModel(
+    private val repository: UsageRepository,
+    private val isResistanceEnabled: () -> Boolean
+) : ViewModel() {
     private val firestoreDataSource = ServiceLocator.firestoreDataSource
 
     private val _stats = MutableLiveData<DailyUsage>()
@@ -98,7 +101,7 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
 
         sessionStartTime = now
         refreshStats()
-        if (!hasTriggeredDelayedUnlock) {
+        if (isResistanceEnabled() && !hasTriggeredDelayedUnlock) {
             _navigateToDelayedUnlock.value = true
             hasTriggeredDelayedUnlock = true
         }
@@ -116,7 +119,7 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     }
 
     fun onResumeCheck() {
-         if (!repository.isZenUnlocked()) {
+         if (isResistanceEnabled() && !hasTriggeredDelayedUnlock && !repository.isZenUnlocked()) {
              _navigateToDelayedUnlock.value = true
              hasTriggeredDelayedUnlock = true
          }
@@ -266,11 +269,14 @@ class MainViewModel(private val repository: UsageRepository) : ViewModel() {
     }
 }
 
-class MainViewModelFactory(private val repository: UsageRepository) : ViewModelProvider.Factory {
+class MainViewModelFactory(
+    private val repository: UsageRepository,
+    private val isResistanceEnabled: () -> Boolean
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(repository) as T
+            return MainViewModel(repository, isResistanceEnabled) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

@@ -5,15 +5,23 @@ import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.FirestoreDataSource
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
 
     @get:Rule
@@ -21,6 +29,10 @@ class MainViewModelTest {
 
     @Before
     fun setup() {
+        // viewModelScope needs a Main dispatcher in unit tests. StandardTestDispatcher
+        // keeps init coroutines queued (never run) so ServiceLocator services that are
+        // not mocked here are never touched.
+        Dispatchers.setMain(StandardTestDispatcher())
         // MainViewModel accesses ServiceLocator.firestoreDataSource in init
         if (!ServiceLocator.isInitialized) {
             ServiceLocator.firestoreDataSource = mock<FirestoreDataSource>()
@@ -30,12 +42,17 @@ class MainViewModelTest {
         }
     }
 
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     @Test
     fun `onScreenUnlocked triggers navigation`() {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
 
         viewModel.onScreenUnlocked()
 
@@ -47,12 +64,13 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
 
         viewModel.onScreenUnlocked()
         viewModel.onScreenLocked()
 
-        verify(repository).setZenUnlockFlag(false)
+        // setZenUnlockFlag(false) is called once in init and once on lock
+        verify(repository, times(2)).setZenUnlockFlag(false)
         verify(repository).updateScreenTime(any())
     }
 
@@ -62,7 +80,7 @@ class MainViewModelTest {
         val expectedUsage = DailyUsage(5000L)
         whenever(repository.getTodayUsage()).thenReturn(expectedUsage)
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
         viewModel.refreshStats()
 
         assertEquals(expectedUsage, viewModel.stats.value)
@@ -74,7 +92,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
         viewModel.onResumeCheck()
 
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -85,7 +103,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
         viewModel.onDelayedUnlockNavigated()
 
         assertEquals(false, viewModel.navigateToDelayedUnlock.value)
@@ -97,7 +115,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
 
         viewModel.onScreenUnlocked()
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -116,7 +134,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
 
         viewModel.onResumeCheck()
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -134,7 +152,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
 
         // First unlock cycle
         viewModel.onScreenUnlocked()
@@ -161,7 +179,7 @@ class MainViewModelTest {
         whenever(repository.hasCachedBuddy()).thenReturn(true)
         whenever(repository.getBuddyScreenTime()).thenReturn(45L)
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
         viewModel.refreshBuddyStatsFromCache()
 
         assertEquals(true, viewModel.hasBuddies.value)
@@ -174,7 +192,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.hasCachedBuddy()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository)
+        val viewModel = MainViewModel(repository) { true }
         viewModel.refreshBuddyStatsFromCache()
 
         assertEquals(false, viewModel.hasBuddies.value)
@@ -182,9 +200,71 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `onScreenUnlocked does not trigger navigation when resistance disabled`() {
+        val repository = mock<UsageRepository>()
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
+
+        val viewModel = MainViewModel(repository) { false }
+
+        viewModel.onScreenUnlocked()
+
+        assertEquals(null, viewModel.navigateToDelayedUnlock.value)
+    }
+
+    @Test
+    fun `onResumeCheck does not trigger navigation when resistance disabled`() {
+        val repository = mock<UsageRepository>()
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
+        whenever(repository.isZenUnlocked()).thenReturn(false)
+
+        val viewModel = MainViewModel(repository) { false }
+
+        viewModel.onResumeCheck()
+
+        assertEquals(null, viewModel.navigateToDelayedUnlock.value)
+    }
+
+    @Test
+    fun `onScreenUnlocked still tracks session when resistance disabled`() {
+        val repository = mock<UsageRepository>()
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
+
+        val viewModel = MainViewModel(repository) { false }
+
+        viewModel.onScreenUnlocked()
+        viewModel.onScreenLocked()
+
+        verify(repository).updateScreenTime(any())
+    }
+
+    @Test
+    fun `enabling resistance mid-session gates next unlock`() {
+        val repository = mock<UsageRepository>()
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
+
+        var resistanceEnabled = false
+        val viewModel = MainViewModel(repository) { resistanceEnabled }
+
+        viewModel.onScreenUnlocked()
+        assertEquals(null, viewModel.navigateToDelayedUnlock.value)
+
+        viewModel.onScreenLocked()
+        resistanceEnabled = true
+
+        // Reset the debounce timestamp so the second unlock is not suppressed
+        val field = MainViewModel::class.java.getDeclaredField("lastUnlockTimestamp")
+        field.isAccessible = true
+        field.setLong(viewModel, 0L)
+
+        viewModel.onScreenUnlocked()
+        assertEquals(true, viewModel.navigateToDelayedUnlock.value)
+    }
+
+    @Test
     fun `MainViewModelFactory creates ViewModel`() {
         val repository = mock<UsageRepository>()
-        val factory = MainViewModelFactory(repository)
+        whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
+        val factory = MainViewModelFactory(repository) { true }
         val viewModel = factory.create(MainViewModel::class.java)
 
         assert(viewModel is MainViewModel)

@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.ResistancePreferences
 import com.zenlauncher.zenmode.ThemePreferences
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -92,6 +93,7 @@ fun SettingsScreen(
     val colors = ZenTheme.colors
     val context = LocalContext.current
     var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
+    var isResistanceEnabled by remember { mutableStateOf(ResistancePreferences.isEnabled(context)) }
     var showProfileSheet by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -121,6 +123,11 @@ fun SettingsScreen(
                 onDarkModeChange = { enabled ->
                     isDarkMode = enabled
                     ThemePreferences.setDarkMode(context, enabled)
+                },
+                isResistanceEnabled = isResistanceEnabled,
+                onResistanceChange = { enabled ->
+                    isResistanceEnabled = enabled
+                    ResistancePreferences.setEnabled(context, enabled)
                 },
                 isNotificationBadgesEnabled = isNotificationBadgesEnabled,
                 onNotificationBadgesClick = onNotificationBadgesClick,
@@ -433,6 +440,8 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
 private fun PersonaliseSection(
     isDarkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit,
+    isResistanceEnabled: Boolean,
+    onResistanceChange: (Boolean) -> Unit,
     isNotificationBadgesEnabled: Boolean,
     onNotificationBadgesClick: () -> Unit,
     onChangeDistractingAppsClick: () -> Unit,
@@ -474,6 +483,14 @@ private fun PersonaliseSection(
                 text = "Dark mode",
                 checked = isDarkMode,
                 onCheckedChange = onDarkModeChange,
+                modifier = Modifier.padding(vertical = 6.dp)
+            )
+
+            // Resistance screen toggle
+            ZenSettingToggleItem(
+                text = "Resistance screen",
+                checked = isResistanceEnabled,
+                onCheckedChange = onResistanceChange,
                 modifier = Modifier.padding(vertical = 6.dp)
             )
 

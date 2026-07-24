@@ -182,7 +182,9 @@ class MainActivity : AppCompatActivity() {
         // Initialize ViewModel
         val analyticsManager = ServiceLocator.analyticsManager
         repository = UsageRepository(applicationContext, analyticsManager)
-        val factory = MainViewModelFactory(repository)
+        val factory = MainViewModelFactory(repository) {
+            ResistancePreferences.isEnabled(applicationContext)
+        }
         viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
         accountabilityViewModel = ViewModelProvider(
             this, AccountabilityViewModelFactory(repository)
