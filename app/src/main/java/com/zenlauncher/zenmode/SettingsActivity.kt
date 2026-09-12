@@ -14,6 +14,7 @@ import androidx.credentials.CredentialManager
 import androidx.lifecycle.lifecycleScope
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.ui.screens.ContentBlockingBottomSheet
 import com.zenlauncher.zenmode.ui.screens.DistractingAppsBottomSheet
 import com.zenlauncher.zenmode.ui.screens.SettingsScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
@@ -39,6 +40,7 @@ class SettingsActivity : AppCompatActivity() {
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
                 var showDistractingSheet by remember { mutableStateOf(false) }
+                var showContentBlockSheet by remember { mutableStateOf(false) }
                 SettingsScreen(
                     weeklyHours = weeklyHours,
                     profilePhotoUrl = profilePhotoUrl,
@@ -48,6 +50,7 @@ class SettingsActivity : AppCompatActivity() {
                     },
                     onBackClick = { finish() },
                     onChangeDistractingAppsClick = { showDistractingSheet = true },
+                    onBlockInAppContentClick = { showContentBlockSheet = true },
                     onAccountabilityPartnerClick = {
                         val intent = Intent(this, MainActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -63,6 +66,9 @@ class SettingsActivity : AppCompatActivity() {
                 )
                 if (showDistractingSheet) {
                     DistractingAppsBottomSheet(onDismiss = { showDistractingSheet = false })
+                }
+                if (showContentBlockSheet) {
+                    ContentBlockingBottomSheet(onDismiss = { showContentBlockSheet = false })
                 }
             }
         }

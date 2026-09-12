@@ -83,6 +83,7 @@ fun SettingsScreen(
     onNotificationBadgesClick: () -> Unit = {},
     onBackClick: () -> Unit,
     onChangeDistractingAppsClick: () -> Unit,
+    onBlockInAppContentClick: () -> Unit = {},
     onAccountabilityPartnerClick: () -> Unit,
     onContributeClick: () -> Unit,
     onRateClick: () -> Unit,
@@ -132,6 +133,7 @@ fun SettingsScreen(
                 isNotificationBadgesEnabled = isNotificationBadgesEnabled,
                 onNotificationBadgesClick = onNotificationBadgesClick,
                 onChangeDistractingAppsClick = onChangeDistractingAppsClick,
+                onBlockInAppContentClick = onBlockInAppContentClick,
                 onAccountabilityPartnerClick = onAccountabilityPartnerClick,
                 onContributeClick = onContributeClick
             )
@@ -445,6 +447,7 @@ private fun PersonaliseSection(
     isNotificationBadgesEnabled: Boolean,
     onNotificationBadgesClick: () -> Unit,
     onChangeDistractingAppsClick: () -> Unit,
+    onBlockInAppContentClick: () -> Unit,
     onAccountabilityPartnerClick: () -> Unit,
     onContributeClick: () -> Unit
 ) {
@@ -511,6 +514,13 @@ private fun PersonaliseSection(
                 text = "Change distracting app list",
                 color = colors.textBrand,
                 onClick = onChangeDistractingAppsClick
+            )
+
+            // Block in-app content (YouTube Shorts / home feed, etc.)
+            SettingsClickableItem(
+                text = "Block in-app content",
+                color = colors.textBrand,
+                onClick = onBlockInAppContentClick
             )
 
             // Accountability partner settings

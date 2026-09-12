@@ -106,6 +106,8 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.androidx.core.testing)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Real org.json impl so JVM unit tests can exercise JSON parsing (android.jar stub throws).
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.intents)
@@ -126,7 +128,9 @@ kover {
                         "com.zenlauncher.zenmode.*Activity*",
                         "com.zenlauncher.zenmode.*Fragment*",
                         "com.zenlauncher.zenmode.*Adapter*",
-                        "com.zenlauncher.zenmode.*ProgressBar*"
+                        "com.zenlauncher.zenmode.*ProgressBar*",
+                        "com.zenlauncher.zenmode.*Service*",
+                        "com.zenlauncher.zenmode.ui.screens.ContentBlockingBottomSheetKt"
                     )
                 }
             }

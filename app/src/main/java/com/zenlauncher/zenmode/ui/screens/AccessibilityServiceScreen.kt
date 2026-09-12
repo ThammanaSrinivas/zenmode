@@ -94,10 +94,13 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "ZenMode uses Android's Accessibility Service API solely to lock your screen " +
-                        "when you tap the lock button on the home screen. Android does not provide any " +
-                        "other way for a launcher app to lock the screen, so this permission is required " +
-                        "for the lock-screen feature to work.",
+                text = "ZenMode uses Android's Accessibility Service API for two features:\n\n" +
+                        "1. Lock screen — Android gives a launcher no other way to lock the screen, " +
+                        "so this permission is required for the lock button to work.\n\n" +
+                        "2. In-app content blocking (optional) — when you turn on blocking for a " +
+                        "surface such as YouTube Shorts, the service checks " +
+                        "whether that screen is currently open and, if so, navigates you away. It runs " +
+                        "only for apps you have explicitly chosen to block.",
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -116,9 +119,9 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "• Uses the system lock-screen action (GLOBAL_ACTION_LOCK_SCREEN) to lock your device\n" +
-                        "• This action is triggered only when you manually tap the lock button\n" +
-                        "• The service does not perform any other actions",
+                text = "• Uses the system lock-screen action (GLOBAL_ACTION_LOCK_SCREEN) when you tap the lock button\n" +
+                        "• For apps you chose to block: checks which screen (view IDs) is visible and, on a blocked screen, presses Back\n" +
+                        "• Only wakes for apps in your block list (currently YouTube)",
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -137,11 +140,11 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "• Does NOT read, collect, or access any screen content\n" +
-                        "• Does NOT monitor or process any accessibility events\n" +
-                        "• Does NOT perform gestures or interact with other apps\n" +
+                text = "• Does NOT read, store, or transmit the text, media, or messages inside any app\n" +
+                        "• Does NOT monitor apps that are not in your block list\n" +
+                        "• Does NOT perform gestures or tap anything inside other apps\n" +
                         "• Does NOT collect, store, transmit, or share any personal data\n" +
-                        "• Does NOT run in the background to observe your activity",
+                        "• Sends nothing off your device — all checks happen locally",
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -160,8 +163,9 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "Your privacy is important to us. This service exists only to enable the lock button. " +
-                        "No data of any kind is accessed through this service.",
+                text = "This service enables the lock button and, if you turn it on, in-app content blocking. " +
+                        "It reads only which screen of a blocked app is visible, on the device, to decide " +
+                        "whether to navigate away. No screen content or personal data is stored, collected, or sent anywhere.",
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -364,7 +368,7 @@ fun AccessibilityServiceScreen(
         WeightSpacer(2f)
 
         Text(
-            text = "ZenMode needs the Accessibility Service permission to lock your screen when you tap the lock button. This is the only thing it does \u2014 it does not read your screen or collect any data.",
+            text = "ZenMode needs the Accessibility Service permission to lock your screen from the lock button, and \u2014 if you enable it \u2014 to block in-app content like YouTube Shorts. It never stores or sends your screen content.",
             color = colors.textPrimary,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(horizontal = 20.rdp)
