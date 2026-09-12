@@ -62,7 +62,7 @@ class SettingsScreenTest {
     @Test
     fun settingsScreen_showsDarkModeToggle() {
         setContent()
-        composeTestRule.onNodeWithText("Dark mode").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Dark mode", substring = true).assertIsDisplayed()
     }
 
     @Test

@@ -52,7 +52,8 @@ import androidx.core.graphics.drawable.toBitmap
 import com.zenlauncher.zenmode.DistractingAppsRepository
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.WeightSpacer
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
+import com.zenlauncher.zenmode.ui.theme.Spacing
+import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
@@ -126,7 +127,7 @@ fun DistractingAppsBottomSheet(onDismiss: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.rdp)
+                .padding(horizontal = Spacing.screenMargin)
                 .padding(bottom = 24.rdp)
         ) {
             // Header row: title + subtitle on the left, app icon on the right
@@ -142,7 +143,7 @@ fun DistractingAppsBottomSheet(onDismiss: () -> Unit) {
                         text = "Change Distracting app list",
                         color = colors.textPrimary,
                         style = TextStyle(
-                            fontFamily = CabinetGrotesque,
+                            fontFamily = Geist,
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.rsp
                         )
@@ -154,7 +155,7 @@ fun DistractingAppsBottomSheet(onDismiss: () -> Unit) {
                         text = "Pick the apps dragging you from zen.",
                         color = colors.textSecondary,
                         style = TextStyle(
-                            fontFamily = CabinetGrotesque,
+                            fontFamily = Geist,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.rsp
                         )

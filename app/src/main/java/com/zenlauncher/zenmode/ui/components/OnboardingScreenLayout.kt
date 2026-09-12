@@ -17,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 
@@ -127,7 +128,7 @@ fun OnboardingScreenLayout(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.rdp)
+                        .padding(horizontal = Spacing.screenMargin)
                 ) {
                     if (onBackClick != null) {
                         Image(

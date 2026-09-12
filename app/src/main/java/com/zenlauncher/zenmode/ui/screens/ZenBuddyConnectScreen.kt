@@ -44,8 +44,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
-import com.zenlauncher.zenmode.ui.theme.RedditMono
+import com.zenlauncher.zenmode.ui.theme.Spacing
+import com.zenlauncher.zenmode.ui.theme.Geist
+import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
@@ -140,7 +141,7 @@ internal fun ZenBuddyConnectContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.rdp)
+                .padding(horizontal = Spacing.screenMargin)
                 .padding(bottom = 32.rdp)
         ) {
             // ── Title Row ──
@@ -221,7 +222,7 @@ private fun TitleRow(displayCode: String, onCopyCode: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "Zen Buddy Connect",
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 24.rsp,
                     color = colors.textPrimary
@@ -240,14 +241,14 @@ private fun TitleRow(displayCode: String, onCopyCode: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "My zenmode code: ",
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.rsp,
                     color = colors.textPrimary
                 )
                 Text(
                     text = displayCode,
-                    fontFamily = RedditMono,
+                    fontFamily = DepartureMono,
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.rsp,
                     color = colors.textSecondary
@@ -290,7 +291,7 @@ private fun AddBuddySection(
 
     Text(
         text = "1. Experience Zen with a special one! \uD83E\uDD1D",
-        fontFamily = CabinetGrotesque,
+        fontFamily = Geist,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 18.rsp,
         color = colors.textPrimary
@@ -300,7 +301,7 @@ private fun AddBuddySection(
 
     Text(
         text = "ENTER YOUR BUDDY'S CODE:",
-        fontFamily = CabinetGrotesque,
+        fontFamily = Geist,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 12.rsp,
         color = colors.textBrand
@@ -318,7 +319,7 @@ private fun AddBuddySection(
             .background(colors.bgSecondary)
             .padding(horizontal = 16.rdp, vertical = 14.rdp),
         textStyle = TextStyle(
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Bold,
             fontSize = 18.rsp,
             color = colors.textPrimary
@@ -329,7 +330,7 @@ private fun AddBuddySection(
             if (buddyCode.isEmpty()) {
                 Text(
                     text = displayCode,
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.rsp,
                     color = colors.textSecondary.copy(alpha = 0.5f)
@@ -345,7 +346,7 @@ private fun AddBuddySection(
     Text(
         text = statusMessage
             ?: "Congrats for start accompanying your friend on mindful journey!!",
-        fontFamily = CabinetGrotesque,
+        fontFamily = Geist,
         fontWeight = FontWeight.Medium,
         fontSize = 14.rsp,
         color = if (isSuccess) colors.textBrand else colors.textSecondary
@@ -374,7 +375,7 @@ private fun RandomConnectSection(onRandomConnect: () -> Unit) {
 
     Text(
         text = "2. Single Forever? No Worries\uD83E\uDEE3",
-        fontFamily = CabinetGrotesque,
+        fontFamily = Geist,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 18.rsp,
         color = colors.textPrimary
@@ -384,7 +385,7 @@ private fun RandomConnectSection(onRandomConnect: () -> Unit) {
 
     Text(
         text = "Our random connect, let\u2019s you connect with random people on their mindful journey!",
-        fontFamily = CabinetGrotesque,
+        fontFamily = Geist,
         fontWeight = FontWeight.Medium,
         fontSize = 14.rsp,
         color = colors.textSecondary
@@ -412,7 +413,7 @@ private fun VideoLink(onWatchVideo: () -> Unit) {
 
     Text(
         text = "Watch video on how add your friend as zen buddy(\uD83D\uDCFA)",
-        fontFamily = CabinetGrotesque,
+        fontFamily = Geist,
         fontWeight = FontWeight.Medium,
         fontSize = 13.rsp,
         color = colors.textBrand,

@@ -14,6 +14,12 @@ if (localPropertiesFile.exists()) {
     localProperties.load(FileInputStream(localPropertiesFile))
 }
 
+// File search kill switch. With `zenmode.fileSearch=false` the marked block in
+// AndroidManifest.xml is dropped before the merge, so the built APK declares no storage
+// permissions and the Files row disappears from search. One property, no code changes.
+val fileSearchEnabled =
+    (project.findProperty("zenmode.fileSearch") as String?)?.toBoolean() ?: true
+
 android {
     namespace = "com.zenlauncher.zenmode"
     compileSdk = 35
@@ -35,6 +41,22 @@ android {
         // Inject Web Client ID as a BuildConfig field
         val webClientId = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: "YOUR_WEB_CLIENT_ID"
         buildConfigField("String", "WEB_CLIENT_ID", "\"$webClientId\"")
+
+        buildConfigField("boolean", "FILE_SEARCH_ENABLED", fileSearchEnabled.toString())
+    }
+
+    if (!fileSearchEnabled) {
+        val stripped = layout.buildDirectory
+            .file("generated/nofilesearch/AndroidManifest.xml").get().asFile
+        stripped.parentFile.mkdirs()
+        stripped.writeText(
+            providers.fileContents(
+                layout.projectDirectory.file("src/main/AndroidManifest.xml")
+            ).asText.get().replace(
+                Regex("(?s)\\s*<!-- file-search:start -->.*?<!-- file-search:end -->"), ""
+            )
+        )
+        sourceSets.getByName("main").manifest.srcFile(stripped)
     }
 
     signingConfigs {

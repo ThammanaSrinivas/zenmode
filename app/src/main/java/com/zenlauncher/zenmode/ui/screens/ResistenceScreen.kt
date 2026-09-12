@@ -59,8 +59,9 @@ import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.DailyUsage
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
-import com.zenlauncher.zenmode.ui.theme.RedditMono
+import com.zenlauncher.zenmode.ui.theme.Spacing
+import com.zenlauncher.zenmode.ui.theme.Geist
+import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Silkscreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.percentageChangeColor
@@ -310,7 +311,7 @@ fun ResistenceScreen(
                 ) {
                     Text(
                         text = "My Screen Time",
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 20.rsp,
                         color = colors.textPrimary
@@ -319,7 +320,7 @@ fun ResistenceScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "${if (yesterdayChangePercent >= 0) "+" else ""}${yesterdayChangePercent}%",
-                            fontFamily = RedditMono,
+                            fontFamily = DepartureMono,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.rsp,
                             color = colors.percentageChangeColor(yesterdayChangePercent)
@@ -335,7 +336,7 @@ fun ResistenceScreen(
                     val timeLineHeight = 42.rsp
                     Text(
                         text = String.format("%02d", hours),
-                        fontFamily = RedditMono,
+                        fontFamily = DepartureMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 56.rsp,
                         color = colors.textPrimary,
@@ -348,7 +349,7 @@ fun ResistenceScreen(
                     )
                     Text(
                         text = "HRS",
-                        fontFamily = RedditMono,
+                        fontFamily = DepartureMono,
                         fontWeight = FontWeight.Normal,
                         fontSize = 10.rsp,
                         color = colors.textPrimary,
@@ -363,7 +364,7 @@ fun ResistenceScreen(
                     )
                     Text(
                         text = String.format("%02d", mins),
-                        fontFamily = RedditMono,
+                        fontFamily = DepartureMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 56.rsp,
                         color = colors.textPrimary,
@@ -376,7 +377,7 @@ fun ResistenceScreen(
                     )
                     Text(
                         text = "MINS",
-                        fontFamily = RedditMono,
+                        fontFamily = DepartureMono,
                         fontWeight = FontWeight.Normal,
                         fontSize = 10.rsp,
                         color = colors.textPrimary,
@@ -407,7 +408,7 @@ fun ResistenceScreen(
                 ) {
                     Text(
                         text = "Mindfulness",
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.rsp,
                         color = colors.textPrimary
@@ -426,12 +427,12 @@ fun ResistenceScreen(
             // ── Advice Text ──
             Text(
                 text = adviceText,
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.rsp,
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 20.rdp)
+                modifier = Modifier.padding(horizontal = Spacing.screenMargin)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -466,7 +467,7 @@ private fun ResistenceHeader(streaks: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.rdp),
+            .padding(horizontal = Spacing.screenMargin),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -583,7 +584,7 @@ private fun CountdownCircle(
         // Countdown number
         Text(
             text = if (countdownFinished) AppConstants.COUNTDOWN_SECONDS.toString() else countdownSeconds.toString(),
-            fontFamily = RedditMono,
+            fontFamily = DepartureMono,
             fontWeight = FontWeight.Bold,
             fontSize = 36.rsp,
             color = colors.textPrimary
@@ -607,7 +608,7 @@ private fun ResistenceBottomDock(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.rdp)
+            .padding(horizontal = Spacing.screenMargin)
             .padding(top = 8.dp, bottom = 32.rdp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -627,7 +628,7 @@ private fun ResistenceBottomDock(
             text = if (canSkip) {
                 buildAnnotatedString {
                     append("Only ")
-                    withStyle(SpanStyle(fontFamily = RedditMono, color = moodColor, fontWeight = FontWeight.Bold)) {
+                    withStyle(SpanStyle(fontFamily = DepartureMono, color = moodColor, fontWeight = FontWeight.Bold)) {
                         append("$skipsLeft")
                     }
                     withStyle(SpanStyle(color = moodColor, fontWeight = FontWeight.Bold)) {
@@ -640,7 +641,7 @@ private fun ResistenceBottomDock(
                     append("No skips left for Today")
                 }
             },
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 12.rsp,
             color = if (canSkip) colors.textSecondary else colors.textSecondary.copy(alpha = 0.5f),

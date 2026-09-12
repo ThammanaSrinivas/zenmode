@@ -19,6 +19,18 @@ object AppConstants {
     // Random Connect
     const val RANDOM_CONNECT_COOLDOWN_MS = 30 * 1000L
 
+    // v3 home screen placeholders. Stand-ins until the scoring and rewards
+    // backend exists — swap these for real values, not the UI around them.
+    const val PLACEHOLDER_ZEN_SCORE = 93
+    const val PLACEHOLDER_GOLD_INVESTED = "2,350"
+    const val PLACEHOLDER_GOLD_CHANGE_PERCENT = 38
+
+    // Deliberately different from PLACEHOLDER_ZEN_SCORE — BuddyStats has no real
+    // score/streak fields yet, and these must never be mistaken for (or accidentally
+    // wired to) the signed-in user's own numbers above.
+    const val PLACEHOLDER_BUDDY_ZEN_SCORE = 88
+    const val PLACEHOLDER_BUDDY_STREAK = 5
+
     // External URLs
     const val GITHUB_URL = "https://github.com/ThammanaSrinivas/zenmode"
     const val YT_BUDDY_INVITE_URL = "https://youtu.be/48M1x2ryhpI"   // TODO: replace with actual YT link

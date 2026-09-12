@@ -44,7 +44,8 @@ import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
+import com.zenlauncher.zenmode.ui.theme.Spacing
+import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
@@ -62,7 +63,7 @@ fun AccessibilityDisclosureScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.bgPrimary)
-            .padding(horizontal = 20.rdp)
+            .padding(horizontal = Spacing.screenMargin)
             .padding(top = 48.rdp, bottom = 24.rdp)
     ) {
         Column(
@@ -74,7 +75,7 @@ fun AccessibilityDisclosureScreen(
                 text = "Accessibility Service Disclosure",
                 color = colors.textPrimary,
                 style = TextStyle(
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.rsp
                 )
@@ -87,7 +88,7 @@ fun AccessibilityDisclosureScreen(
                 text = "Why ZenMode needs Accessibility Service",
                 color = colors.textBrand,
                 style = TextStyle(
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.rsp
                 )
@@ -112,7 +113,7 @@ fun AccessibilityDisclosureScreen(
                 text = "What this service does",
                 color = colors.textBrand,
                 style = TextStyle(
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.rsp
                 )
@@ -133,7 +134,7 @@ fun AccessibilityDisclosureScreen(
                 text = "What this service does NOT do",
                 color = colors.textBrand,
                 style = TextStyle(
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.rsp
                 )
@@ -156,7 +157,7 @@ fun AccessibilityDisclosureScreen(
                 text = "Privacy",
                 color = colors.textBrand,
                 style = TextStyle(
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.rsp
                 )
@@ -250,7 +251,7 @@ fun AccessibilityServiceScreen(
             text = "Accessibility Service",
             color = colors.textPrimary,
             style = TextStyle(
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.rsp
             )
@@ -270,7 +271,7 @@ fun AccessibilityServiceScreen(
                     text = "Accessibility Service",
                     color = colors.textSecondary,
                     style = TextStyle(
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontWeight = FontWeight.Medium,
                         fontSize = 14.rsp
                     )
@@ -371,7 +372,7 @@ fun AccessibilityServiceScreen(
             text = "ZenMode needs the Accessibility Service permission to lock your screen from the lock button, and \u2014 if you enable it \u2014 to block in-app content like YouTube Shorts. It never stores or sends your screen content.",
             color = colors.textPrimary,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(horizontal = 20.rdp)
+            modifier = Modifier.padding(horizontal = Spacing.screenMargin)
         )
 
         WeightSpacer(2f)

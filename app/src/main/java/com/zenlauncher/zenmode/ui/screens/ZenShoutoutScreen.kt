@@ -28,6 +28,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
+import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 
@@ -48,7 +49,7 @@ fun ZenShoutoutScreen(onNextClick: () -> Unit, onBackClick: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.rdp),
+                .padding(horizontal = Spacing.screenMargin),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Group 1

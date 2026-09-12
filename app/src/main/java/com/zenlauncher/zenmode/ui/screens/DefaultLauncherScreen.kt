@@ -47,10 +47,11 @@ import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.components.OnboardingScreenLayout
+import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
 import com.zenlauncher.zenmode.ui.components.StatsCardsRow
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
+import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 
@@ -105,7 +106,7 @@ fun DefaultLauncherScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = Spacing.screenMargin)
                 .padding(top = 16.dp, bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -124,7 +125,7 @@ fun DefaultLauncherScreen(
                 text = "One Last step to Experience Zen",
                 color = colors.textPrimary,
                 style = TextStyle(
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.rsp
                 ),

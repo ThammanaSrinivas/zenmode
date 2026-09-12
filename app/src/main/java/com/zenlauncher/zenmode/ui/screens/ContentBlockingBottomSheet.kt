@@ -38,7 +38,8 @@ import androidx.compose.ui.unit.dp
 import com.zenlauncher.zenmode.ContentBlockPrefs
 import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.accessibility.ContentBlockRules
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
+import com.zenlauncher.zenmode.ui.theme.Spacing
+import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
@@ -91,14 +92,14 @@ fun ContentBlockingBottomSheet(onDismiss: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.rdp)
+                .padding(horizontal = Spacing.screenMargin)
                 .padding(bottom = 32.rdp)
         ) {
             Text(
                 text = "Block in-app content",
                 color = colors.textPrimary,
                 style = TextStyle(
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.rsp
                 )
@@ -108,7 +109,7 @@ fun ContentBlockingBottomSheet(onDismiss: () -> Unit) {
                 text = "Block the endless-scroll parts of an app while keeping the rest usable.",
                 color = colors.textSecondary,
                 style = TextStyle(
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.rsp
                 )
@@ -130,7 +131,7 @@ fun ContentBlockingBottomSheet(onDismiss: () -> Unit) {
                     Text(
                         text = "Accessibility permission needed",
                         color = colors.textPrimary,
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.rsp
                     )
@@ -138,7 +139,7 @@ fun ContentBlockingBottomSheet(onDismiss: () -> Unit) {
                     Text(
                         text = "Tap to open Accessibility settings and turn on ZenMode. Blocking stays off until you do.",
                         color = colors.textSecondary,
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontSize = 13.rsp
                     )
                 }
@@ -181,7 +182,7 @@ fun ContentBlockingBottomSheet(onDismiss: () -> Unit) {
             Text(
                 text = "Writes the on-screen view IDs to logcat (tag ZenA11y) so blocking rules can be tuned to your app version.",
                 color = colors.textSecondary,
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontSize = 12.rsp
             )
 
@@ -191,7 +192,7 @@ fun ContentBlockingBottomSheet(onDismiss: () -> Unit) {
                 Text(
                     text = "Blocker last crashed: $lastCrash\nTap to clear.",
                     color = colors.textSecondary,
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontSize = 12.rsp,
                     modifier = Modifier.clickable { ZenAccessibilityService.clearLastCrash(context) }
                 )
@@ -220,7 +221,7 @@ private fun ToggleRow(
     ) {
         Text(
             text = text,
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 16.rsp,
             color = if (enabled) colors.textPrimary else colors.textSecondary,

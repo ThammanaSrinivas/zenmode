@@ -30,7 +30,7 @@
             android:layout_height="wrap_content"
             android:text="Bro, We're losing zen🥺"
             android:textSize="32sp"
-            android:fontFamily="@font/cabinet_grotesk_bold"
+            android:fontFamily="@font/geist_bold"
             android:textColor="@color/white"
             android:lineHeight="38sp"
             android:layout_marginTop="24dp"
@@ -78,7 +78,7 @@
             android:layout_height="wrap_content"
             android:text="Zenmode kidnapped by scrolls"
             android:textSize="22sp"
-            android:fontFamily="@font/cabinet_grotesk_medium"
+            android:fontFamily="@font/geist_medium"
             android:textColor="#E0E0E0"
             android:layout_marginTop="24dp"
             app:layout_constraintTop_toBottomOf="@id/bars_container" />
@@ -89,7 +89,7 @@
             android:layout_height="wrap_content"
             android:text="15 minutes in life spent!"
             android:textSize="24sp"
-            android:fontFamily="@font/cabinet_grotesk_bold"
+            android:fontFamily="@font/geist_bold"
             android:textColor="@color/white"
             android:layout_marginTop="4dp"
             app:layout_constraintTop_toBottomOf="@id/tv_subtitle_1" />
@@ -100,7 +100,7 @@
             android:layout_height="wrap_content"
             android:text="“Bro, we’ve doom-scrolled enough dinosaurs to extinction. close me, reclaim your life!”"
             android:textSize="18sp"
-            android:fontFamily="@font/cabinet_grotesk_regular"
+            android:fontFamily="@font/geist_regular"
             android:textColor="#B0B0B0"
             android:alpha="0.8"
             android:lineHeight="26sp"
@@ -130,7 +130,7 @@
                 android:layout_height="wrap_content"
                 android:text="Remember, don't remind for next 4 hours"
                 android:textSize="16sp"
-                android:fontFamily="@font/cabinet_grotesk_regular"
+                android:fontFamily="@font/geist_regular"
                 android:textColor="#E0E0E0"
                 android:layout_marginStart="8dp" />
 

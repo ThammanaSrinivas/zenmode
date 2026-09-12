@@ -62,6 +62,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var repository: UsageRepository
 
     private var installedApps by mutableStateOf<List<AppInfo>>(emptyList())
+    // Same reasoning as installedApps: a plain `remember` here only reads the pref
+    // once at first composition, so changing "apps on home screen" in Settings and
+    // pressing back wouldn't take effect until the process restarted — MainActivity
+    // is singleTask, so returning from Settings resumes it rather than recreating it.
+    private var homeAppCount by mutableStateOf(AppGridPreferences.DEFAULT_APP_COUNT)
     private var showSearch by mutableStateOf(false)
     private var showBuddyConnect by mutableStateOf(false)
     private var showBuddyBattle by mutableStateOf(false)
@@ -101,6 +106,7 @@ class MainActivity : AppCompatActivity() {
         }
         checkAndStartDoomMonitor()
         loadInstalledApps()
+        homeAppCount = AppGridPreferences.getAppCount(this)
 
         // Stats Sync Check
         if (::repository.isInitialized) {
@@ -229,6 +235,7 @@ class MainActivity : AppCompatActivity() {
 
         // Load apps initially
         loadInstalledApps()
+        homeAppCount = AppGridPreferences.getAppCount(this)
 
         // Handle cold-start intents
         if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false)) {
@@ -319,6 +326,10 @@ class MainActivity : AppCompatActivity() {
                     buddyStats = buddyStats,
                     isSignedIn = isSignedIn,
                     showSearch = showSearch,
+                    zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                    goldInvested = AppConstants.PLACEHOLDER_GOLD_INVESTED,
+                    goldChangePercent = AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT,
+                    appCount = homeAppCount,
                     myLikes = myLikes,
                     buddyLikes = buddyLikes,
                     onLikeClick = { viewModel.sendLike() },

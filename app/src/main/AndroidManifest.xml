@@ -15,6 +15,17 @@
     <!-- So OEM battery managers don't kill the accessibility service (in-app content blocking) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!-- Centralised search, "Files" section. Building with -Pzenmode.fileSearch=false
+         deletes everything between these two markers before the merge, so the release
+         manifest carries no storage permissions at all. Keep the markers intact. -->
+    <!-- file-search:start -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- file-search:end -->
+
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />

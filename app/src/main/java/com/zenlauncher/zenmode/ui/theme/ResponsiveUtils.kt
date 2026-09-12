@@ -41,3 +41,11 @@ val Int.rdp: Dp
 
 val Float.rdp: Dp
     @Composable get() = (this * LocalScreenScale.current).dp
+
+// Bare decimal literals (e.g. `6.8`) default to Double in Kotlin, not Float, so
+// these two are what most `N.N.rdp` / `N.N.rsp` call sites actually resolve to.
+val Double.rsp: TextUnit
+    @Composable get() = (this * LocalScreenScale.current).sp
+
+val Double.rdp: Dp
+    @Composable get() = (this * LocalScreenScale.current).dp

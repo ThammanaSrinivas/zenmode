@@ -9,7 +9,7 @@ object ThemePreferences {
 
     fun isDarkMode(context: Context): Boolean {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_DARK_MODE, true)
+            .getBoolean(KEY_DARK_MODE, false)
     }
 
     fun setDarkMode(context: Context, enabled: Boolean) {

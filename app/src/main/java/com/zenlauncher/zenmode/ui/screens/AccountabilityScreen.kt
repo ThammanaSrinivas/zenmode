@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.AccountabilityUiState
@@ -45,8 +46,8 @@ import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.components.StatsCardsRow
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
-import com.zenlauncher.zenmode.ui.theme.RedditMono
+import com.zenlauncher.zenmode.ui.theme.Geist
+import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -109,7 +110,7 @@ fun AccountabilityScreen(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
                 ) { /* consume */ }
-                .padding(horizontal = 20.rdp)
+                .padding(horizontal = Spacing.screenMargin)
                 .padding(top = 12.rdp, bottom = 32.rdp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -131,7 +132,7 @@ fun AccountabilityScreen(
             ) {
                 Text(
                     text = "Zen Buddy Summary",
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 26.rsp,
                     color = colors.textPrimary
@@ -156,7 +157,7 @@ fun AccountabilityScreen(
             // Weekly Battle Heading
             Text(
                 text = "Zenmode Weekly Battle:",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.rsp,
                 color = colors.textPrimary,
@@ -190,7 +191,7 @@ fun AccountabilityScreen(
             uiState.connectionDateMillis?.let { millis ->
                 Text(
                     text = "Buddy connection active since ${formatConnectionDate(millis)}",
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.rsp,
                     color = colors.textSecondary,
@@ -216,7 +217,7 @@ fun AccountabilityScreen(
             // Change My Buddy
             Text(
                 text = "Change my buddy",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.rsp,
                 color = colors.textBrand,
@@ -243,14 +244,14 @@ private fun UserCodeRow(code: String, onCopyCode: () -> Unit) {
     ) {
         Text(
             text = "My zenmode code: ",
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Normal,
             fontSize = 14.rsp,
             color = colors.textSecondary
         )
         Text(
             text = displayCode,
-            fontFamily = RedditMono,
+            fontFamily = DepartureMono,
             fontWeight = FontWeight.Bold,
             fontSize = 14.rsp,
             color = colors.textPrimary
@@ -308,7 +309,7 @@ private fun LeadText(myUsage: DailyUsage?, buddyStats: BuddyStats?) {
     ) {
         Text(
             text = leadText,
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 15.rsp,
             color = colors.textPrimary
@@ -316,7 +317,7 @@ private fun LeadText(myUsage: DailyUsage?, buddyStats: BuddyStats?) {
         if (highlightText.isNotEmpty()) {
             Text(
                 text = highlightText,
-                fontFamily = RedditMono,
+                fontFamily = DepartureMono,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.rsp,
                 color = colors.textBrand
@@ -339,7 +340,7 @@ private fun ChangeBuddyConfirmDialog(
         title = {
             Text(
                 text = "Change buddy?",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.rsp,
                 color = colors.textPrimary
@@ -348,7 +349,7 @@ private fun ChangeBuddyConfirmDialog(
         text = {
             Text(
                 text = "Are you sure you want to disconnect with current buddy?",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.rsp,
                 color = colors.textSecondary
@@ -357,7 +358,7 @@ private fun ChangeBuddyConfirmDialog(
         confirmButton = {
             Text(
                 text = "Yes, disconnect",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.rsp,
                 color = colors.moodAnnoyed,
@@ -369,7 +370,7 @@ private fun ChangeBuddyConfirmDialog(
         dismissButton = {
             Text(
                 text = "Cancel",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.rsp,
                 color = colors.textPrimary,

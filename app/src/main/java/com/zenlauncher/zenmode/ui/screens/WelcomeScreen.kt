@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.AppConstants
@@ -341,7 +342,7 @@ fun WelcomeScreen(
         androidx.compose.animation.AnimatedVisibility(
             visible = state >= WelcomeState.BOTTOM_TEXT,
             enter = fadeIn(animationSpec = tween(800)),
-            modifier = Modifier.padding(horizontal = 20.rdp)
+            modifier = Modifier.padding(horizontal = Spacing.screenMargin)
         ) {
             // "Bro, Hear me close," + heart
             // Offset by half of (spacer 8dp + heart 34dp) so only text is center-aligned
@@ -368,7 +369,7 @@ fun WelcomeScreen(
         androidx.compose.animation.AnimatedVisibility(
             visible = state >= WelcomeState.BOTTOM_TEXT,
             enter = fadeIn(animationSpec = tween(800)),
-            modifier = Modifier.padding(horizontal = 20.rdp)
+            modifier = Modifier.padding(horizontal = Spacing.screenMargin)
         ) {
             // "Life is *too* short!"
             val fontSize14 = 14.rsp
@@ -395,7 +396,7 @@ fun WelcomeScreen(
         androidx.compose.animation.AnimatedVisibility(
             visible = state >= WelcomeState.BOTTOM_TEXT,
             enter = fadeIn(animationSpec = tween(800)),
-            modifier = Modifier.padding(horizontal = 20.rdp)
+            modifier = Modifier.padding(horizontal = Spacing.screenMargin)
         ) {
             // 'Just "4000 weeks", Let's make em count!'
             val fontSize16 = 16.rsp

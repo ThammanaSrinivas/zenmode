@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.AppGridPreferences
 import com.zenlauncher.zenmode.ResistancePreferences
 import com.zenlauncher.zenmode.ThemePreferences
 import androidx.compose.foundation.Canvas
@@ -56,8 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ui.theme.CabinetGrotesque
-import com.zenlauncher.zenmode.ui.theme.RedditMono
+import com.zenlauncher.zenmode.ui.theme.Spacing
+import com.zenlauncher.zenmode.ui.theme.Geist
+import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.ui.theme.rdp
@@ -95,6 +97,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
     var isResistanceEnabled by remember { mutableStateOf(ResistancePreferences.isEnabled(context)) }
+    var homeAppCount by remember { mutableStateOf(AppGridPreferences.getAppCount(context)) }
     var showProfileSheet by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -129,6 +132,11 @@ fun SettingsScreen(
                 onResistanceChange = { enabled ->
                     isResistanceEnabled = enabled
                     ResistancePreferences.setEnabled(context, enabled)
+                },
+                homeAppCount = homeAppCount,
+                onHomeAppCountChange = { count ->
+                    homeAppCount = count
+                    AppGridPreferences.setAppCount(context, count)
                 },
                 isNotificationBadgesEnabled = isNotificationBadgesEnabled,
                 onNotificationBadgesClick = onNotificationBadgesClick,
@@ -186,7 +194,7 @@ private fun SettingsHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.rdp, vertical = 16.rdp)
+            .padding(horizontal = Spacing.screenMargin, vertical = 16.rdp)
     ) {
         // Back button — left
         Image(
@@ -248,7 +256,7 @@ private fun SettingsHeader(
 private fun WeeklyStatsSection(weeklyHours: List<Float>) {
     val colors = ZenTheme.colors
 
-    Column(modifier = Modifier.padding(horizontal = 20.rdp)) {
+    Column(modifier = Modifier.padding(horizontal = Spacing.screenMargin)) {
         // Section title row
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
@@ -259,7 +267,7 @@ private fun WeeklyStatsSection(weeklyHours: List<Float>) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "My Weekly stats",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.rsp,
                 color = colors.textPrimary
@@ -304,7 +312,7 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
         // Title
         Text(
             text = "My  Screen time",
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 14.rsp,
             color = colors.textPrimary
@@ -328,7 +336,7 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
                 for (h in listOf(dynamicMax.toInt(), (dynamicMax * 2 / 3).toInt(), (dynamicMax / 3).toInt(), 0)) {
                     Text(
                         text = "${h}h",
-                        fontFamily = RedditMono,
+                        fontFamily = DepartureMono,
                         fontWeight = FontWeight.Normal,
                         fontSize = 10.rsp,
                         color = colors.textSecondary
@@ -424,7 +432,7 @@ private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
             dayLabels.forEach { label ->
                 Text(
                     text = label,
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Normal,
                     fontSize = 10.rsp,
                     color = colors.textSecondary,
@@ -444,6 +452,8 @@ private fun PersonaliseSection(
     onDarkModeChange: (Boolean) -> Unit,
     isResistanceEnabled: Boolean,
     onResistanceChange: (Boolean) -> Unit,
+    homeAppCount: Int,
+    onHomeAppCountChange: (Int) -> Unit,
     isNotificationBadgesEnabled: Boolean,
     onNotificationBadgesClick: () -> Unit,
     onChangeDistractingAppsClick: () -> Unit,
@@ -453,7 +463,7 @@ private fun PersonaliseSection(
 ) {
     val colors = ZenTheme.colors
 
-    Column(modifier = Modifier.padding(horizontal = 20.rdp)) {
+    Column(modifier = Modifier.padding(horizontal = Spacing.screenMargin)) {
         // Section title
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
@@ -464,7 +474,7 @@ private fun PersonaliseSection(
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "Personalise, Your Way!",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.rsp,
                 color = colors.textPrimary
@@ -483,7 +493,7 @@ private fun PersonaliseSection(
         ) {
             // Dark mode toggle
             ZenSettingToggleItem(
-                text = "Dark mode",
+                text = "Dark mode (beta)",
                 checked = isDarkMode,
                 onCheckedChange = onDarkModeChange,
                 modifier = Modifier.padding(vertical = 6.dp)
@@ -495,6 +505,12 @@ private fun PersonaliseSection(
                 checked = isResistanceEnabled,
                 onCheckedChange = onResistanceChange,
                 modifier = Modifier.padding(vertical = 6.dp)
+            )
+
+            // How many apps the home screen grid shows per page
+            HomeAppCountItem(
+                selected = homeAppCount,
+                onSelect = onHomeAppCountChange
             )
 
             // Notification badges toggle
@@ -541,6 +557,52 @@ private fun PersonaliseSection(
 }
 
 @Composable
+private fun HomeAppCountItem(
+    selected: Int,
+    onSelect: (Int) -> Unit
+) {
+    val colors = ZenTheme.colors
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Apps on home screen",
+            fontFamily = Geist,
+            fontWeight = FontWeight.Normal,
+            fontSize = 16.rsp,
+            color = colors.textPrimary,
+            modifier = Modifier.weight(1f)
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            AppGridPreferences.APP_COUNT_OPTIONS.forEach { count ->
+                val isSelected = count == selected
+                Box(
+                    modifier = Modifier
+                        .size(36.rdp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isSelected) colors.textBrand else colors.bgPrimary)
+                        .clickable { onSelect(count) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = count.toString(),
+                        fontFamily = DepartureMono,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 14.rsp,
+                        color = if (isSelected) colors.actionPrimaryText else colors.textSecondary
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun SettingsClickableItem(
     text: String,
     color: Color,
@@ -548,7 +610,7 @@ private fun SettingsClickableItem(
 ) {
     Text(
         text = text,
-        fontFamily = CabinetGrotesque,
+        fontFamily = Geist,
         fontWeight = FontWeight.Normal,
         fontSize = 16.rsp,
         color = color,
@@ -567,7 +629,7 @@ private fun HeroSection() {
 
     val missionLineHeight = 20.rsp
     Column(
-        modifier = Modifier.padding(horizontal = 20.rdp)
+        modifier = Modifier.padding(horizontal = Spacing.screenMargin)
     ) {
         // Title row
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -578,7 +640,7 @@ private fun HeroSection() {
             )
             Text(
                 text = "You're the Hero!",
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.rsp,
                 color = colors.textPrimary
@@ -595,7 +657,7 @@ private fun HeroSection() {
         // Mission text
         Text(
             text = "You can be anywhere, but thanks for joining our journey to help people with mindful digital time.",
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Normal,
             fontSize = 14.rsp,
             color = colors.textSecondary,
@@ -607,7 +669,7 @@ private fun HeroSection() {
         // Copyright
         Text(
             text = "\u00A9 2026 Zenmode. All rights reserved.",
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Normal,
             fontSize = 12.rsp,
             color = colors.textSecondary
@@ -629,7 +691,7 @@ private fun HeroSection() {
                         append("#InMyZone")
                     }
                 },
-                fontFamily = CabinetGrotesque,
+                fontFamily = Geist,
                 fontSize = 14.rsp
             )
             Spacer(modifier = Modifier.width(4.dp))
@@ -649,7 +711,7 @@ private fun RateUsButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.rdp)
+            .padding(horizontal = Spacing.screenMargin)
             .clip(RoundedCornerShape(12.dp))
             .background(ZenTheme.colors.actionPrimary)
             .clickable { onClick() }
@@ -658,7 +720,7 @@ private fun RateUsButton(onClick: () -> Unit) {
     ) {
         Text(
             text = "Rate us on play store",
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Bold,
             fontSize = 18.rsp,
             color = ZenTheme.colors.actionPrimaryText
@@ -680,7 +742,7 @@ private fun ShareZenModeRow(onClick: () -> Unit) {
     ) {
         Text(
             text = "Share zenmode",
-            fontFamily = CabinetGrotesque,
+            fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 18.rsp,
             color = ZenTheme.colors.textBrand
@@ -747,7 +809,7 @@ private fun ProfileBottomSheet(
                                     append("\uD83D\uDC9A")
                                 }
                             },
-                            fontFamily = CabinetGrotesque,
+                            fontFamily = Geist,
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.rsp,
                             color = colors.textPrimary,
@@ -759,7 +821,7 @@ private fun ProfileBottomSheet(
                         // Subtitle
                         Text(
                             text = "Hey though I\u2019m always here waiting to help you!",
-                            fontFamily = CabinetGrotesque,
+                            fontFamily = Geist,
                             fontWeight = FontWeight.Normal,
                             fontSize = 14.rsp,
                             color = colors.textSecondary,
@@ -795,7 +857,7 @@ private fun ProfileBottomSheet(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Delete account",
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.rsp,
                         color = Color(0xFFE53935)
@@ -824,7 +886,7 @@ private fun ProfileBottomSheet(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Log out",
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontWeight = FontWeight.Normal,
                         fontSize = 16.rsp,
                         color = colors.textPrimary
@@ -834,7 +896,7 @@ private fun ProfileBottomSheet(
                 // Delete confirmation view
                 Text(
                     text = "Are you sure?",
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.rsp,
                     color = colors.textPrimary
@@ -844,7 +906,7 @@ private fun ProfileBottomSheet(
 
                 Text(
                     text = "This will permanently delete your account and all associated data. This action cannot be undone.",
-                    fontFamily = CabinetGrotesque,
+                    fontFamily = Geist,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.rsp,
                     color = colors.textSecondary,
@@ -865,7 +927,7 @@ private fun ProfileBottomSheet(
                 ) {
                     Text(
                         text = "Delete my account",
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.rsp,
                         color = Color.White
@@ -886,7 +948,7 @@ private fun ProfileBottomSheet(
                 ) {
                     Text(
                         text = "Cancel",
-                        fontFamily = CabinetGrotesque,
+                        fontFamily = Geist,
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.rsp,
                         color = colors.textPrimary

@@ -4,9 +4,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.zenlauncher.zenmode.testing.TestActivity
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.coreapi.DailyUsage
@@ -53,6 +53,9 @@ class HomeScreenTest {
                     buddyStats = buddyStats,
                     isSignedIn = isSignedIn,
                     showSearch = showSearch,
+                    zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                    goldInvested = AppConstants.PLACEHOLDER_GOLD_INVESTED,
+                    goldChangePercent = AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT,
                     onShowSearchChange = onShowSearchChange,
                     onSettingsClick = onSettingsClick,
                     onGoogleSearch = onGoogleSearch,
@@ -107,22 +110,44 @@ class HomeScreenTest {
     @Test
     fun homeScreen_showsSearchBar() {
         setContent()
-        composeTestRule.onNodeWithText("Search apps & everything", substring = true)
+        composeTestRule.onNodeWithText("Search apps, files & everything", substring = true)
             .assertIsDisplayed()
     }
 
     @Test
     fun homeScreen_showsSearchOverlay_whenShowSearchTrue() {
         setContent(showSearch = true)
-        // "Search apps & everything" appears in both BottomDock and SearchOverlay, use onAllNodes
-        composeTestRule.onAllNodesWithText("Search apps & everything", substring = true)[0]
-            .assertIsDisplayed()
+        // The overlay labels its three parts; Apps is always the first.
+        composeTestRule.onNodeWithText("APPS").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_searchOverlay_labelsAllThreeSections() {
+        setContent(showSearch = true)
+        composeTestRule.onNodeWithText("APPS").assertIsDisplayed()
+        composeTestRule.onNodeWithText("GOOGLE").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_showsZenScore() {
+        setContent()
+        composeTestRule.onNodeWithText("Zen Score").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_showsGoldInvested() {
+        setContent()
+        composeTestRule.onNodeWithText("GOLD INVESTED").assertIsDisplayed()
     }
 
     @Test
     fun homeScreen_showsStreakCount() {
+        // The count and "days" are separate Text nodes (the count alone carries the
+        // gradient style) — Compose doesn't merge sibling text into one semantics
+        // string, so this must assert each independently, not the concatenation.
         setContent(streaks = 7)
-        composeTestRule.onNodeWithText("7", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("7").assertIsDisplayed()
+        composeTestRule.onNodeWithText("days").assertIsDisplayed()
     }
 
     @Test

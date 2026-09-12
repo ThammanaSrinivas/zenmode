@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:text="Do you really need mobile now?"
         android:textSize="20sp"
-        android:fontFamily="@font/cabinet_grotesk_bold"
+        android:fontFamily="@font/geist_bold"
         android:textColor="@color/black"
         android:layout_marginTop="32dp"
         android:textAlignment="center" />
@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:text="Screen Time"
                     android:textSize="12sp"
-                    android:fontFamily="@font/cabinet_grotesk_bold"
+                    android:fontFamily="@font/geist_bold"
                     android:textColor="@color/white"
                     android:textStyle="bold"/>
                 <ProgressBar
@@ -74,7 +74,7 @@
                 android:layout_marginStart="12dp"
                 android:text="66/120"
                 android:textSize="20sp"
-                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:fontFamily="@font/geist_extrabold"
                 android:textColor="@color/black"/>
             <TextView
                 android:id="@+id/txt_screen_time_stats_suffix"
@@ -82,7 +82,7 @@
                 android:layout_height="wrap_content"
                 android:text="mins"
                 android:textSize="8sp"
-                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:fontFamily="@font/geist_extrabold"
                 android:textColor="@color/black"/>
 
         </LinearLayout>
@@ -105,7 +105,7 @@
                     android:layout_height="wrap_content"
                     android:text="Unlocks"
                     android:textSize="12sp"
-                    android:fontFamily="@font/cabinet_grotesk_bold"
+                    android:fontFamily="@font/geist_bold"
                     android:textColor="@color/black"
                     android:textStyle="bold"/>
                 <ProgressBar
@@ -125,7 +125,7 @@
                 android:layout_marginStart="12dp"
                 android:text="10/60"
                 android:textSize="20sp"
-                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:fontFamily="@font/geist_extrabold"
                 android:textColor="@color/black"/>
             <TextView
                 android:id="@+id/txt_unlocks_stats_suffix"
@@ -133,7 +133,7 @@
                 android:layout_height="wrap_content"
                 android:text="times"
                 android:textSize="8sp"
-                android:fontFamily="@font/cabinet_grotesk_extrabold"
+                android:fontFamily="@font/geist_extrabold"
                 android:textColor="@color/black"/>
 
         </LinearLayout>
@@ -150,7 +150,7 @@
                 android:layout_height="wrap_content"
                 android:text="Mindfulness"
                 android:textSize="12sp"
-                android:fontFamily="@font/cabinet_grotesk_bold"
+                android:fontFamily="@font/geist_bold"
                 android:textColor="@color/black"
                 android:textStyle="bold"/>
             
@@ -172,7 +172,7 @@
         android:layout_height="wrap_content"
         android:text="You're being so mindful Today!💚"
         android:textSize="16sp"
-        android:fontFamily="@font/cabinet_grotesk_bold"
+        android:fontFamily="@font/geist_bold"
         android:textColor="#555555"
         android:layout_marginTop="8dp" />
 
@@ -200,7 +200,7 @@
             android:layout_gravity="center"
             android:text="1"
             android:textSize="32sp"
-            android:fontFamily="@font/cabinet_grotesk_extrabold"
+            android:fontFamily="@font/geist_extrabold"
             android:textStyle="bold"
             android:textColor="@color/black"/>
     </FrameLayout>
@@ -227,7 +227,7 @@
         android:layout_height="wrap_content"
         android:text="Skip &amp; Open"
         android:textSize="12sp"
-        android:fontFamily="@font/cabinet_grotesk_extrabold"
+        android:fontFamily="@font/geist_extrabold"
         android:textColor="@color/black"
         android:layout_centerInParent="true"
         android:padding="8dp"

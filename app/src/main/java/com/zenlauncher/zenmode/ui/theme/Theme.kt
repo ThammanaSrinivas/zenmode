@@ -22,20 +22,22 @@ fun ZenTheme(
     dynamicColor: Boolean = false, // Dynamic color is disabled by default for ZenLauncher styling
     content: @Composable () -> Unit
 ) {
+    val zenColors = if (darkTheme) DarkZenColors else LightZenColors
+
     val darkColorScheme = darkColorScheme(
-        primary = ZenBase,
-        background = Black,
-        onBackground = White,
-        surface = Grey800,
-        onSurface = Grey400
+        primary = zenColors.textBrand,
+        background = zenColors.bgPrimary,
+        onBackground = zenColors.textPrimary,
+        surface = zenColors.bgSecondary,
+        onSurface = zenColors.textSecondary
     )
 
     val lightColorScheme = lightColorScheme(
-        primary = ZenDark,
-        background = White,
-        onBackground = Black,
-        surface = Grey100,
-        onSurface = Grey600
+        primary = zenColors.textBrand,
+        background = zenColors.bgPrimary,
+        onBackground = zenColors.textPrimary,
+        surface = zenColors.bgSecondary,
+        onSurface = zenColors.textSecondary
     )
 
     val colorScheme = when {
@@ -46,8 +48,6 @@ fun ZenTheme(
         darkTheme -> darkColorScheme
         else -> lightColorScheme
     }
-
-    val zenColors = if (darkTheme) DarkZenColors else LightZenColors
 
     val view = LocalView.current
     if (!view.isInEditMode) {
