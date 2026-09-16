@@ -1,5 +1,0 @@
-Paparazzi declares this directory as a task input, so it must exist even before
-any baseline images are recorded - otherwise Gradle's input validation fails
-the build outright (confirmed via CI). Real baselines: run
-`./gradlew recordPaparazzi`, review the generated PNGs, commit them here,
-then delete this file.

@@ -2,10 +2,12 @@
 agp = "8.13.2"
 kotlin = "2.2.21"
 kover = "0.9.9"
-# NOT verified against Maven from this environment (no network access) -
-# confirm this is still current, and compatible with AGP 8.13.2 / Compose
-# BOM 2025.06.01 / Kotlin 2.2.21, before relying on it.
-paparazzi = "1.3.5"
+# 1.3.5 (latest stable) fails against Gradle 9.5.1 with
+# ClassNotFoundException: org.gradle.api.internal.tasks.testing.junit.result.TestFailure
+# (Gradle 9 moved internal test-result classes Paparazzi's reporter references).
+# 2.0.0-alpha05 is the latest pre-release, same month as this Gradle version -
+# confirmed working against Gradle 9.5.1 locally.
+paparazzi = "2.0.0-alpha05"
 
 androidxActivity = "1.10.1"
 androidxAppcompat = "1.7.1"
