@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kover)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.paparazzi)
 }
 
 val localProperties = Properties()
@@ -225,4 +226,10 @@ tasks.register("checkSourceOfTruth") {
 
 tasks.named("check") {
     dependsOn("checkSourceOfTruth")
+    // verifyPaparazzi is the Paparazzi plugin's screenshot-diff task (name confirmed
+    // against the installed plugin version - not verified from this environment).
+    // Wired explicitly since some Paparazzi versions don't auto-attach to `check`
+    // for com.android.application modules. Baselines: run `recordPaparazzi` once,
+    // review the generated PNGs under app/src/test/snapshots/, then commit them.
+    dependsOn("verifyPaparazzi")
 }
