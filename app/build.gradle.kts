@@ -164,3 +164,65 @@ kover {
         }
     }
 }
+
+// SOURCE OF TRUTH: design tokens. Real values live in res/values/colors.xml and
+// ui/theme/Color.kt/Type.kt — never a bare Color(0x...) literal or #RRGGBB string elsewhere.
+// Fails ./gradlew check if a new one shows up outside ui/theme/, so the AI/human writing the
+// code sees a build error pointing at ZenTheme.colors instead of relying on remembering this
+// rule from CLAUDE.md every time.
+val legacyColorDebt: Map<String, Int> = file("config/legacy-color-debt.txt")
+    .takeIf { it.exists() }
+    ?.readLines()
+    ?.map { it.trim() }
+    ?.filter { it.isNotEmpty() && !it.startsWith("#") }
+    ?.associate { line ->
+        val (path, count) = line.split(":").let { it[0] to it[1].toInt() }
+        path to count
+    }
+    ?: emptyMap()
+
+tasks.register("checkSourceOfTruth") {
+    group = "verification"
+    description = "Fails if a hardcoded color literal appears outside ui/theme/ beyond the legacy-color-debt allowlist."
+    doLast {
+        val srcRoot = file("src/main/java")
+        val hexPattern = Regex("""Color\(0x[0-9A-Fa-f]{6,8}\)|#[0-9A-Fa-f]{6}""")
+        val countsByRelPath = mutableMapOf<String, MutableList<String>>()
+
+        srcRoot.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .filter { !it.path.replace('\\', '/').contains("/ui/theme/") }
+            .forEach { file ->
+                val relPath = file.relativeTo(srcRoot).path.replace('\\', '/')
+                file.readLines().forEachIndexed { idx, line ->
+                    if (hexPattern.containsMatchIn(line)) {
+                        countsByRelPath.getOrPut(relPath) { mutableListOf() }.add("${idx + 1}: ${line.trim()}")
+                    }
+                }
+            }
+
+        val violations = mutableListOf<String>()
+        countsByRelPath.forEach { (relPath, hits) ->
+            val allowed = legacyColorDebt[relPath] ?: 0
+            if (hits.size > allowed) {
+                violations += "$relPath: ${hits.size} found, $allowed allowed:\n" +
+                    hits.joinToString("\n") { "    $it" }
+            }
+        }
+
+        if (violations.isNotEmpty()) {
+            throw GradleException(
+                "checkSourceOfTruth failed: hardcoded color literal(s) outside ui/theme/.\n" +
+                    "Use ZenTheme.colors (see ui/theme/Color.kt) instead — grep for " +
+                    "'SOURCE OF TRUTH:' to find where the real values live.\n\n" +
+                    violations.joinToString("\n\n") +
+                    "\n\nIf this is deliberate, tracked legacy debt (a screen not yet migrated " +
+                    "to v3), update its count in app/config/legacy-color-debt.txt."
+            )
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn("checkSourceOfTruth")
+}

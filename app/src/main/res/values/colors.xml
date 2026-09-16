@@ -87,6 +87,20 @@
     <color name="score_orange">#FE6801</color>
     <color name="fire_red">#FF3A00</color>
 
+    <!-- Home screen header + gold row accents, sampled from Figma nodes 2001:1504 and
+         71:6081 (see ui/screens/HomeScreen.kt). Not in the token file - one-off decorative
+         values, distinct from the semantic ZenColors set. -->
+    <color name="streak_days">#3C3C3C</color>
+    <color name="score_grad_start">#019A01</color>
+    <color name="score_grad_mid">#E8CA11</color>
+    <color name="streak_grad_2">#FF9F02</color>
+    <color name="streak_grad_3">#BFD126</color>
+    <color name="streak_grad_4">#60DE5E</color>
+    <color name="gold_label">#484848</color>
+    <color name="gold_amount">#FF9601</color>
+    <color name="gold_delta_bg">#E5E5E5</color>
+    <color name="gold_delta_text">#007700</color>
+
     <!-- consumed from View-based code (AppLogic, SegmentedProgressBar) -->
     <color name="zen_mindfulness_happy">#0F7A18</color>
     <color name="zen_mindfulness_neutral">#FFC800</color>

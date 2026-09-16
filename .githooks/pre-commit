@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Blocks commits into this PUBLIC repo that carry private content or obvious secrets.
+# Wired via: git config core.hooksPath .githooks (done once by zenmode-brain/setup.sh).
+#
+# This is a floor, not a guarantee: it only catches content carrying the CONFIDENTIAL marker
+# (the convention private docs in zenmode-brain / zenmode_core_private are supposed to start
+# with) or a small set of recognizable secret shapes. It does not scan for arbitrary sensitive
+# prose that carries no marker.
+set -euo pipefail
+
+diff_content="$(git diff --cached -U0 --no-color -- . ':(exclude).githooks/pre-commit')"
+
+fail=0
+
+if echo "$diff_content" | grep -nE '^\+.*(CONFIDENTIAL)' >/dev/null; then
+  echo "error: staged changes contain a CONFIDENTIAL marker — this is the public zenmode repo." >&2
+  echo "       offending lines:" >&2
+  echo "$diff_content" | grep -nE '^\+.*(CONFIDENTIAL)' >&2
+  fail=1
+fi
+
+if echo "$diff_content" | grep -nE '^\+.*(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AIzaSy[0-9A-Za-z_-]{33}|AKIA[0-9A-Z]{16})' >/dev/null; then
+  echo "error: staged changes look like they contain a private key or API key." >&2
+  echo "       offending lines:" >&2
+  echo "$diff_content" | grep -nE '^\+.*(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AIzaSy[0-9A-Za-z_-]{33}|AKIA[0-9A-Z]{16})' >&2
+  fail=1
+fi
+
+if [ "$fail" -eq 1 ]; then
+  echo "" >&2
+  echo "Commit rejected. If this is a false positive, remove the marker/pattern from the diff" >&2
+  echo "or (rare, deliberate) commit with --no-verify." >&2
+  exit 1
+fi
+
+exit 0

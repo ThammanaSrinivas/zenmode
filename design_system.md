@@ -1,56 +1,13 @@
-# Design System
+# Design System (deprecated)
 
-## 1. Color Primitives (The "Source" Palette)
-These are raw values. They should be defined in your `colors.xml` or as top-level constants in `Color.kt`.
+This file described ZenMode's **v2** design system (Cabinet Grotesque / Reddit Mono / `#00C700`),
+which has been fully replaced by v3 (ZenMode OS).
 
-| Name | Hex Value | Visual Reference |
-|---|---|---|
-| Color-white | `#FFFFFF` | Primary Light |
-| Color-black | `#000000` | Primary Dark |
-| color-grey-100 | `#F5F5F5` | Light Surface |
-| color-grey-200 | `#E5E5E5` | Light Border |
-| color-grey-400 | `#A3A3A3` | Dark Text (Sec) |
-| color-grey-600 | `#525252` | Light Text (Sec) |
-| color-grey-800 | `#1A1A1A` | Dark Surface |
-| Color-zen-base | `#00C700` | Brand Primary |
-| Color-zen-glow | `#24FF24` | Brand Accent |
-| color-zen-dark | `#007700` | Brand Action |
+**Current source of truth:**
+- Design tokens: `zenmode-brain/docs/brand/v3-assets/zenmode.figmatokens.json`
+- Compiled values: `app/src/main/res/values/colors.xml` (raw primitives) and
+  `ui/theme/Color.kt` / `Type.kt` (semantic tokens, fonts) — never read raw colors directly, use
+  `ZenTheme.colors`.
+- Summary: `zenmode-brain/CLAUDE.md` → "Design System" section.
 
-## 2. Semantic Tokens (Theme Logic)
-Use these names in your Jetpack Compose `Theme.kt`. The app will automatically swap based on the system theme.
-
-| Name | Light Mode Value | Dark Mode Value |
-|---|---|---|
-| bg-primary | Color-white | color-black |
-| bg-secondary | color-grey-100 | color-grey-800 |
-| surface-elevated | Color-white | color-grey-600 |
-| border-subtle | color-grey-200 | color-grey-800 |
-| border-focus | Color-zen-base | Color-zen-glow |
-| text-primary | color-black | Color-white |
-| text-secondary | color-grey-600 | color-grey-400 |
-| text-brand | Color-zen-base | Color-zen-glow |
-| action-primary | color-zen-dark | Color-zen-base |
-| action-primary-text | Color-white | color-black |
-| action-hover&pressed | Color-zen-base | Color-zen-glow |
-
-## 3. Typography Rules
-The font pairing strategy for ZenMode v2 is designed for high readability and a technical, "clean" aesthetic.
-Refer only `Type.kt` for accessing fonts
-
-### Primary Font: Cabinet Grotesque
-* **Usage:** Used for all prose, headings, labels, and UI instructions.
-* **Style:** High-contrast Grotesque for a premium editorial feel.
-
-### Secondary Font: Reddit Mono
-* **Usage:** Used for all numerical data (e.g., Screen time counters, `0/5` checklist numbers, timestamps).
-* **Rationale:** Monospaced numbers prevent "layout shift" when digits change (like a timer ticking) and provide an "engineering-grade" precision look.
-
-## 4. Layout & Rhythm
-* **Margins:** Global screen margin is 20dp.
-* **Gutter:** Space between list items or cards is 20dp.
-
-### Corner Radius
-* **Standard Cards:** 16dp
-* **Buttons:** 8dp
-* **Inputs:** 4dp
-* **Refer the particular screen for details**
+This file is kept only as a breadcrumb pointing to the above; it has no content worth reading.

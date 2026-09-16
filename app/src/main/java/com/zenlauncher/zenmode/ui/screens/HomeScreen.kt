@@ -81,6 +81,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -150,21 +151,33 @@ private val DotsToBottomGap: Dp @Composable get() = 20.rdp
 private val HeaderIconSize: Dp @Composable get() = 33.rdp
 private val HeaderIconTextGap: Dp @Composable get() = 4.rdp
 
-// Figma node 2001:1504 — header text colours and gradients
-private val ZenInk = Color(0xFF16210F)
-private val StreakDaysColor = Color(0xFF3C3C3C)
-private val ZenScoreGradient = Brush.linearGradient(
-    listOf(Color(0xFF019A01), Color(0xFFE8CA11), Color(0xFFFE6801))
-)
-private val StreakGradient = Brush.horizontalGradient(
-    listOf(Color(0xFFFE6801), Color(0xFFFF9F02), Color(0xFFBFD126), Color(0xFF60DE5E))
-)
+// Figma node 2001:1504 — header text colours and gradients. Values live in colors.xml
+// (SOURCE OF TRUTH: design tokens) — never inline a Color(0x...) literal here.
+private val ZenInk: Color @Composable get() = colorResource(R.color.ink_gain)
+private val StreakDaysColor: Color @Composable get() = colorResource(R.color.streak_days)
+private val ZenScoreGradient: Brush
+    @Composable get() = Brush.linearGradient(
+        listOf(
+            colorResource(R.color.score_grad_start),
+            colorResource(R.color.score_grad_mid),
+            colorResource(R.color.score_orange)
+        )
+    )
+private val StreakGradient: Brush
+    @Composable get() = Brush.horizontalGradient(
+        listOf(
+            colorResource(R.color.score_orange),
+            colorResource(R.color.streak_grad_2),
+            colorResource(R.color.streak_grad_3),
+            colorResource(R.color.streak_grad_4)
+        )
+    )
 
 // Gold row, sampled from Figma node 71:6081
-private val GoldLabel = Color(0xFF484848)
-private val GoldAmount = Color(0xFFFF9601)
-private val GoldDeltaBg = Color(0xFFE5E5E5)
-private val GoldDeltaText = Color(0xFF007700)
+private val GoldLabel: Color @Composable get() = colorResource(R.color.gold_label)
+private val GoldAmount: Color @Composable get() = colorResource(R.color.gold_amount)
+private val GoldDeltaBg: Color @Composable get() = colorResource(R.color.gold_delta_bg)
+private val GoldDeltaText: Color @Composable get() = colorResource(R.color.gold_delta_text)
 
 // ── Main Home Screen ──────────────────────────────────────────────
 

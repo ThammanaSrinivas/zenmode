@@ -1,0 +1,12 @@
+# Grandfathered hardcoded-color debt: screens not yet migrated to the v3 design (CLAUDE.md
+# notes only Home Screen has been rebuilt to v3). checkSourceOfTruth (app/build.gradle.kts)
+# allows up to <count> hex-literal matches in each listed file; it fails the build if a *new*
+# violation appears anywhere else, or if a listed file's count grows beyond what's recorded here.
+# Format: <path relative to src/main/java>:<count>
+# Fix the real thing (route through ZenTheme.colors / colors.xml) when each screen gets its v3
+# pass, then delete its line here.
+com/zenlauncher/zenmode/ui/screens/WelcomeScreen.kt:1
+com/zenlauncher/zenmode/ui/components/StatsCards.kt:5
+com/zenlauncher/zenmode/ui/screens/DistractingAppsBottomSheet.kt:1
+com/zenlauncher/zenmode/ui/screens/SettingsScreen.kt:2
+com/zenlauncher/zenmode/ui/screens/ResistenceScreen.kt:7
