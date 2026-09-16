@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.theme
 
+// SOURCE OF TRUTH: design tokens (fonts/type scale). Values come from
+// zenmode.figmatokens.json — see CLAUDE.md's Design System section.
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.ExperimentalTextApi
