@@ -36,11 +36,12 @@ captures/
 .externalNativeBuild
 google-services.json
 
-# Gradle wrappers
-gradle/
+# Gradle wrappers (gradle/libs.versions.toml is real project data, not
+# generated - keep it tracked, only the wrapper subfolder is excluded)
+gradle/wrapper/
 gradlew
 gradlew.bat
-**/gradle/
+**/gradle/wrapper/
 **/gradlew
 **/gradlew.bat
 
@@ -69,7 +70,7 @@ tasks.txt
 # Opencore / Composite builds generated files
 core-*/.idea/
 core-*/.kotlin/
-core-*/gradle/
+core-*/gradle/wrapper/
 core-*/gradlew
 core-*/gradlew.bat
 
