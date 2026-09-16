@@ -22,4 +22,8 @@ android {
 
 dependencies {
     implementation("com.zenlauncher.zenmode:core-api")
+    // MockAppInitializer.kt uses StateFlow/MutableStateFlow - version matches
+    // core-private's kotlinx-coroutines-android/play-services (1.7.3), the only
+    // other place in this project pinning a coroutines version explicitly.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }
