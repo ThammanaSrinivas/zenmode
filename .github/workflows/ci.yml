@@ -4,6 +4,13 @@ on:
   push:
   pull_request:
 
+# Cancel a run when a newer commit lands on the same branch - this repo is
+# public (unlimited free minutes) but there's no reason to let a stale
+# run's result race a newer one to completion either.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
