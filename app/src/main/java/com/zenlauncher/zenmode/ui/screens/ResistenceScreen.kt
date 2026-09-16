@@ -92,9 +92,9 @@ fun ResistenceScreen(
     val mindfulnessProgress = AppLogic.getMindfulnessPercentage(minutes)
 
     val moodColor = when (moodState) {
-        MoodState.HAPPY -> Color(0xFF00C700)
-        MoodState.NEUTRAL -> Color(0xFFEBDE27)
-        MoodState.ANNOYED -> Color(0xFFF1634F)
+        MoodState.HAPPY -> colors.moodHappy
+        MoodState.NEUTRAL -> colors.moodNeutral
+        MoodState.ANNOYED -> colors.moodAnnoyed
     }
 
     val centralImageRes = when (moodState) {
@@ -503,12 +503,13 @@ private fun ResistenceMindfulnessBar(
     moodState: MoodState,
     modifier: Modifier = Modifier
 ) {
-    val emptyColor = Color(0xFFD9D9D9)
+    val colors = ZenTheme.colors
+    val emptyColor = colors.borderSubtle
 
     val fillColor = when (moodState) {
-        MoodState.HAPPY -> Color(0xFF00C700)
-        MoodState.NEUTRAL -> Color(0xFFEBDE27)
-        MoodState.ANNOYED -> Color(0xFFF1634F)
+        MoodState.HAPPY -> colors.moodHappy
+        MoodState.NEUTRAL -> colors.moodNeutral
+        MoodState.ANNOYED -> colors.moodAnnoyed
     }
 
     Box(

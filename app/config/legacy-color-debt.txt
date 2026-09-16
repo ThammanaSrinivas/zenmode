@@ -5,8 +5,5 @@
 # Format: <path relative to src/main/java>:<count>
 # Fix the real thing (route through ZenTheme.colors / colors.xml) when each screen gets its v3
 # pass, then delete its line here.
-com/zenlauncher/zenmode/ui/screens/WelcomeScreen.kt:1
-com/zenlauncher/zenmode/ui/components/StatsCards.kt:5
-com/zenlauncher/zenmode/ui/screens/DistractingAppsBottomSheet.kt:1
-com/zenlauncher/zenmode/ui/screens/SettingsScreen.kt:2
-com/zenlauncher/zenmode/ui/screens/ResistenceScreen.kt:7
+#
+# (empty — all 5 previously-listed screens were migrated to ZenTheme.colors / colorResource)

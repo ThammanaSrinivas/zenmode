@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
@@ -69,11 +70,12 @@ private const val FaceAspect = 165f / 89f
 private const val CardAspect = 150.671f / 164.605f
 private val CardBorder: Dp @Composable get() = 1.9.rdp
 private val ChipRadius: Dp @Composable get() = 4.8.rdp
-// Score chip: rgba(0,199,0,.38) -> rgb(232,202,17) -> rgb(254,104,1), from the .fig
-private val ChipGreen = Color(0x6100C700)
-private val ChipYellow = Color(0xFFE8CA11)
-private val ChipOrange = Color(0xFFFE6801)
-private val CardInk = Color(0xFF101010)
+// Score chip: the same gradient as the header score badge (see HomeScreen's
+// scoreGradientColors) — green stop dimmed to .38 alpha, from the .fig.
+private val ChipGreen: Color @Composable get() = colorResource(R.color.score_grad_start).copy(alpha = 0.38f)
+private val ChipYellow: Color @Composable get() = colorResource(R.color.score_grad_mid)
+private val ChipOrange: Color @Composable get() = colorResource(R.color.score_orange)
+private val CardInk: Color @Composable get() = colorResource(R.color.ink_base)
 
 // ── Shared Stats Row ──────────────────────────────────────────────
 
@@ -648,7 +650,7 @@ fun SignInCard(
 
 // ── Modifiers ─────────────────────────────────────────────────────
 
-/** Inset glow: Figma's `shadow-[inset_0_0_28.875px_-8.663px_#12b117]` on the card. */
+/** Inset glow: Figma's `shadow-[inset_0_0_28.875px_-8.663px_12b117]` (hex, no leading #) on the card. */
 fun Modifier.innerGlow(
     color: Color,
     cornerRadius: Dp,

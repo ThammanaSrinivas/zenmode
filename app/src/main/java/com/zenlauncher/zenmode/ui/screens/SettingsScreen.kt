@@ -860,7 +860,7 @@ private fun ProfileBottomSheet(
                         fontFamily = Geist,
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.rsp,
-                        color = Color(0xFFE53935)
+                        color = colors.moodAnnoyed
                     )
                 }
 
@@ -920,7 +920,7 @@ private fun ProfileBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFE53935))
+                        .background(colors.moodAnnoyed)
                         .clickable { onDeleteAccountClick() }
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center

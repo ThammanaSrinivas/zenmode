@@ -260,7 +260,7 @@ fun WelcomeScreen(
                         for (i in 0 until numPins) {
                             val angle = startAngleOffset + i * (360f / 24f)
                             rotate(degrees = angle, pivot = pivot333) {
-                                drawPath(pinPath, color = Color(0xFF2AB828))
+                                drawPath(pinPath, color = colors.textBrand)
                             }
                         }
                     }

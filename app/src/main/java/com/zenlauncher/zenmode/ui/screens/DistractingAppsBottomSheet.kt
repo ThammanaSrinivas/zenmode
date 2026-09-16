@@ -204,6 +204,7 @@ fun DistractingAppsBottomSheet(onDismiss: () -> Unit) {
 
 @Composable
 private fun DistractingAppCell(app: DistractingAppItem, onClick: () -> Unit) {
+    val colors = ZenTheme.colors
     Box(
         modifier = Modifier
             .size(64.dp)
@@ -227,7 +228,7 @@ private fun DistractingAppCell(app: DistractingAppItem, onClick: () -> Unit) {
                     .align(Alignment.BottomEnd)
                     .size(20.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF00C700)),
+                    .background(colors.textBrand),
                 contentAlignment = Alignment.Center
             ) {
                 CheckMark()
