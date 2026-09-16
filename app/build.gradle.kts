@@ -192,8 +192,12 @@ val legacyColorDebt: Map<String, Int> = file("config/legacy-color-debt.txt")
 tasks.register("checkSourceOfTruth") {
     group = "verification"
     description = "Fails if a hardcoded color literal appears outside ui/theme/ beyond the legacy-color-debt allowlist."
+    // Resolved at configuration time, not inside doLast: the configuration cache can't
+    // serialize a reference to the build script object, which is exactly what calling
+    // file(...) or reading a script-level val from inside doLast would capture.
+    val srcRoot = file("src/main/java")
+    val debtSnapshot: Map<String, Int> = legacyColorDebt
     doLast {
-        val srcRoot = file("src/main/java")
         val hexPattern = Regex("""Color\(0x[0-9A-Fa-f]{6,8}\)|#[0-9A-Fa-f]{6}""")
         val countsByRelPath = mutableMapOf<String, MutableList<String>>()
 
@@ -211,7 +215,7 @@ tasks.register("checkSourceOfTruth") {
 
         val violations = mutableListOf<String>()
         countsByRelPath.forEach { (relPath, hits) ->
-            val allowed = legacyColorDebt[relPath] ?: 0
+            val allowed = debtSnapshot[relPath] ?: 0
             if (hits.size > allowed) {
                 violations += "$relPath: ${hits.size} found, $allowed allowed:\n" +
                     hits.joinToString("\n") { "    $it" }
