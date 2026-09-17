@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma node 2026:2220 ("download"), "Save as image" button on the streaks milestone overlay. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+    <path
+        android:fillColor="#0E7A17"
+        android:pathData="M2.5,13H13.5C13.646,13 13.7658,13.0468 13.8595,13.1405C13.9532,13.2342 14,13.354 14,13.5C14,13.646 13.9532,13.7658 13.8595,13.8595C13.7658,13.9532 13.646,14 13.5,14H2.5C2.354,14 2.23417,13.9532 2.1405,13.8595C2.04683,13.7658 2,13.646 2,13.5C2,13.354 2.04683,13.2342 2.1405,13.1405C2.23417,13.0468 2.354,13 2.5,13ZM8.5,9.03151L12.1875,5.34401L12.9065,6.04701L7.9535,11L3.0005,6.04701L3.7035,5.34401L7.5005,9.14101V2.00051H8.5005V9.03201L8.5,9.03151Z" />
+</vector>

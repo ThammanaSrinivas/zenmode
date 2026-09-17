@@ -115,16 +115,24 @@ class MainActivity : AppCompatActivity() {
             val interval = AppConstants.STATS_SYNC_INTERVAL_MINUTES * 60 * 1000L
 
             if (now - lastProcessed > interval) {
-                val workerClass = Class.forName("com.zenlauncher.zenmode.internal.StatSyncWorker") as Class<out androidx.work.ListenableWorker>
-                val syncRequest = androidx.work.OneTimeWorkRequest.Builder(workerClass)
-                    .setConstraints(androidx.work.Constraints.Builder().setRequiredNetworkType(androidx.work.NetworkType.CONNECTED).build())
-                    .build()
-                androidx.work.WorkManager.getInstance(this).enqueueUniqueWork(
-                    "ManualStatSync",
-                    androidx.work.ExistingWorkPolicy.REPLACE,
-                    syncRequest
-                )
-                repository.updateLastStatsProcessedTime(now)
+                // StatSyncWorker lives in core-private only — absent on core-mock (open-source)
+                // builds. Without this catch, a fresh install crash-loops on first onResume()
+                // (lastProcessed defaults to 0, so the interval check is always true).
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    val workerClass = Class.forName("com.zenlauncher.zenmode.internal.StatSyncWorker") as Class<out androidx.work.ListenableWorker>
+                    val syncRequest = androidx.work.OneTimeWorkRequest.Builder(workerClass)
+                        .setConstraints(androidx.work.Constraints.Builder().setRequiredNetworkType(androidx.work.NetworkType.CONNECTED).build())
+                        .build()
+                    androidx.work.WorkManager.getInstance(this).enqueueUniqueWork(
+                        "ManualStatSync",
+                        androidx.work.ExistingWorkPolicy.REPLACE,
+                        syncRequest
+                    )
+                    repository.updateLastStatsProcessedTime(now)
+                } catch (_: ClassNotFoundException) {
+                    // core-mock build — nothing to sync.
+                }
             }
         }
     }
@@ -336,6 +344,9 @@ class MainActivity : AppCompatActivity() {
                     onShowSearchChange = { showSearch = it },
                     onSettingsClick = {
                         startActivity(Intent(this, SettingsActivity::class.java))
+                    },
+                    onZenGoldClick = {
+                        startActivity(Intent(this, ZenGoldActivity::class.java))
                     },
                     onGoogleSearch = { query ->
                         val searchIntent = Intent(Intent.ACTION_WEB_SEARCH).apply {
