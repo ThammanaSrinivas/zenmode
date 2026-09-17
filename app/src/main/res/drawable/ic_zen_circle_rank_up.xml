@@ -1,0 +1,8 @@
+<!-- Ranking "up" marker, Figma node 2026:2580. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="8.2152dp"
+    android:height="7.3711dp"
+    android:viewportWidth="8.2152"
+    android:viewportHeight="7.3711">
+  <path android:pathData="M3.27041 0.483352C3.64249 -0.161116 4.5727 -0.161118 4.94479 0.48335L8.08424 5.92105C8.45633 6.56551 7.99122 7.3711 7.24706 7.3711H0.968145C0.223978 7.3711 -0.241128 6.56552 0.130955 5.92105L3.27041 0.483352Z" android:fillColor="#007700"/>
+</vector>

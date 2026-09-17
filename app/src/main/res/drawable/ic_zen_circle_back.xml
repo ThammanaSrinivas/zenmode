@@ -1,0 +1,15 @@
+<!-- Zen Circle back arrow, Figma node 2026:2446 (drawn pointing right, mirrored in the frame). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="29.5812dp"
+    android:height="20.2844dp"
+    android:viewportWidth="29.5812"
+    android:viewportHeight="20.2844"
+    android:autoMirrored="true">
+  <group
+      android:pivotX="14.7906"
+      android:scaleX="-1">
+    <path
+        android:pathData="M29.1778,11.1161C29.7156,10.5782 29.7156,9.70619 29.1778,9.16833L20.4128,0.403395C19.875,-0.134465 19.0029,-0.134465 18.4651,0.403395C17.9272,0.941255 17.9272,1.8133 18.4651,2.35116L26.2561,10.1422L18.4651,17.9333C17.9272,18.4711 17.9272,19.3432 18.4651,19.881C19.0029,20.4189 19.875,20.4189 20.4128,19.881L29.1778,11.1161ZM0,10.1422V11.5195H28.2039V10.1422V8.76494H0V10.1422Z"
+        android:fillColor="#0E7A17"/>
+  </group>
+</vector>

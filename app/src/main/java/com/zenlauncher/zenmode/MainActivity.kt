@@ -52,9 +52,25 @@ import com.zenlauncher.zenmode.ui.screens.AccountabilityScreen
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import com.zenlauncher.zenmode.ui.screens.ForceUpdateDialog
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
-import com.zenlauncher.zenmode.ui.screens.ZenBuddyConnectBottomSheet
+import com.zenlauncher.zenmode.ui.screens.ZenBroConnectScreen
+import com.zenlauncher.zenmode.ui.screens.ZenBroConnectedScreen
+import com.zenlauncher.zenmode.ui.screens.ZenCircleMember
+import com.zenlauncher.zenmode.ui.screens.ZenCircleScreen
 import androidx.compose.runtime.collectAsState
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+
+/** Which page of the Zen Bro connect flow is showing. */
+private sealed interface ZenBroStage {
+    data object Connect : ZenBroStage
+    data class Connected(val buddyName: String) : ZenBroStage
+    data class Circle(val buddyName: String) : ZenBroStage
+}
 
 class MainActivity : AppCompatActivity() {
     private var isReceiverRegistered = false
@@ -69,6 +85,14 @@ class MainActivity : AppCompatActivity() {
     private var homeAppCount by mutableStateOf(AppGridPreferences.DEFAULT_APP_COUNT)
     private var showSearch by mutableStateOf(false)
     private var showBuddyConnect by mutableStateOf(false)
+    // Set when a connect succeeds; swaps My Zen Circle for the "You're Zen Bros now" screen.
+    private var connectedBuddyName by mutableStateOf<String?>(null)
+    // "Maybe later" on the connected screen, or the buddy card on home, opens the circle dashboard.
+    private var showZenCircle by mutableStateOf(false)
+    // Buddy's display name when the dashboard is opened from home (no connect flow to carry it).
+    private var circleBuddyName by mutableStateOf<String?>(null)
+    // True while "Remove buddy" / "Leave Circle" is waiting on the server.
+    private var removingBuddy by mutableStateOf(false)
     private var showBuddyBattle by mutableStateOf(false)
     private var showAccessibilityDisclosure by mutableStateOf(false)
     private lateinit var accountabilityViewModel: AccountabilityViewModel
@@ -305,12 +329,16 @@ class MainActivity : AppCompatActivity() {
                 androidx.compose.runtime.LaunchedEffect(accountabilityUiState.disconnectResult) {
                     when (val result = accountabilityUiState.disconnectResult) {
                         is DisconnectResult.Success -> {
+                            removingBuddy = false
                             showBuddyBattle = false
+                            // Back to the start of the connect flow, ready to find a new Zen Bro.
+                            closeBuddyConnect()
                             showBuddyConnect = true
                             viewModel.refreshBuddyStatsFromCache()
                             accountabilityViewModel.resetDisconnectResult()
                         }
                         is DisconnectResult.Error -> {
+                            removingBuddy = false
                             android.widget.Toast.makeText(
                                 this@MainActivity,
                                 "Failed to disconnect: ${result.message}",
@@ -328,7 +356,6 @@ class MainActivity : AppCompatActivity() {
                 HomeScreen(
                     usage = usage,
                     streaks = streakCount,
-                    weeklyScreenTimeMillis = weeklyMillis,
                     yesterdayChangePercent = yesterdayChangePercent,
                     hasBuddies = hasBuddies,
                     buddyStats = buddyStats,
@@ -347,6 +374,9 @@ class MainActivity : AppCompatActivity() {
                     },
                     onZenGoldClick = {
                         startActivity(Intent(this, ZenGoldActivity::class.java))
+                    },
+                    onZenScoreClick = {
+                        startActivity(Intent(this, ZenScoreActivity::class.java))
                     },
                     onGoogleSearch = { query ->
                         val searchIntent = Intent(Intent.ACTION_WEB_SEARCH).apply {
@@ -369,7 +399,7 @@ class MainActivity : AppCompatActivity() {
                         showBuddyConnect = true
                     },
                     onBuddyCardClick = if (hasBuddies) {
-                        { showBuddyBattle = true }
+                        { openZenCircleFromHome() }
                     } else null,
                     onSignInClick = {
                         val intent = Intent(this, OnboardingActivity::class.java).apply {
@@ -473,31 +503,159 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
 
-                // Zen Buddy Connect bottom sheet
+                // Zen Bro connect flow: My Zen Circle options → "You're Zen Bros now" → circle dashboard
                 if (showBuddyConnect) {
-                    ZenBuddyConnectBottomSheet(
-                        userCode = userCode,
-                        onCopyCode = {
-                            userCode?.let { code ->
-                                val clipboard = getSystemService(android.content.ClipboardManager::class.java)
-                                val clip = android.content.ClipData.newPlainText("ZenMode Code", code)
-                                clipboard.setPrimaryClip(clip)
-                                ServiceLocator.analyticsTracker.trackBuddyCodeCopied("manual")
-                                android.widget.Toast.makeText(this, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
-                            }
+                    val stage = when {
+                        showZenCircle -> ZenBroStage.Circle(connectedBuddyName ?: circleBuddyName ?: "Zen Bro")
+                        connectedBuddyName != null -> ZenBroStage.Connected(connectedBuddyName!!)
+                        else -> ZenBroStage.Connect
+                    }
+                    AnimatedContent(
+                        targetState = stage,
+                        contentKey = { it::class },
+                        transitionSpec = {
+                            (fadeIn(tween(320)) + scaleIn(tween(320), initialScale = 0.96f)) togetherWith fadeOut(tween(200))
                         },
-                        onAddBuddy = { targetUid -> addBuddy(targetUid) },
-                        onRandomConnect = {
-                            lifecycleScope.launch { randomConnect() }
-                        },
-                        onWatchVideo = {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.YT_BUDDY_INVITE_URL)))
-                        },
-                        onDismiss = { showBuddyConnect = false }
-                    )
+                        label = "zenBroConnectFlow"
+                    ) { current ->
+                        when (current) {
+                            is ZenBroStage.Circle -> ZenCircleScreen(
+                                members = listOf(
+                                    ZenCircleMember(
+                                        name = "You",
+                                        isYou = true,
+                                        screenTimeMinutes = (usage?.screenTimeInMillis ?: 0L) / 60_000,
+                                        zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                                        streaks = streakCount,
+                                        changePercent = yesterdayChangePercent
+                                    ),
+                                    ZenCircleMember(
+                                        name = current.buddyName,
+                                        isYou = false,
+                                        screenTimeMinutes = buddyStats?.screenTimeMins ?: 0L,
+                                        zenScore = AppConstants.PLACEHOLDER_BUDDY_ZEN_SCORE,
+                                        streaks = AppConstants.PLACEHOLDER_BUDDY_STREAK
+                                    )
+                                ),
+                                userCode = userCode,
+                                // Opened from home there's no connected screen to return to.
+                                onBackClick = { if (connectedBuddyName != null) showZenCircle = false else closeBuddyConnect() },
+                                onShareInviteLink = { userCode?.let { shareBuddyInvite(it) } },
+                                onCopyInviteCode = { userCode?.let { copyUserCode(it, showToast = false) } },
+                                onBackToHome = { closeBuddyConnect() },
+                                onSendLove = { viewModel.sendLike() },
+                                onSendMelt = {
+                                    Toast.makeText(this@MainActivity, "Melt reactions are coming soon", Toast.LENGTH_SHORT).show()
+                                },
+                                onWeeklyClick = {
+                                    Toast.makeText(this@MainActivity, "Weekly rankings are part of PRO", Toast.LENGTH_SHORT).show()
+                                },
+                                removingBuddy = removingBuddy,
+                                onRemoveBuddy = { removeBuddy() },
+                                onLeaveCircle = { removeBuddy() }
+                            )
+                            is ZenBroStage.Connected -> ZenBroConnectedScreen(
+                                buddyName = current.buddyName,
+                                usage = usage,
+                                streaks = streakCount,
+                                zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                                buddyStats = buddyStats,
+                                userCode = userCode,
+                                onBackClick = { closeBuddyConnect() },
+                                onShareInviteLink = { userCode?.let { shareBuddyInvite(it) } },
+                                // The sheet confirms inline, so no toast here.
+                                onCopyInviteCode = { userCode?.let { copyUserCode(it, showToast = false) } },
+                                onMaybeLater = { showZenCircle = true }
+                            )
+                            ZenBroStage.Connect -> ZenBroConnectScreen(
+                                userCode = userCode,
+                                onBackClick = { showBuddyConnect = false },
+                                onShareLink = { userCode?.let { shareBuddyInvite(it) } },
+                                onCopyCode = { userCode?.let { copyUserCode(it, showToast = true) } },
+                                onAddBuddy = { targetUid ->
+                                    addBuddy(targetUid).also { result ->
+                                        if (result is BuddyAddResult.Success) {
+                                            // Let "Connected with …" register before the celebration takes over.
+                                            lifecycleScope.launch {
+                                                kotlinx.coroutines.delay(700)
+                                                connectedBuddyName = result.buddyName
+                                            }
+                                        }
+                                    }
+                                },
+                                onRandomConnect = {
+                                    lifecycleScope.launch {
+                                        randomConnect()?.let { connectedBuddyName = it }
+                                    }
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private fun copyUserCode(code: String, showToast: Boolean) {
+        val clipboard = getSystemService(android.content.ClipboardManager::class.java)
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("ZenMode Code", code))
+        ServiceLocator.analyticsTracker.trackBuddyCodeCopied("manual")
+        if (showToast) {
+            android.widget.Toast.makeText(this, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun closeBuddyConnect() {
+        showBuddyConnect = false
+        connectedBuddyName = null
+        showZenCircle = false
+        circleBuddyName = null
+    }
+
+    /** Home's buddy card: straight to the circle dashboard, fetching the buddy's name alongside. */
+    private fun openZenCircleFromHome() {
+        connectedBuddyName = null
+        showZenCircle = true
+        showBuddyConnect = true
+        val buddyUid = repository.getBuddyUid() ?: return
+        lifecycleScope.launch {
+            circleBuddyName = runCatching { ServiceLocator.firestoreDataSource.getUser(buddyUid)?.displayName }
+                .getOrNull()
+                ?.takeIf { it.isNotBlank() }
+        }
+    }
+
+    /**
+     * "Remove buddy" and "Leave Circle" — with one buddy per circle today, both end the
+     * relationship. The result lands in the DisconnectResult effect above.
+     */
+    private fun removeBuddy() {
+        if (removingBuddy) return
+        // Same preconditions disconnectBuddy() checks; without them it returns silently and
+        // the confirm button would sit on "Removing…" forever.
+        val signedIn = (repository.getUserUid() ?: ServiceLocator.authProvider.getCurrentUserId()) != null
+        if (!signedIn || repository.getBuddyUid() == null) {
+            Toast.makeText(this, "You don\u2019t have a Zen Bro to remove.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        removingBuddy = true
+        accountabilityViewModel.disconnectBuddy()
+    }
+
+    /** "Share a link": the Play Store link plus this user's code, via the system share sheet. */
+    private fun shareBuddyInvite(code: String) {
+        ServiceLocator.analyticsTracker.trackBuddyShareStarted("link")
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on ZenMode")
+            putExtra(
+                Intent.EXTRA_TEXT,
+                "Be my Zen Bro on ZenMode! Get the app: " +
+                    "https://play.google.com/store/apps/details?id=$packageName\n" +
+                    "Then paste my Zen code in My Zen Circle: $code"
+            )
+        }
+        startActivity(Intent.createChooser(intent, "Share invite"))
     }
 
     private fun requestPostNotificationsIfNeeded() {
@@ -574,11 +732,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun randomConnect() {
+    /** Returns the new buddy's display name on success, null otherwise (with a toast). */
+    private suspend fun randomConnect(): String? {
         val currentUserId = ServiceLocator.authProvider.getCurrentUserId()
         if (currentUserId == null) {
             android.widget.Toast.makeText(this, "Not signed in.", android.widget.Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
 
         val connectivityManager = getSystemService(android.net.ConnectivityManager::class.java)
@@ -586,7 +745,7 @@ class MainActivity : AppCompatActivity() {
             ?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
         if (!isConnected) {
             android.widget.Toast.makeText(this, "No internet connection.", android.widget.Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
 
         // Cooldown: only allow retrying after cooldown if last attempt found no buddy
@@ -599,10 +758,10 @@ class MainActivity : AppCompatActivity() {
                 "No buddies were available last time. Try again in ${secs}s.",
                 android.widget.Toast.LENGTH_LONG
             ).show()
-            return
+            return null
         }
 
-        try {
+        return try {
             val buddyUid = ServiceLocator.firestoreDataSource.findRandomBuddy(currentUserId)
             if (buddyUid == null) {
                 repository.saveLastRandomConnectAttemptTime(System.currentTimeMillis())
@@ -611,22 +770,22 @@ class MainActivity : AppCompatActivity() {
                     "No buddies available right now. Try again in 30 seconds!",
                     android.widget.Toast.LENGTH_LONG
                 ).show()
+                null
             } else {
                 val buddy = ServiceLocator.firestoreDataSource.getUser(buddyUid)
                 repository.clearCachedBuddy()
                 repository.saveHasBuddy(true)
                 viewModel.fetchBuddyData()
                 ServiceLocator.analyticsTracker.trackBuddyConnected("random")
-                android.widget.Toast.makeText(
-                    this,
-                    "Connected with ${buddy?.displayName ?: "a Zen buddy"}!",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
+                // No toast on success: the "You're Zen Bros now" screen says it.
+                buddy?.displayName?.takeIf { it.isNotBlank() } ?: "your Zen Bro"
             }
         } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
             android.widget.Toast.makeText(this, "Connection timed out. Please try again.", android.widget.Toast.LENGTH_SHORT).show()
+            null
         } catch (e: Exception) {
             android.widget.Toast.makeText(this, "Something went wrong. Please try again.", android.widget.Toast.LENGTH_SHORT).show()
+            null
         }
     }
 
