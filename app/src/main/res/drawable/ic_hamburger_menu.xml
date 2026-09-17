@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma node 2026:1789 ("Group 2147223865"), Zen Gold screen header menu icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="29dp"
+    android:height="17.5dp"
+    android:viewportWidth="29"
+    android:viewportHeight="17.5">
+    <path
+        android:pathData="M1.25,1.25L27.75,1.25"
+        android:strokeColor="#0E7A17"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M4.25,8.25L25.75,8.25"
+        android:strokeColor="#0E7A17"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M6.25,16.25L23.75,16.25"
+        android:strokeColor="#0E7A17"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+</vector>
