@@ -17,8 +17,31 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import android.os.Build
+import android.provider.Settings
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.em
+import com.zenlauncher.zenmode.ui.components.runningGradientStroke
+import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.animation.fadeIn
@@ -226,12 +249,21 @@ fun HomeScreen(
 ) {
     val colors = ZenTheme.colors
     var showStreakOverlay by remember { mutableStateOf(false) }
+    // Where the home pill sits on screen; the search bar opens in exactly that spot.
+    var searchPillBounds by remember { mutableStateOf<Rect?>(null) }
 
     // Three variants, picked by today's screen time. The wash covers the whole screen,
     // pooling the mood colour in the middle and fading to cream at both edges.
     val todayMinutes = ((usage?.screenTimeInMillis ?: 0L) / 1000) / 60
     val mood = AppLogic.getMoodState(todayMinutes)
     val wash = colors.moodWash(mood)
+
+    // Figma 2026:1207 — home stays behind search, blurred ~7.65px. No-op below API 31.
+    val homeBlur by animateDpAsState(
+        targetValue = if (showSearch) 8.rdp else 0.dp,
+        animationSpec = tween(260),
+        label = "home-blur"
+    )
 
     Box(
         modifier = Modifier
@@ -256,10 +288,14 @@ fun HomeScreen(
                 onClick = {},
                 onLongClick = onLockClick
             )
-            .systemBarsPadding()
     ) {
+        // Insets live on the children, not this Box, so the search scrim can run
+        // edge to edge behind the status and navigation bars.
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .systemBarsPadding()
+                .then(if (homeBlur > 0.dp) Modifier.blur(homeBlur) else Modifier)
         ) {
             Spacer(modifier = Modifier.height(TopToHeaderGap))
 
@@ -323,7 +359,10 @@ fun HomeScreen(
             Spacer(modifier = Modifier.weight(1f).heightIn(min = AppsToSearchGap))
 
             // zone 5 · search + page dots
-            SearchPill(onClick = { onShowSearchChange(true) })
+            SearchPill(
+                onClick = { onShowSearchChange(true) },
+                modifier = Modifier.onGloballyPositioned { searchPillBounds = it.boundsInWindow() }
+            )
 
             Spacer(modifier = Modifier.height(SearchToDotsGap))
 
@@ -332,20 +371,16 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(DotsToBottomGap))
         }
 
-        // Search overlay — rises from the bottom, where the search pill is
+        // Search overlay — the scrim fades over the blurring home screen while the bar
+        // ignites its stroke in place over the home pill (see ZenSearchBar)
         AnimatedVisibility(
             visible = showSearch,
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = tween(280)
-            ) + fadeIn(tween(180)),
-            exit = slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(220)
-            ) + fadeOut(tween(160))
+            enter = fadeIn(tween(220)),
+            exit = fadeOut(tween(180))
         ) {
             SearchOverlay(
                 apps = apps,
+                anchorBounds = searchPillBounds,
                 onAppClick = { app ->
                     onShowSearchChange(false)
                     onAppClick(app)
@@ -361,6 +396,7 @@ fun HomeScreen(
         // Streak overlay
         AnimatedVisibility(
             visible = showStreakOverlay,
+            modifier = Modifier.systemBarsPadding(),
             enter = fadeIn(),
             exit = fadeOut()
         ) {
@@ -752,11 +788,11 @@ private fun AppIconItem(
 // ── Search Pill ───────────────────────────────────────────────────
 
 @Composable
-private fun SearchPill(onClick: () -> Unit) {
+private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = ZenTheme.colors
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = ScreenMargin)
             .height(SearchPillHeight)
@@ -784,21 +820,68 @@ private fun SearchPill(onClick: () -> Unit) {
 }
 
 // ── Search Overlay ────────────────────────────────────────────────
-// Three parts, always in this order and always labelled: what is already
-// installed (Apps), what is in storage (Files), then the web (Google).
+// Figma node 2026:1207 — "centralised search / active state". The home screen stays
+// put, blurred under a dark scrim; everything is anchored to the bottom, stacking up
+// from the search bar: the Google row sits right above the bar, then Apps, then
+// on-device files. Sources are unchanged from before (installed apps, MediaStore
+// files behind FILE_SEARCH_ENABLED, Google handed off to the system).
 
+// Matches the home pill (not Figma's 46) so the pressed state lands exactly on top of it.
+private val SearchBarHeight: Dp @Composable get() = SearchPillHeight
+private val SearchStrokeWidth: Dp @Composable get() = 3.rdp
+private val SearchGlyphSize: Dp @Composable get() = 19.2.rdp
+// Results sit 26dp in from the bar's edge (x=56 against the bar's x=30).
+private val SearchResultInset: Dp @Composable get() = 26.rdp
+private val SearchTileSize: Dp @Composable get() = 30.rdp
+private val SearchRowGap: Dp @Composable get() = 16.rdp
+private val SearchHeaderGap: Dp @Composable get() = 24.rdp
+private val SearchSectionGap: Dp @Composable get() = 28.rdp
+private val SearchBarGap: Dp @Composable get() = 26.rdp
+private const val SearchCollapsedRows = 3
+
+// One trip of the gradient round the pill. Slow enough to read as calm, quick
+// enough to read as "listening".
+private const val StrokeRunMillis = 2800
+private const val StrokeTraceMillis = 720
+private const val StrokeGlowRest = 0.45f
+
+private sealed interface SearchRow {
+    val key: String
+
+    data class Header(val label: String) : SearchRow {
+        override val key = "header:$label"
+    }
+    data class App(val app: AppInfo) : SearchRow {
+        override val key = "app:${app.packageName}"
+    }
+    data class File(val file: FileResult) : SearchRow {
+        override val key = "file:${file.uri}"
+    }
+    data class More(val section: String, val count: Int, val noun: String) : SearchRow {
+        override val key = "more:$section"
+    }
+    data object FilePermission : SearchRow {
+        override val key = "file-permission"
+    }
+    data class Google(val query: String) : SearchRow {
+        override val key = "google"
+    }
+    data class Gap(val section: String) : SearchRow {
+        override val key = "gap:$section"
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SearchOverlay(
     apps: List<AppInfo>,
+    anchorBounds: Rect?,
     onAppClick: (AppInfo) -> Unit,
     onGoogleSearch: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val colors = ZenTheme.colors
     val context = LocalContext.current
     var query by remember { mutableStateOf("") }
-    val focusRequester = remember { FocusRequester() }
-    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
 
     val fileSearchEnabled = remember { FileSearchRepository.isEnabled() }
     var hasFilePermission by remember {
@@ -822,225 +905,398 @@ private fun SearchOverlay(
     }
 
     LaunchedEffect(query, hasFilePermission) {
-        fileResults = if (fileSearchEnabled && hasFilePermission) {
-            FileSearchRepository.search(context, query)
-        } else {
-            emptyList()
+        if (!fileSearchEnabled || !hasFilePermission || query.isBlank()) {
+            fileResults = emptyList()
+            return@LaunchedEffect
         }
+        // MediaStore is a disk query — let a burst of typing settle first. A newer
+        // keystroke cancels this effect, so only the last query ever hits the provider.
+        delay(120)
+        fileResults = FileSearchRepository.search(context, query)
+    }
+
+    // "+N more" expands a section; a new query starts collapsed again.
+    var appsExpanded by remember(query) { mutableStateOf(false) }
+    var filesExpanded by remember(query) { mutableStateOf(false) }
+
+    // Top-to-bottom, as Figma draws it.
+    val rows = buildList {
+        if (query.isBlank()) return@buildList
+
+        if (fileSearchEnabled && (!hasFilePermission || fileResults.isNotEmpty())) {
+            add(SearchRow.Header("ON DEVICE FILES"))
+            if (!hasFilePermission) {
+                add(SearchRow.FilePermission)
+            } else {
+                val shown = if (filesExpanded) fileResults else fileResults.take(SearchCollapsedRows)
+                shown.forEach { add(SearchRow.File(it)) }
+                val hidden = fileResults.size - shown.size
+                if (hidden > 0) add(SearchRow.More("files", hidden, "files"))
+            }
+            add(SearchRow.Gap("files"))
+        }
+
+        if (filteredApps.isNotEmpty()) {
+            add(SearchRow.Header("APPS"))
+            val shown = if (appsExpanded) filteredApps else filteredApps.take(SearchCollapsedRows)
+            shown.forEach { add(SearchRow.App(it)) }
+            val hidden = filteredApps.size - shown.size
+            if (hidden > 0) add(SearchRow.More("apps", hidden, if (hidden == 1) "app" else "apps"))
+            add(SearchRow.Gap("apps"))
+        }
+
+        add(SearchRow.Google(query))
     }
 
     BackHandler(enabled = true) {
         onDismiss()
     }
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+    var dragY by remember { mutableStateOf(0f) }
+    val listState = rememberLazyListState()
 
-    var offsetY by remember { mutableStateOf(0f) }
+    // Pin the bar to the home pill: same bottom edge, so pressing search changes the
+    // pill's look, never its position. Only a docked keyboard that would cover it
+    // pushes it up. Until the pill has been measured, fall back to the nav bar gap.
+    val density = LocalDensity.current
+    var overlayBottomInWindow by remember { mutableStateOf<Float?>(null) }
+    val imeBottomPx = WindowInsets.ime.getBottom(density)
+    val navBottomPx = WindowInsets.navigationBars.getBottom(density)
+    val anchoredGapPx = if (anchorBounds != null && overlayBottomInWindow != null) {
+        (overlayBottomInWindow!! - anchorBounds.bottom).coerceAtLeast(0f)
+    } else {
+        with(density) { navBottomPx + SearchBarGap.toPx() }
+    }
+    val keyboardGapPx = if (imeBottomPx > 0) imeBottomPx + with(density) { 12.rdp.toPx() } else 0f
+    val barBottomGap = with(density) { maxOf(anchoredGapPx, keyboardGapPx).toDp() }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset(y = offsetY.coerceAtLeast(0f).dp)
-            .background(colors.bgPrimary.copy(alpha = 0.97f))
+            .onGloballyPositioned { overlayBottomInWindow = it.boundsInWindow().bottom }
+            .background(searchScrim())
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
-                        if (offsetY > 150f) {
-                            onDismiss()
-                        }
-                        offsetY = 0f
+                        if (dragY > 150f) onDismiss()
+                        dragY = 0f
                     },
-                    onVerticalDrag = { _, dragAmount ->
-                        offsetY += dragAmount
-                    }
+                    onVerticalDrag = { _, dragAmount -> dragY += dragAmount }
                 )
             }
-            .clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }) { onDismiss() }
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onDismiss() }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = ScreenMargin, vertical = 48.rdp)
+                .offset { IntOffset(0, dragY.coerceAtLeast(0f).roundToInt()) }
+                .statusBarsPadding()
+                .padding(bottom = barBottomGap)
         ) {
-            // Search input
-            Row(
+            // Reverse layout pins the list to the bar: short result sets hug the
+            // bottom, long ones scroll up from it. Rows are emitted bottom-first.
+            LazyColumn(
+                state = listState,
+                reverseLayout = true,
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxWidth()
-                    .height(SearchPillHeight)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .border(1.5.rdp, colors.borderFocus, RoundedCornerShape(percent = 50))
-                    .padding(horizontal = 18.rdp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = ScreenMargin)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_search),
-                    contentDescription = null,
-                    modifier = Modifier.size(17.rdp),
-                    colorFilter = ColorFilter.tint(colors.textSecondary)
-                )
-                Spacer(modifier = Modifier.width(10.rdp))
-
-                BasicTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier
-                        .weight(1f)
-                        .focusRequester(focusRequester)
-                        .onFocusChanged { state ->
-                            if (state.isFocused) {
-                                keyboardController?.show()
-                            }
-                        },
-                    textStyle = TextStyle(
-                        fontFamily = Geist,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 16.rsp,
-                        color = colors.textPrimary
-                    ),
-                    cursorBrush = SolidColor(colors.textBrand),
-                    singleLine = true,
-                    decorationBox = { innerTextField ->
-                        if (query.isEmpty()) {
-                            Text(
-                                text = "Apps, files & everything",
-                                fontFamily = Geist,
-                                fontWeight = FontWeight.Normal,
-                                fontSize = 16.rsp,
-                                color = colors.textSecondary
-                            )
-                        }
-                        innerTextField()
-                    }
-                )
-
-                if (query.isNotEmpty()) {
-                    Text(
-                        text = "✕",
-                        fontSize = 18.rsp,
-                        color = colors.textSecondary,
-                        modifier = Modifier
-                            .clickable { query = "" }
-                            .padding(start = 8.rdp)
+                items(rows.asReversed(), key = { it.key }) { row ->
+                    val itemModifier = Modifier.animateItem(
+                        fadeInSpec = tween(200),
+                        fadeOutSpec = tween(120)
                     )
+                    when (row) {
+                        is SearchRow.Header -> SearchSectionHeader(row.label, itemModifier)
+                        is SearchRow.App -> AppResultRow(
+                            app = row.app,
+                            onClick = { onAppClick(row.app) },
+                            modifier = itemModifier
+                        )
+                        is SearchRow.File -> FileResultRow(
+                            file = row.file,
+                            onClick = {
+                                onDismiss()
+                                FileSearchRepository.open(context, row.file)
+                            },
+                            modifier = itemModifier
+                        )
+                        is SearchRow.More -> SearchMoreRow(
+                            text = "+${row.count} more ${row.noun}",
+                            onClick = {
+                                if (row.section == "apps") appsExpanded = true
+                                else filesExpanded = true
+                            },
+                            modifier = itemModifier
+                        )
+                        SearchRow.FilePermission -> FilePermissionRow(
+                            onGrantClick = {
+                                permissionLauncher.launch(FileSearchRepository.requiredPermissions)
+                            },
+                            modifier = itemModifier
+                        )
+                        is SearchRow.Google -> GoogleFallbackRow(
+                            query = row.query,
+                            onClick = { onGoogleSearch(row.query) },
+                            modifier = itemModifier
+                        )
+                        is SearchRow.Gap -> Spacer(itemModifier.height(SearchSectionGap - 8.rdp))
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.rdp))
+            Spacer(modifier = Modifier.height(SearchBarGap - 8.rdp))
 
-            // Results — three labelled sections
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.rdp)
-            ) {
-                // 1 · Apps
-                item { SearchSectionHeader("APPS") }
-
-                if (filteredApps.isEmpty()) {
-                    item {
-                        SearchEmptyRow(
-                            text = if (query.isBlank()) "Type to find an app"
-                            else "No app matches “$query”"
-                        )
-                    }
-                } else {
-                    items(filteredApps) { app ->
-                        AppResultRow(app = app, onClick = { onAppClick(app) })
-                    }
+            // Same modifier chain as SearchPill's outer width, so the edges line up too.
+            ZenSearchBar(
+                modifier = Modifier.padding(horizontal = ScreenMargin),
+                query = query,
+                onQueryChange = { query = it },
+                onSubmit = {
+                    val top = filteredApps.firstOrNull()
+                    if (top != null) onAppClick(top) else if (query.isNotBlank()) onGoogleSearch(query)
                 }
+            )
+        }
+    }
 
-                // 2 · Files
-                if (fileSearchEnabled) {
-                    item {
-                        Spacer(modifier = Modifier.height(20.rdp))
-                        SearchSectionHeader("FILES")
-                    }
+    // New results arrive at the bottom edge; keep the bar-side end in view.
+    LaunchedEffect(query) { listState.scrollToItem(0) }
+}
 
-                    when {
-                        !hasFilePermission -> item {
-                            FilePermissionRow(
-                                onGrantClick = {
-                                    permissionLauncher.launch(FileSearchRepository.requiredPermissions)
-                                }
-                            )
-                        }
-                        fileResults.isEmpty() -> item {
-                            SearchEmptyRow(
-                                text = if (query.isBlank()) "Type to find a file"
-                                else "No file matches “$query”"
-                            )
-                        }
-                        else -> items(fileResults) { file ->
-                            FileResultRow(
-                                file = file,
-                                onClick = {
-                                    onDismiss()
-                                    FileSearchRepository.open(context, file)
-                                }
-                            )
-                        }
-                    }
+/** Figma blurs the home screen 7.65px under a 67% black scrim; we run it at 85% because
+ *  the cream home wash bleeds through 67% and washes out the white result text.
+ *  RenderEffect blur only exists from API 31, so below that the scrim deepens further. */
+@Composable
+private fun searchScrim(): Color {
+    val scrim = colorResource(R.color.search_scrim)
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) scrim
+    else scrim.copy(alpha = 0.92f)
+}
+
+// ── Search bar ────────────────────────────────────────────────────
+// Pressing search on home ignites the stroke: it traces out from the glyph in both
+// directions, meets on the right, and then the ZenMode OS gradient keeps running
+// round the pill for as long as search is open. Every keystroke flares the halo.
+
+@Composable
+private fun ZenSearchBar(
+    modifier: Modifier = Modifier,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSubmit: () -> Unit
+) {
+    val white = colorResource(R.color.white)
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val reduceMotion = rememberReduceMotion()
+
+    val strokeColors = listOf(
+        colorResource(R.color.os_grad_ember),  // left
+        colorResource(R.color.os_grad_amber),  // bottom
+        colorResource(R.color.os_grad_glow),   // right
+        colorResource(R.color.os_grad_amber)   // top
+    )
+
+    val trace = remember { Animatable(if (reduceMotion) 1f else 0f) }
+    val glow = remember { Animatable(0f) }
+    val running = rememberInfiniteTransition(label = "search-stroke")
+    val phase by running.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(StrokeRunMillis, easing = LinearEasing)),
+        label = "search-stroke-phase"
+    )
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+        if (reduceMotion) {
+            glow.snapTo(StrokeGlowRest)
+            return@LaunchedEffect
+        }
+        launch { trace.animateTo(1f, tween(StrokeTraceMillis, easing = FastOutSlowInEasing)) }
+        glow.animateTo(1f, tween(StrokeTraceMillis, easing = FastOutSlowInEasing))
+        glow.animateTo(StrokeGlowRest, tween(900, easing = FastOutSlowInEasing))
+    }
+
+    // Keystroke flare. Skips the initial empty value so opening doesn't double-flare.
+    var lastQuery by remember { mutableStateOf(query) }
+    LaunchedEffect(query) {
+        if (query == lastQuery || reduceMotion) return@LaunchedEffect
+        lastQuery = query
+        if (trace.value < 1f) return@LaunchedEffect
+        glow.animateTo(1f, tween(90))
+        glow.animateTo(StrokeGlowRest, tween(650, easing = FastOutSlowInEasing))
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(SearchBarHeight)
+            .runningGradientStroke(
+                colors = strokeColors,
+                strokeWidth = SearchStrokeWidth,
+                trace = { trace.value },
+                phase = { if (reduceMotion) 0f else phase },
+                glow = { glow.value }
+            )
+            .clip(RoundedCornerShape(percent = 50))
+            // swallow taps so they don't fall through to the scrim's dismiss
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { focusRequester.requestFocus() }
+            // 19 + 19.2 glyph + 11 gap puts the glyph centre and text start where
+            // SearchPill has them, so nothing jumps when search opens
+            .padding(start = 19.rdp, end = 4.rdp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_search_v3),
+            contentDescription = null,
+            modifier = Modifier.size(SearchGlyphSize),
+            colorFilter = ColorFilter.tint(colorResource(R.color.search_glyph))
+        )
+        Spacer(modifier = Modifier.width(11.rdp))
+
+        val textStyle = TextStyle(
+            fontFamily = Geist,
+            fontWeight = FontWeight.Normal,
+            fontSize = 16.rsp,
+            letterSpacing = (-0.01).em,
+            color = white
+        )
+        BasicTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester)
+                .onFocusChanged { state ->
+                    if (state.isFocused) keyboardController?.show()
+                },
+            textStyle = textStyle,
+            cursorBrush = SolidColor(colorResource(R.color.search_glyph)),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
+            decorationBox = { innerTextField ->
+                if (query.isEmpty()) {
+                    Text(
+                        text = "Search apps, files & everything",
+                        style = textStyle,
+                        color = white.copy(alpha = 0.5f),
+                        maxLines = 1
+                    )
                 }
+                innerTextField()
+            }
+        )
 
-                // 3 · Google
-                item {
-                    Spacer(modifier = Modifier.height(20.rdp))
-                    SearchSectionHeader("GOOGLE")
-                }
-
-                item {
-                    if (query.isBlank()) {
-                        SearchEmptyRow(text = "Type to search the web")
-                    } else {
-                        GoogleFallbackRow(
-                            query = query,
-                            onClick = { onGoogleSearch(query) }
-                        )
-                    }
-                }
+        // Keep the slot so the text field doesn't reflow when the clear appears.
+        Box(
+            modifier = Modifier
+                .size(40.rdp)
+                .clip(CircleShape)
+                .then(
+                    if (query.isNotEmpty()) Modifier.clickable { onQueryChange("") }
+                    else Modifier
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (query.isNotEmpty()) {
+                Image(
+                    painter = painterResource(R.drawable.ic_search_clear),
+                    contentDescription = "Clear search",
+                    modifier = Modifier.size(width = 9.5.rdp, height = 9.rdp),
+                    colorFilter = ColorFilter.tint(white)
+                )
             }
         }
     }
 }
 
+/** Honours the system "Remove animations" setting — the stroke still appears, it just
+ *  doesn't trace or run. */
 @Composable
-private fun SearchSectionHeader(label: String) {
+private fun rememberReduceMotion(): Boolean {
+    val context = LocalContext.current
+    return remember {
+        Settings.Global.getFloat(
+            context.contentResolver,
+            Settings.Global.ANIMATOR_DURATION_SCALE,
+            1f
+        ) == 0f
+    }
+}
+
+// ── Search rows ───────────────────────────────────────────────────
+// Each row is a 30dp tile + label with 8dp of vertical padding, so the visual 16dp
+// gap from Figma doubles as a 46dp touch target.
+
+@Composable
+private fun SearchSectionHeader(label: String, modifier: Modifier = Modifier) {
     Text(
         text = label,
-        style = ZenTypography.monoLabel,
-        fontSize = 11.rsp,
-        color = ZenTheme.colors.textSecondary,
-        modifier = Modifier.padding(horizontal = 12.rdp, vertical = 8.rdp)
+        fontFamily = Geist,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.rsp,
+        letterSpacing = (-0.01).em,
+        color = colorResource(R.color.white),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = SearchResultInset, bottom = SearchHeaderGap - 8.rdp)
     )
 }
 
 @Composable
-private fun SearchEmptyRow(text: String) {
+private fun SearchResultRow(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tile: @Composable () -> Unit,
+    label: @Composable () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.rdp))
+            .clickable { onClick() }
+            .padding(horizontal = SearchResultInset, vertical = SearchRowGap / 2),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(SearchTileSize), contentAlignment = Alignment.Center) {
+            tile()
+        }
+        Spacer(modifier = Modifier.width(16.rdp))
+        label()
+    }
+}
+
+@Composable
+private fun SearchRowLabel(text: String, weight: FontWeight = FontWeight.Normal, alpha: Float = 1f) {
     Text(
         text = text,
         fontFamily = Geist,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.rsp,
-        color = ZenTheme.colors.textSecondary.copy(alpha = 0.6f),
-        modifier = Modifier.padding(horizontal = 12.rdp, vertical = 10.rdp)
+        fontWeight = weight,
+        fontSize = 16.rsp,
+        letterSpacing = (-0.01).em,
+        color = colorResource(R.color.white).copy(alpha = alpha),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
     )
 }
 
 @Composable
-private fun AppResultRow(app: AppInfo, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.rdp))
-            .clickable { onClick() }
-            .padding(horizontal = 12.rdp, vertical = 10.rdp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.size(44.rdp),
-            contentAlignment = Alignment.Center
-        ) {
+private fun AppResultRow(app: AppInfo, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    SearchResultRow(
+        onClick = onClick,
+        modifier = modifier,
+        tile = {
             AndroidView(
                 factory = { context ->
                     ImageView(context).apply {
@@ -1048,130 +1304,104 @@ private fun AppResultRow(app: AppInfo, onClick: () -> Unit) {
                         setImageDrawable(app.icon)
                     }
                 },
-                update = { imageView ->
-                    imageView.setImageDrawable(app.icon)
-                    imageView.scaleType = ImageView.ScaleType.FIT_XY
-                },
+                update = { imageView -> imageView.setImageDrawable(app.icon) },
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(AppTileRadius))
+                    // the home grid's tile radius, scaled to the 30dp tile
+                    .clip(RoundedCornerShape(AppTileRadius * (30f / 47f)))
             )
-        }
-        Spacer(modifier = Modifier.width(12.rdp))
-        Text(
-            text = app.label.toString(),
-            fontFamily = Geist,
-            fontWeight = FontWeight.Normal,
-            fontSize = 16.rsp,
-            color = ZenTheme.colors.textPrimary
-        )
-    }
+        },
+        label = { SearchRowLabel(app.label.toString()) }
+    )
 }
 
 @Composable
-private fun FileResultRow(file: FileResult, onClick: () -> Unit) {
-    val colors = ZenTheme.colors
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.rdp))
-            .clickable { onClick() }
-            .padding(horizontal = 12.rdp, vertical = 10.rdp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(44.rdp)
-                .clip(RoundedCornerShape(AppTileRadius))
-                .background(colors.bgSecondary),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(R.drawable.ic_file),
-                contentDescription = null,
-                modifier = Modifier.size(20.rdp),
-                colorFilter = ColorFilter.tint(colors.textSecondary)
-            )
-        }
-        Spacer(modifier = Modifier.width(12.rdp))
-        Column {
-            Text(
-                text = file.displayName,
-                fontFamily = Geist,
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.rsp,
-                color = colors.textPrimary,
-                maxLines = 1
-            )
-            file.mimeType?.let { mime ->
-                Text(
-                    text = mime,
-                    style = ZenTypography.monoLabel,
-                    fontSize = 10.rsp,
-                    color = colors.textSecondary
-                )
-            }
-        }
-    }
+private fun FileResultRow(file: FileResult, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    SearchResultRow(
+        onClick = onClick,
+        modifier = modifier,
+        tile = { SearchFileTile(tint = colorResource(R.color.white)) },
+        label = { SearchRowLabel(file.displayName) }
+    )
 }
 
 @Composable
-private fun FilePermissionRow(onGrantClick: () -> Unit) {
-    val colors = ZenTheme.colors
-
-    Row(
+private fun SearchFileTile(tint: Color) {
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.rdp))
-            .background(colors.bgSecondary)
-            .clickable { onGrantClick() }
-            .padding(horizontal = 12.rdp, vertical = 14.rdp),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxSize()
+            .clip(RoundedCornerShape(4.rdp))
+            .background(colorResource(R.color.search_tile)),
+        contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(R.drawable.ic_file),
             contentDescription = null,
-            modifier = Modifier.size(20.rdp),
-            colorFilter = ColorFilter.tint(colors.textBrand)
-        )
-        Spacer(modifier = Modifier.width(12.rdp))
-        Text(
-            text = "Allow file access to search your files",
-            fontFamily = Geist,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.rsp,
-            color = colors.textBrand
+            modifier = Modifier.size(16.rdp),
+            colorFilter = ColorFilter.tint(tint)
         )
     }
 }
 
 @Composable
-private fun GoogleFallbackRow(query: String, onClick: () -> Unit) {
-    val colors = ZenTheme.colors
+private fun SearchMoreRow(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    // Empty tile keeps the label on the same column as the rows above it.
+    SearchResultRow(
+        onClick = onClick,
+        modifier = modifier,
+        tile = {},
+        label = { SearchRowLabel(text, weight = FontWeight.SemiBold) }
+    )
+}
 
+@Composable
+private fun FilePermissionRow(onGrantClick: () -> Unit, modifier: Modifier = Modifier) {
+    val glyph = colorResource(R.color.search_glyph)
+    SearchResultRow(
+        onClick = onGrantClick,
+        modifier = modifier,
+        tile = { SearchFileTile(tint = glyph) },
+        label = {
+            Text(
+                text = "Allow file access to search your files",
+                fontFamily = Geist,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.rsp,
+                letterSpacing = (-0.01).em,
+                color = glyph,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    )
+}
+
+@Composable
+private fun GoogleFallbackRow(query: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.rdp))
-            .background(colors.bgSecondary)
+            .clip(RoundedCornerShape(12.rdp))
             .clickable { onClick() }
-            .padding(horizontal = 12.rdp, vertical = 14.rdp),
+            .padding(horizontal = SearchResultInset, vertical = 8.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(R.drawable.ic_google),
+            painter = painterResource(R.drawable.ic_search_v3),
             contentDescription = "Google",
-            modifier = Modifier.size(20.rdp),
-            colorFilter = ColorFilter.tint(colors.textBrand)
+            modifier = Modifier.size(SearchGlyphSize),
+            colorFilter = ColorFilter.tint(colorResource(R.color.white))
         )
-        Spacer(modifier = Modifier.width(12.rdp))
+        Spacer(modifier = Modifier.width(10.rdp))
         Text(
             text = "Search Google for “$query”",
             fontFamily = Geist,
-            fontWeight = FontWeight.Normal,
-            fontSize = 14.rsp,
-            color = colors.textSecondary
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.rsp,
+            letterSpacing = (-0.01).em,
+            color = colorResource(R.color.white).copy(alpha = 0.65f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

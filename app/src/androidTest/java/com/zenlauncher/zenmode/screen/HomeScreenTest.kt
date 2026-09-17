@@ -6,6 +6,9 @@ import com.zenlauncher.zenmode.testing.TestActivity
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.performTextInput
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.BuddyStats
@@ -117,15 +120,29 @@ class HomeScreenTest {
     @Test
     fun homeScreen_showsSearchOverlay_whenShowSearchTrue() {
         setContent(showSearch = true)
-        // The overlay labels its three parts; Apps is always the first.
-        composeTestRule.onNodeWithText("APPS").assertIsDisplayed()
+        // Home pill + overlay field both carry the prompt; the field has focus.
+        composeTestRule.onNode(hasSetTextAction() and isFocused()).assertIsDisplayed()
     }
 
     @Test
-    fun homeScreen_searchOverlay_labelsAllThreeSections() {
-        setContent(showSearch = true)
+    fun homeScreen_searchOverlay_showsAppsAndGoogleOnceTyped() {
+        setContent(showSearch = true, apps = TestData.createAppList(5))
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("App")
+
         composeTestRule.onNodeWithText("APPS").assertIsDisplayed()
-        composeTestRule.onNodeWithText("GOOGLE").assertIsDisplayed()
+        // Five matches collapse to three plus an expander.
+        composeTestRule.onNodeWithText("+2 more apps").assertIsDisplayed().performClick()
+        composeTestRule.onNodeWithText("App 5").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Search Google for “App”").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_searchOverlay_googleRowHandsOffQuery() {
+        var searched: String? = null
+        setContent(showSearch = true, onGoogleSearch = { searched = it })
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("zen")
+        composeTestRule.onNodeWithText("Search Google for “zen”").performClick()
+        assertTrue(searched == "zen")
     }
 
     @Test
