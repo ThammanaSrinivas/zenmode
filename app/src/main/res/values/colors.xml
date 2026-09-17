@@ -101,6 +101,17 @@
     <color name="gold_delta_bg">#E5E5E5</color>
     <color name="gold_delta_text">#007700</color>
 
+    <!-- Centralised search, active state — Figma node 2026:1207. The stroke runs the
+         "ZenMode OS Gradient" style (ember → amber → zen glow) around the pill; the glow
+         stop is the brighter green the Figma style uses, not zen_700 from the token file. -->
+    <color name="os_grad_ember">#FF6600</color>
+    <color name="os_grad_amber">#FFC800</color>
+    <color name="os_grad_glow">#2AE13C</color>
+    <color name="search_glyph">#00DF00</color>
+    <!-- 85%, deeper than Figma's 67%: over the light home wash 67% left results unreadable -->
+    <color name="search_scrim">#D9000000</color>
+    <color name="search_tile">#80D9D9D9</color>
+
     <!-- consumed from View-based code (AppLogic, SegmentedProgressBar) -->
     <color name="zen_mindfulness_happy">#0F7A18</color>
     <color name="zen_mindfulness_neutral">#FFC800</color>
