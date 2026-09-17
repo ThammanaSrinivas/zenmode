@@ -114,8 +114,9 @@ class MainActivity : AppCompatActivity() {
             val now = System.currentTimeMillis()
             val interval = AppConstants.STATS_SYNC_INTERVAL_MINUTES * 60 * 1000L
 
-            if (now - lastProcessed > interval) {
-                val workerClass = Class.forName("com.zenlauncher.zenmode.internal.StatSyncWorker") as Class<out androidx.work.ListenableWorker>
+            // StatSyncWorker ships in zenmode_core_private; core-mock builds don't have it.
+            val workerClass = statSyncWorkerClass()
+            if (workerClass != null && now - lastProcessed > interval) {
                 val syncRequest = androidx.work.OneTimeWorkRequest.Builder(workerClass)
                     .setConstraints(androidx.work.Constraints.Builder().setRequiredNetworkType(androidx.work.NetworkType.CONNECTED).build())
                     .build()
@@ -127,6 +128,13 @@ class MainActivity : AppCompatActivity() {
                 repository.updateLastStatsProcessedTime(now)
             }
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun statSyncWorkerClass(): Class<out androidx.work.ListenableWorker>? = try {
+        Class.forName("com.zenlauncher.zenmode.internal.StatSyncWorker") as Class<out androidx.work.ListenableWorker>
+    } catch (e: ClassNotFoundException) {
+        null
     }
 
     private fun checkAndStartDoomMonitor() {
