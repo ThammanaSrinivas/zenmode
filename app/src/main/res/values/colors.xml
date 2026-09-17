@@ -134,4 +134,86 @@
     <color name="chart_grid_dark">#666666</color>
     <color name="disabled_button_bg">#C8C8C8</color>
     <color name="disabled_button_text">#868686</color>
+
+    <!-- Zen Score screen, reached by tapping the "Zen Score" widget in HomeHeader
+         (Figma node 2026:2035, ui/screens/ZenScoreScreen.kt). Category legend + session
+         status dots only — everything else reuses zen_900/zen_300/amber_500/gold_delta_text. -->
+    <color name="score_category_messaging">#CCD000</color>
+    <color name="score_status_red">#DA0000</color>
+
+    <!-- My Promise screen, opened from Zen Gold's "Edit my promise" (Figma node 2026:1793,
+         ui/screens/MyPromiseScreen.kt). Brand greens reuse zen_700/zen_900/gold_delta_text. -->
+    <color name="my_promise_bg">#F2F1EE</color>
+    <color name="my_promise_title_dot">#03AE03</color>
+    <color name="my_promise_subtitle">#424242</color>
+    <color name="my_promise_card_top">#F7F6F3</color>
+    <color name="my_promise_card_bottom">#EBE9E2</color>
+    <color name="my_promise_stepper_border">#C9C7BC</color>
+    <color name="my_promise_divider">#CECECE</color>
+    <color name="my_promise_note_bg">#1A4B4B4B</color>
+    <color name="my_promise_note_text">#BF272727</color>
+    <color name="my_promise_logo_text">#323232</color>
+    <color name="my_promise_secondary_button_bg">#F0EEE3</color>
+
+    <!-- Zen Bro connect, screen 1: the "Get your Zen Bro!" invite card on the home screen
+         (Figma node 2026:3102, ui/components/StatsCards.kt). Glow reuses card_neutral_face,
+         the button reuses gold_delta_text (#007700). -->
+    <color name="zen_bro_card_fill">#70E9E9E9</color>
+    <color name="zen_bro_card_dash">#828282</color>
+
+    <!-- Zen Bro connect, screen 2: "My Zen Circle" connect options (Figma node 2026:2443,
+         ui/screens/ZenBroConnectScreen.kt). Light-only; wash reuses wash_neutral_*, greens
+         reuse zen_900/zen_700/gold_delta_text, the Connect pill reuses ink_base. -->
+    <color name="zen_circle_subtitle">#5A5A5A</color>
+    <color name="zen_circle_body">#4B4B4B</color>
+    <color name="zen_circle_step_number">#676767</color>
+    <color name="zen_circle_chip_text">#D9D9D9</color>
+    <color name="zen_circle_input_bg">#FAF9F6</color>
+    <color name="zen_circle_input_border">#DBD9D1</color>
+    <color name="zen_circle_input_hint">#898989</color>
+    <color name="zen_circle_code_text">#292929</color>
+    <color name="zen_circle_divider">#C8C8C8</color>
+
+    <!-- Zen Bro connect, screen 3: "You're Zen Bros now" (Figma node 2026:2346,
+         ui/screens/ZenBroConnectedScreen.kt). Panel reuses milestone_outline_bg, the
+         second circle reuses gold_delta_text. -->
+    <color name="zen_circle_bro_dark">#004100</color>
+    <color name="zen_circle_connected_body">#464646</color>
+    <color name="zen_circle_connected_caption">#5B5B5B</color>
+
+    <!-- Zen Bro connect, invite sheet over screen 3 (Figma node 2026:2420,
+         ui/screens/ZenCircleInviteSheet.kt). Divider reuses zen_circle_divider. -->
+    <color name="zen_circle_scrim">#2EE0E0E0</color>
+    <!-- Figma is 71% over a 61px backdrop blur; Compose can't blur only what's under the
+         sheet, so a denser fill stands in for that extra frosting. -->
+    <color name="zen_circle_sheet_bg">#E6F2F1EE</color>
+    <color name="zen_circle_sheet_option">#373737</color>
+    <color name="zen_circle_sheet_muted">#535353</color>
+
+    <!-- Zen Bro connect, "My Zen Circle" dashboard after "Maybe later" (Figma node 2026:2493,
+         ui/screens/ZenCircleScreen.kt). Toggle reuses toggle_*, Invite pill reuses ink_surface,
+         score gradient's middle/end reuse score_grad_mid/score_orange. -->
+    <color name="zen_circle_card_rule">#4D007700</color>
+    <color name="zen_circle_reset_text">#5E5E5E</color>
+    <color name="zen_circle_band_bg">#121A1A1A</color>
+    <color name="zen_circle_band_rule">#B5007700</color>
+    <color name="zen_circle_band_label">#515151</color>
+    <color name="zen_circle_score_green">#2AE13C</color>
+    <color name="zen_circle_reaction_border">#009900</color>
+    <color name="zen_circle_wheel_name">#6B6B6B</color>
+    <color name="zen_circle_swipe_hint">#9C9C9C</color>
+
+    <!-- Invest Gold screen, opened from Zen Gold's "Invest Gold" (Figma node 2026:1250,
+         ui/screens/InvestGoldScreen.kt). Surfaces, stepper and note reuse my_promise_*. -->
+    <color name="invest_gold_title_text">#434343</color>
+    <color name="invest_gold_instrument_bg">#123E3E3E</color>
+    <color name="invest_gold_symbol_text">#343434</color>
+    <color name="invest_gold_secondary_text">#464646</color>
+    <color name="invest_gold_amount_text">#6C5800</color>
+    <color name="invest_gold_chip_selected_bg">#007C00</color>
+    <color name="invest_gold_chip_selected_text">#F0FFF1</color>
+    <color name="invest_gold_chip_text">#2B2B2B</color>
+    <color name="invest_gold_terms_link">#005700</color>
+    <color name="invest_gold_success_icon">#0E7A17</color>
+    <color name="invest_gold_coin">#FFC700</color>
 </resources>

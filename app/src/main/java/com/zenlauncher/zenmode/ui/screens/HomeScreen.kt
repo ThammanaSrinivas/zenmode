@@ -121,7 +121,6 @@ import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.FileResult
 import com.zenlauncher.zenmode.FileSearchRepository
-import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.coreapi.DailyUsage
@@ -139,9 +138,6 @@ import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
-import java.time.LocalDate
-import java.time.DayOfWeek
-import java.time.temporal.TemporalAdjusters
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -220,7 +216,6 @@ val GoldDeltaText: Color @Composable get() = colorResource(R.color.gold_delta_te
 fun HomeScreen(
     usage: DailyUsage?,
     streaks: Int,
-    weeklyScreenTimeMillis: List<Long> = List(7) { 0L },
     yesterdayChangePercent: Int?,
     hasBuddies: Boolean,
     buddyStats: BuddyStats?,
@@ -236,6 +231,7 @@ fun HomeScreen(
     onShowSearchChange: (Boolean) -> Unit,
     onSettingsClick: () -> Unit,
     onZenGoldClick: () -> Unit = {},
+    onZenScoreClick: () -> Unit = {},
     onGoogleSearch: (String) -> Unit,
     onPhoneClick: () -> Unit,
     onLockClick: () -> Unit,
@@ -303,6 +299,7 @@ fun HomeScreen(
             HomeHeader(
                 zenScore = zenScore,
                 streaks = streaks,
+                onZenScoreClick = onZenScoreClick,
                 onStreakClick = { showStreakOverlay = true }
             )
 
@@ -400,10 +397,6 @@ fun HomeScreen(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            // weeklyScreenTimeMillis (HomeScreen's own param, still fed by MainActivity)
-            // no longer reaches this overlay — the v3 milestone-card design doesn't
-            // use a per-day weekly view. Left wired above pending real streak-history
-            // tracking (see AppConstants' milestone placeholders).
             StreakOverlay(
                 onDismiss = { showStreakOverlay = false }
             )
@@ -417,6 +410,7 @@ fun HomeScreen(
 private fun HomeHeader(
     zenScore: Int,
     streaks: Int,
+    onZenScoreClick: () -> Unit = {},
     onStreakClick: () -> Unit
 ) {
     val colors = ZenTheme.colors
@@ -428,8 +422,12 @@ private fun HomeHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Zen Score — real gradient mark from Figma node 2001:1504.
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Zen Score — real gradient mark from Figma node 2001:1504. Tap target for
+        // ZenScoreActivity (Figma node 2026:2035, ui/screens/ZenScoreScreen.kt).
+        Row(
+            modifier = Modifier.clickable { onZenScoreClick() },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Image(
                 painter = painterResource(R.drawable.ic_zen_mark_gradient),
                 contentDescription = null,

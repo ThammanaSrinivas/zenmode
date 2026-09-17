@@ -1,0 +1,10 @@
+<!-- Invite sheet "Share invite link" icon, Figma node 2026:2433 (s-promotion). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="26.4216dp"
+    android:height="26.4216dp"
+    android:viewportWidth="26.4216"
+    android:viewportHeight="26.4216">
+  <path
+      android:pathData="M5.95416,11.5362L20.4674,5.95416L18.2346,18.2346L10.4544,13.9956L19.351,7.07056L9.07674,13.2281L5.95416,11.5362ZM10.4198,20.4674V15.1818L13.769,17.1182L10.4198,20.4674Z"
+      android:fillColor="#007700"/>
+</vector>

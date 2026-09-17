@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma node 2026:1814 (Frame 2147224283): stepper "decrease" button. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="42.7886dp"
+    android:height="44.7886dp"
+    android:viewportWidth="42.7886"
+    android:viewportHeight="44.7886">
+    <path
+        android:fillColor="@color/white"
+        android:strokeColor="@color/my_promise_stepper_border"
+        android:strokeWidth="1"
+        android:pathData="M0.5,21.3943A20.8943,20.8943 0,0 1,42.2886 21.3943L42.2886,23.3943A20.8943,20.8943 0,0 1,0.5 23.3943Z" />
+    <path
+        android:strokeColor="@color/black"
+        android:strokeWidth="2.4704"
+        android:pathData="M27,23.235L16.3029,23.235" />
+</vector>

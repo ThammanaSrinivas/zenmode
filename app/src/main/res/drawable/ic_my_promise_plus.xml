@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma node 2026:1818 (Group 2147223868): stepper "increase" glyph. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="11.7dp"
+    android:height="11.7dp"
+    android:viewportWidth="11.7"
+    android:viewportHeight="11.7">
+    <path
+        android:strokeColor="@color/black"
+        android:strokeWidth="2.34"
+        android:pathData="M5.84974,0L5.84974,11.7M11.7,5.84949L0,5.84949" />
+</vector>

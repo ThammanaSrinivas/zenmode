@@ -1,0 +1,9 @@
+<!-- Name-wheel chevron, Figma node 2026:2592 (right; the left one is mirrored in code). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="33.2872dp"
+    android:height="48.2079dp"
+    android:viewportWidth="33.2872"
+    android:viewportHeight="48.2079"
+    android:autoMirrored="true">
+  <path android:pathData="M10.1064 10.1064L23.1808 24.1039L10.1064 38.1014" android:strokeColor="#0E7A17" android:strokeWidth="2.02129"/>
+</vector>

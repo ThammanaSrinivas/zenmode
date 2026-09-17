@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma node 2026:1798 (Arrow 1), mirrored horizontally as in the design. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="29.3673dp"
+    android:height="20.1378dp"
+    android:viewportWidth="29.3673"
+    android:viewportHeight="20.1378">
+    <group android:scaleX="-1" android:pivotX="14.68365">
+        <path
+            android:fillColor="@color/zen_700"
+            android:pathData="M28.9668 11.0357C29.5008 10.5018 29.5008 9.63602 28.9668 9.10205L20.2653 0.400478C19.7313 -0.133493 18.8656 -0.133493 18.3316 0.400478C17.7976 0.93445 17.7976 1.80019 18.3316 2.33416L26.0663 10.0689L18.3316 17.8036C17.7976 18.3376 17.7976 19.2033 18.3316 19.7373C18.8656 20.2713 19.7313 20.2713 20.2653 19.7373L28.9668 11.0357ZM0 10.0689V11.4362H28V10.0689V8.70157H0V10.0689Z" />
+    </group>
+</vector>

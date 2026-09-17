@@ -57,7 +57,7 @@ class StatsCardsTest {
                 )
             }
         }
-        composeTestRule.onNodeWithContentDescription("Invite buddy").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Add Buddy").assertIsDisplayed()
     }
 
     @Test
@@ -112,7 +112,7 @@ class StatsCardsTest {
                 )
             }
         }
-        composeTestRule.onNodeWithContentDescription("Invite buddy").performClick()
+        composeTestRule.onNodeWithText("Add Buddy").performClick()
         assertTrue(clicked)
     }
 }

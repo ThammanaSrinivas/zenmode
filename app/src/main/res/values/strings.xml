@@ -2,4 +2,5 @@
     <string name="app_name">ZenMode</string>
     <string name="a_mindful_minimalist_launcher">A mindful Minimalist Launcher</string>
     <string name="accessibility_service_description">ZenMode uses this Accessibility Service for two things: to lock your screen when you tap the lock button on the home screen, and — only when you turn on in-app content blocking — to detect when a screen you chose to block (such as YouTube Shorts) is open, so it can navigate you away. It checks only which screen is showing; it does not read, store, or share the content itself, and does nothing for apps you have not chosen to block.</string>
+    <string name="invest_gold_kite_unavailable">Couldn\'t open Kite. Install it or open kite.zerodha.com in a browser.</string>
 </resources>

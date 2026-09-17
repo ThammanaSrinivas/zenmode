@@ -1,0 +1,9 @@
+<!-- "+ Invite" pill glyph, Figma node 2026:2604. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="7.1061dp"
+    android:height="7.10619dp"
+    android:viewportWidth="7.1061"
+    android:viewportHeight="7.10619">
+  <path android:pathData="M3.55374,0.000106916L3.55374,7.10619" android:strokeColor="#FFFFFF" android:strokeWidth="0.789565"/>
+  <path android:pathData="M7.10608,3.55201L0.0000000173,3.55201" android:strokeColor="#FFFFFF" android:strokeWidth="0.789565"/>
+</vector>
