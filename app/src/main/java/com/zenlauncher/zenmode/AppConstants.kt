@@ -31,6 +31,30 @@ object AppConstants {
     const val PLACEHOLDER_BUDDY_ZEN_SCORE = 88
     const val PLACEHOLDER_BUDDY_STREAK = 5
 
+    // Streaks milestone overlay (v3 redesign, Figma node 2026:2137). "Total mindful
+    // days", the community percentile and the longest-streak stat all need real
+    // streak-history tracking that doesn't exist yet — placeholders until it does.
+    const val PLACEHOLDER_MILESTONE_DAYS = 120
+    const val PLACEHOLDER_MILESTONE_PERCENTILE = 10
+    const val PLACEHOLDER_MILESTONE_SCORE_THRESHOLD = 7
+    const val PLACEHOLDER_LONGEST_STREAK_DAYS = 43
+    const val PLACEHOLDER_LONGEST_STREAK_RANGE = "JUL 31–SEP 12"
+
+    // Zen Gold screen (Figma node 2026:1648) — the home screen's right-swipe page.
+    // Promise-vs-screen-time tracking and the price forecast both need a real Gold
+    // Streak backend (see zenmode_core_private/docs/plans) that doesn't exist yet.
+    const val PLACEHOLDER_PROMISE_HOURS = 4
+    const val PLACEHOLDER_DAILY_AVERAGE_MINUTES = 59
+    const val PLACEHOLDER_DAYS_UNTIL_UNLOCK = 3
+    const val PLACEHOLDER_DAYS_LEFT_THIS_WEEK = 4
+    // true = promise kept, false = broken, null = day hasn't happened yet
+    val PLACEHOLDER_WEEKLY_PROMISE_STATUS: List<Boolean?> =
+        listOf(true, false, false, true, true, null, null)
+    const val PLACEHOLDER_FORECAST_PERCENT = 20
+    const val PLACEHOLDER_FORECAST_MONTHLY_AMOUNT = 200
+    const val PLACEHOLDER_FORECAST_TODAY_MONTH_INDEX = 2 // Sep, 0-based into the Jul-Dec axis
+    const val PLACEHOLDER_INVEST_GOLD_UNLOCKED = false
+
     // External URLs
     const val GITHUB_URL = "https://github.com/ThammanaSrinivas/zenmode"
     const val YT_BUDDY_INVITE_URL = "https://youtu.be/48M1x2ryhpI"   // TODO: replace with actual YT link

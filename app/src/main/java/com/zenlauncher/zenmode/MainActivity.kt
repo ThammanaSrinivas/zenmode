@@ -345,6 +345,9 @@ class MainActivity : AppCompatActivity() {
                     onSettingsClick = {
                         startActivity(Intent(this, SettingsActivity::class.java))
                     },
+                    onZenGoldClick = {
+                        startActivity(Intent(this, ZenGoldActivity::class.java))
+                    },
                     onGoogleSearch = { query ->
                         val searchIntent = Intent(Intent.ACTION_WEB_SEARCH).apply {
                             putExtra(android.app.SearchManager.QUERY, query)

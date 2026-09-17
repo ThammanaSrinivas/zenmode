@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figma node 2026:1215 (search clear "x"). Tinted at the call site. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="9.50679dp"
+    android:height="9dp"
+    android:viewportWidth="9.50679"
+    android:viewportHeight="9">
+    <path
+        android:pathData="M8.89876,0.273283L0.256799,8.39372"
+        android:strokeWidth="0.75"
+        android:strokeColor="#FFFFFFFF" />
+    <path
+        android:pathData="M0.253397,0.473567L9.2534,8.72357"
+        android:strokeWidth="0.75"
+        android:strokeColor="#FFFFFFFF" />
+</vector>
