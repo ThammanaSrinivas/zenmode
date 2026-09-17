@@ -123,4 +123,10 @@
     <color name="chart_grid_dark">#666666</color>
     <color name="disabled_button_bg">#C8C8C8</color>
     <color name="disabled_button_text">#868686</color>
+
+    <!-- Zen Bro connect, screen 1: the "Get your Zen Bro!" invite card on the home screen
+         (Figma node 2026:3102, ui/components/StatsCards.kt). Glow reuses card_neutral_face,
+         the button reuses gold_delta_text (#007700). -->
+    <color name="zen_bro_card_fill">#70E9E9E9</color>
+    <color name="zen_bro_card_dash">#828282</color>
 </resources>

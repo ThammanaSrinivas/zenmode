@@ -552,9 +552,6 @@ private fun DashedCard(
     val colors = ZenTheme.colors
     // Same shape as the real stats cards, so a dashed placeholder sitting next to
     // one in the row reads as the same card, not a mismatched square.
-    val dashStroke = 1.rdp
-    val dashOn = 8.rdp
-    val dashOff = 8.rdp
     val cardRadius = CardRadius
 
     Column(
@@ -562,22 +559,13 @@ private fun DashedCard(
             .aspectRatio(CardAspect)
             .clip(RoundedCornerShape(cardRadius))
             .background(colors.bgSecondary)
-            .drawWithContent {
-                drawContent()
-                val strokeWidth = dashStroke.toPx()
-                val dash = dashOn.toPx()
-                val gap = dashOff.toPx()
-                drawRoundRect(
-                    color = colors.textSecondary,
-                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
-                    size = Size(size.width - strokeWidth, size.height - strokeWidth),
-                    cornerRadius = CornerRadius(cardRadius.toPx()),
-                    style = Stroke(
-                        width = strokeWidth,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, gap), 0f)
-                    )
-                )
-            }
+            .dashedBorder(
+                color = colors.textSecondary,
+                width = 1.rdp,
+                dash = 8.rdp,
+                gap = 8.rdp,
+                cornerRadius = cardRadius
+            )
             .padding(bottom = 10.rdp)
     ) {
         Image(
@@ -620,19 +608,120 @@ private fun DashedCard(
     }
 }
 
+/**
+ * Zen Bro connect, screen 1 — Figma node 2026:3102. The empty seat next to My Screen
+ * Time: a ghost of the stats card (translucent fill, dashed outline, the same neutral
+ * glow) with the score chip only hinted at as a warm blur, and a solid "Add Buddy" pill.
+ * The whole card is the tap target; the pill is the visual affordance.
+ */
 @Composable
 fun BuddyInviteCard(
     onInviteBuddyClick: () -> Unit,
     modifier: Modifier = Modifier
-) = DashedCard(
-    faceDescription = "Buddy face",
-    title = "Get your Buddy!",
-    subtitle = "pick a wise one!",
-    buttonRes = R.drawable.button_invite_buddy,
-    buttonDescription = "Invite buddy",
-    onClick = onInviteBuddyClick,
-    modifier = modifier
-)
+) {
+    val cardRadius = CardRadius
+    val cardShape = RoundedCornerShape(cardRadius)
+    val ghostYellow = ChipYellow
+    val ghostOrange = ChipOrange
+
+    Box(
+        modifier = modifier
+            .aspectRatio(CardAspect)
+            .dropShadow(
+                color = Color.Black.copy(alpha = 0.25f),
+                blur = 24.3.rdp,
+                cornerRadius = cardRadius,
+                offsetY = 7.1.rdp,
+                // Translucent card: Figma doesn't show the shadow through the fill.
+                knockout = true
+            )
+            .clip(cardShape)
+            .clickable(onClickLabel = "Add buddy", onClick = onInviteBuddyClick)
+            .background(colorResource(R.color.zen_bro_card_fill))
+            // Ghost of the score chip (Figma blurs it 15.7px) — a radial wash rather
+            // than Modifier.blur, which is a no-op below API 31 and would leave a
+            // crisp fake score on screen.
+            .drawBehind {
+                val center = Offset(12.dp.toPx(), size.height - 12.dp.toPx())
+                val radius = 30.dp.toPx()
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        0f to ghostOrange.copy(alpha = 0.35f),
+                        0.4f to ghostYellow.copy(alpha = 0.25f),
+                        1f to Color.Transparent,
+                        center = center,
+                        radius = radius
+                    ),
+                    radius = radius,
+                    center = center
+                )
+            }
+            .innerGlow(
+                // Softer than MoodCard's glow: here it only warms the corners.
+                color = colorResource(R.color.card_neutral_face).copy(alpha = 0.5f),
+                cornerRadius = cardRadius,
+                blur = 28.9.rdp,
+                spread = (-8.7).dp
+            )
+            .dashedBorder(
+                color = colorResource(R.color.zen_bro_card_dash),
+                width = 2.rdp,
+                dash = 8.rdp,
+                gap = 6.rdp,
+                cornerRadius = cardRadius
+            )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Same face geometry as MoodCard so both faces sit on one line in the row.
+            // Bowl-less face: Figma's meter ellipse is empty on this card.
+            Image(
+                painter = painterResource(R.drawable.face_zen_bro),
+                contentDescription = null,
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(FaceAspect)
+            )
+
+            Text(
+                text = "Get your Zen Bro!",
+                fontFamily = ClashDisplay,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.rsp,
+                color = CardInk,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 8.rdp)
+            )
+
+            Spacer(modifier = Modifier.height(11.rdp))
+
+            Box(
+                modifier = Modifier
+                    .width(119.rdp)
+                    .height(31.rdp)
+                    .clip(CircleShape)
+                    .background(colorResource(R.color.gold_delta_text)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Add Buddy",
+                    fontFamily = Geist,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.rsp,
+                    letterSpacing = (-0.28).sp,
+                    color = Color.White,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun SignInCard(
@@ -698,15 +787,53 @@ fun Modifier.innerGlow(
     }
 }
 
+/** Dashed outline drawn inside the bounds, e.g. the placeholder cards' `border-dashed`. */
+fun Modifier.dashedBorder(
+    color: Color,
+    width: Dp,
+    dash: Dp,
+    gap: Dp,
+    cornerRadius: Dp
+) = drawWithContent {
+    drawContent()
+    val strokeWidth = width.toPx()
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
+        size = Size(size.width - strokeWidth, size.height - strokeWidth),
+        cornerRadius = CornerRadius(cornerRadius.toPx()),
+        style = Stroke(
+            width = strokeWidth,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash.toPx(), gap.toPx()), 0f)
+        )
+    )
+}
+
+/**
+ * [knockout] cuts the node's own rounded rect out of the shadow, so a translucent
+ * card doesn't show a dark slab through its fill.
+ */
 fun Modifier.dropShadow(
     color: Color,
     blur: Dp,
     cornerRadius: Dp = 0.dp,
     offsetX: Dp = 0.dp,
     offsetY: Dp = 0.dp,
-    spread: Dp = 0.dp
+    spread: Dp = 0.dp,
+    knockout: Boolean = false
 ) = drawBehind {
     drawIntoCanvas { canvas ->
+        if (knockout) {
+            canvas.nativeCanvas.save()
+            val cutout = android.graphics.Path().apply {
+                addRoundRect(
+                    android.graphics.RectF(0f, 0f, size.width, size.height),
+                    cornerRadius.toPx(), cornerRadius.toPx(),
+                    android.graphics.Path.Direction.CW
+                )
+            }
+            canvas.nativeCanvas.clipOutPath(cutout)
+        }
         val paint = android.graphics.Paint().apply {
             this.color = color.toArgb()
             this.isAntiAlias = true
@@ -727,5 +854,6 @@ fun Modifier.dropShadow(
             cornerRadiusPx, cornerRadiusPx,
             paint
         )
+        if (knockout) canvas.nativeCanvas.restore()
     }
 }
