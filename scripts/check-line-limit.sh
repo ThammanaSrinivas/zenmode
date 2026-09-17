@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# 1000-line ceiling on source files, so a file can't quietly grow into a
+# God-file that's hard for both humans and AI to reason about or to target
+# with the grep-discovery workflow. HomeScreen.kt is grandfathered at its
+# pre-existing size (1519, the size it already was when this check was
+# introduced) - it must not grow further, but wasn't forced into an
+# emergency split just for tripping this check on day one.
+#
+# Single source of truth for this check's logic - called identically by CI,
+# the pre-commit hook, the Claude Code PostToolUse hook, and the guardrail
+# self-tests.
+#
+# Usage: check-line-limit.sh [file...]   (defaults to the whole app/core-api/core-mock tree)
+set -uo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEFAULT_LIMIT=1000
+
+limit_for() {
+  case "$(basename "$1")" in
+    HomeScreen.kt) echo 1519 ;;
+    *) echo "$DEFAULT_LIMIT" ;;
+  esac
+}
+
+if [ "$#" -gt 0 ]; then
+  files=("$@")
+else
+  mapfile -t files < <(find "$REPO_ROOT/app/src" "$REPO_ROOT/core-api/src" "$REPO_ROOT/core-mock/src" \
+    \( -name "*.kt" -o -name "*.ts" \) 2>/dev/null)
+fi
+
+fail=0
+for f in "${files[@]}"; do
+  case "$f" in *.kt|*.ts) ;; *) continue ;; esac
+  [ -f "$f" ] || continue
+  lines=$(wc -l < "$f" | tr -d ' ')
+  limit=$(limit_for "$f")
+  if [ "$lines" -gt "$limit" ]; then
+    echo "error: $f is $lines lines (limit $limit) - split it into smaller files instead of growing it further." >&2
+    fail=1
+  fi
+done
+
+exit "$fail"

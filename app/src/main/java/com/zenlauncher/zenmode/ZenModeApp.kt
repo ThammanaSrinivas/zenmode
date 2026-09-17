@@ -13,7 +13,12 @@ class ZenModeApp : Application() {
         // Restore persisted dark/light theme before any activity renders
         ThemePreferences.applyStoredTheme(this)
 
-        // Discover and run the private module initializer via ServiceLoader
+        // [WHAT] Discovers and runs the backend AppInitializer via the ServiceLoader SPI.
+        // [WHY] The one place core-mock vs core-private gets selected - no other file branches
+        // on which backend is present.
+        // [HOW] Reads META-INF/services/...AppInitializer; the discovered impl populates
+        // ServiceLocator's lateinit properties.
+        // [WHERE] Runs once, before any Activity/ViewModel touches ServiceLocator.
         val initializers = ServiceLoader.load(AppInitializer::class.java)
         for (initializer in initializers) {
             initializer.initialize(this)
