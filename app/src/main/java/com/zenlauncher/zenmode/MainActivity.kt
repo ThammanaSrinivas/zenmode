@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.zenlauncher.zenmode.coreapi.UsageAccess
@@ -91,6 +92,9 @@ class MainActivity : AppCompatActivity() {
     private var showZenCircle by mutableStateOf(false)
     // Buddy's display name when the dashboard is opened from home (no connect flow to carry it).
     private var circleBuddyName by mutableStateOf<String?>(null)
+    // Pending "Connected with …" → celebration handoff; cancelled if the user backs out early
+    // so it can't set connectedBuddyName after the flow has already been closed.
+    private var connectSuccessJob: Job? = null
     // True while "Remove buddy" / "Leave Circle" is waiting on the server.
     private var removingBuddy by mutableStateOf(false)
     private var showBuddyBattle by mutableStateOf(false)
@@ -569,14 +573,14 @@ class MainActivity : AppCompatActivity() {
                             )
                             ZenBroStage.Connect -> ZenBroConnectScreen(
                                 userCode = userCode,
-                                onBackClick = { showBuddyConnect = false },
+                                onBackClick = { closeBuddyConnect() },
                                 onShareLink = { userCode?.let { shareBuddyInvite(it) } },
                                 onCopyCode = { userCode?.let { copyUserCode(it, showToast = true) } },
                                 onAddBuddy = { targetUid ->
                                     addBuddy(targetUid).also { result ->
                                         if (result is BuddyAddResult.Success) {
                                             // Let "Connected with …" register before the celebration takes over.
-                                            lifecycleScope.launch {
+                                            connectSuccessJob = lifecycleScope.launch {
                                                 kotlinx.coroutines.delay(700)
                                                 connectedBuddyName = result.buddyName
                                             }
@@ -606,6 +610,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun closeBuddyConnect() {
+        connectSuccessJob?.cancel()
+        connectSuccessJob = null
         showBuddyConnect = false
         connectedBuddyName = null
         showZenCircle = false
@@ -614,7 +620,10 @@ class MainActivity : AppCompatActivity() {
 
     /** Home's buddy card: straight to the circle dashboard, fetching the buddy's name alongside. */
     private fun openZenCircleFromHome() {
+        connectSuccessJob?.cancel()
+        connectSuccessJob = null
         connectedBuddyName = null
+        circleBuddyName = null
         showZenCircle = true
         showBuddyConnect = true
         val buddyUid = repository.getBuddyUid() ?: return

@@ -609,7 +609,9 @@ private fun CodeInput(
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (value.isEmpty()) {
-                    Text(text = "ZEN-000", style = codeStyle.copy(color = hintColor), maxLines = 1)
+                    // Codes are long (raw UIDs) and can't be retyped from memory, so the hint
+                    // points at pasting rather than implying a short fixed-format code.
+                    Text(text = "Paste code here", style = codeStyle.copy(color = hintColor), maxLines = 1)
                 }
                 inner()
             }

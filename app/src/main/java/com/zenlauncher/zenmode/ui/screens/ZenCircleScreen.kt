@@ -180,7 +180,7 @@ fun ZenCircleScreen(
     // Continuous wheel position; the member at round(position) is selected. Starts one step
     // back so the entrance spins the first member into place.
     val position = remember { Animatable(if (inspection || count < 2) 0f else -1f) }
-    val selected by remember { derivedStateOf { Math.floorMod(position.value.roundToInt(), count) } }
+    val selected by remember(count) { derivedStateOf { Math.floorMod(position.value.roundToInt(), count) } }
     LaunchedEffect(Unit) {
         if (position.value != 0f) {
             delay(260)
