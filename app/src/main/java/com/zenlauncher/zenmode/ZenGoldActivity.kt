@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +20,14 @@ class ZenGoldActivity : AppCompatActivity() {
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@ZenGoldActivity)) {
                 ZenGoldScreen(
-                    onBackClick = { finish() }
+                    onBackClick = { finish() },
+                    // TEMP: force-unlocked so the Kite basket-redirect spike is reachable
+                    // for testing — revert to the real PLACEHOLDER_INVEST_GOLD_UNLOCKED
+                    // gate once a real weekly-promise backend drives it.
+                    investGoldUnlocked = true,
+                    onInvestGoldClick = {
+                        startActivity(Intent(this, KiteBasketActivity::class.java))
+                    }
                 )
             }
         }

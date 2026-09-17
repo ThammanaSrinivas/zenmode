@@ -43,6 +43,10 @@ android {
         val webClientId = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID") ?: "YOUR_WEB_CLIENT_ID"
         buildConfigField("String", "WEB_CLIENT_ID", "\"$webClientId\"")
 
+        // TEMP: Kite basket-redirect spike (gold-streak instrument) — see KiteBasketActivity.
+        val kiteApiKey = localProperties.getProperty("KITE_API_KEY") ?: ""
+        buildConfigField("String", "KITE_API_KEY", "\"$kiteApiKey\"")
+
         buildConfigField("boolean", "FILE_SEARCH_ENABLED", fileSearchEnabled.toString())
     }
 

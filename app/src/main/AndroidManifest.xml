@@ -108,6 +108,11 @@
             android:name=".ZenGoldActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <!-- TEMP: Kite basket-redirect spike, see KiteBasketActivity -->
+        <activity
+            android:name=".KiteBasketActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity
             android:name=".AccountabilityActivity"
             android:screenOrientation="portrait"
