@@ -35,6 +35,37 @@ jobs:
         with:
           gradle-version: "9.5.1"
 
+      # Architectural choke point: app/ must reach backends only through
+      # ServiceLocator (core-api), never by importing Firebase/PostHog SDK
+      # classes or declaring their dependencies directly - that split is what
+      # keeps open-source builds buildable without core-private. Only
+      # core-mock/core-private are allowed to touch those SDKs.
+      #
+      # scripts/*.sh are the single source of truth for this and the checks
+      # below - also called by the pre-commit hook, the Claude Code
+      # PostToolUse hook, and tests/guardrails/, so none of them can drift
+      # out of sync with each other.
+      - name: Check app/ boundary (no direct Firebase/PostHog)
+        run: ./scripts/check-app-boundary.sh
+
+      # SOURCE OF TRUTH: architectural choke points. ServiceLocator.kt and
+      # ZenModeApp.kt's onCreate() are the two files an AI (or a human) needs
+      # to read to understand the whole composite-build/backend-selection
+      # story - keep the [WHAT]/[WHY]/[HOW]/[WHERE] tags in them so that
+      # context is found by grep instead of requiring the private docs.
+      - name: Check choke-point files carry WHAT/WHY/HOW/WHERE tags
+        run: ./scripts/check-choke-point-tags.sh
+
+      # 1000-line ceiling on source files - see scripts/check-line-limit.sh
+      # for rationale (HomeScreen.kt is grandfathered there).
+      - name: Check file line-count ceiling
+        run: ./scripts/check-line-limit.sh
+
+      # Guardrails that test themselves: plants a known-bad fixture, asserts
+      # the checks above actually catch it, then asserts a clean pass.
+      - name: Test guardrails
+        run: ./tests/guardrails/run.sh
+
       # No zenmode_core_private sibling exists in this checkout, so
       # settings.gradle.kts falls back to core-mock automatically - this is
       # the intended open-source build path, see CLAUDE.md.

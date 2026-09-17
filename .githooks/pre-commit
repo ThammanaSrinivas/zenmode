@@ -33,4 +33,47 @@ if [ "$fail" -eq 1 ]; then
   exit 1
 fi
 
+# Architectural choke point: app/ must reach backends only through
+# ServiceLocator (core-api), never by importing Firebase/PostHog SDK classes
+# or declaring their dependencies directly. scripts/*.sh are the single
+# source of truth for these checks - also called by CI, the Claude Code
+# PostToolUse hook, and tests/guardrails/.
+staged_boundary_files=$(git diff --cached --name-only --diff-filter=ACM -- ':(glob)app/src/**/*.kt' app/build.gradle.kts || true)
+if [ -n "$staged_boundary_files" ]; then
+  if ! echo "$staged_boundary_files" | xargs ./scripts/check-app-boundary.sh; then
+    fail=1
+  fi
+fi
+
+# SOURCE OF TRUTH: architectural choke points. If either file is staged,
+# make sure the [WHAT]/[WHY]/[HOW]/[WHERE] micro-context tags weren't
+# accidentally stripped - mirrors the same CI step.
+choke_point_files="core-api/src/main/java/com/zenlauncher/zenmode/coreapi/services/ServiceLocator.kt app/src/main/java/com/zenlauncher/zenmode/ZenModeApp.kt"
+staged_choke_points=""
+for f in $choke_point_files; do
+  if git diff --cached --name-only | grep -qx "$f"; then
+    staged_choke_points="$staged_choke_points $f"
+  fi
+done
+if [ -n "$staged_choke_points" ]; then
+  if ! ./scripts/check-choke-point-tags.sh; then
+    fail=1
+  fi
+fi
+
+# 1000-line ceiling on source files - see scripts/check-line-limit.sh for rationale.
+staged_src_files=$(git diff --cached --name-only --diff-filter=ACM -- ':(glob)app/src/**/*.kt' ':(glob)core-api/src/**/*.kt' ':(glob)core-mock/src/**/*.kt' || true)
+if [ -n "$staged_src_files" ]; then
+  if ! echo "$staged_src_files" | xargs ./scripts/check-line-limit.sh; then
+    fail=1
+  fi
+fi
+
+if [ "$fail" -eq 1 ]; then
+  echo "" >&2
+  echo "Commit rejected. If this is a false positive, remove the marker/pattern from the diff" >&2
+  echo "or (rare, deliberate) commit with --no-verify." >&2
+  exit 1
+fi
+
 exit 0
