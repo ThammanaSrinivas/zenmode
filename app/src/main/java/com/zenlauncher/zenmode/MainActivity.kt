@@ -98,6 +98,8 @@ class MainActivity : AppCompatActivity() {
     // True while "Remove buddy" / "Leave Circle" is waiting on the server.
     private var removingBuddy by mutableStateOf(false)
     private var showBuddyBattle by mutableStateOf(false)
+    // First-time Zen Buddy -> Zen Circle choice, shown at most once (see BuddyFlowPreferences).
+    private var showBuddyFlowMigrationPrompt by mutableStateOf(false)
     private var showAccessibilityDisclosure by mutableStateOf(false)
     private lateinit var accountabilityViewModel: AccountabilityViewModel
 
@@ -118,11 +120,12 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         // Home button pressed while already on launcher — dismiss search overlay
         showSearch = false
-        if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false)) {
-            showBuddyConnect = true
-        }
-        if (intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)) {
-            showBuddyBattle = true
+        // Both extras open "the buddy area" - which screen that resolves to is
+        // openBuddyFlow()'s call, not the sender's (Settings, an old push notification, etc.).
+        if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
+            intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)
+        ) {
+            openBuddyFlow()
         }
     }
 
@@ -274,11 +277,10 @@ class MainActivity : AppCompatActivity() {
         homeAppCount = AppGridPreferences.getAppCount(this)
 
         // Handle cold-start intents
-        if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false)) {
-            showBuddyConnect = true
-        }
-        if (intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)) {
-            showBuddyBattle = true
+        if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
+            intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)
+        ) {
+            openBuddyFlow()
         }
 
         setContent {
@@ -335,6 +337,9 @@ class MainActivity : AppCompatActivity() {
                         is DisconnectResult.Success -> {
                             removingBuddy = false
                             showBuddyBattle = false
+                            // Nothing classic left to preserve once the relationship is gone -
+                            // any new buddy from here on goes through Zen Circle.
+                            BuddyFlowPreferences.setDecision(this@MainActivity, BuddyFlow.ZEN_CIRCLE)
                             // Back to the start of the connect flow, ready to find a new Zen Bro.
                             closeBuddyConnect()
                             showBuddyConnect = true
@@ -400,10 +405,10 @@ class MainActivity : AppCompatActivity() {
                     },
                     onInviteBuddyClick = {
                         ServiceLocator.analyticsTracker.trackBuddyShareStarted("manual")
-                        showBuddyConnect = true
+                        openBuddyFlow()
                     },
                     onBuddyCardClick = if (hasBuddies) {
-                        { openZenCircleFromHome() }
+                        { openBuddyFlow() }
                     } else null,
                     onSignInClick = {
                         val intent = Intent(this, OnboardingActivity::class.java).apply {
@@ -503,7 +508,28 @@ class MainActivity : AppCompatActivity() {
                         onChangeBuddyConfirmed = { accountabilityViewModel.disconnectBuddy() },
                         myLikes = accMyLikes,
                         buddyLikes = accBuddyLikes,
-                        onLikeClick = { accountabilityViewModel.sendLike() }
+                        onLikeClick = { accountabilityViewModel.sendLike() },
+                        onSwitchToZenCircle = {
+                            BuddyFlowPreferences.setDecision(this@MainActivity, BuddyFlow.ZEN_CIRCLE)
+                            showBuddyBattle = false
+                            openBuddyFlow()
+                        }
+                    )
+                }
+
+                // One-time Zen Buddy -> Zen Circle migration choice.
+                if (showBuddyFlowMigrationPrompt) {
+                    com.zenlauncher.zenmode.ui.screens.BuddyFlowMigrationPrompt(
+                        onTryZenCircle = {
+                            BuddyFlowPreferences.setDecision(this@MainActivity, BuddyFlow.ZEN_CIRCLE)
+                            showBuddyFlowMigrationPrompt = false
+                            openBuddyFlow()
+                        },
+                        onKeepZenBuddy = {
+                            BuddyFlowPreferences.setDecision(this@MainActivity, BuddyFlow.ZEN_BUDDY_CLASSIC)
+                            showBuddyFlowMigrationPrompt = false
+                            openBuddyFlow()
+                        }
                     )
                 }
 
@@ -616,6 +642,30 @@ class MainActivity : AppCompatActivity() {
         connectedBuddyName = null
         showZenCircle = false
         circleBuddyName = null
+    }
+
+    /**
+     * Single entry point for "open the buddy area" - Settings, an old push-notification
+     * deep link, the home invite button and the home buddy card all funnel through here so
+     * they all respect the cached [BuddyFlowPreferences] decision instead of hardcoding a
+     * screen. See BuddyFlowPreferences for the decision rules.
+     */
+    private fun openBuddyFlow() {
+        when (BuddyFlowPreferences.decision(this)) {
+            BuddyFlow.ZEN_CIRCLE -> {
+                if (repository.getBuddyUid() != null) openZenCircleFromHome() else showBuddyConnect = true
+            }
+            BuddyFlow.ZEN_BUDDY_CLASSIC -> showBuddyBattle = true
+            null -> {
+                if (repository.getBuddyUid() != null) {
+                    showBuddyFlowMigrationPrompt = true
+                } else {
+                    // Nothing to migrate - silently and permanently on Zen Circle.
+                    BuddyFlowPreferences.setDecision(this, BuddyFlow.ZEN_CIRCLE)
+                    showBuddyConnect = true
+                }
+            }
+        }
     }
 
     /** Home's buddy card: straight to the circle dashboard, fetching the buddy's name alongside. */
