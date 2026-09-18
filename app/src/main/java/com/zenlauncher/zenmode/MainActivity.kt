@@ -63,6 +63,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
+import com.zenlauncher.zenmode.onboarding.EnteringZenModeScreen
+import com.zenlauncher.zenmode.recap.RecapActivity
+import com.zenlauncher.zenmode.recap.RecapStore
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 /** Which page of the Zen Bro connect flow is showing. */
@@ -85,6 +88,7 @@ class MainActivity : AppCompatActivity() {
     private var homeAppCount by mutableStateOf(AppGridPreferences.DEFAULT_APP_COUNT)
     private var showSearch by mutableStateOf(false)
     private var showBuddyConnect by mutableStateOf(false)
+    private var showEnteringZenMode by mutableStateOf(false)
     // Set when a connect succeeds; swaps My Zen Circle for the "You're Zen Bros now" screen.
     private var connectedBuddyName by mutableStateOf<String?>(null)
     // "Maybe later" on the connected screen, or the buddy card on home, opens the circle dashboard.
@@ -96,6 +100,9 @@ class MainActivity : AppCompatActivity() {
     private var showBuddyBattle by mutableStateOf(false)
     private var showAccessibilityDisclosure by mutableStateOf(false)
     private lateinit var accountabilityViewModel: AccountabilityViewModel
+    private val buddyConnector by lazy {
+        BuddyConnector(this, repository) { viewModel.fetchBuddyData() }
+    }
 
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
@@ -131,6 +138,7 @@ class MainActivity : AppCompatActivity() {
         checkAndStartDoomMonitor()
         loadInstalledApps()
         homeAppCount = AppGridPreferences.getAppCount(this)
+        openUnseenRecap()
 
         // Stats Sync Check
         if (::repository.isInitialized) {
@@ -215,7 +223,6 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        requestPostNotificationsIfNeeded()
 
         // Initialize ViewModel
         val analyticsManager = ServiceLocator.analyticsManager
@@ -228,12 +235,15 @@ class MainActivity : AppCompatActivity() {
             this, AccountabilityViewModelFactory(repository)
         )[AccountabilityViewModel::class.java]
 
-        // for testing onboarding just remove !
-        if (!repository.isOnboardingComplete()) {
+        // New users, and v2 users who haven't seen the ZenMode OS revamp yet.
+        if (!repository.isOnboardingComplete() || !repository.isOsOnboardingComplete()) {
             startActivity(Intent(this, OnboardingActivity::class.java))
             finish()
             return
         }
+        showEnteringZenMode = repository.isEnteringCelebrationPending()
+        // Don't stack the system prompt over the celebration; it asks once that ends.
+        if (!showEnteringZenMode) requestPostNotificationsIfNeeded()
 
         // Disable back button since this is a launcher home screen
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -402,7 +412,7 @@ class MainActivity : AppCompatActivity() {
                         { openZenCircleFromHome() }
                     } else null,
                     onSignInClick = {
-                        val intent = Intent(this, OnboardingActivity::class.java).apply {
+                        val intent = OnboardingActivity.signInIntent(this).apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         }
                         startActivity(intent)
@@ -540,8 +550,8 @@ class MainActivity : AppCompatActivity() {
                                 userCode = userCode,
                                 // Opened from home there's no connected screen to return to.
                                 onBackClick = { if (connectedBuddyName != null) showZenCircle = false else closeBuddyConnect() },
-                                onShareInviteLink = { userCode?.let { shareBuddyInvite(it) } },
-                                onCopyInviteCode = { userCode?.let { copyUserCode(it, showToast = false) } },
+                                onShareInviteLink = { userCode?.let { buddyConnector.shareBuddyInvite(it) } },
+                                onCopyInviteCode = { userCode?.let { buddyConnector.copyUserCode(it, showToast = false) } },
                                 onBackToHome = { closeBuddyConnect() },
                                 onSendLove = { viewModel.sendLike() },
                                 onSendMelt = {
@@ -562,18 +572,18 @@ class MainActivity : AppCompatActivity() {
                                 buddyStats = buddyStats,
                                 userCode = userCode,
                                 onBackClick = { closeBuddyConnect() },
-                                onShareInviteLink = { userCode?.let { shareBuddyInvite(it) } },
+                                onShareInviteLink = { userCode?.let { buddyConnector.shareBuddyInvite(it) } },
                                 // The sheet confirms inline, so no toast here.
-                                onCopyInviteCode = { userCode?.let { copyUserCode(it, showToast = false) } },
+                                onCopyInviteCode = { userCode?.let { buddyConnector.copyUserCode(it, showToast = false) } },
                                 onMaybeLater = { showZenCircle = true }
                             )
                             ZenBroStage.Connect -> ZenBroConnectScreen(
                                 userCode = userCode,
                                 onBackClick = { showBuddyConnect = false },
-                                onShareLink = { userCode?.let { shareBuddyInvite(it) } },
-                                onCopyCode = { userCode?.let { copyUserCode(it, showToast = true) } },
+                                onShareLink = { userCode?.let { buddyConnector.shareBuddyInvite(it) } },
+                                onCopyCode = { userCode?.let { buddyConnector.copyUserCode(it, showToast = true) } },
                                 onAddBuddy = { targetUid ->
-                                    addBuddy(targetUid).also { result ->
+                                    buddyConnector.addBuddy(targetUid).also { result ->
                                         if (result is BuddyAddResult.Success) {
                                             // Let "Connected with …" register before the celebration takes over.
                                             lifecycleScope.launch {
@@ -585,23 +595,37 @@ class MainActivity : AppCompatActivity() {
                                 },
                                 onRandomConnect = {
                                     lifecycleScope.launch {
-                                        randomConnect()?.let { connectedBuddyName = it }
+                                        buddyConnector.randomConnect()?.let { connectedBuddyName = it }
                                     }
                                 }
                             )
                         }
                     }
                 }
+
+                // "Entering ZenMode", once, right after onboarding — shown here because
+                // granting the home role relaunches this activity on top of onboarding.
+                if (showEnteringZenMode) {
+                    EnteringZenModeScreen(onFinished = {
+                        repository.setEnteringCelebrationPending(false)
+                        showEnteringZenMode = false
+                        requestPostNotificationsIfNeeded()
+                    })
+                }
             }
         }
     }
 
-    private fun copyUserCode(code: String, showToast: Boolean) {
-        val clipboard = getSystemService(android.content.ClipboardManager::class.java)
-        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("ZenMode Code", code))
-        ServiceLocator.analyticsTracker.trackBuddyCodeCopied("manual")
-        if (showToast) {
-            android.widget.Toast.makeText(this, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
+    /**
+     * The first home visit after a week's recap is announced plays it — the notification
+     * may have been missed or blocked. Once opened it's marked seen and won't reappear.
+     */
+    private fun openUnseenRecap() {
+        if (showEnteringZenMode || !::repository.isInitialized) return
+        lifecycleScope.launch {
+            val week = withContext(Dispatchers.IO) { RecapStore(applicationContext).unseenWeek() } ?: return@launch
+            if (showEnteringZenMode) return@launch
+            startActivity(RecapActivity.intent(this@MainActivity, week.weekStart, RecapActivity.SOURCE_HOME))
         }
     }
 
@@ -642,22 +666,6 @@ class MainActivity : AppCompatActivity() {
         accountabilityViewModel.disconnectBuddy()
     }
 
-    /** "Share a link": the Play Store link plus this user's code, via the system share sheet. */
-    private fun shareBuddyInvite(code: String) {
-        ServiceLocator.analyticsTracker.trackBuddyShareStarted("link")
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on ZenMode")
-            putExtra(
-                Intent.EXTRA_TEXT,
-                "Be my Zen Bro on ZenMode! Get the app: " +
-                    "https://play.google.com/store/apps/details?id=$packageName\n" +
-                    "Then paste my Zen code in My Zen Circle: $code"
-            )
-        }
-        startActivity(Intent.createChooser(intent, "Share invite"))
-    }
-
     private fun requestPostNotificationsIfNeeded() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
             androidx.core.content.ContextCompat.checkSelfPermission(
@@ -680,112 +688,6 @@ class MainActivity : AppCompatActivity() {
             android.widget.Toast.makeText(this, "Accessibility service is reconnecting, please try again", android.widget.Toast.LENGTH_SHORT).show()
         } else {
             showAccessibilityDisclosure = true
-        }
-    }
-
-    private suspend fun addBuddy(targetUid: String): BuddyAddResult {
-        val currentUserId = ServiceLocator.authProvider.getCurrentUserId()
-
-        if (targetUid == currentUserId) return BuddyAddResult.SelfAdd
-
-        ServiceLocator.analyticsTracker.trackBuddyCodePasted("manual")
-        
-        // Check network connectivity
-        val connectivityManager = getSystemService(android.net.ConnectivityManager::class.java)
-        val activeNetwork = connectivityManager?.activeNetwork
-        val networkCapabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
-        val isConnected = networkCapabilities?.hasCapability(
-            android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
-        ) == true
-
-        if (!isConnected) {
-            return BuddyAddResult.Error("No internet connection. Please check your network and try again.")
-        }
-
-        val firestoreDataSource = ServiceLocator.firestoreDataSource
-        return try {
-            val user = firestoreDataSource.getUser(targetUid)
-                ?: return BuddyAddResult.Error("User ID not found. Please check the ID and try again.")
-
-            val myUid = currentUserId
-                ?: return BuddyAddResult.Error("Not signed in.")
-
-            if (firestoreDataSource.checkRelationshipExists(myUid, targetUid)) {
-                return BuddyAddResult.AlreadyBuddies(user.displayName)
-            }
-
-            firestoreDataSource.sendBuddyInvite(myUid, targetUid)
-            repository.clearCachedBuddy()
-            viewModel.fetchBuddyData()
-            ServiceLocator.analyticsTracker.trackBuddyConnected("manual")
-
-            BuddyAddResult.Success(user.displayName)
-        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-            BuddyAddResult.Error("Connection timed out. Please check your network and try again.")
-        } catch (e: Exception) {
-            val errorMessage = when {
-                e.message?.contains("offline", ignoreCase = true) == true ->
-                    "Unable to connect. Please check your internet and try again."
-                else -> "Failed: ${e.message}"
-            }
-            BuddyAddResult.Error(errorMessage)
-        }
-    }
-
-    /** Returns the new buddy's display name on success, null otherwise (with a toast). */
-    private suspend fun randomConnect(): String? {
-        val currentUserId = ServiceLocator.authProvider.getCurrentUserId()
-        if (currentUserId == null) {
-            android.widget.Toast.makeText(this, "Not signed in.", android.widget.Toast.LENGTH_SHORT).show()
-            return null
-        }
-
-        val connectivityManager = getSystemService(android.net.ConnectivityManager::class.java)
-        val isConnected = connectivityManager?.getNetworkCapabilities(connectivityManager.activeNetwork)
-            ?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        if (!isConnected) {
-            android.widget.Toast.makeText(this, "No internet connection.", android.widget.Toast.LENGTH_SHORT).show()
-            return null
-        }
-
-        // Cooldown: only allow retrying after cooldown if last attempt found no buddy
-        val lastTried = repository.getLastRandomConnectAttemptTime()
-        val remaining = AppConstants.RANDOM_CONNECT_COOLDOWN_MS - (System.currentTimeMillis() - lastTried)
-        if (remaining > 0) {
-            val secs = (remaining / 1000).coerceAtLeast(1)
-            android.widget.Toast.makeText(
-                this,
-                "No buddies were available last time. Try again in ${secs}s.",
-                android.widget.Toast.LENGTH_LONG
-            ).show()
-            return null
-        }
-
-        return try {
-            val buddyUid = ServiceLocator.firestoreDataSource.findRandomBuddy(currentUserId)
-            if (buddyUid == null) {
-                repository.saveLastRandomConnectAttemptTime(System.currentTimeMillis())
-                android.widget.Toast.makeText(
-                    this,
-                    "No buddies available right now. Try again in 30 seconds!",
-                    android.widget.Toast.LENGTH_LONG
-                ).show()
-                null
-            } else {
-                val buddy = ServiceLocator.firestoreDataSource.getUser(buddyUid)
-                repository.clearCachedBuddy()
-                repository.saveHasBuddy(true)
-                viewModel.fetchBuddyData()
-                ServiceLocator.analyticsTracker.trackBuddyConnected("random")
-                // No toast on success: the "You're Zen Bros now" screen says it.
-                buddy?.displayName?.takeIf { it.isNotBlank() } ?: "your Zen Bro"
-            }
-        } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
-            android.widget.Toast.makeText(this, "Connection timed out. Please try again.", android.widget.Toast.LENGTH_SHORT).show()
-            null
-        } catch (e: Exception) {
-            android.widget.Toast.makeText(this, "Something went wrong. Please try again.", android.widget.Toast.LENGTH_SHORT).show()
-            null
         }
     }
 

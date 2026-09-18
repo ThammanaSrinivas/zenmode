@@ -85,14 +85,31 @@ class UsageRepository(private val context: Context, private val analyticsManager
         usm: android.app.usage.UsageStatsManager,
         start: Long,
         end: Long
-    ): Long {
+    ): Long = foregroundSessions(usm, start, end).sumOf { it.endMillis - it.startMillis }
+
+    /**
+     * Every foreground app session in `[start, end)`, from paired resume/pause events.
+     * Empty when usage access is missing or the OEM withholds raw events.
+     */
+    fun getForegroundSessions(start: Long, end: Long): List<ForegroundSession> {
+        if (!UsageAccess.isGranted(context)) return emptyList()
+        val usm = context.getSystemService(Context.USAGE_STATS_SERVICE)
+            as? android.app.usage.UsageStatsManager ?: return emptyList()
+        return foregroundSessions(usm, start, end)
+    }
+
+    private fun foregroundSessions(
+        usm: android.app.usage.UsageStatsManager,
+        start: Long,
+        end: Long
+    ): List<ForegroundSession> {
         val events = usm.queryEvents(start, end)
         val event = android.app.usage.UsageEvents.Event()
 
         // Per-package resume timestamps so interleaved apps (split-screen, quick switches)
         // are not cross-attributed or double counted.
         val resumeAt = HashMap<String, Long>()
-        var total = 0L
+        val sessions = mutableListOf<ForegroundSession>()
 
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
@@ -112,18 +129,36 @@ class UsageRepository(private val context: Context, private val analyticsManager
                     // First event being a pause => started == null => ignored, because the matching
                     // resume happened before `start` (it belongs to the previous day).
                     if (started != null && event.timeStamp > started) {
-                        total += event.timeStamp - started
+                        sessions += ForegroundSession(pkg, started, event.timeStamp)
                     }
                 }
             }
         }
 
         // Any app still in the foreground at `end`: close the open session(s) at `end`.
-        for (started in resumeAt.values) {
-            if (end > started) total += end - started
+        for ((pkg, started) in resumeAt) {
+            if (end > started) sessions += ForegroundSession(pkg, started, end)
         }
-        return total
+        return sessions
     }
+
+    /** Unlocks (keyguard dismissals) in `[start, end)`. */
+    fun getPickupCount(start: Long, end: Long): Int {
+        if (!UsageAccess.isGranted(context)) return 0
+        val usm = context.getSystemService(Context.USAGE_STATS_SERVICE)
+            as? android.app.usage.UsageStatsManager ?: return 0
+        val events = usm.queryEvents(start, end)
+        val event = android.app.usage.UsageEvents.Event()
+        var count = 0
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            if (event.eventType == android.app.usage.UsageEvents.Event.KEYGUARD_HIDDEN) count++
+        }
+        return count
+    }
+
+    /** Total screen time for `yyyy-MM-dd`, computed the same way as the home screen's. */
+    fun getScreenTimeMillisForDate(dateString: String): Long = getScreenTimeForDay(dateString)
 
     private fun sumForegroundFromStats(
         usm: android.app.usage.UsageStatsManager,
@@ -290,16 +325,41 @@ class UsageRepository(private val context: Context, private val analyticsManager
         prefs.edit().putBoolean("is_onboarding_complete", complete).commit()
     }
 
-    fun getOnboardingCurrentPage(): Int {
-        return prefs.getInt("onboarding_current_page", 0)
+    /**
+     * The ZenMode OS (v3) onboarding. Separate from [isOnboardingComplete] so users who
+     * finished the v2 onboarding still walk through the revamp once, as returning users.
+     */
+    fun isOsOnboardingComplete(): Boolean {
+        return prefs.getBoolean("is_os_onboarding_complete", false)
     }
 
-    fun setOnboardingCurrentPage(page: Int) {
-        prefs.edit().putInt("onboarding_current_page", page).apply()
+    fun setOsOnboardingComplete(complete: Boolean) {
+        prefs.edit().putBoolean("is_os_onboarding_complete", complete).commit()
     }
 
-    fun clearOnboardingCurrentPage() {
-        prefs.edit().remove("onboarding_current_page").apply()
+    /**
+     * Set when onboarding finishes; the home screen plays "Entering ZenMode" once and
+     * clears it. Lives on home because granting the home role relaunches it on top.
+     */
+    fun isEnteringCelebrationPending(): Boolean {
+        return prefs.getBoolean("entering_celebration_pending", false)
+    }
+
+    fun setEnteringCelebrationPending(pending: Boolean) {
+        prefs.edit().putBoolean("entering_celebration_pending", pending).apply()
+    }
+
+    /** Name of the onboarding step the user was on, so a re-created activity resumes there. */
+    fun getOnboardingCurrentStep(): String? {
+        return prefs.getString("onboarding_current_step", null)
+    }
+
+    fun setOnboardingCurrentStep(step: String) {
+        prefs.edit().putString("onboarding_current_step", step).apply()
+    }
+
+    fun clearOnboardingCurrentStep() {
+        prefs.edit().remove("onboarding_current_step").apply()
     }
 
     fun setOnboardingStartTime(timestamp: Long) {
@@ -553,7 +613,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
     }
 
     companion object {
-        const val MAX_PINNED_APPS = 4
+        const val MAX_PINNED_APPS = 8
 
         private const val KEY_RECENT_LIKE_TIMESTAMPS = "recent_like_timestamps"
         const val LIKE_WINDOW_MS: Long = 20L * 60_000L  // 20 minutes

@@ -216,4 +216,20 @@
     <color name="invest_gold_terms_link">#005700</color>
     <color name="invest_gold_success_icon">#0E7A17</color>
     <color name="invest_gold_coin">#FFC700</color>
+
+    <!-- ZenMode OS onboarding (onboarding/*). Welcome's sunrise wash, the stories' night
+         backdrop, and the "Entering ZenMode" celebration greens sampled off its render. -->
+    <color name="onboarding_sunrise">#F6E6C8</color>
+    <color name="onboarding_night">#0B0D0B</color>
+    <color name="onboarding_celebrate_deep">#2E6B2E</color>
+    <color name="onboarding_celebrate_mid">#0C6E0C</color>
+    <color name="onboarding_celebrate_line">#1DDC1D</color>
+    <color name="onboarding_celebrate_toggle">#00C745</color>
+
+    <!-- Weekly recap ("Zen Week", recap/*). Kept weeks run on zen greens and gold; missed
+         weeks on a warm dusk — honest, never alarm-red. -->
+    <color name="recap_dusk">#1A1522</color>
+    <color name="recap_dusk_glow">#FF7A2E</color>
+    <color name="recap_gold_light">#FFF4C7</color>
+    <color name="recap_gold_deep">#FFD84D</color>
 </resources>

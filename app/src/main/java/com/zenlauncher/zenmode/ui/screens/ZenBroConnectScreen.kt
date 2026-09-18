@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.ui.components.BrandedText
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.tween
@@ -155,15 +156,35 @@ fun ZenBroConnectScreen(
             }
 
             Spacer(Modifier.height(23.rdp))
-            Column(
-                modifier = Modifier.padding(horizontal = 29.5.rdp),
-                verticalArrangement = Arrangement.spacedBy(20.rdp)
-            ) {
-                ShareLinkCard(enabled = userCode != null, onShareLink = onShareLink)
-                UseCodeCard(userCode = userCode, onCopyCode = onCopyCode, onAddBuddy = onAddBuddy)
-                RandomConnectCard(onRandomConnect = onRandomConnect)
-            }
+            ZenCircleConnectOptions(
+                userCode = userCode,
+                onShareLink = onShareLink,
+                onCopyCode = onCopyCode,
+                onAddBuddy = onAddBuddy,
+                onRandomConnect = onRandomConnect,
+                modifier = Modifier.padding(horizontal = 29.5.rdp)
+            )
         }
+    }
+}
+
+/** The three ways into a Zen Circle — share a link, trade codes, random connect. Also used by onboarding. */
+@Composable
+internal fun ZenCircleConnectOptions(
+    userCode: String?,
+    onShareLink: () -> Unit,
+    onCopyCode: () -> Unit,
+    onAddBuddy: suspend (String) -> BuddyAddResult,
+    onRandomConnect: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(20.rdp)
+    ) {
+        ShareLinkCard(enabled = userCode != null, onShareLink = onShareLink)
+        UseCodeCard(userCode = userCode, onCopyCode = onCopyCode, onAddBuddy = onAddBuddy)
+        RandomConnectCard(onRandomConnect = onRandomConnect)
     }
 }
 
@@ -527,14 +548,16 @@ private fun StepCard(
 
 @Composable
 private fun StepBody(text: String) {
-    Text(
+    BrandedText(
         text = text,
-        fontFamily = Geist,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.rsp,
-        lineHeight = 20.8.rsp,
-        letterSpacing = (-0.18).sp,
-        color = colorResource(R.color.zen_circle_body),
+        style = TextStyle(
+            fontFamily = Geist,
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.rsp,
+            lineHeight = 20.8.rsp,
+            letterSpacing = (-0.18).sp,
+            color = colorResource(R.color.zen_circle_body)
+        ),
         modifier = Modifier.padding(start = StepTextStart, end = 29.rdp)
     )
 }

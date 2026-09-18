@@ -96,8 +96,16 @@
             android:excludeFromRecents="true"/>
 
         <activity
-            android:name=".OnboardingActivity"
+            android:name=".recap.RecapActivity"
             android:screenOrientation="portrait"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+
+        <activity
+            android:name=".OnboardingActivity"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
 
         <activity

@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -91,7 +92,8 @@ fun SettingsScreen(
     onRateClick: () -> Unit,
     onShareClick: () -> Unit,
     onLogoutClick: () -> Unit = {},
-    onDeleteAccountClick: () -> Unit = {}
+    onDeleteAccountClick: () -> Unit = {},
+    weeklyReports: (@Composable () -> Unit)? = null
 ) {
     val colors = ZenTheme.colors
     val context = LocalContext.current
@@ -105,6 +107,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.bgPrimary)
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
             // ── Header ────────────────────────────────────────────────
@@ -118,6 +121,12 @@ fun SettingsScreen(
 
             // ── My Weekly Stats ───────────────────────────────────────
             WeeklyStatsSection(weeklyHours = weeklyHours)
+
+            // ── Weekly reports (PRO) ──────────────────────────────────
+            if (weeklyReports != null) {
+                Spacer(modifier = Modifier.height(28.rdp))
+                weeklyReports()
+            }
 
             Spacer(modifier = Modifier.height(28.rdp))
 

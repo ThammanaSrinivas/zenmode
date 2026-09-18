@@ -20,4 +20,17 @@ interface AnalyticsTrackerContract {
     fun trackBuddyConnected(mode: String)
     fun trackDailyScreenTime(minutes: Long)
     fun trackWeeklyScreenTime(minutes: Long)
+
+    // ── Weekly recap ("Zen Week") ──
+    /** A week's recap was built and the user notified. [outcome] is "kept" or "missed". */
+    fun trackRecapReady(weekStart: String, outcome: String)
+    /** [source]: "notification", "home", "settings". */
+    fun trackRecapOpened(weekStart: String, outcome: String, source: String)
+    fun trackRecapCardViewed(weekStart: String, outcome: String, card: String, position: Int)
+    fun trackRecapCompleted(weekStart: String, outcome: String)
+    /** [cta]: "invest", "recommit", "reports". */
+    fun trackRecapCtaClicked(weekStart: String, outcome: String, cta: String)
+    fun trackReportDownloaded(weekStart: String)
+    /** [surface]: where the PRO upsell was shown, e.g. "settings_reports". */
+    fun trackProUpsellViewed(surface: String)
 }

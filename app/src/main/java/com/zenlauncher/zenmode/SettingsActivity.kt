@@ -1,5 +1,17 @@
 package com.zenlauncher.zenmode
 
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import com.zenlauncher.zenmode.recap.ProUpsellSheet
+import com.zenlauncher.zenmode.recap.RecapActivity
+import com.zenlauncher.zenmode.recap.RecapReport
+import com.zenlauncher.zenmode.recap.RecapStore
+import com.zenlauncher.zenmode.recap.WeeklyRecap
+import com.zenlauncher.zenmode.recap.WeeklyReportsSection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.time.LocalDate
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -23,10 +35,27 @@ import kotlinx.coroutines.launch
 class SettingsActivity : AppCompatActivity() {
 
     private var notificationBadgesEnabled by mutableStateOf(false)
+    private var weeklyReports by mutableStateOf<List<WeeklyRecap>>(emptyList())
+    private var downloadingWeek by mutableStateOf<LocalDate?>(null)
+    private var showProSheet by mutableStateOf(false)
+
+    /** Android 9 has no MediaStore Downloads; the user picks where the PDF goes. */
+    private var pendingPickerWeek: LocalDate? = null
+    private val createDocument = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri ->
+        val week = pendingPickerWeek ?: return@registerForActivityResult
+        pendingPickerWeek = null
+        if (uri != null) writeReport(week) { recap -> contentResolver.openOutputStream(uri)?.use { RecapReport.write(this, recap, it) }; uri }
+    }
 
     override fun onResume() {
         super.onResume()
         notificationBadgesEnabled = ZenNotificationListenerService.isEnabledInSettings(this)
+        lifecycleScope.launch {
+            weeklyReports = withContext(Dispatchers.IO) { RecapStore(applicationContext).completedWeeks() }
+            ServiceLocator.proEntitlementProvider.refresh()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,8 +91,38 @@ class SettingsActivity : AppCompatActivity() {
                     onRateClick = { openPlayStore() },
                     onShareClick = { shareZenMode() },
                     onLogoutClick = { performLogout(repository) },
-                    onDeleteAccountClick = { performDeleteAccount(repository) }
+                    onDeleteAccountClick = { performDeleteAccount(repository) },
+                    weeklyReports = {
+                        WeeklyReportsSection(
+                            reports = weeklyReports,
+                            isPro = ProAccess.isProState(this@SettingsActivity),
+                            downloadingWeek = downloadingWeek,
+                            onOpen = { week ->
+                                startActivity(RecapActivity.intent(this@SettingsActivity, week, RecapActivity.SOURCE_SETTINGS))
+                            },
+                            onDownload = ::downloadReport,
+                            onUnlockPro = {
+                                ServiceLocator.analyticsTracker.trackProUpsellViewed("settings_reports")
+                                showProSheet = true
+                            }
+                        )
+                    }
                 )
+                if (showProSheet) {
+                    ProUpsellSheet(
+                        onDismiss = { showProSheet = false },
+                        onRequestAccess = {
+                            showProSheet = false
+                            requestProAccess()
+                        },
+                        onEnableForTesting = if (ProAccess.canUseDebugOverride) {
+                            {
+                                ProAccess.setDebugOverride(this@SettingsActivity, true)
+                                showProSheet = false
+                            }
+                        } else null
+                    )
+                }
                 if (showDistractingSheet) {
                     DistractingAppsBottomSheet(onDismiss = { showDistractingSheet = false })
                 }
@@ -71,6 +130,56 @@ class SettingsActivity : AppCompatActivity() {
                     ContentBlockingBottomSheet(onDismiss = { showContentBlockSheet = false })
                 }
             }
+        }
+    }
+
+    private fun downloadReport(week: LocalDate) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val recap = weeklyReports.firstOrNull { it.weekStart == week } ?: return
+            pendingPickerWeek = week
+            createDocument.launch(RecapReport.fileName(recap))
+            return
+        }
+        writeReport(week) { recap -> RecapReport.saveToDownloads(this, recap) }
+    }
+
+    /** Runs [save] off the main thread, then offers to open the saved PDF. */
+    private fun writeReport(week: LocalDate, save: (WeeklyRecap) -> Uri?) {
+        val recap = weeklyReports.firstOrNull { it.weekStart == week } ?: return
+        downloadingWeek = week
+        lifecycleScope.launch {
+            val uri = withContext(Dispatchers.IO) { runCatching { save(recap) }.getOrNull() }
+            downloadingWeek = null
+            if (uri == null) {
+                Toast.makeText(this@SettingsActivity, "Couldn't save the report. Please try again.", Toast.LENGTH_LONG).show()
+                return@launch
+            }
+            ServiceLocator.analyticsTracker.trackReportDownloaded(week.toString())
+            val where = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) " to Downloads" else ""
+            Toast.makeText(this@SettingsActivity, "Report saved$where", Toast.LENGTH_SHORT).show()
+            openPdf(uri)
+        }
+    }
+
+    private fun openPdf(uri: Uri) {
+        val view = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/pdf")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        try {
+            startActivity(view)
+        } catch (_: android.content.ActivityNotFoundException) {
+            // No PDF viewer installed; the file is still in Downloads.
+        }
+    }
+
+    private fun requestProAccess() {
+        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${AppConstants.SUPPORT_EMAIL}"))
+            .putExtra(Intent.EXTRA_SUBJECT, "ZenMode PRO early access")
+            .putExtra(Intent.EXTRA_TEXT, "Hi ZenMode team, I'd love early access to ZenMode PRO.")
+        try {
+            startActivity(intent)
+        } catch (_: android.content.ActivityNotFoundException) {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.TELEGRAM_URL)))
         }
     }
 

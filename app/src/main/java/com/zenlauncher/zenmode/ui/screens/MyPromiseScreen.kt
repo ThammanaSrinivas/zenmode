@@ -62,6 +62,7 @@ import com.zenlauncher.zenmode.ui.components.ClashLineHeight
 import com.zenlauncher.zenmode.ui.components.FullLineBox
 import com.zenlauncher.zenmode.ui.components.GeistLineHeight
 import com.zenlauncher.zenmode.ui.components.V3BrandGreen
+import com.zenlauncher.zenmode.ui.components.rememberBrandOsGradient
 import com.zenlauncher.zenmode.ui.components.V3BulletDot
 import com.zenlauncher.zenmode.ui.components.V3CardDivider
 import com.zenlauncher.zenmode.ui.components.V3PillButtonText
@@ -198,7 +199,7 @@ private fun IntroText() {
 // ── Promise card ──────────────────────────────────────────────────
 
 @Composable
-private fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
+internal fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
     // Set from the tap itself so both rolling numbers agree on direction.
     var rollUp by remember { mutableStateOf(true) }
 
@@ -323,7 +324,7 @@ private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
 // ── Rules note ────────────────────────────────────────────────────
 
 @Composable
-private fun PromiseRulesNote(dailyHours: Int) {
+internal fun PromiseRulesNote(dailyHours: Int) {
     val green = BrandGreen
     val hrs = if (dailyHours == 1) "hr" else "hrs"
     Row(
@@ -427,43 +428,6 @@ private fun BrandStrip() {
         }
     }
 }
-
-/**
- * Figma's "Branf zen gradient" style: a CSS linear-gradient at -67.92deg through
- * score_grad_start / score_grad_mid / score_orange. Brush.linearGradient can't express
- * a CSS angle against an unknown text box, so the line is resolved from the laid-out size.
- */
-@Composable
-private fun rememberBrandOsGradient(): Brush {
-    val start = colorResource(R.color.score_grad_start)
-    val mid = colorResource(R.color.score_grad_mid)
-    val end = colorResource(R.color.score_orange)
-    return remember(start, mid, end) {
-        cssLinearGradient(
-            angleDegrees = -67.92291865051479f,
-            colors = listOf(start, mid, end),
-            stops = listOf(0.23558f, 0.50636f, 0.71412f)
-        )
-    }
-}
-
-private fun cssLinearGradient(angleDegrees: Float, colors: List<Color>, stops: List<Float>): ShaderBrush =
-    object : ShaderBrush() {
-        override fun createShader(size: Size): Shader {
-            val radians = Math.toRadians(angleDegrees.toDouble())
-            val dx = sin(radians).toFloat()
-            val dy = -cos(radians).toFloat()
-            val halfLength = (abs(size.width * dx) + abs(size.height * dy)) / 2f
-            val cx = size.width / 2f
-            val cy = size.height / 2f
-            return LinearGradientShader(
-                from = Offset(cx - dx * halfLength, cy - dy * halfLength),
-                to = Offset(cx + dx * halfLength, cy + dy * halfLength),
-                colors = colors,
-                colorStops = stops
-            )
-        }
-    }
 
 @Composable
 private fun OutlinedPillButton(text: String, onClick: () -> Unit) {

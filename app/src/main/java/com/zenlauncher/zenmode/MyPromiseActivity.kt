@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -17,10 +19,22 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
  */
 class MyPromiseActivity : AppCompatActivity() {
 
+    companion object {
+        private const val EXTRA_SUGGESTED_HOURS = "suggested_hours"
+
+        /** [suggestedHours] pre-fills the stepper (e.g. from a missed week's recap). */
+        fun intent(context: Context, suggestedHours: Int? = null): Intent =
+            Intent(context, MyPromiseActivity::class.java).apply {
+                if (suggestedHours != null) putExtra(EXTRA_SUGGESTED_HOURS, suggestedHours)
+            }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val storedHours = PromisePreferences.getDailyHours(this)
+        val storedHours = intent.getIntExtra(EXTRA_SUGGESTED_HOURS, 0)
+            .takeIf { it in AppConstants.PROMISE_MIN_DAILY_HOURS..AppConstants.PROMISE_MAX_DAILY_HOURS }
+            ?: PromisePreferences.getDailyHours(this)
 
         setContent {
             var dailyHours by rememberSaveable { mutableIntStateOf(storedHours) }

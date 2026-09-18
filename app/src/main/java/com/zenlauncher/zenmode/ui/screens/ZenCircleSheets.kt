@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.ui.text.TextStyle
+import com.zenlauncher.zenmode.ui.components.BrandedText
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -412,13 +414,15 @@ private fun InviteOption(
                 transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
                 label = "inviteOptionSubtitle"
             ) { (text, highlighted) ->
-                Text(
+                BrandedText(
                     text = text,
-                    fontFamily = Geist,
-                    fontSize = 12.1.rsp,
-                    lineHeight = 14.5.rsp,
-                    letterSpacing = (-0.12).sp,
-                    color = if (highlighted) highlight else muted,
+                    style = TextStyle(
+                        fontFamily = Geist,
+                        fontSize = 12.1.rsp,
+                        lineHeight = 14.5.rsp,
+                        letterSpacing = (-0.12).sp,
+                        color = if (highlighted) highlight else muted
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
