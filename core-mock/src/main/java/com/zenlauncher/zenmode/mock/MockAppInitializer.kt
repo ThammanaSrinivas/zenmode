@@ -26,6 +26,7 @@ class MockAppInitializer : AppInitializer {
         ServiceLocator.analyticsTracker = MockAnalyticsTracker()
         ServiceLocator.analyticsManager = MockAnalyticsManager()
         ServiceLocator.remoteConfigProvider = MockRemoteConfigProvider()
+        ServiceLocator.entitlementProvider = MockEntitlementProvider(application)
     }
 }
 

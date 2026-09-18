@@ -49,8 +49,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -208,8 +206,8 @@ fun HomeScreen(
     onBuddyCardClick: (() -> Unit)? = null,
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
-    onAppInfoClick: (AppInfo) -> Unit = {},
-    apps: List<AppInfo>
+    apps: List<AppInfo>,
+    modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
     var showStreakOverlay by remember { mutableStateOf(false) }
@@ -221,7 +219,7 @@ fun HomeScreen(
     val wash = colors.moodWash(mood)
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(wash))
             // No dock any more: swipe left anywhere on the home screen for Settings,
@@ -300,8 +298,7 @@ fun HomeScreen(
             AppGrid(
                 apps = apps.take(appCount),
                 onAppClick = onAppClick,
-                onAppLongClick = onAppLongClick,
-                onAppInfoClick = onAppInfoClick
+                onAppLongClick = onAppLongClick
             )
 
             Spacer(modifier = Modifier.weight(1f).heightIn(min = AppsToSearchGap))
@@ -579,8 +576,7 @@ private fun GoldInvestedRow(
 private fun AppGrid(
     apps: List<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
-    onAppLongClick: (AppInfo) -> Unit = {},
-    onAppInfoClick: (AppInfo) -> Unit = {}
+    onAppLongClick: (AppInfo) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -599,8 +595,7 @@ private fun AppGrid(
                         AppIconItem(
                             appInfo = app,
                             onClick = { onAppClick(app) },
-                            onLongClick = { onAppLongClick(app) },
-                            onAppInfoClick = { onAppInfoClick(app) }
+                            onLongClick = { onAppLongClick(app) }
                         )
                     }
                 }
@@ -619,11 +614,9 @@ private fun AppGrid(
 private fun AppIconItem(
     appInfo: AppInfo,
     onClick: () -> Unit,
-    onLongClick: () -> Unit = {},
-    onAppInfoClick: () -> Unit = {}
+    onLongClick: () -> Unit = {}
 ) {
     val view = LocalView.current
-    var showMenu by remember { mutableStateOf(false) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -631,7 +624,7 @@ private fun AppIconItem(
             onClick = onClick,
             onLongClick = {
                 view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
-                showMenu = true
+                onLongClick()
             }
         )
     ) {
@@ -654,17 +647,6 @@ private fun AppIconItem(
                     .fillMaxSize()
                     .clip(RoundedCornerShape(AppTileRadius))
             )
-
-            // Pin star indicator — bottom-right of icon (outside clip)
-            if (appInfo.isPinned) {
-                Image(
-                    painter = painterResource(id = R.drawable.star),
-                    contentDescription = "Pinned",
-                    modifier = Modifier
-                        .size(14.rdp)
-                        .align(Alignment.BottomEnd)
-                )
-            }
 
             // Notification badge — top-right of icon
             if (appInfo.notificationCount > 0) {
@@ -696,37 +678,6 @@ private fun AppIconItem(
                     )
                 }
             }
-        }
-
-        // Long-press context menu
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { showMenu = false }
-        ) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = if (appInfo.isPinned) "Unpin" else "Pin app",
-                        fontFamily = Geist
-                    )
-                },
-                onClick = {
-                    showMenu = false
-                    onLongClick()
-                }
-            )
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = "App info",
-                        fontFamily = Geist
-                    )
-                },
-                onClick = {
-                    showMenu = false
-                    onAppInfoClick()
-                }
-            )
         }
     }
 }

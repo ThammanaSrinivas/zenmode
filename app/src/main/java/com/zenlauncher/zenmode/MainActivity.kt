@@ -22,7 +22,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -51,6 +50,9 @@ import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
 import com.zenlauncher.zenmode.ui.screens.AccountabilityScreen
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import com.zenlauncher.zenmode.ui.screens.ForceUpdateDialog
+import com.zenlauncher.zenmode.ui.components.zenOverlayBlur
+import com.zenlauncher.zenmode.ui.screens.HomeAppActionsOverlay
+import com.zenlauncher.zenmode.ui.screens.HomeAppsPickerOverlay
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
 import com.zenlauncher.zenmode.ui.screens.ZenBuddyConnectBottomSheet
 import androidx.compose.runtime.collectAsState
@@ -68,6 +70,10 @@ class MainActivity : AppCompatActivity() {
     // is singleTask, so returning from Settings resumes it rather than recreating it.
     private var homeAppCount by mutableStateOf(AppGridPreferences.DEFAULT_APP_COUNT)
     private var showSearch by mutableStateOf(false)
+    private var longPressedApp by mutableStateOf<AppInfo?>(null)
+    private var showHomeAppsPicker by mutableStateOf(false)
+    // The app whose actions opened the picker, so back returns to them.
+    private var pickerReturnApp: AppInfo? = null
     private var showBuddyConnect by mutableStateOf(false)
     private var showBuddyBattle by mutableStateOf(false)
     private var showAccessibilityDisclosure by mutableStateOf(false)
@@ -88,8 +94,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Home button pressed while already on launcher — dismiss search overlay
+        // Home button pressed while already on launcher — dismiss search and home-app overlays
         showSearch = false
+        longPressedApp = null
+        showHomeAppsPicker = false
         if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false)) {
             showBuddyConnect = true
         }
@@ -381,25 +389,8 @@ class MainActivity : AppCompatActivity() {
                             startActivity(launchIntent)
                         }
                     },
-                    onAppLongClick = { appInfo ->
-                        val pinned = repository.getPinnedApps()
-                        val isCurrentlyPinned = pinned.contains(appInfo.packageName.toString())
-                        val toggled = repository.togglePinnedApp(appInfo.packageName.toString())
-                        if (!isCurrentlyPinned && !toggled) {
-                            Toast.makeText(
-                                this,
-                                "Only ${UsageRepository.MAX_PINNED_APPS} apps can be pinned",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        loadInstalledApps()
-                    },
-                    onAppInfoClick = { appInfo ->
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.parse("package:${appInfo.packageName}")
-                        }
-                        startActivity(intent)
-                    },
+                    onAppLongClick = { longPressedApp = it },
+                    modifier = Modifier.zenOverlayBlur(longPressedApp != null || showHomeAppsPicker),
                     apps = run {
                         val notifCounts = ZenNotificationListenerService.notificationCounts
                         installedApps.map { app ->
@@ -423,6 +414,46 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                 }
+
+                // Long-press on a home app: frosted actions, then the frosted home-apps picker.
+                HomeAppActionsOverlay(
+                    app = longPressedApp,
+                    position = installedApps.take(homeAppCount)
+                        .indexOfFirst { it.packageName == longPressedApp?.packageName } + 1,
+                    appCount = homeAppCount,
+                    onChangeHomeApps = {
+                        pickerReturnApp = longPressedApp
+                        longPressedApp = null
+                        showHomeAppsPicker = true
+                    },
+                    onAppInfo = { appInfo ->
+                        longPressedApp = null
+                        startActivity(
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                .setData(Uri.parse("package:${appInfo.packageName}"))
+                        )
+                    },
+                    onDismiss = { longPressedApp = null }
+                )
+                HomeAppsPickerOverlay(
+                    visible = showHomeAppsPicker,
+                    limit = homeAppCount,
+                    initialSelection = repository.getPinnedApps(),
+                    onSelectionChange = { packages ->
+                        // Home apps reuse the pinned-apps list; home reorders live behind the blur.
+                        repository.savePinnedApps(packages)
+                        loadInstalledApps()
+                    },
+                    onDismiss = {
+                        showHomeAppsPicker = false
+                        pickerReturnApp = null
+                    },
+                    onBack = {
+                        showHomeAppsPicker = false
+                        longPressedApp = pickerReturnApp
+                        pickerReturnApp = null
+                    }
+                )
 
                 // Accessibility disclosure full-screen
                 if (showAccessibilityDisclosure) {

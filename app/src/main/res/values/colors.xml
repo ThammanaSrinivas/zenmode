@@ -50,6 +50,12 @@
     <color name="paper_white">#FFFFFF</color>
     <color name="paper_ink">#F5F5F1</color>
     <color name="paper_hairline">#DBD9D2</color>
+    <color name="paper_hairline_soft">#E4E2DB</color>
+    <!-- action-outline-border: outline buttons, unchecked switch track edge -->
+    <color name="paper_outline">#C9C7BD</color>
+    <!-- hairline inside a zen_050 tint surface / an amber_on reward surface -->
+    <color name="zen_050_line">#C8E7CA</color>
+    <color name="amber_on_line">#EFD98A</color>
 
     <!-- stone · neutrals -->
     <color name="stone_600">#5E6058</color>
