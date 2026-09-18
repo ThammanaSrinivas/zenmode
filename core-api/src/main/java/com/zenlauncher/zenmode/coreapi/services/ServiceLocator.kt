@@ -17,6 +17,12 @@ object ServiceLocator {
     lateinit var remoteConfigProvider: RemoteConfigProvider
     lateinit var proEntitlementProvider: ProEntitlementProvider
 
+    /**
+     * Not lateinit on purpose: backends that don't sell Pro yet (core-private today) keep
+     * compiling and every user is simply Free. Not part of [isInitialized] for the same reason.
+     */
+    var entitlementProvider: EntitlementProvider = FreeEntitlementProvider
+
     /** Emitted when FCM delivers a buddy-reaction push while app is running. */
     val buddyReactedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
 

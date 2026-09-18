@@ -220,13 +220,21 @@ class UsageRepository(private val context: Context, private val analyticsManager
         return queried
     }
 
-    fun getWeeklyScreenTimeMillis(): List<Long> {
+    fun getWeeklyScreenTimeMillis(): List<Long> = getDailyScreenTimeMillis(7)
+
+    /**
+     * Screen time per day for the last [days] days, oldest first, today last.
+     * Past days are cached; the cache keeps [CACHE_RETENTION_DAYS] so the Pro 30-day range
+     * doesn't re-query UsageStats on every open. Call off the main thread for [days] > 7.
+     */
+    fun getDailyScreenTimeMillis(days: Int): List<Long> {
+        require(days in 1..CACHE_RETENTION_DAYS) { "days must be in 1..$CACHE_RETENTION_DAYS" }
         val today = getTodayDate()
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
         val result = mutableListOf<Long>()
 
-        for (daysAgo in 6 downTo 0) {
+        for (daysAgo in (days - 1) downTo 0) {
             val cal = Calendar.getInstance().apply {
                 add(Calendar.DAY_OF_YEAR, -daysAgo)
             }
@@ -251,8 +259,8 @@ class UsageRepository(private val context: Context, private val analyticsManager
             result.add(millis)
         }
 
-        // Cleanup stale entries older than 7 days
-        val cutoffCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -7) }
+        // Cleanup stale entries older than the retention window
+        val cutoffCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -CACHE_RETENTION_DAYS) }
         val cutoffDate = dateFormat.format(cutoffCal.time)
         val editor = prefs.edit()
         var hasRemovals = false
@@ -273,6 +281,9 @@ class UsageRepository(private val context: Context, private val analyticsManager
     fun getWeeklyScreenTimeHours(): List<Float> {
         return getWeeklyScreenTimeMillis().map { it / 3_600_000f }
     }
+
+    fun getDailyScreenTimeHours(days: Int): List<Float> =
+        getDailyScreenTimeMillis(days).map { it / 3_600_000f }
 
     fun getTodayUsage(): DailyUsage {
         val granted = UsageAccess.isGranted(context)
@@ -614,6 +625,9 @@ class UsageRepository(private val context: Context, private val analyticsManager
 
     companion object {
         const val MAX_PINNED_APPS = 8
+
+        /** Longest range any screen asks for (the Pro 30-day chart). */
+        const val CACHE_RETENTION_DAYS = 30
 
         private const val KEY_RECENT_LIKE_TIMESTAMPS = "recent_like_timestamps"
         const val LIKE_WINDOW_MS: Long = 20L * 60_000L  // 20 minutes
