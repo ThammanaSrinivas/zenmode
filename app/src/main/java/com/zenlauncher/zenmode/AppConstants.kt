@@ -88,6 +88,9 @@ object AppConstants {
 
     // External URLs
     const val GITHUB_URL = "https://github.com/ThammanaSrinivas/zenmode"
+    // Buddy invite links. Path must match the pathPrefix in AndroidManifest.xml's
+    // App Links intent-filter and the /b/ route on the zenmodeos.com Firebase Hosting site.
+    const val BUDDY_INVITE_BASE_URL = "https://zenmodeos.com/b/"
     const val YT_BUDDY_INVITE_URL = "https://youtu.be/48M1x2ryhpI"   // TODO: replace with actual YT link
     const val YT_BUDDY_CONFUSED_URL = "https://youtu.be/48M1x2ryhpI" // TODO: replace later
     const val PRIVACY_POLICY_URL = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"

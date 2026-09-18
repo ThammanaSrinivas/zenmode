@@ -56,6 +56,17 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Buddy invite links (zenmodeos.com/b/{code}). autoVerify triggers Android's
+                 assetlinks.json handshake so this opens ZenMode directly instead of a chooser. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="zenmodeos.com"
+                    android:pathPrefix="/b/" />
+            </intent-filter>
         </activity>
 
         <service

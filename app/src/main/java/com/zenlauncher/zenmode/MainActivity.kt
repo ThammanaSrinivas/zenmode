@@ -86,6 +86,9 @@ class MainActivity : AppCompatActivity() {
     private var homeAppCount by mutableStateOf(AppGridPreferences.DEFAULT_APP_COUNT)
     private var showSearch by mutableStateOf(false)
     private var showBuddyConnect by mutableStateOf(false)
+    // Set from a zenmodeos.com/b/{code} App Link tap; consumed once the Connect screen
+    // is actually on-screen (see the LaunchedEffect next to ZenBroStage.Connect below).
+    private var pendingInviteCode by mutableStateOf<String?>(null)
     // Set when a connect succeeds; swaps My Zen Circle for the "You're Zen Bros now" screen.
     private var connectedBuddyName by mutableStateOf<String?>(null)
     // "Maybe later" on the connected screen, or the buddy card on home, opens the circle dashboard.
@@ -120,13 +123,27 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         // Home button pressed while already on launcher — dismiss search overlay
         showSearch = false
+        val openedFromInviteLink = handleDeepLink(intent)
         // Both extras open "the buddy area" - which screen that resolves to is
         // openBuddyFlow()'s call, not the sender's (Settings, an old push notification, etc.).
-        if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
+        if (openedFromInviteLink ||
+            intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
             intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)
         ) {
             openBuddyFlow()
         }
+    }
+
+    /**
+     * Parses a zenmodeos.com/b/{code} App Link tap into [pendingInviteCode]. Returns true if
+     * the intent was one of these links, so callers know to also call [openBuddyFlow].
+     */
+    private fun handleDeepLink(intent: Intent): Boolean {
+        val data = intent.data ?: return false
+        if (data.host != "zenmodeos.com" || data.path?.startsWith("/b/") != true) return false
+        val code = data.lastPathSegment?.takeIf { it.isNotBlank() } ?: return false
+        pendingInviteCode = code
+        return true
     }
 
     override fun onResume() {
@@ -277,7 +294,9 @@ class MainActivity : AppCompatActivity() {
         homeAppCount = AppGridPreferences.getAppCount(this)
 
         // Handle cold-start intents
-        if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
+        val openedFromInviteLink = handleDeepLink(intent)
+        if (openedFromInviteLink ||
+            intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
             intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)
         ) {
             openBuddyFlow()
@@ -540,6 +559,16 @@ class MainActivity : AppCompatActivity() {
                         connectedBuddyName != null -> ZenBroStage.Connected(connectedBuddyName!!)
                         else -> ZenBroStage.Connect
                     }
+                    // An invite-link tap only auto-connects once the Connect screen is actually
+                    // showing — if openBuddyFlow() routed to the circle/migration-prompt instead
+                    // (user already has a buddy), the code is left for closeBuddyConnect() to drop.
+                    androidx.compose.runtime.LaunchedEffect(pendingInviteCode, stage) {
+                        val code = pendingInviteCode
+                        if (code != null && stage == ZenBroStage.Connect) {
+                            pendingInviteCode = null
+                            connectWithInviteCode(code)
+                        }
+                    }
                     AnimatedContent(
                         targetState = stage,
                         contentKey = { it::class },
@@ -642,6 +671,9 @@ class MainActivity : AppCompatActivity() {
         connectedBuddyName = null
         showZenCircle = false
         circleBuddyName = null
+        // Drops a still-pending invite-link code if the flow closed before it ever
+        // reached the Connect screen (e.g. the migration prompt intercepted it).
+        pendingInviteCode = null
     }
 
     /**
@@ -704,17 +736,39 @@ class MainActivity : AppCompatActivity() {
     /** "Share a link": the Play Store link plus this user's code, via the system share sheet. */
     private fun shareBuddyInvite(code: String) {
         ServiceLocator.analyticsTracker.trackBuddyShareStarted("link")
+        // One tap for anyone who already has ZenMode installed (App Links opens straight
+        // into the Connect screen via handleDeepLink); the same link also works with no
+        // app installed - the zenmodeos.com/b/ page there points to the Play Store instead.
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on ZenMode")
             putExtra(
                 Intent.EXTRA_TEXT,
-                "Be my Zen Bro on ZenMode! Get the app: " +
-                    "https://play.google.com/store/apps/details?id=$packageName\n" +
-                    "Then paste my Zen code in My Zen Circle: $code"
+                "Be my Zen Bro on ZenMode! ${AppConstants.BUDDY_INVITE_BASE_URL}$code"
             )
         }
         startActivity(Intent.createChooser(intent, "Share invite"))
+    }
+
+    /** Auto-connect path for a zenmodeos.com/b/{code} App Link tap - same outcome as pasting
+     *  the code into "Use a code", minus the inline status text (there's no field to show it in). */
+    private fun connectWithInviteCode(targetUid: String) {
+        lifecycleScope.launch {
+            when (val result = addBuddy(targetUid)) {
+                is BuddyAddResult.Success -> {
+                    connectSuccessJob = lifecycleScope.launch {
+                        kotlinx.coroutines.delay(700)
+                        connectedBuddyName = result.buddyName
+                    }
+                }
+                is BuddyAddResult.AlreadyBuddies ->
+                    Toast.makeText(this@MainActivity, "You're already connected with ${result.buddyName}.", Toast.LENGTH_SHORT).show()
+                is BuddyAddResult.SelfAdd ->
+                    Toast.makeText(this@MainActivity, "That's your own invite link.", Toast.LENGTH_SHORT).show()
+                is BuddyAddResult.Error ->
+                    Toast.makeText(this@MainActivity, result.message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun requestPostNotificationsIfNeeded() {
