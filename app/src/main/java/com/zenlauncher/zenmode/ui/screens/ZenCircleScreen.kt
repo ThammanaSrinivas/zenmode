@@ -137,7 +137,11 @@ data class ZenCircleMember(
     /** 0–100, shown as x.y out of 10. */
     val zenScore: Int,
     val streaks: Int,
-    val changePercent: Int? = null
+    val changePercent: Int? = null,
+    /** Empty for the classic-buddy reskin (no real circle, nothing to react into yet);
+     * a real Firebase Auth UID once backed by an actual Circle. Needed to target
+     * reactions at a specific member -- see ReactionButton's onSendLove/onSendMelt. */
+    val uid: String = ""
 )
 
 private const val FrontCardScale = 201.66f / 150.67f

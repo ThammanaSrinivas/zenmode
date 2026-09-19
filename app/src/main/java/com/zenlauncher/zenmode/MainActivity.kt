@@ -104,6 +104,7 @@ class MainActivity : AppCompatActivity() {
     private var showBuddyFlowMigrationPrompt by mutableStateOf(false)
     private var showAccessibilityDisclosure by mutableStateOf(false)
     private lateinit var accountabilityViewModel: AccountabilityViewModel
+    private lateinit var circleViewModel: CircleViewModel
 
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
@@ -224,6 +225,9 @@ class MainActivity : AppCompatActivity() {
         accountabilityViewModel = ViewModelProvider(
             this, AccountabilityViewModelFactory(repository)
         )[AccountabilityViewModel::class.java]
+        circleViewModel = ViewModelProvider(
+            this, CircleViewModelFactory(repository)
+        )[CircleViewModel::class.java]
 
         // for testing onboarding just remove !
         if (!repository.isOnboardingComplete()) {
@@ -291,6 +295,7 @@ class MainActivity : AppCompatActivity() {
                         ?: ServiceLocator.authProvider.getCurrentUserId()
                 }
                 val accountabilityUiState by accountabilityViewModel.uiState.observeAsState(AccountabilityUiState())
+                val circleUiState by circleViewModel.uiState.observeAsState(CircleUiState())
                 val showForceUpdate by viewModel.showForceUpdateDialog.collectAsState(initial = false)
 
                 if (showForceUpdate) {
@@ -348,6 +353,18 @@ class MainActivity : AppCompatActivity() {
                             accountabilityViewModel.resetDisconnectResult()
                         }
                         null -> Unit
+                    }
+                }
+
+                // Same reasoning as the disconnect handler above -- without this, leaving a
+                // real circle (with no classic buddy underneath) falls back to rendering a
+                // placeholder "buddyName" member ("Zen Bro") that isn't a real person, instead
+                // of navigating away.
+                androidx.compose.runtime.LaunchedEffect(circleUiState.justLeftCircle) {
+                    if (circleUiState.justLeftCircle) {
+                        closeBuddyConnect()
+                        showBuddyConnect = true
+                        circleViewModel.consumeLeftCircleEvent()
                     }
                 }
 
@@ -553,41 +570,78 @@ class MainActivity : AppCompatActivity() {
                         label = "zenBroConnectFlow"
                     ) { current ->
                         when (current) {
-                            is ZenBroStage.Circle -> ZenCircleScreen(
-                                members = listOf(
-                                    ZenCircleMember(
-                                        name = "You",
-                                        isYou = true,
-                                        screenTimeMinutes = (usage?.screenTimeInMillis ?: 0L) / 60_000,
-                                        zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
-                                        streaks = streakCount,
-                                        changePercent = yesterdayChangePercent
-                                    ),
-                                    ZenCircleMember(
-                                        name = current.buddyName,
-                                        isYou = false,
-                                        screenTimeMinutes = buddyStats?.screenTimeMins ?: 0L,
-                                        zenScore = AppConstants.PLACEHOLDER_BUDDY_ZEN_SCORE,
-                                        streaks = AppConstants.PLACEHOLDER_BUDDY_STREAK
+                            is ZenBroStage.Circle -> {
+                                // Real circle takes over once the user has actually created/joined
+                                // one (circleUiState.circle != null) -- until then this stays the
+                                // classic-buddy reskin exactly as before. Melt reactions and
+                                // real leaveCircle() only make sense once a real circle exists;
+                                // there's nowhere in Firestore for them to go otherwise.
+                                val realCircle = circleUiState.circle
+                                val members = if (realCircle != null) {
+                                    realCircle.members.map { m ->
+                                        ZenCircleMember(
+                                            name = if (m.uid == userCode) "You" else (m.displayName?.takeIf { it.isNotBlank() } ?: "Member"),
+                                            isYou = m.uid == userCode,
+                                            screenTimeMinutes = if (m.uid == userCode) (usage?.screenTimeInMillis ?: 0L) / 60_000 else 0L,
+                                            zenScore = m.zenScore,
+                                            // Real circles don't track per-member streaks yet (not in
+                                            // the schema) -- only "you" gets the real local value.
+                                            streaks = if (m.uid == userCode) streakCount else 0,
+                                            changePercent = if (m.uid == userCode) yesterdayChangePercent else null,
+                                            uid = m.uid
+                                        )
+                                    }
+                                } else {
+                                    listOf(
+                                        ZenCircleMember(
+                                            name = "You",
+                                            isYou = true,
+                                            screenTimeMinutes = (usage?.screenTimeInMillis ?: 0L) / 60_000,
+                                            zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                                            streaks = streakCount,
+                                            changePercent = yesterdayChangePercent
+                                        ),
+                                        ZenCircleMember(
+                                            name = current.buddyName,
+                                            isYou = false,
+                                            screenTimeMinutes = buddyStats?.screenTimeMins ?: 0L,
+                                            zenScore = AppConstants.PLACEHOLDER_BUDDY_ZEN_SCORE,
+                                            streaks = AppConstants.PLACEHOLDER_BUDDY_STREAK
+                                        )
                                     )
-                                ),
-                                userCode = userCode,
-                                // Opened from home there's no connected screen to return to.
-                                onBackClick = { if (connectedBuddyName != null) showZenCircle = false else closeBuddyConnect() },
-                                onShareInviteLink = { userCode?.let { shareBuddyInvite(it) } },
-                                onCopyInviteCode = { userCode?.let { copyUserCode(it, showToast = false) } },
-                                onBackToHome = { closeBuddyConnect() },
-                                onSendLove = { viewModel.sendLike() },
-                                onSendMelt = {
-                                    Toast.makeText(this@MainActivity, "Melt reactions are coming soon", Toast.LENGTH_SHORT).show()
-                                },
-                                onWeeklyClick = {
-                                    Toast.makeText(this@MainActivity, "Weekly rankings are part of PRO", Toast.LENGTH_SHORT).show()
-                                },
-                                removingBuddy = removingBuddy,
-                                onRemoveBuddy = { removeBuddy() },
-                                onLeaveCircle = { removeBuddy() }
-                            )
+                                }
+                                ZenCircleScreen(
+                                    members = members,
+                                    userCode = userCode,
+                                    // Opened from home there's no connected screen to return to.
+                                    onBackClick = { if (connectedBuddyName != null) showZenCircle = false else closeBuddyConnect() },
+                                    onShareInviteLink = { userCode?.let { shareBuddyInvite(it) } },
+                                    onCopyInviteCode = { userCode?.let { copyUserCode(it, showToast = false) } },
+                                    onBackToHome = { closeBuddyConnect() },
+                                    onSendLove = { member ->
+                                        if (realCircle != null) {
+                                            circleViewModel.sendReaction(member.uid, com.zenlauncher.zenmode.coreapi.ReactionType.LOVE)
+                                        } else {
+                                            viewModel.sendLike()
+                                        }
+                                    },
+                                    onSendMelt = { member ->
+                                        if (realCircle != null) {
+                                            circleViewModel.sendReaction(member.uid, com.zenlauncher.zenmode.coreapi.ReactionType.MELT)
+                                        } else {
+                                            Toast.makeText(this@MainActivity, "Melt reactions are coming soon", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    onWeeklyClick = {
+                                        Toast.makeText(this@MainActivity, "Weekly rankings are part of PRO", Toast.LENGTH_SHORT).show()
+                                    },
+                                    removingBuddy = removingBuddy || circleUiState.removing,
+                                    onRemoveBuddy = { removeBuddy() },
+                                    onLeaveCircle = {
+                                        if (realCircle != null) circleViewModel.leaveCircle() else removeBuddy()
+                                    }
+                                )
+                            }
                             is ZenBroStage.Connected -> ZenBroConnectedScreen(
                                 buddyName = current.buddyName,
                                 usage = usage,

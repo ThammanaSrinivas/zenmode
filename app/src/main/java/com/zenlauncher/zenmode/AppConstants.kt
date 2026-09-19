@@ -19,6 +19,10 @@ object AppConstants {
     // Random Connect
     const val RANDOM_CONNECT_COOLDOWN_MS = 30 * 1000L
 
+    // Zen Circle cap and reaction rate-limit constants live in core-api (Circle.kt /
+    // UsageRepository.kt), not here — core-private's FirestoreDataSourceImpl needs the cap
+    // for its join check, and core-private cannot depend on the app module.
+
     // v3 home screen placeholders. Stand-ins until the scoring and rewards
     // backend exists — swap these for real values, not the UI around them.
     const val PLACEHOLDER_ZEN_SCORE = 93

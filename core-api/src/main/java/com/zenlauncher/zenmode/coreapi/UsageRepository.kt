@@ -413,6 +413,101 @@ class UsageRepository(private val context: Context, private val analyticsManager
         return prefs.getLong("buddy_screen_time", 0)
     }
 
+    // ── Zen Circle cache ──────────────────────────────────────────────
+    // Same offline-first pattern as the buddy cache above, reshaped for up to
+    // ZEN_CIRCLE_MAX_MEMBERS members: one JSON blob (org.json — no new serialization
+    // library, matching the Gold Streak precedent) instead of N scalar keys per member.
+
+    fun cacheCircle(circle: Circle) {
+        val membersJson = org.json.JSONArray()
+        circle.members.forEach { m ->
+            membersJson.put(
+                org.json.JSONObject()
+                    .put("uid", m.uid)
+                    .put("displayName", m.displayName ?: org.json.JSONObject.NULL)
+                    .put("zenScore", m.zenScore)
+                    .put("lastUpdatedEpochMs", m.lastUpdatedEpochMs)
+                    .put("role", m.role.name)
+                    .put("joinedAtEpochMs", m.joinedAtEpochMs)
+            )
+        }
+        val json = org.json.JSONObject()
+            .put("id", circle.id)
+            .put("name", circle.name)
+            .put("leaderUid", circle.leaderUid)
+            .put("createdAtEpochMs", circle.createdAtEpochMs)
+            .put("members", membersJson)
+        prefs.edit().putString("circle_cache_json", json.toString()).apply()
+    }
+
+    fun getCachedCircle(): Circle? {
+        val raw = prefs.getString("circle_cache_json", null) ?: return null
+        return try {
+            val json = org.json.JSONObject(raw)
+            val membersJson = json.getJSONArray("members")
+            val members = (0 until membersJson.length()).map { i ->
+                val m = membersJson.getJSONObject(i)
+                CircleMember(
+                    uid = m.getString("uid"),
+                    displayName = if (m.isNull("displayName")) null else m.getString("displayName"),
+                    zenScore = m.getInt("zenScore"),
+                    lastUpdatedEpochMs = m.getLong("lastUpdatedEpochMs"),
+                    role = CircleRole.valueOf(m.getString("role")),
+                    joinedAtEpochMs = m.getLong("joinedAtEpochMs")
+                )
+            }
+            Circle(
+                id = json.getString("id"),
+                name = json.getString("name"),
+                leaderUid = json.getString("leaderUid"),
+                members = members,
+                createdAtEpochMs = json.getLong("createdAtEpochMs")
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun clearCachedCircle() {
+        prefs.edit().remove("circle_cache_json").remove("circle_id_cached").apply()
+    }
+
+    /** Returns null if not yet cached, a circleId/"" (no circle) if previously set by StatSyncWorker's self-heal. */
+    fun getCachedCircleId(): String? {
+        return if (prefs.contains("circle_id_cached")) prefs.getString("circle_id_cached", null) else null
+    }
+
+    fun saveCircleId(circleId: String?) {
+        prefs.edit().putString("circle_id_cached", circleId ?: "").apply()
+    }
+
+    // ── Circle reaction rate limit, per sender->target pair ─────────────
+    // Generalizes the buddy-like limiter above (which only ever had one possible
+    // target) — same window/count shape (see AppConstants doc comment), keyed by target
+    // since Circle has up to ZEN_CIRCLE_MAX_MEMBERS - 1 possible recipients.
+
+    fun getRecentReactionTimestamps(targetUid: String): List<Long> {
+        val raw = prefs.getString("recent_reaction_timestamps_$targetUid", "") ?: ""
+        if (raw.isEmpty()) return emptyList()
+        val now = System.currentTimeMillis()
+        return raw.split(",")
+            .mapNotNull { it.toLongOrNull() }
+            .filter { now - it < CIRCLE_REACTION_WINDOW_MS }
+            .sorted()
+    }
+
+    fun recordReactionSent(targetUid: String) {
+        val pruned = (getRecentReactionTimestamps(targetUid) + System.currentTimeMillis()).joinToString(",")
+        prefs.edit().putString("recent_reaction_timestamps_$targetUid", pruned).apply()
+    }
+
+    fun removeLastReactionTimestamp(targetUid: String) {
+        val current = getRecentReactionTimestamps(targetUid).toMutableList()
+        if (current.isEmpty()) return
+        current.removeAt(current.size - 1)
+        prefs.edit().putString("recent_reaction_timestamps_$targetUid", current.joinToString(",")).apply()
+    }
+
     fun getTodayDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
@@ -524,6 +619,11 @@ class UsageRepository(private val context: Context, private val analyticsManager
         private const val KEY_RECENT_LIKE_TIMESTAMPS = "recent_like_timestamps"
         const val LIKE_WINDOW_MS: Long = 20L * 60_000L  // 20 minutes
         const val LIKE_MAX_COUNT: Int = 4
+
+        // Circle reaction rate limit — same shape as the buddy-like limiter above,
+        // per sender->target pair rather than a single fixed target.
+        const val CIRCLE_REACTION_WINDOW_MS: Long = 20L * 60_000L  // 20 minutes
+        const val CIRCLE_REACTION_MAX_COUNT: Int = 4
     }
 
     fun clearAllData() {
