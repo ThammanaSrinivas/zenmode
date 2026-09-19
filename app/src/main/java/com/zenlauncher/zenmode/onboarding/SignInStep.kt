@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.onboarding
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,13 +17,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +41,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -52,6 +61,7 @@ internal fun SignInStep(
     isLoading: Boolean,
     onBack: () -> Unit,
     onGoogleSignIn: () -> Unit,
+    onEmailSignIn: (email: String, password: String) -> Unit,
     onExplore: () -> Unit
 ) {
     val uriHandler = LocalUriHandler.current
@@ -129,6 +139,59 @@ internal fun SignInStep(
                 PromiseRow("Only your daily screen-time total syncs, in minutes.")
                 PromiseRow("The app is open source on GitHub.")
                 PromiseRow("Delete your account anytime from Settings.", last = true)
+            }
+
+            Spacer(Modifier.height(20.rdp))
+            ReviewerSignIn(isLoading = isLoading, onSignIn = onEmailSignIn)
+            Spacer(Modifier.height(20.rdp))
+        }
+    }
+}
+
+/**
+ * Email/password sign-in for Play Store reviewers, who get a test account rather than a
+ * Google login. Kept low-key behind a small link.
+ */
+@Composable
+private fun ReviewerSignIn(isLoading: Boolean, onSignIn: (email: String, password: String) -> Unit) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (!expanded) {
+            OnboardingTextButton(
+                text = "Reviewer? Sign in here",
+                onClick = { expanded = true },
+                color = colorResource(R.color.stone_500)
+            )
+        }
+        AnimatedVisibility(visible = expanded) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.rdp)) {
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OnboardingTextButton(
+                    text = "Sign in",
+                    onClick = {
+                        if (!isLoading && email.isNotBlank() && password.isNotBlank()) onSignIn(email.trim(), password)
+                    },
+                    color = colorResource(R.color.zen_700),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
         }
     }

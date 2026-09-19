@@ -5,7 +5,7 @@ package com.zenlauncher.zenmode.onboarding
  * (who sees which step) are unit-testable.
  *
  * New users:        Welcome → Stories → Sign in → Promise → Circle → Permissions → Home apps
- * Returning (v2):   Welcome → Stories → Promise → Circle → Permissions → Home apps
+ * Returning (v2):   same flow; the Welcome copy changes to "Update now"
  *
  * Sign-in is skipped for anyone already signed in, Circle for anyone who isn't (buddies
  * need an account), and Permissions once every required grant is in place.
@@ -38,7 +38,7 @@ object OnboardingFlow {
         }
         add(OnboardingStep.WELCOME)
         add(OnboardingStep.STORIES)
-        if (!context.isReturningUser && !context.isSignedIn) add(OnboardingStep.SIGN_IN)
+        if (!context.isSignedIn) add(OnboardingStep.SIGN_IN)
         add(OnboardingStep.PROMISE)
         if (context.isSignedIn) add(OnboardingStep.CIRCLE)
         if (!context.hasRequiredPermissions) add(OnboardingStep.PERMISSIONS)

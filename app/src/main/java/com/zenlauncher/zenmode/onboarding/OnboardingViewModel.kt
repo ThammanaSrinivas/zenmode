@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.zenlauncher.zenmode.AppGridPreferences
+import com.zenlauncher.zenmode.LauncherActivities
 import com.zenlauncher.zenmode.PromisePreferences
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
@@ -224,17 +225,16 @@ class OnboardingViewModel(
 
     private fun queryLaunchableApps(): Pair<List<HomeAppOption>, List<String>> {
         val pm = context.packageManager
-        val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         val iconPx = (48 * context.resources.displayMetrics.density).toInt()
-        val apps = pm.queryIntentActivities(launcherIntent, 0)
+        val apps = LauncherActivities.query(pm)
             .asSequence()
             .filter { it.activityInfo.packageName != context.packageName }
-            .distinctBy { it.activityInfo.packageName }
             .map { info ->
                 HomeAppOption(
                     packageName = info.activityInfo.packageName,
                     label = info.loadLabel(pm).toString(),
-                    icon = info.loadIcon(pm).toBitmap(iconPx, iconPx).asImageBitmap()
+                    icon = info.loadIcon(pm).toBitmap(iconPx, iconPx).asImageBitmap(),
+                    key = LauncherActivities.key(info)
                 )
             }
             .sortedBy { it.label.lowercase() }
@@ -277,6 +277,11 @@ class OnboardingViewModel(
     fun complete() {
         val state = _uiState.value
         if (state.finished) return
+        // Grants can be revoked behind the app's back; never finish without the required ones.
+        if (!ZenPermission.hasAllRequired(ZenPermission.grantedSet(context))) {
+            returnToPermissions()
+            return
+        }
 
         PromisePreferences.setDailyHours(context, state.promiseHours)
         // A fresh instance may finish before its app list loads; the draft has the picks.
@@ -304,6 +309,15 @@ class OnboardingViewModel(
         OnboardingDraft.clear(context)
 
         _uiState.update { it.copy(finished = true) }
+    }
+
+    private fun returnToPermissions() {
+        val steps = OnboardingFlow.steps(
+            currentContext(isReturningUser = _uiState.value.isReturningUser)
+                .copy(hasRequiredPermissions = false)
+        )
+        _uiState.update { it.copy(steps = steps, granted = ZenPermission.grantedSet(context)) }
+        moveTo(steps.indexOf(OnboardingStep.PERMISSIONS))
     }
 
     // ── Device reads ──────────────────────────────────────────────

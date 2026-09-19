@@ -64,8 +64,7 @@ internal fun PermissionsStep(
     granted: Set<ZenPermission>,
     onBack: () -> Unit,
     onAllow: (ZenPermission) -> Unit,
-    onContinue: () -> Unit,
-    onSkip: () -> Unit
+    onContinue: () -> Unit
 ) {
     val requiredDone = ZenPermission.hasAllRequired(granted)
     val requiredCount = permissions.count { it.required }
@@ -80,7 +79,6 @@ internal fun PermissionsStep(
                 enabled = requiredDone,
                 style = if (requiredDone) OnboardingButtonStyle.Brand else OnboardingButtonStyle.Ink
             )
-            if (!requiredDone) OnboardingTextButton(text = "Skip for now", onClick = onSkip)
         }
     ) {
         Column(

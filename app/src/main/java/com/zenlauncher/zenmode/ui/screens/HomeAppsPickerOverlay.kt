@@ -1,7 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -66,6 +65,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.graphics.drawable.toBitmap
+import com.zenlauncher.zenmode.LauncherActivities
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.ZenFrostedOverlay
 import com.zenlauncher.zenmode.ui.components.ZenOverlayTagline
@@ -81,20 +81,21 @@ import kotlinx.coroutines.withContext
 data class HomeAppPickerItem(
     val label: String,
     val packageName: String,
-    val icon: Drawable
+    val icon: Drawable,
+    /** Package + activity: one package can have two launcher entries (see [LauncherActivities]). */
+    val key: String = packageName
 )
 
 /** Launcher-visible apps, A–Z. Same source as the home grid in MainActivity. */
 fun loadHomeAppPickerItems(context: Context): List<HomeAppPickerItem> {
     val pm = context.packageManager
-    val intent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
-    return pm.queryIntentActivities(intent, 0)
-        .distinctBy { it.activityInfo.packageName }
+    return LauncherActivities.query(pm)
         .map {
             HomeAppPickerItem(
                 label = it.loadLabel(pm).toString(),
                 packageName = it.activityInfo.packageName,
-                icon = it.loadIcon(pm)
+                icon = it.loadIcon(pm),
+                key = LauncherActivities.key(it)
             )
         }
         .sortedBy { it.label.lowercase() }
@@ -244,7 +245,7 @@ fun HomeAppsPickerOverlay(
                 verticalArrangement = Arrangement.spacedBy(14.rdp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(items = visibleApps, key = { it.packageName }) { app ->
+                items(items = visibleApps, key = { it.key }) { app ->
                     val position = selection.indexOf(app.packageName)
                     PickerAppCell(
                         app = app,
@@ -403,7 +404,7 @@ private fun HomeSlotGrid(
 
 @Composable
 private fun rememberIconBitmap(app: HomeAppPickerItem) =
-    remember(app.packageName) { app.icon.toBitmap(width = 128, height = 128).asImageBitmap() }
+    remember(app.key) { app.icon.toBitmap(width = 128, height = 128).asImageBitmap() }
 
 @Composable
 private fun HomeSlot(

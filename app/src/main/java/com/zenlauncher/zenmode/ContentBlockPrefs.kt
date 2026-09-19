@@ -101,10 +101,33 @@ object ContentBlockPrefs {
     // ── Service gates ─────────────────────────────────────────────
 
     /** Fast pre-check so the accessibility service can bail before touching the node tree. */
-    fun isAnyBlockEnabled(ctx: Context): Boolean {
+    fun isAnyBlockEnabled(ctx: Context): Boolean = snapshot(ctx).isAnyBlockEnabled
+
+    /**
+     * Everything the accessibility service checks per event, read in one pass. The service
+     * keeps one and re-reads it from its change listener instead of hitting prefs per event.
+     */
+    data class Snapshot(
+        val pausedUntil: Long,
+        val quietedApps: Set<String>,
+        val blockedSurfaceKeys: Set<String>,
+        val isDebugDumpEnabled: Boolean
+    ) {
+        val isAnyBlockEnabled: Boolean get() = blockedSurfaceKeys.isNotEmpty() || quietedApps.isNotEmpty()
+        fun isPaused(now: Long): Boolean = pausedUntil > now
+        fun isAppQuieted(packageName: String): Boolean = packageName in quietedApps
+        fun isSurfaceBlocked(packageName: String, surfaceId: String): Boolean =
+            surfaceKey(packageName, surfaceId) in blockedSurfaceKeys
+    }
+
+    fun snapshot(ctx: Context): Snapshot {
         val all = prefs(ctx).all
-        return all.any { (k, v) -> k.startsWith(SURFACE_PREFIX) && v == true } ||
-            (all[KEY_QUIETED_APPS] as? Set<*>).orEmpty().isNotEmpty()
+        return Snapshot(
+            pausedUntil = all[KEY_PAUSED_UNTIL] as? Long ?: 0L,
+            quietedApps = (all[KEY_QUIETED_APPS] as? Set<*>).orEmpty().filterIsInstance<String>().toSet(),
+            blockedSurfaceKeys = all.filter { (k, v) -> k.startsWith(SURFACE_PREFIX) && v == true }.keys,
+            isDebugDumpEnabled = all[KEY_DEBUG_DUMP] as? Boolean ?: false
+        )
     }
 
     fun isDebugDumpEnabled(ctx: Context): Boolean =

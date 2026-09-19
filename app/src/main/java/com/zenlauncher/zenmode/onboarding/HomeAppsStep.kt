@@ -63,7 +63,13 @@ import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 
 @Immutable
-data class HomeAppOption(val packageName: String, val label: String, val icon: ImageBitmap)
+data class HomeAppOption(
+    val packageName: String,
+    val label: String,
+    val icon: ImageBitmap,
+    /** Package + activity: one package can have two launcher entries (see LauncherActivities). */
+    val key: String = packageName
+)
 
 /**
  * 07 · Pick the 8 apps on the ZenHome, pre-filled with calm essentials, then the final
@@ -131,7 +137,7 @@ internal fun HomeAppsStep(
             horizontalArrangement = Arrangement.spacedBy(8.rdp),
             verticalArrangement = Arrangement.spacedBy(14.rdp)
         ) {
-            items(apps, key = { it.packageName }) { app ->
+            items(apps, key = { it.key }) { app ->
                 AppTile(
                     app = app,
                     isSelected = app.packageName in selected,

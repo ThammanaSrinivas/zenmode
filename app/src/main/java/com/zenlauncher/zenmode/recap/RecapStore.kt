@@ -15,7 +15,6 @@ import java.time.LocalDate
 class RecapStore(context: Context) {
 
     private val file = File(context.applicationContext.filesDir, FILE_NAME)
-    private val lock = Any()
 
     fun days(): Map<LocalDate, DayRecord> = synchronized(lock) { read().days }
 
@@ -78,7 +77,10 @@ class RecapStore(context: Context) {
         val seen: Set<LocalDate> = emptySet()
     )
 
-    private fun read(): State {
+    /** Parsed once per process; every write goes through [write], which keeps it current. */
+    private fun read(): State = cache ?: load().also { cache = it }
+
+    private fun load(): State {
         if (!file.exists()) return State()
         return try {
             val root = JSONObject(file.readText())
@@ -109,6 +111,7 @@ class RecapStore(context: Context) {
             file.writeText(root.toString())
             tmp.delete()
         }
+        cache = state
     }
 
     private fun dayToJson(day: DayRecord) = JSONObject()
@@ -140,6 +143,10 @@ class RecapStore(context: Context) {
         if (this == null) emptySet() else (0 until length()).map { LocalDate.parse(getString(it)) }.toSet()
 
     private companion object {
+        // Shared by every instance: callers make short-lived stores over the same file.
+        val lock = Any()
+        var cache: State? = null
+
         const val TAG = "ZenRecap"
         const val FILE_NAME = "weekly_recap_history.json"
         const val RETENTION_DAYS = 16L * 7

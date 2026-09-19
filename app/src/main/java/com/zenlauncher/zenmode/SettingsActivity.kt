@@ -99,6 +99,7 @@ class SettingsActivity : AppCompatActivity() {
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
                 val entitlement by entitlements.entitlement.collectAsState()
+                val isPro = ProAccess.isProState(this@SettingsActivity)
                 LaunchedEffect(entitlements.isAvailable) {
                     if (entitlements.isAvailable) offers = entitlements.offers()
                 }
@@ -108,6 +109,7 @@ class SettingsActivity : AppCompatActivity() {
                     displayName = displayName,
                     isProAvailable = entitlements.isAvailable,
                     entitlement = entitlement,
+                    isPro = isPro,
                     offers = offers,
                     isContentBlockingOn = contentBlockingOn,
                     homeAppsChosenCount = homeAppsChosenCount,
@@ -147,7 +149,7 @@ class SettingsActivity : AppCompatActivity() {
                     weeklyReports = {
                         WeeklyReportsSection(
                             reports = weeklyReports,
-                            isPro = ProAccess.isProState(this@SettingsActivity),
+                            isPro = isPro,
                             downloadingWeek = downloadingWeek,
                             onOpen = { week ->
                                 startActivity(RecapActivity.intent(this@SettingsActivity, week, RecapActivity.SOURCE_SETTINGS))

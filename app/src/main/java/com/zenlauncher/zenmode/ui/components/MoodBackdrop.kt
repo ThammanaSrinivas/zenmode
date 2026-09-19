@@ -86,20 +86,19 @@ fun MoodBackdrop(mood: MoodState = rememberTodayMood(), modifier: Modifier = Mod
 
     val still = rememberReduceMotion() || LocalInspectionMode.current
     val drift = rememberInfiniteTransition(label = "wash-drift")
-    val t by drift.animateFloat(
+    // Kept as State and read only inside the Canvas, so each drift frame redraws without recomposing.
+    val t = drift.animateFloat(
         initialValue = 0f,
         targetValue = (2 * Math.PI).toFloat(),
         animationSpec = infiniteRepeatable(tween(28_000, easing = LinearEasing)),
         label = "wash-drift-t"
     )
-    val swell by drift.animateFloat(
+    val swell = drift.animateFloat(
         initialValue = 0.92f,
         targetValue = 1.08f,
         animationSpec = infiniteRepeatable(tween(9_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "wash-swell"
     )
-    val phase = if (still) 0f else t
-    val scale = if (still) 1f else swell
     // Real blur exists from API 31; below that the radial falloff alone keeps the pools soft.
     val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
@@ -111,6 +110,8 @@ fun MoodBackdrop(mood: MoodState = rememberTodayMood(), modifier: Modifier = Mod
         ) {
             val w = size.width
             val h = size.height
+            val phase = if (still) 0f else t.value
+            val scale = if (still) 1f else swell.value
             fun pool(color: Color, x: Float, y: Float, radius: Float, alpha: Float) {
                 val c = Offset(x, y)
                 drawCircle(

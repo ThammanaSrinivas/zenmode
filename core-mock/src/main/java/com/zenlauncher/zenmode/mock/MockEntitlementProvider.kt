@@ -61,7 +61,10 @@ class MockEntitlementProvider(context: Context) : EntitlementProvider {
     override suspend fun resume(activity: Activity): Boolean {
         val current = state.value
         if (current.status != ProStatus.ENDING) return false
-        write(current.copy(status = ProStatus.ACTIVE, renewsOn = current.endsOn, endsOn = null))
+        // A cancelled free month picks up where it was; cancel() keeps trialEndsOn for this.
+        val inTrial = current.trialEndsOn?.let { it > startOfToday() } == true
+        val status = if (inTrial) ProStatus.TRIAL else ProStatus.ACTIVE
+        write(current.copy(status = status, renewsOn = current.endsOn, endsOn = null))
         return true
     }
 

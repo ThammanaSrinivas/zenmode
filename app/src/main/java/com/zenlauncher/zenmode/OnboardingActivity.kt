@@ -152,6 +152,7 @@ class OnboardingActivity : ComponentActivity() {
                     isLoading = state.signingIn,
                     onBack = { if (state.signInOnly) openHome() else viewModel.back() },
                     onGoogleSignIn = { signInViewModel.performGetCredential(this@OnboardingActivity, redirectIfNoAccount = true) },
+                    onEmailSignIn = signInViewModel::signInWithEmail,
                     onExplore = { if (state.signInOnly) openHome() else viewModel.next() }
                 )
                 OnboardingStep.PROMISE -> PromiseStep(
@@ -186,8 +187,7 @@ class OnboardingActivity : ComponentActivity() {
                     granted = state.granted,
                     onBack = { viewModel.back() },
                     onAllow = ::requestPermission,
-                    onContinue = viewModel::next,
-                    onSkip = viewModel::next
+                    onContinue = viewModel::next
                 )
                 OnboardingStep.HOME_APPS -> HomeAppsStep(
                     progress = progress,

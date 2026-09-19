@@ -11,9 +11,10 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * The app's single answer to "is this user PRO?". The entitlement itself comes from
- * [ServiceLocator.proEntitlementProvider]; debug builds can additionally switch PRO on
- * locally so the team can test PRO surfaces without a server grant.
+ * The app's single answer to "is this user PRO?". Pro comes from either a server grant
+ * ([ServiceLocator.proEntitlementProvider], invite-only early access) or a subscription
+ * ([ServiceLocator.entitlementProvider]); every screen asks here so the two never disagree.
+ * Debug builds can additionally switch PRO on locally to test PRO surfaces.
  */
 object ProAccess {
     private const val PREFS_NAME = "zenmode_prefs"
@@ -23,14 +24,17 @@ object ProAccess {
     private var debugOverride: MutableStateFlow<Boolean>? = null
 
     fun isPro(context: Context): Boolean =
-        ServiceLocator.proEntitlementProvider.isPro.value || debugOverride(context).value
+        ServiceLocator.proEntitlementProvider.isPro.value ||
+            ServiceLocator.entitlementProvider.entitlement.value.isPro ||
+            debugOverride(context).value
 
-    /** Recomposes when the entitlement changes (e.g. after sign-in). */
+    /** Recomposes when either entitlement changes (e.g. after sign-in or a purchase). */
     @Composable
     fun isProState(context: Context): Boolean {
-        val entitled by ServiceLocator.proEntitlementProvider.isPro.collectAsState()
+        val granted by ServiceLocator.proEntitlementProvider.isPro.collectAsState()
+        val subscription by ServiceLocator.entitlementProvider.entitlement.collectAsState()
         val overridden by debugOverride(context).collectAsState()
-        return entitled || overridden
+        return granted || subscription.isPro || overridden
     }
 
     val canUseDebugOverride: Boolean get() = BuildConfig.DEBUG

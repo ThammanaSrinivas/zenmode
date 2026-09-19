@@ -77,8 +77,13 @@ class ZenAccessibilityService : AccessibilityService() {
     private var lastActionAt = 0L
     private var lastEventAt = 0L
 
+    // Blocker settings as of the last change; handleEvent reads this, never prefs directly.
+    @Volatile
+    private var blockPrefs: ContentBlockPrefs.Snapshot? = null
+
     // Held as a field: SharedPreferences only keeps listeners weakly.
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        blockPrefs = ContentBlockPrefs.snapshot(this)
         if (ContentBlockPrefs.affectsWatchedPackages(key)) updateWatchedPackages()
     }
 
@@ -86,8 +91,9 @@ class ZenAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         instance = this
         rules = ContentBlockRules.default()
-        updateWatchedPackages()
         ContentBlockPrefs.prefs(this).registerOnSharedPreferenceChangeListener(prefsListener)
+        blockPrefs = ContentBlockPrefs.snapshot(this)
+        updateWatchedPackages()
 
         getSharedPreferences(CRASH_PREFS, Context.MODE_PRIVATE)
             .getString(KEY_LAST_CRASH, null)?.let { last ->
@@ -133,19 +139,20 @@ class ZenAccessibilityService : AccessibilityService() {
         lastEventAt = now
 
         val pkg = event.packageName?.toString() ?: return
-        if (ContentBlockPrefs.isPaused(this, now)) return
+        val prefs = blockPrefs ?: ContentBlockPrefs.snapshot(this).also { blockPrefs = it }
+        if (prefs.isPaused(now)) return
 
         // A quieted app goes straight back home the moment its window comes up.
         if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && pkg != packageName &&
-            ContentBlockPrefs.isAppQuieted(this, pkg)
+            prefs.isAppQuieted(pkg)
         ) {
             quietApp(pkg)
             return
         }
 
-        val debug = ContentBlockPrefs.isDebugDumpEnabled(this)
+        val debug = prefs.isDebugDumpEnabled
         val appRule = rules.appRule(pkg) ?: return
-        if (!ContentBlockPrefs.isAnyBlockEnabled(this)) return
+        if (!prefs.isAnyBlockEnabled) return
 
         val root = rootInActiveWindow
         if (root == null) {
@@ -158,7 +165,7 @@ class ZenAccessibilityService : AccessibilityService() {
         val surface = SurfaceDetector.detect(appRule, snapshot)
         if (debug) Log.d(TAG, "event pkg=$pkg detected surface=${surface?.id}")
         if (surface == null) return
-        if (!ContentBlockPrefs.isSurfaceBlocked(this, pkg, surface.id)) return
+        if (!prefs.isSurfaceBlocked(pkg, surface.id)) return
 
         block(pkg, surface)
     }

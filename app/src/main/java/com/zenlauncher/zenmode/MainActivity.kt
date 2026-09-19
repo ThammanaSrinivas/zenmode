@@ -204,9 +204,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadInstalledApps() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
-                val intent = Intent(Intent.ACTION_MAIN, null)
-                intent.addCategory(Intent.CATEGORY_LAUNCHER)
-                val activities = packageManager.queryIntentActivities(intent, 0)
+                val activities = LauncherActivities.query(packageManager)
                 val homePackages = repository.getPinnedApps()
                 val homeRank = homePackages.withIndex().associate { (i, pkg) -> pkg to i }
 
@@ -217,12 +215,7 @@ class MainActivity : AppCompatActivity() {
                         icon = resolveInfo.loadIcon(packageManager),
                         activityClassName = resolveInfo.activityInfo.name
                     )
-                    // Dedupe by the actual launcher activity (package + class), not
-                    // package alone: some OEM ROMs (e.g. MIUI) ship Phone and Contacts
-                    // as two distinct launcher activities in the same package, and
-                    // deduping by package alone silently drops one of the two icons.
-                }.distinctBy { "${it.packageName}/${it.activityClassName}" }
-                    .sortedBy { it.label.toString() }
+                }.sortedBy { it.label.toString() }
 
                 // The picked home apps lead, in the order chosen; everything else stays A–Z.
                 val (home, rest) = allApps.partition { it.packageName.toString() in homeRank }

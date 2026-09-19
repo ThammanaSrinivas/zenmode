@@ -39,8 +39,9 @@ class RecapCollector(
         val end = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
         val totalMillis = repository.getScreenTimeMillisForDate(date.toString())
         val sessions = repository.getForegroundSessions(start, end)
-        // Nothing at all usually means the history already rolled off; don't store a false zero.
-        if (totalMillis <= 0L && sessions.isEmpty()) return null
+        // No sessions means the raw events already rolled off (the total may still come from
+        // the aggregated stats fallback); don't store a day with a false-empty breakdown.
+        if (totalMillis <= 0L || sessions.isEmpty()) return null
 
         val breakdown = DayAggregator.aggregate(sessions, start, end, excluded)
         return DayRecord(

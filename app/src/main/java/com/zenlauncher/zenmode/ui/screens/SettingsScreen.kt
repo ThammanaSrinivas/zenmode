@@ -101,6 +101,8 @@ fun SettingsScreen(
     displayName: String? = null,
     isProAvailable: Boolean = false,
     entitlement: Entitlement = Entitlement.Free,
+    /** From [com.zenlauncher.zenmode.ProAccess], the same answer every other screen gets. */
+    isPro: Boolean = entitlement.isPro,
     offers: List<PlanOffer> = emptyList(),
     isContentBlockingOn: Boolean = false,
     homeAppsChosenCount: Int = 0,
@@ -130,7 +132,8 @@ fun SettingsScreen(
     var gate by remember { mutableStateOf<ProFeature?>(null) }
     var soon by remember { mutableStateOf<ProFeature?>(null) }
 
-    val isPro = isProAvailable && entitlement.isPro
+    @Suppress("NAME_SHADOWING")
+    val isPro = isProAvailable && isPro
     fun proTag() = when {
         !isProAvailable -> ProTagState.None
         isPro -> ProTagState.Unlocked

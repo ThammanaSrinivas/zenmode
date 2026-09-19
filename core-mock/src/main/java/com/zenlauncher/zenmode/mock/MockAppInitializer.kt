@@ -35,9 +35,12 @@ class MockAppInitializer : AppInitializer {
     }
 }
 
-/** Open-source builds have no billing; PRO features stay on so contributors can work on them. */
+/**
+ * No server grants in open-source builds: Pro comes from [MockEntitlementProvider]'s simulated
+ * purchase (free and instant), so Settings' plan card and every Pro gate agree.
+ */
 class MockProEntitlementProvider : ProEntitlementProvider {
-    override val isPro: StateFlow<Boolean> = MutableStateFlow(true)
+    override val isPro: StateFlow<Boolean> = MutableStateFlow(false)
     override suspend fun refresh() {}
 }
 

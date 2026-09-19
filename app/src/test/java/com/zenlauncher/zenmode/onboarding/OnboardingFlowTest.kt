@@ -31,9 +31,15 @@ class OnboardingFlowTest {
     }
 
     @Test
-    fun `returning user never sees sign-in and skips permissions already granted`() {
+    fun `signed-in returning user skips sign-in and permissions already granted`() {
         val returning = OnboardingContext(isReturningUser = true, isSignedIn = true, hasRequiredPermissions = true)
         assertEquals(listOf(WELCOME, STORIES, PROMISE, CIRCLE, HOME_APPS), OnboardingFlow.steps(returning))
+    }
+
+    @Test
+    fun `signed-out returning user still gets the sign-in step`() {
+        val returning = OnboardingContext(isReturningUser = true, isSignedIn = false, hasRequiredPermissions = true)
+        assertEquals(listOf(WELCOME, STORIES, SIGN_IN, PROMISE, HOME_APPS), OnboardingFlow.steps(returning))
     }
 
     @Test
