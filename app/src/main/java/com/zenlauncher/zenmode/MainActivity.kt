@@ -211,25 +211,20 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(Intent.ACTION_MAIN, null)
                 intent.addCategory(Intent.CATEGORY_LAUNCHER)
                 val activities = packageManager.queryIntentActivities(intent, 0)
-                val pinnedPackages = repository.getPinnedApps()
-                val pinnedSet = pinnedPackages.toSet()
 
-                val allApps = activities.map { resolveInfo ->
-                    val pkg = resolveInfo.activityInfo.packageName
+                activities.map { resolveInfo ->
                     AppInfo(
                         label = resolveInfo.loadLabel(packageManager),
-                        packageName = pkg,
+                        packageName = resolveInfo.activityInfo.packageName,
                         icon = resolveInfo.loadIcon(packageManager),
-                        isPinned = pkg in pinnedSet
+                        activityClassName = resolveInfo.activityInfo.name
                     )
-                }.distinctBy { it.packageName.toString() }
-
-                val appsByPackage = allApps.associateBy { it.packageName.toString() }
-                val pinned = pinnedPackages.mapNotNull { appsByPackage[it] }
-                val unpinned = allApps.filter { it.packageName.toString() !in pinnedSet }
+                    // Dedupe by the actual launcher activity (package + class), not
+                    // package alone: some OEM ROMs (e.g. MIUI) ship Phone and Contacts
+                    // as two distinct launcher activities in the same package, and
+                    // deduping by package alone silently drops one of the two icons.
+                }.distinctBy { "${it.packageName}/${it.activityClassName}" }
                     .sortedBy { it.label.toString() }
-
-                pinned + unpinned
             }
             installedApps = result
         }
@@ -437,23 +432,25 @@ class MainActivity : AppCompatActivity() {
                         finish()
                     },
                     onAppClick = { appInfo ->
-                        val launchIntent = packageManager.getLaunchIntentForPackage(appInfo.packageName.toString())
+                        // Launch the exact activity the icon represents rather than
+                        // packageManager.getLaunchIntentForPackage(), which resolves a
+                        // single "default" activity per package and can't distinguish
+                        // Phone from Contacts when an OEM ships both from the same
+                        // package (e.g. MIUI's com.android.contacts).
+                        val launchIntent = if (appInfo.activityClassName.isNotEmpty()) {
+                            Intent(Intent.ACTION_MAIN).apply {
+                                addCategory(Intent.CATEGORY_LAUNCHER)
+                                component = android.content.ComponentName(
+                                    appInfo.packageName.toString(),
+                                    appInfo.activityClassName
+                                )
+                            }
+                        } else {
+                            packageManager.getLaunchIntentForPackage(appInfo.packageName.toString())
+                        }
                         if (launchIntent != null) {
                             startActivity(launchIntent)
                         }
-                    },
-                    onAppLongClick = { appInfo ->
-                        val pinned = repository.getPinnedApps()
-                        val isCurrentlyPinned = pinned.contains(appInfo.packageName.toString())
-                        val toggled = repository.togglePinnedApp(appInfo.packageName.toString())
-                        if (!isCurrentlyPinned && !toggled) {
-                            Toast.makeText(
-                                this,
-                                "Only ${UsageRepository.MAX_PINNED_APPS} apps can be pinned",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        loadInstalledApps()
                     },
                     onAppInfoClick = { appInfo ->
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {

@@ -2,7 +2,6 @@ package com.zenlauncher.zenmode.coreapi
 
 import android.content.Context
 import android.content.SharedPreferences
-import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -494,37 +493,6 @@ class UsageRepository(private val context: Context, private val analyticsManager
         return snoozedDate == getTodayDate()
     }
 
-    // ── Pinned Apps ────────────────────────────────────────────────
-
-    fun getPinnedApps(): List<String> {
-        val json = prefs.getString("pinned_apps", null) ?: return emptyList()
-        return try {
-            val array = JSONArray(json)
-            (0 until array.length()).map { array.getString(it) }
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-
-    fun savePinnedApps(packageNames: List<String>) {
-        val array = JSONArray(packageNames)
-        prefs.edit().putString("pinned_apps", array.toString()).apply()
-    }
-
-    fun togglePinnedApp(packageName: String): Boolean {
-        val current = getPinnedApps().toMutableList()
-        return if (current.contains(packageName)) {
-            current.remove(packageName)
-            savePinnedApps(current)
-            false
-        } else {
-            if (current.size >= MAX_PINNED_APPS) return false
-            current.add(packageName)
-            savePinnedApps(current)
-            true
-        }
-    }
-
     // ── React Rate Limit ──────────────────────────────────────────────
 
     /** Returns like-send timestamps that still fall within the rate-limit window, oldest first. */
@@ -553,8 +521,6 @@ class UsageRepository(private val context: Context, private val analyticsManager
     }
 
     companion object {
-        const val MAX_PINNED_APPS = 4
-
         private const val KEY_RECENT_LIKE_TIMESTAMPS = "recent_like_timestamps"
         const val LIKE_WINDOW_MS: Long = 20L * 60_000L  // 20 minutes
         const val LIKE_MAX_COUNT: Int = 4
