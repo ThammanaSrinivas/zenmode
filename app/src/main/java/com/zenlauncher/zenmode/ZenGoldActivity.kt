@@ -1,7 +1,10 @@
 package com.zenlauncher.zenmode
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.zenlauncher.zenmode.ui.screens.ZenGoldScreen
@@ -25,11 +28,28 @@ class ZenGoldActivity : AppCompatActivity() {
                     // for testing — revert to the real PLACEHOLDER_INVEST_GOLD_UNLOCKED
                     // gate once a real weekly-promise backend drives it.
                     investGoldUnlocked = true,
-                    onInvestGoldClick = {
-                        startActivity(Intent(this, KiteBasketActivity::class.java))
-                    }
+                    // TEMP: direct native-app redirect (no prefill) while a Zerodha partner
+                    // approval for prefilled native deep links is pending — see the email in
+                    // zenmode_docs/docs/features/gold-streak.md. Swap back to KiteBasketActivity
+                    // (still in the codebase, WebView + prefilled basket order) once approved.
+                    onInvestGoldClick = { openKite() }
                 )
             }
         }
+    }
+
+    private fun openKite() {
+        val intent = packageManager.getLaunchIntentForPackage(KITE_PACKAGE_NAME)
+            ?: Intent(Intent.ACTION_VIEW, Uri.parse(KITE_WEB_URL))
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, "Couldn't open Kite", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private companion object {
+        const val KITE_PACKAGE_NAME = "com.zerodha.kite3"
+        const val KITE_WEB_URL = "https://kite.zerodha.com/"
     }
 }
