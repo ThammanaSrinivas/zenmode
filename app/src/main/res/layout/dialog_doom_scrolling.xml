@@ -44,7 +44,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:alpha="0.8"
-            android:src="@drawable/app_icon"
+            android:src="@drawable/ic_zen_mark_gradient"
             app:layout_constraintBottom_toBottomOf="@id/tv_title"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/tv_title"

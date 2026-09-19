@@ -165,7 +165,7 @@ fun DistractingAppsBottomSheet(onDismiss: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Image(
-                    painter = painterResource(id = R.drawable.app_icon),
+                    painter = painterResource(id = R.drawable.ic_zen_mark_gradient),
                     contentDescription = null,
                     modifier = Modifier.size(56.dp),
                     contentScale = ContentScale.Fit

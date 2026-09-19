@@ -210,7 +210,7 @@ private fun SettingsHeader(
 
         // App icon — center
         Image(
-            painter = painterResource(R.drawable.app_icon),
+            painter = painterResource(R.drawable.ic_zen_mark_gradient),
             contentDescription = "ZenMode",
             modifier = Modifier
                 .align(Alignment.Center)
@@ -833,7 +833,7 @@ private fun ProfileBottomSheet(
 
                     // App icon — top right
                     Image(
-                        painter = painterResource(R.drawable.app_icon),
+                        painter = painterResource(R.drawable.ic_zen_mark_gradient),
                         contentDescription = "ZenMode",
                         modifier = Modifier.size(48.rdp)
                     )

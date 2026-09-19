@@ -112,7 +112,7 @@ fun DefaultLauncherScreen(
         ) {
             // ZenMode logo
             Image(
-                painter = painterResource(id = R.drawable.app_icon),
+                painter = painterResource(id = R.drawable.ic_zen_mark_gradient),
                 contentDescription = "ZenMode logo",
                 modifier = Modifier.size(60.dp),
                 contentScale = ContentScale.Fit

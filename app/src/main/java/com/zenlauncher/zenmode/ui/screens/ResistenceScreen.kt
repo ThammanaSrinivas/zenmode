@@ -472,7 +472,7 @@ private fun ResistenceHeader(streaks: Int) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(R.drawable.app_icon),
+            painter = painterResource(R.drawable.ic_zen_mark_gradient),
             contentDescription = "ZenMode",
             modifier = Modifier.size(44.rdp)
         )
