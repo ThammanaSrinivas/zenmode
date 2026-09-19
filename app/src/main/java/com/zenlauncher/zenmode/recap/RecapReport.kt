@@ -2,6 +2,7 @@ package com.zenlauncher.zenmode.recap
 
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.DashPathEffect
 import android.graphics.LinearGradient
@@ -17,8 +18,12 @@ import android.provider.MediaStore
 import androidx.annotation.ColorRes
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
 import com.zenlauncher.zenmode.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.OutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -63,6 +68,36 @@ object RecapReport {
         }
         return uri
     }
+
+    /**
+     * Opens the system share sheet for the week. With [attachPdf] (PRO) the report PDF is
+     * rendered into the share cache and attached; otherwise a short text summary goes out.
+     * Throws if the PDF can't be written; the caller decides how to tell the user.
+     */
+    suspend fun share(context: Context, recap: WeeklyRecap, attachPdf: Boolean) {
+        val summary = "My week in Zen (${recap.rangeLabel()}): ${formatMinutes(recap.totalMinutes)} on my phone, " +
+            "promise kept ${recap.daysKept} of 7 days. Tracked with ZenMode OS — zenmodeos.com"
+        val send = Intent(Intent.ACTION_SEND).apply {
+            putExtra(Intent.EXTRA_SUBJECT, "My week in Zen · ${recap.rangeLabel()}")
+            putExtra(Intent.EXTRA_TEXT, summary)
+        }
+        if (attachPdf) {
+            val file = withContext(Dispatchers.IO) {
+                val folder = File(context.cacheDir, SHARE_FOLDER).apply { mkdirs() }
+                File(folder, fileName(recap)).also { f -> f.outputStream().use { write(context, recap, it) } }
+            }
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            send.type = "application/pdf"
+            send.putExtra(Intent.EXTRA_STREAM, uri)
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } else {
+            send.type = "text/plain"
+        }
+        context.startActivity(Intent.createChooser(send, "Share weekly report"))
+    }
+
+    /** Matches the cache-path in res/xml/file_paths.xml. */
+    private const val SHARE_FOLDER = "shared_reports"
 
     /** Writes the PDF to [out] (e.g. a document the user picked). */
     fun write(context: Context, recap: WeeklyRecap, out: OutputStream) {

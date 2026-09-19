@@ -263,18 +263,27 @@ fun ZenGlyph(kind: GlyphKind, color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-/** Visual-only switch; the whole row carries the toggle semantics. */
+/**
+ * Visual-only switch; the whole row carries the toggle semantics. [onTrack] / [offTrack]
+ * recolour it for surfaces that aren't the plain settings background (e.g. a green card).
+ */
 @Composable
-fun ZenSwitch(checked: Boolean, modifier: Modifier = Modifier) {
+fun ZenSwitch(
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    onTrack: Color = ZenTheme.colors.textBrand,
+    offTrack: Color = ZenTheme.colors.surfaceSunk,
+    outlineWhenOff: Boolean = true
+) {
     val colors = ZenTheme.colors
-    val track by animateColorAsState(if (checked) colors.textBrand else colors.surfaceSunk, label = "track")
+    val track by animateColorAsState(if (checked) onTrack else offTrack, label = "track")
     val offset by animateDpAsState(if (checked) 20.rdp else 0.rdp, label = "thumb")
     Box(
         modifier = modifier
             .size(width = 52.rdp, height = 32.rdp)
             .clip(CircleShape)
             .background(track)
-            .then(if (checked) Modifier else Modifier.border(1.dp, colors.borderOutline, CircleShape))
+            .then(if (checked || !outlineWhenOff) Modifier else Modifier.border(1.dp, colors.borderOutline, CircleShape))
             .padding(4.rdp)
     ) {
         Box(
@@ -357,37 +366,6 @@ fun <T> ZenSegmented(
                     Spacer(Modifier.width(6.rdp))
                     ZenProTag(unlocked = false)
                 }
-            }
-        }
-    }
-}
-
-/** Number chips, e.g. apps on the home screen. Selected chip is ink on paper. */
-@Composable
-fun ZenNumberChips(
-    options: List<Int>,
-    selected: Int,
-    onSelect: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colors = ZenTheme.colors
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(6.rdp)) {
-        options.forEach { count ->
-            val isSelected = count == selected
-            Box(
-                modifier = Modifier
-                    .size(width = 48.rdp, height = 40.rdp)
-                    .clip(RoundedCornerShape(ChipRadius))
-                    .background(if (isSelected) colors.actionPrimary else colors.surfaceSunk)
-                    .selectable(selected = isSelected, role = Role.RadioButton, onClick = { onSelect(count) }),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = count.toString(),
-                    fontFamily = DepartureMono,
-                    fontSize = 14.rsp,
-                    color = if (isSelected) colors.actionPrimaryText else colors.textSecondary
-                )
             }
         }
     }

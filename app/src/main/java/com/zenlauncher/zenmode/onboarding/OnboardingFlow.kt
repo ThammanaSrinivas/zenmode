@@ -53,6 +53,17 @@ object OnboardingFlow {
         steps.filter { it != OnboardingStep.WELCOME }
 
     /**
+     * How far through the flow the user is, 0–100, for the label beside the progress bar.
+     * Counts the steps already behind them plus [fraction] of the current one, so the
+     * last step reads below 100% until they actually finish.
+     */
+    fun percentComplete(currentIndex: Int, segments: Int, fraction: Float = 0f): Int {
+        if (segments <= 0) return 0
+        val done = currentIndex.coerceIn(0, segments) + fraction.coerceIn(0f, 1f)
+        return (done / segments * 100f).toInt().coerceIn(0, 100)
+    }
+
+    /**
      * Re-evaluates the flow after something changed mid-way (signed in, granted a
      * permission) and returns where [current] now sits. Steps that dropped out behind
      * the user don't move them; if [current] itself dropped out, they land on the step

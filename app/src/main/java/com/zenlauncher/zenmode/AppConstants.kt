@@ -25,13 +25,12 @@ object AppConstants {
 
     // v3 home screen placeholders. Stand-ins until the scoring and rewards
     // backend exists — swap these for real values, not the UI around them.
-    const val PLACEHOLDER_ZEN_SCORE = 93
     const val PLACEHOLDER_GOLD_INVESTED = "2,350"
     const val PLACEHOLDER_GOLD_CHANGE_PERCENT = 38
 
-    // Deliberately different from PLACEHOLDER_ZEN_SCORE — BuddyStats has no real
-    // score/streak fields yet, and these must never be mistaken for (or accidentally
-    // wired to) the signed-in user's own numbers above.
+    // BuddyStats has no real score/streak fields yet, so the buddy's side stays a
+    // placeholder. Zen Scores are tenths (88 = 8.8), see ZenScore. Never wire these
+    // to the signed-in user's own numbers, which come from ZenScoreStore.
     const val PLACEHOLDER_BUDDY_ZEN_SCORE = 88
     const val PLACEHOLDER_BUDDY_STREAK = 5
 
@@ -86,7 +85,6 @@ object AppConstants {
     // Zen Score screen (Figma node 2026:2035) — reached by tapping the "Zen Score"
     // widget in HomeHeader. Category breakdown and session log both need real
     // per-app usage categorization that doesn't exist yet.
-    const val PLACEHOLDER_SCORE_INSIGHT = "Down 0.6, messaging increased by 15% than yesterday."
     const val PLACEHOLDER_RECLAIMED_MINUTES = 1350
     const val PLACEHOLDER_SESSION_LOG_TOTAL = "TODAY, 2,000"
 

@@ -172,7 +172,7 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
         Spacer(Modifier.width(12.rdp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (permission.required) "REQUIRED" else "OPTIONAL",
+                text = if (permission.required) "Required" else "Optional",
                 fontFamily = DepartureMono,
                 fontSize = 10.rsp,
                 letterSpacing = 0.8.sp,

@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -107,27 +107,30 @@ internal fun HomeAppsStep(
             return@OnboardingPage
         }
 
+        // Heading, preview and label stay put; only the app list scrolls under them.
+        Column(modifier = Modifier.padding(horizontal = OnboardingMargin)) {
+            Spacer(Modifier.height(20.rdp))
+            OnboardingEyebrow("Your ZenHome")
+            Spacer(Modifier.height(10.rdp))
+            OnboardingHeadline("Pick your $limit.")
+            Spacer(Modifier.height(12.rdp))
+            OnboardingBody("These live on your home screen. Everything else is one search away.")
+            Spacer(Modifier.height(20.rdp))
+            DockPreview(selected = selected.mapNotNull { byPackage[it] }, limit = limit)
+            Spacer(Modifier.height(22.rdp))
+            OnboardingEyebrow("All apps", color = colorResource(R.color.stone_500))
+            Spacer(Modifier.height(10.rdp))
+        }
+        HorizontalDivider(color = colorResource(R.color.paper_hairline), thickness = 1.dp)
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = OnboardingMargin, end = OnboardingMargin, bottom = 16.rdp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentPadding = PaddingValues(start = OnboardingMargin, end = OnboardingMargin, top = 14.rdp, bottom = 16.rdp),
             horizontalArrangement = Arrangement.spacedBy(8.rdp),
             verticalArrangement = Arrangement.spacedBy(14.rdp)
         ) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Column {
-                    Spacer(Modifier.height(20.rdp))
-                    OnboardingEyebrow("Your ZenHome")
-                    Spacer(Modifier.height(10.rdp))
-                    OnboardingHeadline("Pick your $limit.")
-                    Spacer(Modifier.height(12.rdp))
-                    OnboardingBody("These live on your home screen. Everything else is one search away.")
-                    Spacer(Modifier.height(20.rdp))
-                    DockPreview(selected = selected.mapNotNull { byPackage[it] }, limit = limit)
-                    Spacer(Modifier.height(22.rdp))
-                    OnboardingEyebrow("All apps", color = colorResource(R.color.stone_500))
-                }
-            }
             items(apps, key = { it.packageName }) { app ->
                 AppTile(
                     app = app,

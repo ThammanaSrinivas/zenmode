@@ -82,8 +82,8 @@ class SettingsScreenTest {
         setContent()
         listOf(
             "Resistance screen",
-            "Block in-app content",
-            "Apps on home screen",
+            "Distraction Blocker",
+            "Choose home apps",
             "Notification badges",
             "Dark mode (beta)",
             "Accountability partner",

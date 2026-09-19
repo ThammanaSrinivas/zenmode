@@ -41,10 +41,7 @@ class BuddyConnector(
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on ZenMode")
-            putExtra(
-                Intent.EXTRA_TEXT,
-                "Be my Zen Bro on ZenMode! ${AppConstants.BUDDY_INVITE_BASE_URL}$code"
-            )
+            putExtra(Intent.EXTRA_TEXT, inviteMessage(code))
         }
         activity.startActivity(Intent.createChooser(intent, "Share invite"))
     }
@@ -144,5 +141,11 @@ class BuddyConnector(
 
     private fun toast(message: String, length: Int = Toast.LENGTH_SHORT) {
         Toast.makeText(activity, message, length).show()
+    }
+
+    companion object {
+        /** The invite text: the user's zenmodeos.com/b/ invite link. Shared by the link and the circle card. */
+        fun inviteMessage(code: String): String =
+            "Be my Zen Bro on ZenMode! ${AppConstants.BUDDY_INVITE_BASE_URL}$code"
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,7 +50,6 @@ import com.zenlauncher.zenmode.ui.components.rememberBrandOsGradient
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
-import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
@@ -66,10 +66,12 @@ fun WeeklyReportsSection(
     downloadingWeek: LocalDate?,
     onOpen: (LocalDate) -> Unit,
     onDownload: (LocalDate) -> Unit,
+    onShare: (LocalDate) -> Unit,
     onUnlockPro: () -> Unit
 ) {
     val colors = ZenTheme.colors
-    Column(modifier = Modifier.padding(horizontal = Spacing.screenMargin)) {
+    // Settings already applies the screen margin; this section sits on the same edges as the cards.
+    Column(modifier = Modifier.padding(horizontal = 4.rdp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "Weekly reports",
@@ -103,7 +105,8 @@ fun WeeklyReportsSection(
                         recap = recap,
                         downloading = downloadingWeek == recap.weekStart,
                         onOpen = { onOpen(recap.weekStart) },
-                        onDownload = { onDownload(recap.weekStart) }
+                        onDownload = { onDownload(recap.weekStart) },
+                        onShare = { onShare(recap.weekStart) }
                     )
                     if (i < reports.lastIndex) {
                         Box(
@@ -127,6 +130,7 @@ private fun ReportRow(
     downloading: Boolean,
     onOpen: () -> Unit,
     onDownload: () -> Unit,
+    onShare: () -> Unit = {},
     interactive: Boolean = true
 ) {
     val colors = ZenTheme.colors
@@ -158,6 +162,17 @@ private fun ReportRow(
             )
         }
         OutcomeChip(kept)
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .then(
+                    if (interactive) Modifier.pressScale(onClick = onShare, onClickLabel = "Share report")
+                    else Modifier
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Rounded.Share, contentDescription = "Share report", tint = colors.textPrimary, modifier = Modifier.size(20.rdp))
+        }
         Box(
             modifier = Modifier
                 .size(44.dp)

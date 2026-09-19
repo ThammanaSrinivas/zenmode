@@ -176,3 +176,33 @@ fun ZenModeOsWordmark(
         Text(text = "OS", style = wordStyle.copy(brush = gradient), maxLines = 1)
     }
 }
+
+/**
+ * "ZenMode OS Settings" — the Settings title and every "back to Settings" label. "OS" keeps
+ * the brand gradient; [color] tints the rest.
+ */
+@Composable
+fun ZenModeOsSettingsTitle(
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = 22.sp,
+    color: Color = colorResource(R.color.ink_surface),
+    letterSpacing: TextUnit = (-0.44).sp
+) {
+    Row(
+        modifier = modifier.clearAndSetSemantics { contentDescription = "$PRODUCT_NAME Settings" },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ZenModeOsWordmark(fontSize = fontSize, zenModeColor = color, letterSpacing = letterSpacing)
+        Text(
+            text = " Settings",
+            style = FullLineBox.copy(
+                fontFamily = ClashDisplay,
+                fontWeight = FontWeight.Medium,
+                fontSize = fontSize,
+                letterSpacing = letterSpacing
+            ),
+            color = color,
+            maxLines = 1
+        )
+    }
+}

@@ -47,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -66,6 +67,8 @@ import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.GoldOrder
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.SettingsMenuButton
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.components.ClashLineHeight
 import com.zenlauncher.zenmode.ui.components.DepartureMonoLineHeight
 import com.zenlauncher.zenmode.ui.components.FullLineBox
@@ -119,7 +122,6 @@ fun InvestGoldScreen(
     onUnitsChange: (Int) -> Unit,
     onBackClick: () -> Unit,
     onReviewInKiteClick: () -> Unit,
-    onMenuClick: () -> Unit = {},
     onViewTermsClick: () -> Unit = {},
     symbol: String = AppConstants.PLACEHOLDER_GOLD_SYMBOL,
     fundName: String = AppConstants.PLACEHOLDER_GOLD_FUND_NAME,
@@ -138,6 +140,7 @@ fun InvestGoldScreen(
             painter = painterResource(R.drawable.bg_my_promise_glow),
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            alpha = integerResource(R.integer.my_promise_glow_alpha_pct) / 100f,
             modifier = Modifier.matchParentSize()
         )
 
@@ -163,19 +166,14 @@ fun InvestGoldScreen(
                         centerOnTitle = true,
                         dotPulse = true,
                         modifier = Modifier.staggeredEntrance(Entrance.HEADER),
-                        trailing = {
-                            Image(
-                                painter = painterResource(R.drawable.ic_hamburger_menu),
-                                contentDescription = "Menu",
-                                modifier = Modifier
-                                    .pressScale(onClick = onMenuClick)
-                                    .width(29.rdp)
-                                    .height(17.5.rdp)
-                            )
-                        }
+                        trailing = { SettingsMenuButton() }
                     )
                     Spacer(modifier = Modifier.height(20.rdp))
-                    StepIndicator(modifier = Modifier.staggeredEntrance(Entrance.STEP))
+                    InvestGoldStepIndicator(
+                        step = 1,
+                        label = "Choose The Quantity & Amount",
+                        modifier = Modifier.staggeredEntrance(Entrance.STEP)
+                    )
                     Spacer(modifier = Modifier.height(40.2.rdp))
                     Text(
                         text = "How much gold?",
@@ -237,29 +235,30 @@ fun InvestGoldScreen(
 
 // ── Step indicator ────────────────────────────────────────────────
 
+/** "Step 0N • label" under the header; shared by both Invest Gold steps. */
 @Composable
-private fun StepIndicator(modifier: Modifier = Modifier) {
+internal fun InvestGoldStepIndicator(step: Int, label: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = "Step 1: choose the quantity and amount" },
+            .clearAndSetSemantics { contentDescription = "Step $step: ${label.lowercase()}" },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Step 01",
+            text = "Step ${step.toString().padStart(2, '0')}",
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 14.rsp,
             lineHeight = (14 * GeistLineHeight).rsp,
             letterSpacing = (-0.28).sp,
-            color = Color.Black,
+            color = ZenTheme.colors.textPrimary,
             maxLines = 1,
             style = FullLineBox
         )
         V3BulletDot(slotWidth = 24.rdp, dotSize = 4.rdp, color = SecondaryText)
         Text(
-            text = "Choose The Quantity & Amount",
+            text = label,
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 16.rsp,
@@ -334,7 +333,7 @@ private fun InstrumentRow(
                 fontSize = 18.4.rsp,
                 lineHeight = (18.4 * 1.257).rsp,
                 letterSpacing = (-2.208).sp,
-                color = colorResource(R.color.zen_700),
+                color = ZenTheme.colors.textBrand,
                 maxLines = 1,
                 softWrap = false,
                 style = FullLineBox
@@ -424,7 +423,7 @@ private fun QuantityCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             CardLabel("QUANTITY")
-            V3BulletDot(slotWidth = 18.rdp, dotSize = 3.5.rdp, color = Color.Black)
+            V3BulletDot(slotWidth = 18.rdp, dotSize = 3.5.rdp, color = ZenTheme.colors.textPrimary)
             CardLabel("WHOLE  UNITS")
             Spacer(modifier = Modifier.weight(1f))
             WeeklyCapLabel(atCap = units == maxUnits)
@@ -484,7 +483,7 @@ private fun QuantityCard(
             fontSize = 12.rsp,
             lineHeight = 18.72.rsp,
             letterSpacing = (-0.36).sp,
-            color = Color.Black,
+            color = ZenTheme.colors.textPrimary,
             style = FullLineBox,
             modifier = Modifier.padding(horizontal = 28.rdp)
         )
@@ -500,7 +499,7 @@ private fun CardLabel(text: String) {
         fontSize = 12.rsp,
         lineHeight = (12 * GeistLineHeight).rsp,
         letterSpacing = (-0.36).sp,
-        color = Color.Black,
+        color = ZenTheme.colors.textPrimary,
         maxLines = 1,
         style = FullLineBox
     )
@@ -542,7 +541,7 @@ private fun QuickPickChip(units: Int, selected: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(5.037.rdp)
     val colorSpec = tween<Color>(durationMillis = 220, easing = FastOutSlowInEasing)
     val background by animateColorAsState(
-        if (selected) colorResource(R.color.invest_gold_chip_selected_bg) else Color.White,
+        if (selected) colorResource(R.color.invest_gold_chip_selected_bg) else ZenTheme.colors.surfaceElevated,
         colorSpec,
         label = "ChipBackground"
     )
@@ -592,7 +591,7 @@ private fun OrderBreakdown(units: Int, unitPricePaise: Long, totalPaise: Long, r
         fontSize = 16.rsp,
         lineHeight = (16 * DepartureMonoLineHeight).rsp,
         letterSpacing = (-0.48).sp,
-        color = Color.Black
+        color = ZenTheme.colors.textPrimary
     )
 
     Row(
@@ -642,14 +641,8 @@ private fun OrderBreakdown(units: Int, unitPricePaise: Long, totalPaise: Long, r
 
 @Composable
 private fun DematNote(dematMaskedId: String, onViewTermsClick: () -> Unit, modifier: Modifier = Modifier) {
-    val zen900 = colorResource(R.color.zen_900)
+    val zen900 = ZenTheme.colors.textBrandStrong
     val link = colorResource(R.color.invest_gold_terms_link)
-    val inspection = LocalInspectionMode.current
-    val checkScale = remember { Animatable(if (inspection) 1f else 0f) }
-    LaunchedEffect(Unit) {
-        delay(Entrance.NOTE * Entrance.STEP_MILLIS + 180L)
-        checkScale.animateTo(1f, spring(dampingRatio = 0.38f, stiffness = Spring.StiffnessMediumLow))
-    }
 
     Row(
         modifier = modifier
@@ -661,16 +654,7 @@ private fun DematNote(dematMaskedId: String, onViewTermsClick: () -> Unit, modif
         horizontalArrangement = Arrangement.spacedBy(6.rdp),
         verticalAlignment = Alignment.Top
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_invest_gold_success),
-            contentDescription = null,
-            modifier = Modifier
-                .size(16.rdp)
-                .graphicsLayer {
-                    scaleX = checkScale.value
-                    scaleY = checkScale.value
-                }
-        )
+        InvestGoldNoteCheck(popDelayMillis = Entrance.NOTE * Entrance.STEP_MILLIS + 180L)
         Text(
             text = buildAnnotatedString {
                 append("Demat linked • ")
@@ -692,9 +676,30 @@ private fun DematNote(dematMaskedId: String, onViewTermsClick: () -> Unit, modif
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.rsp,
                 lineHeight = (12 * GeistLineHeight).rsp,
-                color = Color.Black
+                color = ZenTheme.colors.textPrimary
             ),
             modifier = Modifier.weight(1f)
         )
     }
+}
+
+/** The green check that pops in beside an Invest Gold note line, [popDelayMillis] after the screen opens. */
+@Composable
+internal fun InvestGoldNoteCheck(popDelayMillis: Long, modifier: Modifier = Modifier) {
+    val inspection = LocalInspectionMode.current
+    val checkScale = remember { Animatable(if (inspection) 1f else 0f) }
+    LaunchedEffect(Unit) {
+        delay(popDelayMillis)
+        checkScale.animateTo(1f, spring(dampingRatio = 0.38f, stiffness = Spring.StiffnessMediumLow))
+    }
+    Image(
+        painter = painterResource(R.drawable.ic_invest_gold_success),
+        contentDescription = null,
+        modifier = modifier
+            .size(16.rdp)
+            .graphicsLayer {
+                scaleX = checkScale.value
+                scaleY = checkScale.value
+            }
+    )
 }

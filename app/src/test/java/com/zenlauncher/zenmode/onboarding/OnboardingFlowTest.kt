@@ -72,4 +72,19 @@ class OnboardingFlowTest {
         assertEquals(0, OnboardingFlow.restoreIndex(steps, "NOT_A_STEP"))
         assertEquals(0, OnboardingFlow.restoreIndex(steps, null))
     }
+
+    @Test
+    fun `percent counts finished steps plus progress into the current one`() {
+        assertEquals(0, OnboardingFlow.percentComplete(currentIndex = 0, segments = 5))
+        assertEquals(10, OnboardingFlow.percentComplete(currentIndex = 0, segments = 5, fraction = 0.5f))
+        assertEquals(80, OnboardingFlow.percentComplete(currentIndex = 4, segments = 5))
+        assertEquals(100, OnboardingFlow.percentComplete(currentIndex = 4, segments = 5, fraction = 1f))
+    }
+
+    @Test
+    fun `percent stays in range for odd inputs`() {
+        assertEquals(0, OnboardingFlow.percentComplete(currentIndex = 0, segments = 0))
+        assertEquals(100, OnboardingFlow.percentComplete(currentIndex = 9, segments = 5, fraction = 3f))
+        assertEquals(0, OnboardingFlow.percentComplete(currentIndex = -2, segments = 5, fraction = -1f))
+    }
 }

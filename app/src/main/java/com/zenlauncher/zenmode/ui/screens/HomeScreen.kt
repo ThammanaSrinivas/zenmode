@@ -1,6 +1,5 @@
 package com.zenlauncher.zenmode.ui.screens
 
-import android.content.Intent
 import android.graphics.Bitmap
 import android.widget.ImageView
 import androidx.compose.ui.geometry.Rect
@@ -8,11 +7,7 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.core.content.FileProvider
 import androidx.core.view.drawToBitmap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.File
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,6 +35,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.em
 import com.zenlauncher.zenmode.ui.components.runningGradientStroke
+import com.zenlauncher.zenmode.ui.components.BlazingFlame
+import com.zenlauncher.zenmode.ui.components.MoodBackdrop
+import com.zenlauncher.zenmode.ui.components.MoodSource
+import com.zenlauncher.zenmode.ui.components.HomePage
+import com.zenlauncher.zenmode.ui.components.HomePageDots
+import com.zenlauncher.zenmode.ui.components.HomeReveal
+import com.zenlauncher.zenmode.ui.components.pageSwipe
+import com.zenlauncher.zenmode.ui.components.rememberCountUp
+import com.zenlauncher.zenmode.ui.components.rememberReduceMotion
+import com.zenlauncher.zenmode.ui.components.rememberResumeCount
+import com.zenlauncher.zenmode.ui.components.revealPop
+import com.zenlauncher.zenmode.ui.components.revealRise
+import com.zenlauncher.zenmode.ui.components.revealSpin
+import com.zenlauncher.zenmode.ui.components.revealStrike
+import com.zenlauncher.zenmode.ui.components.taperedBorder
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.Constraints
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import androidx.compose.animation.core.tween
@@ -87,7 +100,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -120,6 +132,18 @@ import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.FileResult
 import com.zenlauncher.zenmode.FileSearchRepository
 import com.zenlauncher.zenmode.R
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.zenlauncher.zenmode.AppSearchRanking
+import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.ui.components.saveImageToPictures
+import com.zenlauncher.zenmode.ui.components.shareImage
+import com.zenlauncher.zenmode.ui.components.taperedBorder
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
@@ -127,7 +151,6 @@ import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ZenTypography
-import com.zenlauncher.zenmode.ui.theme.moodWash
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.components.StatsCardsRow
@@ -140,10 +163,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import android.content.ContentValues
-import android.provider.MediaStore
-import android.os.Environment
-import android.widget.Toast
 import android.util.Log
 
 // ── Constants ─────────────────────────────────────────────────────
@@ -174,13 +193,10 @@ private val AppRowGap: Dp @Composable get() = 45.rdp
 private val AppsToSearchGap: Dp @Composable get() = 40.rdp
 private val SearchToDotsGap: Dp @Composable get() = 25.rdp
 private val DotsToBottomGap: Dp @Composable get() = 20.rdp
-private val HeaderIconSize: Dp @Composable get() = 33.rdp
-private val HeaderIconTextGap: Dp @Composable get() = 4.rdp
+private val HeaderIconTextGap: Dp @Composable get() = 6.rdp
 
 // Figma node 2001:1504 — header text colours and gradients. Values live in colors.xml
 // (SOURCE OF TRUTH: design tokens) — never inline a Color(0x...) literal here.
-private val ZenInk: Color @Composable get() = colorResource(R.color.ink_gain)
-private val StreakDaysColor: Color @Composable get() = colorResource(R.color.streak_days)
 private val ZenScoreGradient: Brush
     @Composable get() = Brush.linearGradient(
         listOf(
@@ -189,16 +205,6 @@ private val ZenScoreGradient: Brush
             colorResource(R.color.score_orange)
         )
     )
-private val StreakGradient: Brush
-    @Composable get() = Brush.horizontalGradient(
-        listOf(
-            colorResource(R.color.score_orange),
-            colorResource(R.color.streak_grad_2),
-            colorResource(R.color.streak_grad_3),
-            colorResource(R.color.streak_grad_4)
-        )
-    )
-
 // Gold row, sampled from Figma node 71:6081. Not private — ZenGoldScreen.kt
 // (Figma node 2026:1648) reuses these same tokens via GoldInvestedRow.
 val GoldLabel: Color @Composable get() = colorResource(R.color.gold_label)
@@ -226,7 +232,6 @@ fun HomeScreen(
     buddyLikes: Long = 0L,
     onLikeClick: () -> Unit = {},
     onShowSearchChange: (Boolean) -> Unit,
-    onSettingsClick: () -> Unit,
     onZenGoldClick: () -> Unit = {},
     onZenScoreClick: () -> Unit = {},
     onGoogleSearch: (String) -> Unit,
@@ -242,6 +247,8 @@ fun HomeScreen(
 ) {
     val colors = ZenTheme.colors
     var showStreakOverlay by remember { mutableStateOf(false) }
+    // Bumps every time Home comes into view, replaying the reveal (see HomeMotion.kt).
+    val reveal = rememberResumeCount()
     // Where the home pill sits on screen; the search bar opens in exactly that spot.
     var searchPillBounds by remember { mutableStateOf<Rect?>(null) }
 
@@ -249,7 +256,8 @@ fun HomeScreen(
     // pooling the mood colour in the middle and fading to cream at both edges.
     val todayMinutes = ((usage?.screenTimeInMillis ?: 0L) / 1000) / 60
     val mood = AppLogic.getMoodState(todayMinutes)
-    val wash = colors.moodWash(mood)
+    // Every other page reads this so it opens already in today's colour.
+    MoodSource.lastKnown = mood
 
     // Figma 2026:1207 — home stays behind search, blurred ~7.65px. No-op below API 31.
     val homeBlur by animateDpAsState(
@@ -261,20 +269,9 @@ fun HomeScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(wash))
-            // No dock any more: swipe left anywhere on the home screen for Settings,
-            // swipe right for Zen Gold, long-press to lock.
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures { change, dragAmount ->
-                    if (dragAmount < -40f) {
-                        change.consume()
-                        onSettingsClick()
-                    } else if (dragAmount > 40f) {
-                        change.consume()
-                        onZenGoldClick()
-                    }
-                }
-            }
+            // No dock: Home is the middle of three pages — swipe right for Zen Score, left
+            // for Zen Gold. Long-press to lock. Settings lives behind every page's ☰.
+            .pageSwipe(onSwipeLeft = onZenGoldClick, onSwipeRight = onZenScoreClick)
             .combinedClickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
@@ -282,6 +279,8 @@ fun HomeScreen(
                 onLongClick = onLockClick
             )
     ) {
+        MoodBackdrop(mood)
+
         // Insets live on the children, not this Box, so the search scrim can run
         // edge to edge behind the status and navigation bars.
         Column(
@@ -296,6 +295,7 @@ fun HomeScreen(
             HomeHeader(
                 zenScore = zenScore,
                 streaks = streaks,
+                reveal = reveal,
                 onZenScoreClick = onZenScoreClick,
                 onStreakClick = { showStreakOverlay = true }
             )
@@ -305,7 +305,8 @@ fun HomeScreen(
             // zone 2 · the reward row
             GoldInvestedRow(
                 gold = goldInvested,
-                changePercent = goldChangePercent
+                changePercent = goldChangePercent,
+                modifier = Modifier.revealRise(reveal, HomeReveal.GOLD)
             )
 
             Spacer(modifier = Modifier.height(GoldToCardsGap))
@@ -328,6 +329,11 @@ fun HomeScreen(
                 onInviteBuddyClick = onInviteBuddyClick,
                 onSignInClick = onSignInClick,
                 onBuddyCardClick = onBuddyCardClick,
+                // My screen time lands first, then the bolt strikes, then my Zen Bro's /
+                // Zen Circle's card — the comparison reads left to right.
+                leftCardModifier = Modifier.revealPop(reveal, HomeReveal.MY_CARD),
+                rightCardModifier = Modifier.revealPop(reveal, HomeReveal.BUDDY_CARD),
+                boltModifier = Modifier.revealStrike(reveal, HomeReveal.BOLT),
                 modifier = Modifier.padding(horizontal = ScreenMargin)
             )
 
@@ -359,7 +365,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(SearchToDotsGap))
 
-            PageDots(onSettingsClick = onSettingsClick, onZenGoldClick = onZenGoldClick)
+            HomePageDots(current = HomePage.HOME)
 
             Spacer(modifier = Modifier.height(DotsToBottomGap))
         }
@@ -406,10 +412,13 @@ fun HomeScreen(
 private fun HomeHeader(
     zenScore: Int,
     streaks: Int,
+    reveal: Int,
     onZenScoreClick: () -> Unit = {},
     onStreakClick: () -> Unit
 ) {
     val colors = ZenTheme.colors
+    val shownScore = rememberCountUp(zenScore, reveal, HomeReveal.SCORE)
+    val shownStreak = rememberCountUp(streaks, reveal, HomeReveal.STREAK, durationMillis = 600)
 
     Row(
         modifier = Modifier
@@ -418,138 +427,163 @@ private fun HomeHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Zen Score — real gradient mark from Figma node 2001:1504. Tap target for
-        // ZenScoreActivity (Figma node 2026:2035, ui/screens/ZenScoreScreen.kt).
-        Row(
-            modifier = Modifier.clickable { onZenScoreClick() },
-            verticalAlignment = Alignment.CenterVertically
+        // Zen Score — gradient mark from Figma node 2001:1504, exactly as tall as the
+        // "Zen Score / 07/10" block beside it. Opens Zen Score (also a swipe right away).
+        IconMatchedLabel(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.rdp))
+                .clickable(onClickLabel = "Open Zen Score", onClick = onZenScoreClick),
+            icon = {
+                Image(
+                    painter = painterResource(R.drawable.ic_zen_mark_gradient),
+                    contentDescription = null,
+                    modifier = Modifier.revealSpin(reveal, HomeReveal.SCORE)
+                )
+            }
         ) {
-            Image(
-                painter = painterResource(R.drawable.ic_zen_mark_gradient),
-                contentDescription = null,
-                modifier = Modifier.size(HeaderIconSize)
-            )
-
-            Spacer(modifier = Modifier.width(HeaderIconTextGap))
-
-            Column {
+            Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
                 Text(
                     text = "Zen Score",
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 13.4.rsp,
-                    color = colors.textPrimary
+                    fontSize = 14.rsp,
+                    lineHeight = 16.rsp,
+                    color = colors.textPrimary,
+                    style = HeaderTextStyle
                 )
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = zenScore.toString(),
+                        text = ZenScore.format(shownScore),
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 19.9.rsp,
-                        style = TextStyle(brush = ZenScoreGradient)
+                        fontSize = 22.rsp,
+                        lineHeight = 24.rsp,
+                        style = HeaderTextStyle.copy(brush = ZenScoreGradient)
                     )
                     Text(
-                        text = "/100",
+                        text = "/${ZenScore.MAX_DISPLAY}",
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.4.rsp,
-                        color = ZenInk
+                        fontSize = 14.rsp,
+                        lineHeight = 20.rsp,
+                        color = colors.textSecondary,
+                        style = HeaderTextStyle
                     )
                 }
             }
         }
 
-        // Streaks — real two-tone flame + gradient number, same node.
-        Row(
-            modifier = Modifier.clickable { onStreakClick() },
-            verticalAlignment = Alignment.CenterVertically
+        // Streaks — the flame burns as tall as the "13 days / Streaks" block beside it.
+        IconMatchedLabel(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.rdp))
+                .clickable(onClickLabel = "Open streaks", onClick = onStreakClick),
+            icon = {
+                BlazingFlame(
+                    revealKey = reveal,
+                    lit = streaks > 0,
+                    contentDescription = null
+                )
+            }
         ) {
-            Image(
-                painter = painterResource(R.drawable.ic_streak_fire),
-                contentDescription = "Streaks",
-                modifier = Modifier.size(HeaderIconSize)
-            )
-
-            Spacer(modifier = Modifier.width(HeaderIconTextGap))
-
-            Column {
+            Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
                 Row(verticalAlignment = Alignment.Bottom) {
+                    // Solid ink, not the brand gradient: the gradient's yellow-green washed out
+                    // on the green home wash. textPrimary flips dark/light with the theme.
                     Text(
-                        text = streaks.toString(),
+                        text = shownStreak.toString(),
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.4.rsp,
-                        style = TextStyle(brush = StreakGradient)
+                        fontSize = 18.rsp,
+                        lineHeight = 20.rsp,
+                        color = colors.textPrimary,
+                        style = HeaderTextStyle
                     )
                     Spacer(modifier = Modifier.width(3.rdp))
                     Text(
-                        text = "days",
+                        text = if (streaks == 1) "day" else "days",
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 13.4.rsp,
-                        color = StreakDaysColor
+                        fontSize = 18.rsp,
+                        lineHeight = 20.rsp,
+                        color = colors.textPrimary,
+                        style = HeaderTextStyle
                     )
                 }
                 Text(
                     text = "Streaks",
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 13.4.rsp,
-                    color = colors.textPrimary
+                    fontSize = 18.rsp,
+                    lineHeight = 20.rsp,
+                    color = colors.textPrimary,
+                    style = HeaderTextStyle
                 )
             }
         }
     }
 }
 
+/** Tight line boxes, so a two-line block's height is its type and nothing else. */
+private val HeaderTextStyle = TextStyle(
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both)
+)
+
+/**
+ * [icon] beside [label], with the icon sized to a square exactly as tall as the label block —
+ * so the mark always matches its two lines of text, whatever the font scale.
+ */
+@Composable
+private fun IconMatchedLabel(
+    modifier: Modifier = Modifier,
+    icon: @Composable () -> Unit,
+    label: @Composable () -> Unit
+) {
+    val gap = HeaderIconTextGap
+    Layout(contents = listOf(icon, label), modifier = modifier) { (iconMeasurables, labelMeasurables), constraints ->
+        val gapPx = gap.roundToPx()
+        val labelPlaceable = labelMeasurables.first().measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val side = labelPlaceable.height
+        val iconPlaceable = iconMeasurables.first().measure(Constraints.fixed(side, side))
+        layout(side + gapPx + labelPlaceable.width, side) {
+            iconPlaceable.place(0, 0)
+            labelPlaceable.place(side + gapPx, 0)
+        }
+    }
+}
+
 // ── Gold Invested ─────────────────────────────────────────────────
 
+/**
+ * The Gold Invested pill (Figma node 71:6081). On Home it hugs its content under a top-only rule;
+ * [fullWidth] is Zen Gold's variant (node 2026:1530) — ruled top and bottom, stretched to the
+ * content width, with [trailing] (View all) inset from the right edge.
+ */
 @Composable
 fun GoldInvestedRow(
     gold: String,
-    changePercent: Int
+    changePercent: Int,
+    modifier: Modifier = Modifier,
+    fullWidth: Boolean = false,
+    trailing: (@Composable () -> Unit)? = null
 ) {
-    val colors = ZenTheme.colors
     var amountVisible by remember { mutableStateOf(true) }
-    val topRule = colors.textBrand
+    val rule = colorResource(R.color.zen_700)
+    // Figma draws this as CSS border-top (and border-bottom) on a 41.8dp radius: a rule that
+    // is full width along the edge and thins to nothing as it curves down the sides.
+    val radius = 41.777.rdp
 
-    // Every number below is the Figma frame's own geometry (node 71:6081).
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ) {
-        // Hoisted out of drawBehind: reading LocalScreenScale (what .rdp needs) only
-        // works in composable scope, not inside the DrawScope lambda below.
-        val arcRadius = 41.777.rdp
-        val arcStroke = 1.rdp
-
         Row(
             modifier = Modifier
+                .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier)
                 .height(56.4.rdp)
-                // The design puts a border on the TOP edge only, so the rounded
-                // corners render as an arc that runs down and stops.
-                .drawBehind {
-                    val r = arcRadius.toPx()
-                    val stroke = arcStroke.toPx()
-                    val path = Path().apply {
-                        moveTo(0f, r)
-                        arcTo(
-                            rect = Rect(0f, 0f, r * 2, r * 2),
-                            startAngleDegrees = 180f,
-                            sweepAngleDegrees = 90f,
-                            forceMoveTo = false
-                        )
-                        lineTo(size.width - r, 0f)
-                        arcTo(
-                            rect = Rect(size.width - r * 2, 0f, size.width, r * 2),
-                            startAngleDegrees = 270f,
-                            sweepAngleDegrees = 90f,
-                            forceMoveTo = false
-                        )
-                    }
-                    drawPath(path, topRule, style = Stroke(width = stroke))
-                }
-                .padding(horizontal = 15.5.rdp, vertical = 3.5.rdp),
+                .taperedBorder(rule, radius, top = 1.rdp, bottom = if (fullWidth) 1.rdp else 0.dp)
+                .padding(start = 15.5.rdp, end = if (fullWidth) 12.rdp else 15.5.rdp),
             horizontalArrangement = Arrangement.spacedBy(6.4.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -559,7 +593,7 @@ fun GoldInvestedRow(
                 modifier = Modifier.size(49.3.rdp)
             )
 
-            Column(horizontalAlignment = Alignment.End) {
+            Column(horizontalAlignment = Alignment.Start) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "GOLD INVESTED",
@@ -615,6 +649,11 @@ fun GoldInvestedRow(
                         )
                     }
                 }
+            }
+
+            if (trailing != null) {
+                Spacer(modifier = Modifier.weight(1f))
+                trailing()
             }
         }
     }
@@ -673,13 +712,16 @@ private fun AppIconItem(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.combinedClickable(
-            onClick = onClick,
-            onLongClick = {
-                view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
-                onLongClick()
-            }
-        )
+        // Icons only, no labels on screen, so name the app for screen readers.
+        modifier = Modifier
+            .semantics { contentDescription = appInfo.label.toString() }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = {
+                    view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                    onLongClick()
+                }
+            )
     ) {
         Box(
             modifier = Modifier.size(AppGridIconSize),
@@ -747,7 +789,7 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
             .padding(horizontal = ScreenMargin)
             .height(SearchPillHeight)
             .clip(RoundedCornerShape(percent = 50))
-            .border(1.rdp, colors.textBrand.copy(alpha = 0.45f), RoundedCornerShape(percent = 50))
+            .border(3.rdp, colors.textBrand.copy(alpha = 0.45f), RoundedCornerShape(percent = 50))
             .clickable { onClick() }
             .padding(horizontal = 20.rdp),
         verticalAlignment = Alignment.CenterVertically
@@ -778,7 +820,7 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 // Matches the home pill (not Figma's 46) so the pressed state lands exactly on top of it.
 private val SearchBarHeight: Dp @Composable get() = SearchPillHeight
-private val SearchStrokeWidth: Dp @Composable get() = 3.rdp
+private val SearchStrokeWidth: Dp @Composable get() = 5.rdp
 private val SearchGlyphSize: Dp @Composable get() = 19.2.rdp
 // Results sit 26dp in from the bar's edge (x=56 against the bar's x=30).
 private val SearchResultInset: Dp @Composable get() = 26.rdp
@@ -788,6 +830,7 @@ private val SearchHeaderGap: Dp @Composable get() = 24.rdp
 private val SearchSectionGap: Dp @Composable get() = 28.rdp
 private val SearchBarGap: Dp @Composable get() = 26.rdp
 private const val SearchCollapsedRows = 3
+private val SearchTopFade: Dp @Composable get() = 48.rdp
 
 // One trip of the gradient round the pill. Slow enough to read as calm, quick
 // enough to read as "listening".
@@ -847,10 +890,12 @@ private fun SearchOverlay(
 
     val filteredApps by remember(query, apps) {
         derivedStateOf {
-            if (query.isBlank()) emptyList()
-            else apps.filter {
-                it.label.toString().contains(query, ignoreCase = true)
-            }
+            AppSearchRanking.filter(
+                apps = apps,
+                query = query,
+                label = { it.label.toString() },
+                packageName = { it.packageName.toString() }
+            )
         }
     }
 
@@ -951,9 +996,13 @@ private fun SearchOverlay(
             LazyColumn(
                 state = listState,
                 reverseLayout = true,
+                // Room above the first row, and a fade where a long list runs under the
+                // status bar, so an overflowing result set reads as scrollable, not clipped.
+                contentPadding = PaddingValues(top = SearchTopFade),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .fadeTopEdge(SearchTopFade)
                     .padding(horizontal = ScreenMargin)
             ) {
                 items(rows.asReversed(), key = { it.key }) { row ->
@@ -1018,6 +1067,22 @@ private fun SearchOverlay(
     // New results arrive at the bottom edge; keep the bar-side end in view.
     LaunchedEffect(query) { listState.scrollToItem(0) }
 }
+
+/** Fades content to transparent over the top [height] of the element. */
+private fun Modifier.fadeTopEdge(height: Dp): Modifier = this
+    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        drawRect(
+            brush = Brush.verticalGradient(
+                0f to Color.Transparent,
+                1f to Color.Black,
+                startY = 0f,
+                endY = height.toPx()
+            ),
+            blendMode = BlendMode.DstIn
+        )
+    }
 
 /** Figma blurs the home screen 7.65px under a 67% black scrim; we run it at 85% because
  *  the cream home wash bleeds through 67% and washes out the white result text.
@@ -1168,20 +1233,6 @@ private fun ZenSearchBar(
                 )
             }
         }
-    }
-}
-
-/** Honours the system "Remove animations" setting — the stroke still appears, it just
- *  doesn't trace or run. */
-@Composable
-private fun rememberReduceMotion(): Boolean {
-    val context = LocalContext.current
-    return remember {
-        Settings.Global.getFloat(
-            context.contentResolver,
-            Settings.Global.ANIMATOR_DURATION_SCALE,
-            1f
-        ) == 0f
     }
 }
 
@@ -1814,119 +1865,30 @@ private suspend fun saveOrShareMilestoneCard(
     share: Boolean,
     totalMindfulDays: Int
 ) {
-    try {
-        val bounds = cardBounds ?: run {
-            Log.e("StreakOverlayShare", "cardBounds is null")
-            return
-        }
-        // Capture on Main thread (required by drawToBitmap)
-        val fullBitmap = view.drawToBitmap()
-        val left = bounds.left.toInt().coerceAtLeast(0)
-        val top = bounds.top.toInt().coerceAtLeast(0)
-        val cropped = Bitmap.createBitmap(
-            fullBitmap,
-            left,
-            top,
-            bounds.width.toInt().coerceAtMost(fullBitmap.width - left),
-            bounds.height.toInt().coerceAtMost(fullBitmap.height - top)
-        )
-
-        if (share) {
-            withContext(Dispatchers.IO) {
-                val imagesFolder = File(context.cacheDir, "shared_images")
-                imagesFolder.mkdirs()
-                val file = File(imagesFolder, "zenmode_milestone.png")
-                file.outputStream().use { out -> cropped.compress(Bitmap.CompressFormat.PNG, 100, out) }
-
-                withContext(Dispatchers.Main) {
-                    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "image/png"
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        putExtra(Intent.EXTRA_TEXT, "$totalMindfulDays days of intentional time with ZenMode.")
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    context.startActivity(Intent.createChooser(intent, "Share Streak"))
-                }
-            }
-        } else {
-            withContext(Dispatchers.IO) {
-                val fileName = "zenmode_milestone_${System.currentTimeMillis()}.png"
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val resolver = context.contentResolver
-                    val values = ContentValues().apply {
-                        put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
-                        put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-                        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/ZenMode")
-                    }
-                    val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-                    if (uri == null) {
-                        Log.e("StreakOverlayShare", "MediaStore insert() returned null")
-                    } else {
-                        val stream = resolver.openOutputStream(uri)
-                        if (stream == null) {
-                            Log.e("StreakOverlayShare", "openOutputStream() returned null for $uri")
-                        } else {
-                            stream.use { out -> cropped.compress(Bitmap.CompressFormat.PNG, 100, out) }
-                            Log.i("StreakOverlayShare", "saved to $uri")
-                        }
-                    }
-                } else {
-                    val dir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-                    dir?.mkdirs()
-                    File(dir, fileName).outputStream().use { out ->
-                        cropped.compress(Bitmap.CompressFormat.PNG, 100, out)
-                    }
-                }
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Saved to Pictures", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    } catch (e: Exception) {
-        Log.e("StreakOverlayShare", "save/share failed", e)
+    val bounds = cardBounds ?: run {
+        Log.e("StreakOverlayShare", "cardBounds is null")
+        return
     }
-}
-
-// ── Page Dots ─────────────────────────────────────────────────────
-// The dock is gone. These mark the home pages: swipe left for Settings, swipe
-// right for Zen Gold (ZenGoldActivity). Purely a visual echo of the swipe zone
-// on the full-screen Box above — not an independent hit target.
-
-@Composable
-private fun PageDots(onSettingsClick: () -> Unit, onZenGoldClick: () -> Unit = {}) {
-    val colors = ZenTheme.colors
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures { change, dragAmount ->
-                    if (dragAmount < -40f) {
-                        change.consume()
-                        onSettingsClick()
-                    } else if (dragAmount > 40f) {
-                        change.consume()
-                        onZenGoldClick()
-                    }
-                }
-            }
-            .padding(vertical = 8.rdp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(3) { i ->
-            val active = i == 1
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 4.rdp)
-                    .size(7.rdp)
-                    .clip(CircleShape)
-                    .background(
-                        if (active) colors.textBrand
-                        else colors.textPrimary.copy(alpha = 0.35f)
-                    )
-            )
-        }
+    // Capture on Main thread (required by drawToBitmap)
+    val fullBitmap = view.drawToBitmap()
+    val left = bounds.left.toInt().coerceAtLeast(0)
+    val top = bounds.top.toInt().coerceAtLeast(0)
+    val cropped = Bitmap.createBitmap(
+        fullBitmap,
+        left,
+        top,
+        bounds.width.toInt().coerceAtMost(fullBitmap.width - left),
+        bounds.height.toInt().coerceAtMost(fullBitmap.height - top)
+    )
+    if (share) {
+        shareImage(
+            context = context,
+            bitmap = cropped,
+            fileName = "zenmode_milestone.png",
+            text = "$totalMindfulDays days of intentional time with ZenMode.",
+            chooserTitle = "Share Streak"
+        )
+    } else {
+        saveImageToPictures(context, cropped, fileBaseName = "zenmode_milestone")
     }
 }

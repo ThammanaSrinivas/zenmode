@@ -12,7 +12,8 @@ import org.junit.Test
 
 /**
  * Snapshot coverage for Invest Gold step 1 (Figma node 2026:1250): a quick pick
- * selected, and the weekly cap reached (plus disabled, no quick pick selected).
+ * selected, and the weekly cap reached (plus disabled, no quick pick selected);
+ * and step 2, the order read back before Kite.
  * Inspection mode is forced on so entrance motion renders its settled frame.
  * Baselines: `./gradlew recordPaparazzi`, review under app/src/test/snapshots/.
  */
@@ -29,6 +30,13 @@ class InvestGoldScreenScreenshotTest {
     @Test
     fun `invest gold - weekly cap reached`() {
         snapshotInvestGold(units = AppConstants.INVEST_GOLD_MAX_UNITS_PER_WEEK)
+    }
+
+    @Test
+    fun `invest gold - review`() {
+        paparazzi.snapshot {
+            Settled { InvestGoldReviewScreen(units = 8, onBackClick = {}, onOpenKiteClick = {}, onChangeQuantityClick = {}) }
+        }
     }
 
     private fun snapshotInvestGold(units: Int) {

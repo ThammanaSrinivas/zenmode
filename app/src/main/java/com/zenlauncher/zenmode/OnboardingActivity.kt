@@ -143,6 +143,7 @@ class OnboardingActivity : ComponentActivity() {
                     onContinue = viewModel::next
                 )
                 OnboardingStep.STORIES -> StoriesStep(
+                    progress = progress,
                     onBack = { viewModel.back() },
                     onContinue = viewModel::next
                 )

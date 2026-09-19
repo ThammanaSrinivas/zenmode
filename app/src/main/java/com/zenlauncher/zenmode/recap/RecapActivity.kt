@@ -3,6 +3,7 @@ package com.zenlauncher.zenmode.recap
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import com.zenlauncher.zenmode.InvestGoldActivity
 import com.zenlauncher.zenmode.MyPromiseActivity
+import com.zenlauncher.zenmode.ProAccess
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.Dispatchers
@@ -89,6 +91,15 @@ class RecapActivity : ComponentActivity() {
                         val suggested = (RecapStory.cards(current).last() as? RecapCard.Recommit)?.suggestedPromiseHours
                         startActivity(MyPromiseActivity.intent(this, suggested))
                         finish()
+                    },
+                    onShare = {
+                        lifecycleScope.launch {
+                            runCatching {
+                                RecapReport.share(this@RecapActivity, current, attachPdf = ProAccess.isPro(this@RecapActivity))
+                            }.onFailure {
+                                Toast.makeText(this@RecapActivity, "Couldn't share the report. Please try again.", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     },
                     onClose = ::finish
                 )

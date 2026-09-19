@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,8 +15,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -38,7 +36,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -53,16 +50,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.HomePage
+import com.zenlauncher.zenmode.ui.components.MoodBackdrop
+import com.zenlauncher.zenmode.ui.components.PinnedPageFooter
+import com.zenlauncher.zenmode.ui.components.moodWashColors
+import com.zenlauncher.zenmode.ui.components.rememberTodayMood
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.zenlauncher.zenmode.ui.components.SettingsMenuButton
+import com.zenlauncher.zenmode.ui.components.pageSwipe
+import com.zenlauncher.zenmode.ui.components.pressScale
+import com.zenlauncher.zenmode.ui.components.taperedBorder
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import java.time.LocalDate
 
-// ── ZM_OS v3: Zen Gold (Home right-swipe page) ──────────────────────
-// Figma node 2026:1648. Reached by swiping right on the home screen (mirrors
-// swipe-left-for-Settings); back arrow / swipe-left-here returns to Home.
+// ── ZM_OS v3: Zen Gold (Home left-swipe page) ───────────────────────
+// Figma nodes 2026:1648 / 2026:1435. The right-hand home page: reached by swiping left on
+// the home screen (Zen Score is the swipe-right page); back arrow / swipe right returns Home.
 //
 // Every number this screen shows — the weekly promise pattern, the daily
 // average, the forecast — needs a real Gold Streak backend that doesn't exist
@@ -87,42 +98,37 @@ fun ZenGoldScreen(
     forecastMonthlyAmount: Int = AppConstants.PLACEHOLDER_FORECAST_MONTHLY_AMOUNT,
     investGoldUnlocked: Boolean = AppConstants.PLACEHOLDER_INVEST_GOLD_UNLOCKED,
     onBackClick: () -> Unit,
-    onMenuClick: () -> Unit = {},
     onViewAllClick: () -> Unit = {},
     onInvestGoldClick: () -> Unit = {},
     onEditPromiseClick: () -> Unit = {},
     onViewTermsClick: () -> Unit = {}
 ) {
-    val colors = ZenTheme.colors
+    val mood = rememberTodayMood()
+    var footerHeight by remember { mutableStateOf(0.dp) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bgPrimary)
-            .systemBarsPadding()
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures { change, dragAmount ->
-                    if (dragAmount > 40f) {
-                        change.consume()
-                        onBackClick()
-                    }
-                }
-            }
+            // Home sits to the left of this page, so swiping right goes back to it.
+            .pageSwipe(onSwipeRight = onBackClick)
     ) {
+        MoodBackdrop(mood)
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            ZenGoldHeader(onBackClick = onBackClick, onMenuClick = onMenuClick)
+            ZenGoldHeader(onBackClick = onBackClick)
 
-            Spacer(modifier = Modifier.height(20.rdp))
+            Spacer(modifier = Modifier.height(14.rdp))
 
             Column(
                 modifier = Modifier
                     .padding(horizontal = ScreenMargin)
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.rdp)
+                verticalArrangement = Arrangement.spacedBy(10.rdp)
             ) {
                 ScreenTimeCard(
                     dailyAverageMinutes = dailyAverageMinutes,
@@ -139,13 +145,14 @@ fun ZenGoldScreen(
                     forecastMonthlyAmount = forecastMonthlyAmount
                 )
 
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    GoldInvestedRow(gold = goldInvested, changePercent = goldChangePercent)
-                    ViewAllPillButton(
-                        onClick = onViewAllClick,
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    )
-                }
+                // Full-width variant: ruled top and bottom, with View all inset from the
+                // right edge by the same padding the coin has on the left (node 2026:1530).
+                GoldInvestedRow(
+                    gold = goldInvested,
+                    changePercent = goldChangePercent,
+                    fullWidth = true,
+                    trailing = { ViewAllPillButton(onClick = onViewAllClick) }
+                )
 
                 GoldUnlockDisclaimer(
                     daysUntilUnlock = daysUntilUnlock,
@@ -154,24 +161,27 @@ fun ZenGoldScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.rdp))
+            // Room for the sticky footer, so the last card can scroll clear of it.
+            Spacer(modifier = Modifier.height(footerHeight + 8.rdp))
+        }
 
+        // Invest Gold / Edit my promise stay on screen however far the page scrolls.
+        PinnedPageFooter(
+            current = HomePage.ZEN_GOLD,
+            fadeTo = moodWashColors(mood).last(),
+            onHeightChanged = { footerHeight = it },
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = ScreenMargin)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.rdp)
+                verticalArrangement = Arrangement.spacedBy(2.rdp)
             ) {
                 InvestGoldButton(unlocked = investGoldUnlocked, onClick = onInvestGoldClick)
                 EditPromiseButton(onClick = onEditPromiseClick)
             }
-
-            Spacer(modifier = Modifier.height(16.rdp))
-
-            ZenGoldPageDots(onSwipeLeft = onBackClick)
-
-            Spacer(modifier = Modifier.height(20.rdp))
         }
     }
 }
@@ -179,7 +189,7 @@ fun ZenGoldScreen(
 // ── Header ────────────────────────────────────────────────────────
 
 @Composable
-private fun ZenGoldHeader(onBackClick: () -> Unit, onMenuClick: () -> Unit) {
+private fun ZenGoldHeader(onBackClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,18 +197,22 @@ private fun ZenGoldHeader(onBackClick: () -> Unit, onMenuClick: () -> Unit) {
             .padding(top = 12.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_arrow_back),
-            contentDescription = "Back",
-            modifier = Modifier
-                .size(28.rdp)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = onBackClick
-                ),
-            colorFilter = ColorFilter.tint(colorResource(R.color.zen_900))
-        )
+        // Same footprint as the ☰ on the right, so the title stays truly centred.
+        Box(
+            modifier = Modifier.size(width = 29.rdp, height = 28.rdp),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_arrow_back),
+                contentDescription = "Back",
+                modifier = Modifier
+                    .requiredSize(48.dp)
+                    .clip(CircleShape)
+                    .clickable(onClickLabel = "Back to home", onClick = onBackClick)
+                    .padding(10.dp),
+                colorFilter = ColorFilter.tint(ZenTheme.colors.textBrandStrong)
+            )
+        }
 
         Text(
             text = "ZEN GOLD",
@@ -206,23 +220,12 @@ private fun ZenGoldHeader(onBackClick: () -> Unit, onMenuClick: () -> Unit) {
             fontWeight = FontWeight.Medium,
             fontSize = 24.rsp,
             letterSpacing = (-0.48).sp,
-            color = colorResource(R.color.zen_900),
+            color = ZenTheme.colors.textBrandStrong,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Center
         )
 
-        Image(
-            painter = painterResource(R.drawable.ic_hamburger_menu),
-            contentDescription = "Menu",
-            modifier = Modifier
-                .width(29.rdp)
-                .height(17.5.rdp)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = onMenuClick
-                )
-        )
+        SettingsMenuButton()
     }
 }
 
@@ -244,134 +247,130 @@ private fun ScreenTimeCard(
     daysClearedUnder: Int
 ) {
     val colors = ZenTheme.colors
-    val topBorder = colorResource(R.color.zen_700)
+    val rule = colorResource(R.color.zen_700)
+    val radius = 16.rdp
     val hrs = dailyAverageMinutes / 60
     val mins = dailyAverageMinutes % 60
-    val topBorderWidth = 3.rdp
 
-    Column(
+    // Node 2026:1449 — a 3dp rule on the top edge that tapers round the corners, and the
+    // status tab tucked into the bottom-right corner, flush with the card's own curve.
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.rdp))
+            .clip(RoundedCornerShape(radius))
             .background(if (unlocked) colors.statsCardFillHappy else colors.bgPrimary)
-            .drawBehind {
-                drawLine(
-                    color = topBorder,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = topBorderWidth.toPx()
-                )
-            }
-            .padding(horizontal = 16.rdp, vertical = 16.rdp)
+            .taperedBorder(rule, radius, top = 3.rdp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.rdp, end = 20.rdp, top = 17.rdp, bottom = 16.rdp + StatusTabHeight)
         ) {
-            Text(
-                text = "My Screen time",
-                fontFamily = ClashDisplay,
-                fontWeight = FontWeight.Medium,
-                fontSize = 16.rsp,
-                letterSpacing = (-0.16).sp,
-                color = colors.textPrimary
-            )
-            WeeklyMonthlyToggle()
-        }
-
-        Spacer(modifier = Modifier.height(8.rdp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "Daily Average  •  This Week",
-                fontFamily = Geist,
-                fontSize = 12.rsp,
-                letterSpacing = (-0.12).sp,
-                color = colors.textPrimary,
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = "My promise - ",
-                fontFamily = Geist,
-                fontSize = 10.rsp,
-                color = colors.textPrimary
-            )
-            Text(
-                text = "${promiseHours}Hrs/day",
-                fontFamily = Geist,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 10.rsp,
-                color = topBorder
-            )
-        }
-
-        Spacer(modifier = Modifier.height(4.rdp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.Bottom) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "%02d".format(hrs),
-                    fontFamily = DepartureMono,
-                    fontSize = 31.5.rsp,
-                    letterSpacing = (-2.5).sp,
-                    color = colorResource(R.color.ink_soft)
+                    text = "My Screen time",
+                    fontFamily = ClashDisplay,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.rsp,
+                    letterSpacing = (-0.16).sp,
+                    color = colors.textPrimary
+                )
+                WeeklyMonthlyToggle()
+            }
+
+            Spacer(modifier = Modifier.height(10.rdp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Daily Average  •  This Week",
+                    fontFamily = Geist,
+                    fontSize = 12.rsp,
+                    letterSpacing = (-0.12).sp,
+                    color = colors.textPrimary,
+                    modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = " HRS  ",
-                    fontFamily = DepartureMono,
+                    text = "My promise - ",
+                    fontFamily = Geist,
+                    fontSize = 10.rsp,
+                    color = colors.textPrimary
+                )
+                Text(
+                    text = "${promiseHours}Hrs/day",
+                    fontFamily = Geist,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 7.rsp,
-                    color = colorResource(R.color.ink_soft),
-                    modifier = Modifier.padding(bottom = 6.rdp)
-                )
-                Text(
-                    text = "%02d".format(mins),
-                    fontFamily = DepartureMono,
-                    fontSize = 33.6.rsp,
-                    letterSpacing = (-2.7).sp,
-                    color = colorResource(R.color.ink_soft)
-                )
-                Text(
-                    text = " MINS",
-                    fontFamily = DepartureMono,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 6.rsp,
-                    color = colorResource(R.color.ink_soft),
-                    modifier = Modifier.padding(bottom = 6.rdp)
+                    fontSize = 10.rsp,
+                    color = rule
                 )
             }
-            if (unlocked) {
+
+            Spacer(modifier = Modifier.height(2.rdp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = "%02d".format(hrs),
+                        fontFamily = DepartureMono,
+                        fontSize = 31.5.rsp,
+                        letterSpacing = (-2.5).sp,
+                        color = colors.textSecondary
+                    )
+                    Text(
+                        text = " HRS  ",
+                        fontFamily = DepartureMono,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 7.rsp,
+                        color = colors.textSecondary,
+                        modifier = Modifier.padding(bottom = 6.rdp)
+                    )
+                    Text(
+                        text = "%02d".format(mins),
+                        fontFamily = DepartureMono,
+                        fontSize = 33.6.rsp,
+                        letterSpacing = (-2.7).sp,
+                        color = colors.textSecondary
+                    )
+                    Text(
+                        text = " MINS",
+                        fontFamily = DepartureMono,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 6.rsp,
+                        color = colors.textSecondary,
+                        modifier = Modifier.padding(bottom = 6.rdp)
+                    )
+                }
                 WeeklyPromiseLegend()
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.rdp))
+            Spacer(modifier = Modifier.height(10.rdp))
 
-        WeeklyPromiseBars(weeklyPromiseStatus)
+            WeeklyPromiseBars(weeklyPromiseStatus)
 
-        Spacer(modifier = Modifier.height(12.rdp))
+            Spacer(modifier = Modifier.height(10.rdp))
 
-        Row(verticalAlignment = Alignment.Bottom) {
-            // Two-tone caption: bold lead, regular tail — copy as authored in Figma (the
-            // "7 hrs" here doesn't match "My promise - ${promiseHours}Hrs/day" above;
-            // reproduced as-is, not reconciled).
             BasicText(
                 text = if (unlocked) {
                     buildAnnotatedString {
+                        append("You cleared the line with $daysClearedUnder days under. ")
                         withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                            append("You cleared the line with $daysClearedUnder days under. ")
+                            append("Gold pay stays open until Sunday midnight.")
                         }
-                        append("Gold pay stays open until Sunday midnight.")
                     }
                 } else {
                     buildAnnotatedString {
                         withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                            append("$daysUntilUnlock more days under 7 hrs opens gold pay, ")
+                            append("$daysUntilUnlock more days under ${promiseHours} hrs opens gold pay, ")
                         }
                         append("and you have $daysLeftThisWeek days left this week to do it.")
                     }
@@ -379,53 +378,39 @@ private fun ScreenTimeCard(
                 style = TextStyle(
                     fontFamily = Geist,
                     fontSize = 11.rsp,
+                    lineHeight = 14.rsp,
                     letterSpacing = (-0.22).sp,
                     color = colors.textPrimary
-                ),
-                modifier = Modifier.weight(1f)
-            )
-
-            if (unlocked) {
-                Spacer(modifier = Modifier.width(8.rdp))
-                UnlockedBadge()
-            }
-        }
-
-        if (!unlocked) {
-            Spacer(modifier = Modifier.height(12.rdp))
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.rdp))
-                    .background(colorResource(R.color.promise_badge_bg))
-                    .padding(horizontal = 10.rdp, vertical = 5.rdp)
-            ) {
-                Text(
-                    text = "IN PROGRESS",
-                    fontFamily = DepartureMono,
-                    fontSize = 9.5.rsp,
-                    letterSpacing = (-0.19).sp,
-                    color = PromiseKeptGreen
                 )
-            }
+            )
         }
+
+        StatusTab(
+            unlocked = unlocked,
+            modifier = Modifier.align(Alignment.BottomEnd)
+        )
     }
 }
 
+private val StatusTabHeight: Dp @Composable get() = 22.rdp
+
+/** UNLOCKED / IN PROGRESS tab sitting in the card's bottom-right corner. */
 @Composable
-private fun UnlockedBadge() {
+private fun StatusTab(unlocked: Boolean, modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(6.rdp))
-            .background(PromiseKeptGreen)
-            .padding(horizontal = 10.rdp, vertical = 5.rdp)
+        modifier = modifier
+            .width(105.rdp)
+            .height(StatusTabHeight)
+            .clip(RoundedCornerShape(topStart = 8.rdp))
+            .background(if (unlocked) PromiseKeptGreen else colorResource(R.color.promise_badge_bg)),
+        contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "UNLOCKED",
+            text = if (unlocked) "UNLOCKED" else "IN PROGRESS",
             fontFamily = DepartureMono,
             fontSize = 9.5.rsp,
-            letterSpacing = (-0.19).sp,
-            color = Color.White
+            letterSpacing = 0.4.sp,
+            color = if (unlocked) Color.White else PromiseKeptGreen
         )
     }
 }
@@ -455,7 +440,7 @@ private fun WeeklyPromiseLegendRow(color: Color, label: String) {
             fontFamily = Geist,
             fontSize = 7.5.rsp,
             letterSpacing = (-0.075).sp,
-            color = Color.Black
+            color = ZenTheme.colors.textPrimary
         )
     }
 }
@@ -499,15 +484,21 @@ private fun WeeklyMonthlyToggle() {
 @Composable
 private fun WeeklyPromiseBars(status: List<Boolean?>) {
     val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.rdp)
-        ) {
-            status.take(7).forEach { kept ->
+    // Each day is one equal column holding its bar and, centred beneath it, its letter —
+    // so the letters always sit exactly under their bars.
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(7.6.rdp)
+    ) {
+        dayLabels.forEachIndexed { i, label ->
+            val kept = status.getOrNull(i)
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Box(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()
                         .height(5.5.rdp)
                         .clip(RoundedCornerShape(percent = 50))
                         .background(
@@ -518,12 +509,8 @@ private fun WeeklyPromiseBars(status: List<Boolean?>) {
                             }
                         )
                 )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.rdp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            dayLabels.forEach { label ->
-                Text(label, fontFamily = Geist, fontSize = 12.rsp, letterSpacing = (-0.24).sp, color = Color.Black)
+                Spacer(modifier = Modifier.height(10.rdp))
+                Text(label, fontFamily = Geist, fontSize = 12.rsp, letterSpacing = (-0.24).sp, color = ZenTheme.colors.textPrimary)
             }
         }
     }
@@ -534,24 +521,17 @@ private fun WeeklyPromiseBars(status: List<Boolean?>) {
 @Composable
 private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
     val colors = ZenTheme.colors
-    val topBorder = colorResource(R.color.zen_700)
-    val zenGreen900 = colorResource(R.color.zen_900)
-    val topBorderWidth = 1.rdp
+    val rule = colorResource(R.color.zen_700)
+    val zenGreen900 = colors.textBrandStrong
+    val radius = 24.rdp
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.rdp))
+            .clip(RoundedCornerShape(radius))
             .background(colors.bgPrimary.copy(alpha = 0.71f))
-            .drawBehind {
-                drawLine(
-                    color = topBorder,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = topBorderWidth.toPx()
-                )
-            }
-            .padding(20.rdp)
+            .taperedBorder(rule, radius, top = 1.rdp)
+            .padding(horizontal = 20.rdp, vertical = 18.rdp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
@@ -567,15 +547,15 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.7.rsp,
                 letterSpacing = (-0.14).sp,
-                color = Color.Black
+                color = colors.textPrimary
             )
             Spacer(modifier = Modifier.width(4.rdp))
             Text(
-                text = "(2026)",
+                text = "(${LocalDate.now().year})",
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 10.3.rsp,
-                color = Color.Black.copy(alpha = 0.5f)
+                color = colors.textPrimary.copy(alpha = 0.5f)
             )
         }
 
@@ -585,9 +565,9 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
             text = "Expect your Gold rise by $forecastPercent% as the Christmas approach",
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
-            fontSize = 20.2.rsp,
-            lineHeight = 26.rsp,
-            letterSpacing = (-0.6).sp,
+            fontSize = 18.rsp,
+            lineHeight = 23.rsp,
+            letterSpacing = (-0.54).sp,
             color = zenGreen900
         )
 
@@ -599,123 +579,138 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
             fontWeight = FontWeight.Medium,
             fontSize = 13.rsp,
             letterSpacing = (-0.13).sp,
-            color = topBorder
+            color = rule
         )
 
-        Spacer(modifier = Modifier.height(20.rdp))
+        Spacer(modifier = Modifier.height(10.rdp))
 
-        Box(modifier = Modifier.fillMaxWidth()) {
-            ForecastChart(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(70.rdp)
-            )
-            Column(
-                modifier = Modifier.align(Alignment.TopEnd),
-                horizontalAlignment = Alignment.End
-            ) {
-                Text("Forecast", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, letterSpacing = (-0.28).sp, color = Color.Black)
-                Text("₹$forecastMonthlyAmount/mo avg", fontFamily = DepartureMono, fontSize = 9.5.rsp, letterSpacing = (-0.19).sp, color = Color.Black)
-            }
+        // Legend sits above the forecast half of the chart, over the Nov/Dec columns.
+        Column(
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(end = 4.rdp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text("Forecast", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, letterSpacing = (-0.28).sp, color = colors.textPrimary)
+            Text("₹$forecastMonthlyAmount/mo avg", fontFamily = DepartureMono, fontSize = 9.5.rsp, letterSpacing = (-0.19).sp, color = colors.textPrimary)
         }
 
-        Spacer(modifier = Modifier.height(4.rdp))
+        Spacer(modifier = Modifier.height(6.rdp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            listOf("Jul", "Aug", "Sep", "Oct", "Nov", "Dec").forEach { month ->
-                Text(month, fontFamily = Geist, fontSize = 10.3.rsp, letterSpacing = (-0.21).sp, color = colorResource(R.color.chart_axis_label))
+        ForecastChart(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.rdp)
+        )
+
+        Spacer(modifier = Modifier.height(8.rdp))
+
+        // Same six equal columns the chart's grid lines are centred in.
+        Row(modifier = Modifier.fillMaxWidth()) {
+            ForecastMonths.forEach { month ->
+                Text(
+                    text = month,
+                    fontFamily = Geist,
+                    fontSize = 10.3.rsp,
+                    letterSpacing = (-0.21).sp,
+                    color = colorResource(R.color.chart_axis_label),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
 }
 
+private val ForecastMonths = listOf("Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+// Illustrative curve (0 = top of the chart, 1 = bottom) until a real gold-price forecast feed
+// exists: a shallow dip into "today", then the forecast easing up before a year-end climb.
+private val ForecastCurve = listOf(0.34f, 0.55f, 0.68f, 0.60f, 0.53f, 0.12f)
+
 /**
- * The actual/forecast gold-price curve. Figma's own vector data for this (a solid
- * "recent" segment and a dashed "forecast" segment meeting at a marker) is
- * reproduced here at the exact relative positions and colors from the source SVGs
- * (nodes 2026:1722/1723/1724 area) rather than as static images, since it's a
- * shape fully described by those control points — not illustration we don't have
- * the data for.
+ * The gold-price chart (nodes 2026:1501–1510): one grid line per month, centred in the same
+ * columns as the month labels; a solid line for the months so far, and a broken (dashed) line
+ * carrying on from the "today" marker to the end of the year — both running through the same
+ * points, so they meet exactly at the marker.
  */
 @Composable
 private fun ForecastChart(modifier: Modifier = Modifier) {
-    val gridColorLight = colorResource(R.color.chart_grid_light).copy(alpha = 0.25f)
-    val gridColorDark = colorResource(R.color.chart_grid_dark).copy(alpha = 0.8f)
+    val pastGrid = colorResource(R.color.chart_grid_light).copy(alpha = 0.35f)
+    val futureGrid = colorResource(R.color.chart_grid_dark).copy(alpha = 0.8f)
+    val todayGrid = ZenTheme.colors.textPrimary
     val solidGreen = colorResource(R.color.gold_delta_text)
     val dashedGreen = colorResource(R.color.gold_delta_text).copy(alpha = 0.5f)
     val dotColor = colorResource(R.color.amber_500)
-    val strokeWidthDp = 3.rdp
+    val lineWidth = 3.rdp
+    val today = AppConstants.PLACEHOLDER_FORECAST_TODAY_MONTH_INDEX.coerceIn(0, ForecastCurve.lastIndex)
 
     Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
+        val column = size.width / ForecastCurve.size
+        val points = ForecastCurve.mapIndexed { i, y -> Offset(column * (i + 0.5f), size.height * y) }
 
-        // 6 evenly spaced month grid lines — first 3 lighter, last 3 darker, per source.
-        for (i in 0..5) {
-            val x = w * (i / 5f)
+        points.forEachIndexed { i, p ->
             drawLine(
-                color = if (i < 3) gridColorLight else gridColorDark,
-                start = Offset(x, 0f),
-                end = Offset(x, h),
-                strokeWidth = 0.86.dp.toPx()
+                color = when {
+                    i == today -> todayGrid
+                    i < today -> pastGrid
+                    else -> futureGrid
+                },
+                start = Offset(p.x, 0f),
+                end = Offset(p.x, size.height),
+                strokeWidth = (if (i == today) 1.2.dp else 0.86.dp).toPx()
             )
         }
 
-        // "Today" sits on its month's grid line (the axis spans 6 months, 5 gaps).
-        val junctionX = w * (AppConstants.PLACEHOLDER_FORECAST_TODAY_MONTH_INDEX / 5f)
-
-        // Solid "recent" line: shallow valley, flat at both ends (~38% down from top).
-        val solidPath = Path().apply {
-            moveTo(0f, h * 0.38f)
-            cubicTo(
-                w * 0.15f, h * 0.46f,
-                w * 0.28f, h * 0.50f,
-                junctionX, h * 0.46f
-            )
-        }
         drawPath(
-            solidPath,
+            smoothPath(points.subList(0, today + 1)),
             color = solidGreen,
-            style = Stroke(width = strokeWidthDp.toPx(), cap = StrokeCap.Round)
+            style = Stroke(width = lineWidth.toPx(), cap = StrokeCap.Round)
         )
-
-        // Dashed "forecast" line: rises from the junction to the top-right.
-        val dashedPath = Path().apply {
-            moveTo(junctionX, h * 0.73f)
-            cubicTo(
-                w * 0.6f, h * 0.55f,
-                w * 0.8f, h * 0.30f,
-                w, h * 0.14f
-            )
-        }
         drawPath(
-            dashedPath,
+            smoothPath(points.subList(today, points.size)),
             color = dashedGreen,
             style = Stroke(
-                width = strokeWidthDp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx()))
+                width = lineWidth.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(7.dp.toPx(), 5.dp.toPx()))
             )
         )
 
-        // "Today" marker at the junction.
-        drawCircle(color = dotColor, radius = 8.dp.toPx(), center = Offset(junctionX, h * 0.55f))
+        // "Today" marker, with a soft halo so it reads over both lines.
+        val marker = points[today]
+        drawCircle(color = dotColor.copy(alpha = 0.25f), radius = 12.dp.toPx(), center = marker)
+        drawCircle(color = dotColor, radius = 7.5.dp.toPx(), center = marker)
+    }
+}
+
+/** A curve through [points] (Catmull-Rom as cubic Béziers), so neighbouring segments join smoothly. */
+private fun smoothPath(points: List<Offset>): Path = Path().apply {
+    if (points.isEmpty()) return@apply
+    moveTo(points[0].x, points[0].y)
+    for (i in 0 until points.lastIndex) {
+        val p0 = points[(i - 1).coerceAtLeast(0)]
+        val p1 = points[i]
+        val p2 = points[i + 1]
+        val p3 = points[(i + 2).coerceAtMost(points.lastIndex)]
+        cubicTo(
+            p1.x + (p2.x - p0.x) / 6f, p1.y + (p2.y - p0.y) / 6f,
+            p2.x - (p3.x - p1.x) / 6f, p2.y - (p3.y - p1.y) / 6f,
+            p2.x, p2.y
+        )
     }
 }
 
 // ── Buttons & footer ──────────────────────────────────────────────
 
 @Composable
-private fun ViewAllPillButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun ViewAllPillButton(onClick: () -> Unit) {
     Row(
-        modifier = modifier
+        modifier = Modifier
+            .height(34.rdp)
             .clip(RoundedCornerShape(percent = 50))
             .background(colorResource(R.color.ink_surface))
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            )
-            .padding(horizontal = 14.rdp, vertical = 8.rdp),
+            .pressScale(onClick = onClick, onClickLabel = "View all gold")
+            .padding(horizontal = 16.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -723,7 +718,8 @@ private fun ViewAllPillButton(onClick: () -> Unit, modifier: Modifier = Modifier
             fontFamily = Geist,
             fontSize = 14.9.rsp,
             letterSpacing = (-0.3).sp,
-            color = Color.White
+            color = Color.White,
+            maxLines = 1
         )
     }
 }
@@ -777,8 +773,9 @@ private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onView
         },
         style = TextStyle(
             fontFamily = Geist,
-            fontSize = 16.rsp,
-            letterSpacing = (-0.16).sp,
+            fontSize = 14.rsp,
+            lineHeight = 19.rsp,
+            letterSpacing = (-0.14).sp,
             color = bodyColor
         ),
         modifier = Modifier.clickable(
@@ -830,7 +827,7 @@ private fun EditPromiseButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(47.rdp)
+            .height(42.rdp)
             .clip(RoundedCornerShape(percent = 50))
             .clickable(
                 indication = null,
@@ -847,46 +844,5 @@ private fun EditPromiseButton(onClick: () -> Unit) {
             letterSpacing = (-0.35).sp,
             color = PromiseKeptGreen
         )
-    }
-}
-
-/**
- * This screen's own page-dots row — third dot active (Zen Gold is the rightmost
- * of the three home pages). Mirrors HomeScreen's PageDots; kept local rather than
- * shared since the two screens' navigation targets differ (Settings/Zen Gold vs.
- * Zen Gold/nothing) and the app has no existing shared nav-dots component to
- * extend into.
- */
-@Composable
-private fun ZenGoldPageDots(onSwipeLeft: () -> Unit) {
-    val colors = ZenTheme.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures { change, dragAmount ->
-                    if (dragAmount > 40f) {
-                        change.consume()
-                        onSwipeLeft()
-                    }
-                }
-            }
-            .padding(vertical = 8.rdp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(3) { i ->
-            val active = i == 2
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 4.rdp)
-                    .size(7.rdp)
-                    .clip(CircleShape)
-                    .background(
-                        if (active) colors.textBrand
-                        else colors.textPrimary.copy(alpha = 0.35f)
-                    )
-            )
-        }
     }
 }

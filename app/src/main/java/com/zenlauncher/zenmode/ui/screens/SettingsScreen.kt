@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zenlauncher.zenmode.AppGridPreferences
+import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
 import com.zenlauncher.zenmode.ResistancePreferences
 import com.zenlauncher.zenmode.ThemePreferences
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
@@ -62,7 +63,6 @@ import com.zenlauncher.zenmode.ui.components.ZenButton
 import com.zenlauncher.zenmode.ui.components.ZenButtonStyle
 import com.zenlauncher.zenmode.ui.components.ZenEyebrow
 import com.zenlauncher.zenmode.ui.components.ZenGlyph
-import com.zenlauncher.zenmode.ui.components.ZenNumberChips
 import com.zenlauncher.zenmode.ui.components.ZenProTag
 import com.zenlauncher.zenmode.ui.components.ZenRowDivider
 import com.zenlauncher.zenmode.ui.components.ZenSegmented
@@ -125,7 +125,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
     var isResistanceEnabled by remember { mutableStateOf(ResistancePreferences.isEnabled(context)) }
-    var homeAppCount by remember { mutableStateOf(AppGridPreferences.getAppCount(context)) }
+    val homeAppCount = remember { AppGridPreferences.getAppCount(context) }
     var showAccountSheet by remember { mutableStateOf(false) }
     var gate by remember { mutableStateOf<ProFeature?>(null) }
     var soon by remember { mutableStateOf<ProFeature?>(null) }
@@ -146,6 +146,7 @@ fun SettingsScreen(
         }
     }
 
+    // Plain paper, not the mood backdrop: Settings is a place to read and change things.
     Box(modifier = modifier.fillMaxSize().background(colors.bgPrimary)) {
         Column(
             modifier = Modifier
@@ -198,39 +199,14 @@ fun SettingsScreen(
                     )
                     ZenRowDivider()
                     ZenSettingsRow(
-                        title = "Block in-app content",
-                        subtitle = "Shorts, Reels and other endless feeds.",
+                        title = "Distraction Blocker",
+                        subtitle = "Quiet reels, shorts and the apps that pull you in.",
                         value = if (isContentBlockingOn) "On" else "Off",
                         onClick = onBlockInAppContentClick
                     )
                 }
 
                 ZenSettingsGroup(label = "Home screen") {
-                    Column(Modifier.padding(horizontal = 16.rdp, vertical = 14.rdp)) {
-                        Text(
-                            text = "Apps on home screen",
-                            fontFamily = Geist,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 16.rsp,
-                            color = colors.textPrimary
-                        )
-                        Text(
-                            text = "Fewer apps, fewer reasons to linger.",
-                            fontFamily = Geist,
-                            fontSize = 13.rsp,
-                            color = colors.textSecondary,
-                            modifier = Modifier.padding(top = 2.rdp, bottom = 10.rdp)
-                        )
-                        ZenNumberChips(
-                            options = AppGridPreferences.APP_COUNT_OPTIONS,
-                            selected = homeAppCount,
-                            onSelect = { count ->
-                                homeAppCount = count
-                                AppGridPreferences.setAppCount(context, count)
-                            }
-                        )
-                    }
-                    ZenRowDivider()
                     ZenSettingsRow(
                         title = "Choose home apps",
                         subtitle = "Pick which apps sit on home, and in what order.",
@@ -301,6 +277,8 @@ fun SettingsScreen(
                     }
                 }
 
+                PhoneSettingsGroup()
+
                 ZenSettingsGroup(label = "ZenMode") {
                     ZenSettingsRow(title = "Rate on Play Store", trailing = RowTrailing.External, onClick = onRateClick)
                     ZenRowDivider()
@@ -367,10 +345,13 @@ private fun SettingsTopBar(
     onAccountClick: () -> Unit
 ) {
     val colors = ZenTheme.colors
+    // The back button and avatar draw at 38dp inside 48dp touch targets; pulling the row in by
+    // the difference puts both visible circles exactly on the cards' margin below.
+    val touchInset = (Spacing.touchTarget - 38.rdp) / 2
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.rdp, vertical = 6.rdp),
+            .padding(horizontal = Spacing.screenMargin - touchInset, vertical = 8.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -393,12 +374,9 @@ private fun SettingsTopBar(
             }
         }
         Spacer(Modifier.width(8.rdp))
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineSmall,
-            color = colors.textPrimary,
-            modifier = Modifier.weight(1f).semantics { heading() }
-        )
+        Box(modifier = Modifier.weight(1f).semantics { heading() }) {
+            ZenModeOsSettingsTitle(fontSize = 22.rsp, color = colors.textPrimary)
+        }
         Box(
             modifier = Modifier
                 .size(Spacing.touchTarget)
@@ -668,35 +646,6 @@ private fun formatHours(hours: Float): String {
 }
 
 // ── Footer ─────────────────────────────────────────────────────────
-
-@Composable
-private fun SettingsFooter() {
-    val colors = ZenTheme.colors
-    Column(
-        modifier = Modifier.padding(horizontal = 4.rdp),
-        verticalArrangement = Arrangement.spacedBy(6.rdp)
-    ) {
-        Text(
-            text = "Thanks for being here. You can be anywhere, and you chose a calmer phone.",
-            fontFamily = Geist,
-            fontSize = 14.rsp,
-            lineHeight = 20.rsp,
-            color = colors.textSecondary
-        )
-        Text(
-            text = "#Zenmode #IMZ #InMyZone",
-            fontFamily = Geist,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.rsp,
-            color = colors.textBrand
-        )
-        Text(
-            text = "© 2026 ZENMODE · OPEN SOURCE",
-            style = ZenTypography.monoLabel,
-            color = colors.textMuted
-        )
-    }
-}
 
 // ── Sheets ─────────────────────────────────────────────────────────
 

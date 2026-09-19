@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.components.ClashLineHeight
 import com.zenlauncher.zenmode.ui.components.FullLineBox
 import com.zenlauncher.zenmode.ui.components.GeistLineHeight
@@ -113,6 +115,7 @@ fun MyPromiseScreen(
             painter = painterResource(R.drawable.bg_my_promise_glow),
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            alpha = integerResource(R.integer.my_promise_glow_alpha_pct) / 100f,
             modifier = Modifier.matchParentSize()
         )
 
@@ -174,7 +177,7 @@ private fun IntroText() {
         fontSize = 28.rsp,
         lineHeight = (28 * ClashLineHeight).rsp,
         letterSpacing = (-0.84).sp,
-        color = Color.Black,
+        color = ZenTheme.colors.textPrimary,
         style = FullLineBox,
         modifier = Modifier
             .padding(horizontal = HeadingMargin)
@@ -214,7 +217,7 @@ internal fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             CardLabel("SCREEN TIME")
-            V3BulletDot(slotWidth = 19.rdp, dotSize = 3.5.rdp, color = Color.Black)
+            V3BulletDot(slotWidth = 19.rdp, dotSize = 3.5.rdp, color = ZenTheme.colors.textPrimary)
             CardLabel("PER WEEK")
         }
 
@@ -245,7 +248,7 @@ internal fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
             fontSize = 12.rsp,
             lineHeight = 18.72.rsp,
             letterSpacing = (-0.36).sp,
-            color = Color.Black,
+            color = ZenTheme.colors.textPrimary,
             style = FullLineBox,
             modifier = Modifier.padding(start = 27.rdp, end = 28.rdp)
         )
@@ -261,7 +264,7 @@ private fun CardLabel(text: String) {
         fontSize = 12.rsp,
         lineHeight = (12 * GeistLineHeight).rsp,
         letterSpacing = (-0.36).sp,
-        color = Color.Black,
+        color = ZenTheme.colors.textPrimary,
         maxLines = 1,
         style = FullLineBox
     )
@@ -293,7 +296,7 @@ private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
         fontSize = 15.rsp,
         lineHeight = (15 * GeistLineHeight).rsp,
         letterSpacing = (-0.45).sp,
-        color = BrandGreen
+        color = ZenTheme.colors.textBrand
     )
     val mono = base.copy(fontFamily = DepartureMono)
     val bold = base.copy(fontFamily = Geist, fontWeight = FontWeight.Bold)
@@ -325,7 +328,7 @@ private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
 
 @Composable
 internal fun PromiseRulesNote(dailyHours: Int) {
-    val green = BrandGreen
+    val green = ZenTheme.colors.textBrand
     val hrs = if (dailyHours == 1) "hr" else "hrs"
     Row(
         modifier = Modifier

@@ -58,6 +58,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -97,9 +98,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.MoodBackdrop
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.components.BuddyStatsCard
 import com.zenlauncher.zenmode.ui.components.MyScreenTimeCard
+import com.zenlauncher.zenmode.ui.components.taperedBorder
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -127,7 +132,7 @@ import kotlin.math.sin
 //
 // Motion: on entry the wheel spins the first member into place (cards shuffle with it), the
 // band draws out from the centre, and the chevrons nudge once to teach the swipe. Reactions
-// (🫠 / 🤍) release bursts of flying emojis over the card.
+// (😔 / 🤍) are twins: same button, same burst of emojis floating up over the card.
 
 /** One person in the circle, already resolved to display values. */
 data class ZenCircleMember(
@@ -166,8 +171,6 @@ fun ZenCircleScreen(
     require(members.isNotEmpty()) { "A Zen Circle always has at least you in it" }
     BackHandler(onBack = onBackClick)
 
-    val washEdge = colorResource(R.color.wash_neutral_edge)
-    val washCore = colorResource(R.color.wash_neutral_core)
     val inspection = LocalInspectionMode.current
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -225,13 +228,15 @@ fun ZenCircleScreen(
         }
     )
     val step: (Int) -> Unit = { by -> if (count > 1) settle(position.value.roundToInt().toFloat() + by) }
+    var showShareCard by rememberSaveable { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(washEdge, washCore, washEdge)))
             .pointerInput(Unit) { detectTapGestures() }
     ) {
+        MoodBackdrop()
+
         ZenCircleSheetHost(
             userCode = userCode,
             onShareInviteLink = onShareInviteLink,
@@ -311,8 +316,9 @@ fun ZenCircleScreen(
                             .riseIn(delayMillis = 420)
                     ) {
                         ZenCirclePillButton(
+                            // The card carries the invite link and code, so sharing it invites too.
                             text = "Share & Invite to Zen Circle",
-                            onClick = { openSheet(ZenCircleSheet.Invite) },
+                            onClick = { showShareCard = true },
                             container = colorResource(R.color.zen_700),
                             content = Color.White,
                             height = 47.5.rdp,
@@ -323,7 +329,7 @@ fun ZenCircleScreen(
                             text = "Back to the Home",
                             onClick = onBackToHome,
                             container = Color.Transparent,
-                            content = colorResource(R.color.gold_delta_text),
+                            content = ZenTheme.colors.textBrand,
                             height = 47.5.rdp,
                             fontSize = 17.76.rsp,
                             letterSpacing = (-0.36).sp
@@ -332,6 +338,13 @@ fun ZenCircleScreen(
                 }
             }
         }
+        ZenCircleSharePreview(
+            visible = showShareCard,
+            members = members,
+            ranks = ranks,
+            userCode = userCode,
+            onDismiss = { showShareCard = false }
+        )
     }
 }
 
@@ -428,7 +441,7 @@ private fun CircleSummaryCard(
             .padding(horizontal = 32.34.rdp)
             .fillMaxWidth()
             .height(69.73.rdp)
-            .topAccentBorder(colorResource(R.color.zen_circle_card_rule), 1.dp, radius)
+            .taperedBorder(colorResource(R.color.zen_circle_card_rule), radius, top = 1.dp)
             .clip(RoundedCornerShape(radius))
     ) {
         Row(
@@ -442,7 +455,7 @@ private fun CircleSummaryCard(
                 fontWeight = FontWeight.Medium,
                 fontSize = 20.21.rsp,
                 letterSpacing = (-0.2).sp,
-                color = Color.Black,
+                color = ZenTheme.colors.textPrimary,
                 modifier = Modifier.semantics { heading() }
             )
             Spacer(Modifier.width(5.rdp))
@@ -488,7 +501,7 @@ private fun CircleSummaryCard(
 
 /** Overlapping initials — there are no profile photos to show yet. */
 @Composable
-private fun MemberAvatars(members: List<ZenCircleMember>) {
+internal fun MemberAvatars(members: List<ZenCircleMember>) {
     val fills = listOf(colorResource(R.color.zen_700), colorResource(R.color.zen_circle_bro_dark))
     Row(modifier = Modifier.graphicsLayer { alpha = 0.76f }) {
         members.take(4).forEachIndexed { i, member ->
@@ -515,7 +528,7 @@ private fun MemberAvatars(members: List<ZenCircleMember>) {
 
 /** "HH:MM" until local midnight, when the daily ranking resets. Ticks every 30s. */
 @Composable
-private fun rememberTimeUntilMidnight(): String {
+internal fun rememberTimeUntilMidnight(): String {
     fun compute(): String {
         val now = Calendar.getInstance()
         val midnight = (now.clone() as Calendar).apply {
@@ -599,11 +612,13 @@ private fun MemberCardStack(
         }
 
         val canReact = !selectedMember.isYou
+        // The sad face is the heart's twin — same button, same floating burst — so a
+        // "rough day, hang in there" nudge feels as light to send as love.
         ReactionButton(
-            emoji = "🫠",
-            label = "Send a melt to ${selectedMember.name}",
+            emoji = "😔",
+            label = "Send a sad face to ${selectedMember.name}",
             enabled = canReact,
-            flight = ReactionFlight.Melt,
+            flight = ReactionFlight.Float,
             towardsCentre = 1f,
             onClick = { onSendMelt(selectedMember) },
             modifier = Modifier
@@ -648,10 +663,8 @@ private fun MemberCard(member: ZenCircleMember) {
 
 /** Burst style: how a reaction's emojis leave the button. */
 private enum class ReactionFlight(val riseDp: ClosedFloatingPointRange<Float>, val durationMs: IntRange, val count: Int) {
-    /** Light and floaty — hearts drift high. */
-    Float(riseDp = 150f..240f, durationMs = 1_050..1_450, count = 8),
-    /** Heavy — melts wobble up a shorter way, slower, and sag before they fade. */
-    Melt(riseDp = 90f..150f, durationMs = 1_250..1_700, count = 6)
+    /** Light and floaty — both reactions drift high. */
+    Float(riseDp = 150f..240f, durationMs = 1_050..1_450, count = 8)
 }
 
 private data class EmojiParticle(
@@ -698,6 +711,8 @@ private fun ReactionButton(
                 }
                 .clip(CircleShape)
                 .border(0.73.dp, colorResource(R.color.zen_circle_reaction_border), CircleShape)
+                // Name the button, not the emoji, for screen readers.
+                .semantics { contentDescription = label }
                 .clickable(enabled = enabled, onClickLabel = label) {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     scope.launch {
@@ -730,7 +745,6 @@ private fun ReactionButton(
                 FlyingEmoji(
                     emoji = emoji,
                     particle = particle,
-                    melt = flight == ReactionFlight.Melt,
                     onFinished = { particles.remove(particle) }
                 )
             }
@@ -739,7 +753,7 @@ private fun ReactionButton(
 }
 
 @Composable
-private fun FlyingEmoji(emoji: String, particle: EmojiParticle, melt: Boolean, onFinished: () -> Unit) {
+private fun FlyingEmoji(emoji: String, particle: EmojiParticle, onFinished: () -> Unit) {
     val density = LocalDensity.current
     val progress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
@@ -749,7 +763,7 @@ private fun FlyingEmoji(emoji: String, particle: EmojiParticle, melt: Boolean, o
     }
     val risePx = with(density) { particle.riseDp.dp.toPx() }
     val driftPx = with(density) { particle.driftDp.dp.toPx() }
-    val wobblePx = with(density) { (if (melt) 10f else 7f).dp.toPx() }
+    val wobblePx = with(density) { 7.dp.toPx() }
 
     Text(
         text = emoji,
@@ -762,11 +776,11 @@ private fun FlyingEmoji(emoji: String, particle: EmojiParticle, melt: Boolean, o
             }
             // Fast launch, slow drift at the top.
             val lift = 1f - (1f - t) * (1f - t) * (1f - t)
-            translationY = -risePx * lift + (if (melt) risePx * 0.18f * t * t else 0f)
+            translationY = -risePx * lift
             translationX = driftPx * lift + sin(t * 2.4f * PI.toFloat() + particle.wobblePhase) * wobblePx * t
             val pop = if (t < 0.14f) 0.35f + 0.9f * (t / 0.14f) else 1.25f - 0.4f * ((t - 0.14f) / 0.86f)
-            scaleX = pop * particle.sizeScale * (if (melt) 1f + 0.12f * t else 1f)
-            scaleY = pop * particle.sizeScale * (if (melt) 1f - 0.1f * t else 1f)
+            scaleX = pop * particle.sizeScale
+            scaleY = pop * particle.sizeScale
             rotationZ = particle.spinDegrees * t
             alpha = if (t > 0.62f) (1f - t) / 0.38f else 1f
         }

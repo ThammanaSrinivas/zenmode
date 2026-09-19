@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Opacity (%) of the cream bg_my_promise_glow wash on My Promise / Invest Gold.
+         Night mode drops it to a faint warm tint so the page reads as ink, not cream. -->
+    <integer name="my_promise_glow_alpha_pct">100</integer>
+</resources>

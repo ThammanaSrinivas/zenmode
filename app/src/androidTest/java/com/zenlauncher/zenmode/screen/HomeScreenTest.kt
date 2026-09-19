@@ -17,6 +17,15 @@ import com.zenlauncher.zenmode.testing.TestData
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import org.junit.Assert.assertTrue
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.geometry.Offset
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,7 +46,8 @@ class HomeScreenTest {
         isSignedIn: Boolean = true,
         showSearch: Boolean = false,
         onShowSearchChange: (Boolean) -> Unit = {},
-        onSettingsClick: () -> Unit = {},
+        onZenGoldClick: () -> Unit = {},
+        onZenScoreClick: () -> Unit = {},
         onGoogleSearch: (String) -> Unit = {},
         onPhoneClick: () -> Unit = {},
         onLockClick: () -> Unit = {},
@@ -56,11 +66,12 @@ class HomeScreenTest {
                     buddyStats = buddyStats,
                     isSignedIn = isSignedIn,
                     showSearch = showSearch,
-                    zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                    zenScore = 93, // 9.3 of 10, see ZenScore
                     goldInvested = AppConstants.PLACEHOLDER_GOLD_INVESTED,
                     goldChangePercent = AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT,
                     onShowSearchChange = onShowSearchChange,
-                    onSettingsClick = onSettingsClick,
+                    onZenGoldClick = onZenGoldClick,
+                    onZenScoreClick = onZenScoreClick,
                     onGoogleSearch = onGoogleSearch,
                     onPhoneClick = onPhoneClick,
                     onLockClick = onLockClick,
@@ -76,38 +87,42 @@ class HomeScreenTest {
     @Test
     fun homeScreen_rendersWithoutCrash() {
         setContent()
-        composeTestRule.onNodeWithContentDescription("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Zen Score").assertIsDisplayed()
     }
 
     @Test
     fun homeScreen_showsAppGrid() {
-        // App grid shows icons only (no text labels). Verify the grid renders with lock icon.
+        // Icons only on screen; each is named for screen readers.
         setContent(apps = TestData.createAppList(3))
-        composeTestRule.onNodeWithContentDescription("Lock phone").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("App 1").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("App 3").assertIsDisplayed()
+    }
+
+    // v3 home has no dock: swipe left for Zen Gold, right for Zen Score, long-press to lock.
+
+    @Test
+    fun homeScreen_swipeLeft_opensZenGoldOnce() {
+        var opened = 0
+        setContent(onZenGoldClick = { opened++ })
+        composeTestRule.onRoot().performTouchInput { swipeLeft() }
+        assertEquals("one swipe opens the page once", 1, opened)
     }
 
     @Test
-    fun homeScreen_settingsIcon_callsCallback() {
-        var clicked = false
-        setContent(onSettingsClick = { clicked = true })
-        composeTestRule.onNodeWithContentDescription("Settings").performClick()
-        assertTrue(clicked)
+    fun homeScreen_swipeRight_opensZenScoreOnce() {
+        var opened = 0
+        setContent(onZenScoreClick = { opened++ })
+        composeTestRule.onRoot().performTouchInput { swipeRight() }
+        assertEquals("one swipe opens the page once", 1, opened)
     }
 
     @Test
-    fun homeScreen_phoneIcon_callsCallback() {
-        var clicked = false
-        setContent(onPhoneClick = { clicked = true })
-        composeTestRule.onNodeWithContentDescription("Phone").performClick()
-        assertTrue(clicked)
-    }
-
-    @Test
-    fun homeScreen_lockIcon_callsCallback() {
-        var clicked = false
-        setContent(onLockClick = { clicked = true })
-        composeTestRule.onNodeWithContentDescription("Lock phone").performClick()
-        assertTrue(clicked)
+    fun homeScreen_longPress_locks() {
+        var locked = false
+        setContent(onLockClick = { locked = true })
+        // The left margin is bare wash, clear of the cards and app icons.
+        composeTestRule.onRoot().performTouchInput { longClick(Offset(4f, centerY)) }
+        assertTrue(locked)
     }
 
     @Test
@@ -163,7 +178,8 @@ class HomeScreenTest {
         // gradient style) — Compose doesn't merge sibling text into one semantics
         // string, so this must assert each independently, not the concatenation.
         setContent(streaks = 7)
-        composeTestRule.onNodeWithText("7").assertIsDisplayed()
+        // The header and the stats card both show the streak.
+        composeTestRule.onAllNodesWithText("7").onFirst().assertIsDisplayed()
         composeTestRule.onNodeWithText("days").assertIsDisplayed()
     }
 

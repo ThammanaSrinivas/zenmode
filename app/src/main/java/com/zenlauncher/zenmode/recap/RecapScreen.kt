@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -100,6 +101,7 @@ fun RecapScreen(
     onCardViewed: (card: RecapCard, position: Int) -> Unit,
     onInvest: () -> Unit,
     onRecommit: () -> Unit,
+    onShare: () -> Unit,
     onClose: () -> Unit
 ) {
     val cards = remember(recap) { RecapStory.cards(recap) }
@@ -155,6 +157,14 @@ fun RecapScreen(
                             .weight(1f)
                             .padding(start = 8.rdp)
                     )
+                    Box(
+                        modifier = Modifier
+                            .requiredSize(44.dp)
+                            .pressScale(onClick = onShare, onClickLabel = "Share this week"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.Share, contentDescription = "Share weekly report", tint = content)
+                    }
                     Box(
                         modifier = Modifier
                             .requiredSize(44.dp)

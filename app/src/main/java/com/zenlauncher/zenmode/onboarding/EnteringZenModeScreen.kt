@@ -70,10 +70,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Glyph viewport — the Z mark's own (ic_zen_mark_gradient.xml). */
-private const val GLYPH = 32.18f
+internal const val GLYPH = 32.18f
 
 /** The Z mark from ic_zen_mark_gradient.xml, outlined. N is the same mark mirrored. */
-private const val Z_MARK =
+internal const val Z_MARK =
     "M29.708 0.13C31.07 0.15 32.17 1.27 32.15 2.63L32.03 11.72C32.02 12.36 31.77 12.97 31.33 13.42L13.76 31.44" +
         "C13.3 31.91 12.66 32.18 11.99 32.18H2.47C1.11 32.18 0 31.07 0 29.71V20.66C0 20 0.26 19.37 0.72 18.91" +
         "L18.89 0.74C19.36 0.27 20.01 0.01 20.67 0.01L29.708 0.13Z" +

@@ -240,7 +240,7 @@ class MainActivity : AppCompatActivity() {
         // Initialize ViewModel
         val analyticsManager = ServiceLocator.analyticsManager
         repository = UsageRepository(applicationContext, analyticsManager)
-        val factory = MainViewModelFactory(repository) {
+        val factory = MainViewModelFactory(repository, ZenScoreStore(applicationContext, repository)) {
             ResistancePreferences.isEnabled(applicationContext)
         }
         viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
@@ -309,6 +309,7 @@ class MainActivity : AppCompatActivity() {
                 val usage by viewModel.stats.observeAsState()
                 val usagePermissionMissing by viewModel.usagePermissionMissing.observeAsState(initial = false)
                 val yesterdayChangePercent by viewModel.yesterdayChangePercent.observeAsState()
+                val zenScore by viewModel.zenScore.observeAsState(initial = 0)
                 val hasBuddies by viewModel.hasBuddies.observeAsState(initial = false)
                 val buddyStats by viewModel.buddyStats.observeAsState()
                 val myLikes by viewModel.myLikes.observeAsState(initial = 0L)
@@ -404,7 +405,7 @@ class MainActivity : AppCompatActivity() {
                     buddyStats = buddyStats,
                     isSignedIn = isSignedIn,
                     showSearch = showSearch,
-                    zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                    zenScore = zenScore,
                     goldInvested = AppConstants.PLACEHOLDER_GOLD_INVESTED,
                     goldChangePercent = AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT,
                     appCount = homeAppCount,
@@ -412,9 +413,6 @@ class MainActivity : AppCompatActivity() {
                     buddyLikes = buddyLikes,
                     onLikeClick = { viewModel.sendLike() },
                     onShowSearchChange = { showSearch = it },
-                    onSettingsClick = {
-                        startActivity(Intent(this, SettingsActivity::class.java))
-                    },
                     onZenGoldClick = {
                         startActivity(Intent(this, ZenGoldActivity::class.java))
                     },
@@ -451,7 +449,12 @@ class MainActivity : AppCompatActivity() {
                         startActivity(intent)
                         finish()
                     },
-                    onAppClick = { appInfo ->
+                    onAppClick = onAppClick@{ appInfo ->
+                        // Quieted in the Distraction Blocker: don't even start it.
+                        if (ContentBlockPrefs.shouldQuietApp(this, appInfo.packageName.toString())) {
+                            Toast.makeText(this, "${appInfo.label} is quieted. Let it back in Settings → Distraction Blocker.", Toast.LENGTH_SHORT).show()
+                            return@onAppClick
+                        }
                         // Launch the exact activity the icon represents rather than
                         // packageManager.getLaunchIntentForPackage(), which resolves a
                         // single "default" activity per package and can't distinguish
@@ -658,7 +661,7 @@ class MainActivity : AppCompatActivity() {
                                             name = "You",
                                             isYou = true,
                                             screenTimeMinutes = (usage?.screenTimeInMillis ?: 0L) / 60_000,
-                                            zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                                            zenScore = zenScore,
                                             streaks = streakCount,
                                             changePercent = yesterdayChangePercent
                                         ),
@@ -690,7 +693,8 @@ class MainActivity : AppCompatActivity() {
                                         if (realCircle != null) {
                                             circleViewModel.sendReaction(member.uid, com.zenlauncher.zenmode.coreapi.ReactionType.MELT)
                                         } else {
-                                            Toast.makeText(this@MainActivity, "Melt reactions are coming soon", Toast.LENGTH_SHORT).show()
+                                            // Classic buddy pairs only sync hearts; the sad face needs a real Circle.
+                                            Toast.makeText(this@MainActivity, "Sad-face reactions arrive with Zen Circles", Toast.LENGTH_SHORT).show()
                                         }
                                     },
                                     onWeeklyClick = {
@@ -707,7 +711,7 @@ class MainActivity : AppCompatActivity() {
                                 buddyName = current.buddyName,
                                 usage = usage,
                                 streaks = streakCount,
-                                zenScore = AppConstants.PLACEHOLDER_ZEN_SCORE,
+                                zenScore = zenScore,
                                 buddyStats = buddyStats,
                                 userCode = userCode,
                                 onBackClick = { closeBuddyConnect() },

@@ -10,6 +10,8 @@
 
     <!-- zen · the working accent -->
     <color name="zen_900">#0B5C12</color>
+    <!-- Deepest brand green: the Zen Score page's "Share Zen Score" pill. -->
+    <color name="zen_950">#0E2A0B</color>
     <color name="zen_700">#0F7A18</color>
     <color name="zen_500">#2AA136</color>
     <color name="zen_300">#5BDF62</color>
@@ -160,6 +162,9 @@
     <color name="my_promise_note_text">#BF272727</color>
     <color name="my_promise_logo_text">#323232</color>
     <color name="my_promise_secondary_button_bg">#F0EEE3</color>
+    <!-- Stepper +/− buttons (ZenV3Components, ic_my_promise_*): fill and glyph. -->
+    <color name="my_promise_stepper_fill">#FFFFFF</color>
+    <color name="my_promise_stepper_glyph">#000000</color>
 
     <!-- Zen Bro connect, screen 1: the "Get your Zen Bro!" invite card on the home screen
          (Figma node 2026:3102, ui/components/StatsCards.kt). Glow reuses card_neutral_face,
@@ -199,6 +204,10 @@
     <!-- Zen Bro connect, "My Zen Circle" dashboard after "Maybe later" (Figma node 2026:2493,
          ui/screens/ZenCircleScreen.kt). Toggle reuses toggle_*, Invite pill reuses ink_surface,
          score gradient's middle/end reuse score_grad_mid/score_orange. -->
+    <!-- Page wash for the Zen Circle / Zen Bro screens: the neutral home wash in light,
+         its ink counterpart in night (values-night). The share card keeps wash_neutral_*. -->
+    <color name="zen_circle_wash_edge">#F2F0E4</color>
+    <color name="zen_circle_wash_core">#F6E9A8</color>
     <color name="zen_circle_card_rule">#4D007700</color>
     <color name="zen_circle_reset_text">#5E5E5E</color>
     <color name="zen_circle_band_bg">#121A1A1A</color>
@@ -222,6 +231,14 @@
     <color name="invest_gold_terms_link">#005700</color>
     <color name="invest_gold_success_icon">#0E7A17</color>
     <color name="invest_gold_coin">#FFC700</color>
+    <!-- Minted gold coin in the onboarding Zen Gold story (onboarding/StoriesStep.kt):
+         highlight → face → shadow, plus the darker reeded edge. -->
+    <color name="coin_gold_highlight">#FFF6CF</color>
+    <color name="coin_gold_light">#FADB6E</color>
+    <color name="coin_gold_face">#E9B63A</color>
+    <color name="coin_gold_deep">#B98221</color>
+    <color name="coin_gold_edge">#8A5A12</color>
+    <color name="coin_gold_shadow">#5A3806</color>
 
     <!-- ZenMode OS onboarding (onboarding/*). Welcome's sunrise wash, the stories' night
          backdrop, and the "Entering ZenMode" celebration greens sampled off its render. -->
@@ -238,4 +255,9 @@
     <color name="recap_dusk_glow">#FF7A2E</color>
     <color name="recap_gold_light">#FFF4C7</color>
     <color name="recap_gold_deep">#FFD84D</color>
+
+    <!-- Settings / Distraction Blocker (Figma 2026:949). Card and chips reuse gold_delta_text,
+         ink_surface and zen_050; these are the two values the design adds. -->
+    <color name="distraction_card_text">#DADADA</color>
+    <color name="distraction_switch_on">#3B7A2B</color>
 </resources>

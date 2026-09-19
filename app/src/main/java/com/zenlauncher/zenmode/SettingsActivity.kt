@@ -30,7 +30,6 @@ import androidx.lifecycle.lifecycleScope
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
-import com.zenlauncher.zenmode.ui.screens.ContentBlockingBottomSheet
 import com.zenlauncher.zenmode.ui.components.zenOverlayBlur
 import com.zenlauncher.zenmode.ui.screens.HomeAppsPickerOverlay
 import com.zenlauncher.zenmode.ui.screens.SettingsScreen
@@ -41,6 +40,8 @@ class SettingsActivity : AppCompatActivity() {
 
     private var notificationBadgesEnabled by mutableStateOf(false)
     private var weeklyReports by mutableStateOf<List<WeeklyRecap>>(emptyList())
+    // Filled off the main thread: reading a week of usage stats here stalled the slide-in.
+    private var weeklyHours by mutableStateOf(List(7) { 0f })
     private var downloadingWeek by mutableStateOf<LocalDate?>(null)
     private var showProSheet by mutableStateOf(false)
 
@@ -58,6 +59,11 @@ class SettingsActivity : AppCompatActivity() {
     private var homeAppsChosenCount by mutableStateOf(0)
     private var showHomeAppsPicker by mutableStateOf(false)
 
+    override fun finish() {
+        super.finish()
+        HomePageSide.RIGHT.applyOnFinish(this)
+    }
+
     override fun onResume() {
         super.onResume()
         // These are changed outside this screen (system settings or a sheet), so re-read them.
@@ -71,10 +77,13 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        HomePageSide.RIGHT.applyOnCreate(this)
 
         val repository = UsageRepository(applicationContext, ServiceLocator.analyticsManager)
         homeAppsChosenCount = repository.getPinnedApps().size
-        val weeklyHours = repository.getWeeklyScreenTimeHours()
+        lifecycleScope.launch {
+            weeklyHours = withContext(Dispatchers.IO) { repository.getWeeklyScreenTimeHours() }
+        }
         val profilePhotoUrl = ServiceLocator.authProvider.getPhotoUrl()
         val displayName = ServiceLocator.authProvider.getDisplayName()
         val entitlements = ServiceLocator.entitlementProvider
@@ -89,7 +98,6 @@ class SettingsActivity : AppCompatActivity() {
 
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
-                var showContentBlockSheet by remember { mutableStateOf(false) }
                 val entitlement by entitlements.entitlement.collectAsState()
                 LaunchedEffect(entitlements.isAvailable) {
                     if (entitlements.isAvailable) offers = entitlements.offers()
@@ -114,7 +122,9 @@ class SettingsActivity : AppCompatActivity() {
                         startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
                     },
                     onBackClick = { finish() },
-                    onBlockInAppContentClick = { showContentBlockSheet = true },
+                    onBlockInAppContentClick = {
+                        startActivity(Intent(this@SettingsActivity, DistractionBlockerActivity::class.java))
+                    },
                     onAccountabilityPartnerClick = {
                         val intent = Intent(this, MainActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -143,6 +153,7 @@ class SettingsActivity : AppCompatActivity() {
                                 startActivity(RecapActivity.intent(this@SettingsActivity, week, RecapActivity.SOURCE_SETTINGS))
                             },
                             onDownload = ::downloadReport,
+                            onShare = ::shareReport,
                             onUnlockPro = {
                                 ServiceLocator.analyticsTracker.trackProUpsellViewed("settings_reports")
                                 showProSheet = true
@@ -156,7 +167,7 @@ class SettingsActivity : AppCompatActivity() {
                         onDismiss = { showProSheet = false },
                         onRequestAccess = {
                             showProSheet = false
-                            requestProAccess()
+                            ProAccess.requestAccess(this@SettingsActivity)
                         },
                         onEnableForTesting = if (ProAccess.canUseDebugOverride) {
                             {
@@ -177,12 +188,6 @@ class SettingsActivity : AppCompatActivity() {
                     },
                     onDismiss = { showHomeAppsPicker = false }
                 )
-                if (showContentBlockSheet) {
-                    ContentBlockingBottomSheet(onDismiss = {
-                        showContentBlockSheet = false
-                        contentBlockingOn = ContentBlockPrefs.isAnyBlockEnabled(this)
-                    })
-                }
             }
         }
     }
@@ -195,6 +200,16 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
         writeReport(week) { recap -> RecapReport.saveToDownloads(this, recap) }
+    }
+
+    private fun shareReport(week: LocalDate) {
+        val recap = weeklyReports.firstOrNull { it.weekStart == week } ?: return
+        lifecycleScope.launch {
+            runCatching { RecapReport.share(this@SettingsActivity, recap, attachPdf = ProAccess.isPro(this@SettingsActivity)) }
+                .onFailure {
+                    Toast.makeText(this@SettingsActivity, "Couldn't share the report. Please try again.", Toast.LENGTH_LONG).show()
+                }
+        }
     }
 
     /** Runs [save] off the main thread, then offers to open the saved PDF. */
@@ -223,17 +238,6 @@ class SettingsActivity : AppCompatActivity() {
             startActivity(view)
         } catch (_: android.content.ActivityNotFoundException) {
             // No PDF viewer installed; the file is still in Downloads.
-        }
-    }
-
-    private fun requestProAccess() {
-        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${AppConstants.SUPPORT_EMAIL}"))
-            .putExtra(Intent.EXTRA_SUBJECT, "ZenMode PRO early access")
-            .putExtra(Intent.EXTRA_TEXT, "Hi ZenMode team, I'd love early access to ZenMode PRO.")
-        try {
-            startActivity(intent)
-        } catch (_: android.content.ActivityNotFoundException) {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.TELEGRAM_URL)))
         }
     }
 

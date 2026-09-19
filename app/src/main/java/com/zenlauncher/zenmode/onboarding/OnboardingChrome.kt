@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
@@ -157,6 +158,9 @@ internal fun SegmentedProgress(
 /** Where a step sits in the flow, so each step can draw the shared top bar without knowing the rest. */
 @Immutable
 data class StepProgress(val segments: Int, val currentIndex: Int) {
+    /** 0–100 through the whole flow; [fraction] is how far into this step the user is. */
+    fun percent(fraction: Float = 0f): Int = OnboardingFlow.percentComplete(currentIndex, segments, fraction)
+
     @Composable
     fun TopBar(
         onBack: (() -> Unit)?,
@@ -166,12 +170,16 @@ data class StepProgress(val segments: Int, val currentIndex: Int) {
         segments = segments,
         currentIndex = currentIndex,
         onBack = onBack,
+        percent = percent(),
         eyebrow = eyebrow,
         trailing = trailing
     )
 }
 
-/** Progress bar, then back arrow + "ZenMode OS" eyebrow and an optional trailing slot. */
+/**
+ * Progress bar with the flow's percentage beside it, then back arrow + "ZenMode OS"
+ * eyebrow and an optional trailing slot.
+ */
 @Composable
 internal fun OnboardingTopBar(
     segments: Int,
@@ -180,17 +188,37 @@ internal fun OnboardingTopBar(
     modifier: Modifier = Modifier,
     currentFraction: Float = 1f,
     dark: Boolean = false,
+    percent: Int? = null,
     eyebrow: String = "Welcome to ZenMode OS",
     trailing: (@Composable () -> Unit)? = null
 ) {
     val content = if (dark) Color.White else colorResource(R.color.ink_surface)
     Column(modifier = modifier.padding(horizontal = 16.rdp).padding(top = 10.rdp)) {
-        SegmentedProgress(
-            segments = segments,
-            currentIndex = currentIndex,
-            currentFraction = currentFraction,
-            dark = dark
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SegmentedProgress(
+                segments = segments,
+                currentIndex = currentIndex,
+                currentFraction = currentFraction,
+                dark = dark,
+                modifier = Modifier.weight(1f)
+            )
+            if (percent != null) {
+                Spacer(Modifier.width(10.rdp))
+                Text(
+                    text = "$percent%",
+                    fontFamily = DepartureMono,
+                    fontSize = 12.rsp,
+                    lineHeight = 14.rsp,
+                    color = if (dark) Color.White.copy(alpha = 0.72f) else colorResource(R.color.stone_600),
+                    textAlign = TextAlign.End,
+                    maxLines = 1,
+                    // Wide enough for "100%" so the bar doesn't twitch as the number grows.
+                    modifier = Modifier
+                        .width(36.rdp)
+                        .semantics { contentDescription = "$percent percent complete" }
+                )
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -278,7 +306,7 @@ internal fun OnboardingBody(
     )
 }
 
-/** Uppercase DepartureMono eyebrow, the v3 section label. */
+/** DepartureMono eyebrow, the v3 section label. Onboarding keeps it in sentence case so it reads easily. */
 @Composable
 internal fun OnboardingEyebrow(
     text: String,
@@ -286,7 +314,7 @@ internal fun OnboardingEyebrow(
     color: Color = colorResource(R.color.zen_700)
 ) {
     Text(
-        text = text.uppercase(),
+        text = text,
         fontFamily = DepartureMono,
         fontSize = 12.rsp,
         lineHeight = 16.rsp,

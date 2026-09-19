@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
@@ -277,7 +278,7 @@ private fun SheetContent(
             fontSize = 14.15.rsp,
             lineHeight = 17.rsp,
             letterSpacing = (-0.42).sp,
-            color = Color.Black,
+            color = ZenTheme.colors.textPrimary,
             modifier = Modifier.padding(start = 33.36.rdp)
         )
 
@@ -289,7 +290,7 @@ private fun SheetContent(
                 fontWeight = FontWeight.Medium,
                 fontSize = 20.22.rsp,
                 lineHeight = 24.3.rsp,
-                color = Color.Black,
+                color = ZenTheme.colors.textPrimary,
                 modifier = Modifier.semantics { heading() }
             )
             Spacer(Modifier.height(12.13.rdp))

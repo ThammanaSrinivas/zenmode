@@ -37,17 +37,17 @@ internal object OnboardingContent {
     val stories = listOf(
         Story(
             eyebrow = "Zen Bro & Zen Gang",
-            headline = "QUIET THE NOISE, TOGETHER",
+            headline = "Quiet the noise, together!",
             body = "Pair up with a Zen Bro or bring your gang. Cheer each other on and keep each other honest."
         ),
         Story(
             eyebrow = "Zen Score",
-            headline = "ONE NUMBER FOR A CALMER DAY",
+            headline = "One number for a calmer day",
             body = "Your Zen Score rises when you're present and dips when you doomscroll. Updated live, all day."
         ),
         Story(
             eyebrow = "Zen Gold",
-            headline = "PROMISE LESS SCREEN. EARN GOLD",
+            headline = "Promise less screen. Earn gold.",
             body = "Keep your screen-time promise 5 of 7 days and Invest unlocks for the week."
         )
     )

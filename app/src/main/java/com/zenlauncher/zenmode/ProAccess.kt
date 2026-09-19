@@ -1,6 +1,9 @@
 package com.zenlauncher.zenmode
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,4 +49,19 @@ object ProAccess {
                     .getBoolean(KEY_DEBUG_OVERRIDE, false)
             ).also { debugOverride = it }
         }
+
+    /**
+     * PRO is invite-only for now: "Upgrade" asks the team for early access by email, falling
+     * back to the Telegram group when there's no mail app.
+     */
+    fun requestAccess(context: Context) {
+        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${AppConstants.SUPPORT_EMAIL}"))
+            .putExtra(Intent.EXTRA_SUBJECT, "ZenMode PRO early access")
+            .putExtra(Intent.EXTRA_TEXT, "Hi ZenMode team, I'd love early access to ZenMode PRO.")
+        try {
+            context.startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.TELEGRAM_URL)))
+        }
+    }
 }
