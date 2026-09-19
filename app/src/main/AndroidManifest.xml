@@ -8,9 +8,6 @@
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- So OEM battery managers don't kill the accessibility service (in-app content blocking) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -56,6 +53,17 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Buddy invite links (zenmodeos.com/b/{code}). autoVerify triggers Android's
+                 assetlinks.json handshake so this opens ZenMode directly instead of a chooser. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="zenmodeos.com"
+                    android:pathPrefix="/b/" />
+            </intent-filter>
         </activity>
 
         <service
@@ -70,15 +78,6 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <service
-            android:name=".DoomScrollingMonitorService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                      android:value="app_usage_monitoring" />
-        </service>
-        
         <service
             android:name=".ZenNotificationListenerService"
             android:exported="false"
@@ -111,6 +110,18 @@
         <!-- TEMP: Kite basket-redirect spike, see KiteBasketActivity -->
         <activity
             android:name=".KiteBasketActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <activity
+            android:name=".ZenScoreActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <activity
+            android:name=".MyPromiseActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <activity
+            android:name=".InvestGoldActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity

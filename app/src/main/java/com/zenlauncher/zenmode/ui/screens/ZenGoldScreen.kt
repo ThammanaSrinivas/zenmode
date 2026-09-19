@@ -80,6 +80,7 @@ fun ZenGoldScreen(
     weeklyPromiseStatus: List<Boolean?> = AppConstants.PLACEHOLDER_WEEKLY_PROMISE_STATUS,
     daysUntilUnlock: Int = AppConstants.PLACEHOLDER_DAYS_UNTIL_UNLOCK,
     daysLeftThisWeek: Int = AppConstants.PLACEHOLDER_DAYS_LEFT_THIS_WEEK,
+    daysClearedUnder: Int = AppConstants.PLACEHOLDER_DAYS_CLEARED_UNDER,
     goldInvested: String = AppConstants.PLACEHOLDER_GOLD_INVESTED,
     goldChangePercent: Int = AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT,
     forecastPercent: Int = AppConstants.PLACEHOLDER_FORECAST_PERCENT,
@@ -128,7 +129,9 @@ fun ZenGoldScreen(
                     promiseHours = promiseHours,
                     weeklyPromiseStatus = weeklyPromiseStatus,
                     daysUntilUnlock = daysUntilUnlock,
-                    daysLeftThisWeek = daysLeftThisWeek
+                    daysLeftThisWeek = daysLeftThisWeek,
+                    unlocked = investGoldUnlocked,
+                    daysClearedUnder = daysClearedUnder
                 )
 
                 ForecastCard(
@@ -146,6 +149,7 @@ fun ZenGoldScreen(
 
                 GoldUnlockDisclaimer(
                     daysUntilUnlock = daysUntilUnlock,
+                    unlocked = investGoldUnlocked,
                     onViewTermsClick = onViewTermsClick
                 )
             }
@@ -235,7 +239,9 @@ private fun ScreenTimeCard(
     promiseHours: Int,
     weeklyPromiseStatus: List<Boolean?>,
     daysUntilUnlock: Int,
-    daysLeftThisWeek: Int
+    daysLeftThisWeek: Int,
+    unlocked: Boolean,
+    daysClearedUnder: Int
 ) {
     val colors = ZenTheme.colors
     val topBorder = colorResource(R.color.zen_700)
@@ -247,7 +253,7 @@ private fun ScreenTimeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.rdp))
-            .background(colors.bgPrimary)
+            .background(if (unlocked) colors.statsCardFillHappy else colors.bgPrimary)
             .drawBehind {
                 drawLine(
                     color = topBorder,
@@ -302,37 +308,46 @@ private fun ScreenTimeCard(
 
         Spacer(modifier = Modifier.height(4.rdp))
 
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = "%02d".format(hrs),
-                fontFamily = DepartureMono,
-                fontSize = 31.5.rsp,
-                letterSpacing = (-2.5).sp,
-                color = colorResource(R.color.ink_soft)
-            )
-            Text(
-                text = " HRS  ",
-                fontFamily = DepartureMono,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 7.rsp,
-                color = colorResource(R.color.ink_soft),
-                modifier = Modifier.padding(bottom = 6.rdp)
-            )
-            Text(
-                text = "%02d".format(mins),
-                fontFamily = DepartureMono,
-                fontSize = 33.6.rsp,
-                letterSpacing = (-2.7).sp,
-                color = colorResource(R.color.ink_soft)
-            )
-            Text(
-                text = " MINS",
-                fontFamily = DepartureMono,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 6.rsp,
-                color = colorResource(R.color.ink_soft),
-                modifier = Modifier.padding(bottom = 6.rdp)
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = "%02d".format(hrs),
+                    fontFamily = DepartureMono,
+                    fontSize = 31.5.rsp,
+                    letterSpacing = (-2.5).sp,
+                    color = colorResource(R.color.ink_soft)
+                )
+                Text(
+                    text = " HRS  ",
+                    fontFamily = DepartureMono,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 7.rsp,
+                    color = colorResource(R.color.ink_soft),
+                    modifier = Modifier.padding(bottom = 6.rdp)
+                )
+                Text(
+                    text = "%02d".format(mins),
+                    fontFamily = DepartureMono,
+                    fontSize = 33.6.rsp,
+                    letterSpacing = (-2.7).sp,
+                    color = colorResource(R.color.ink_soft)
+                )
+                Text(
+                    text = " MINS",
+                    fontFamily = DepartureMono,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 6.rsp,
+                    color = colorResource(R.color.ink_soft),
+                    modifier = Modifier.padding(bottom = 6.rdp)
+                )
+            }
+            if (unlocked) {
+                WeeklyPromiseLegend()
+            }
         }
 
         Spacer(modifier = Modifier.height(12.rdp))
@@ -341,40 +356,107 @@ private fun ScreenTimeCard(
 
         Spacer(modifier = Modifier.height(12.rdp))
 
-        // Two-tone caption: bold lead, regular tail — copy as authored in Figma (the
-        // "7 hrs" here doesn't match "My promise - ${promiseHours}Hrs/day" above;
-        // reproduced as-is, not reconciled).
-        BasicText(
-            text = buildAnnotatedString {
-                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                    append("$daysUntilUnlock more days under 7 hrs opens gold pay, ")
-                }
-                append("and you have $daysLeftThisWeek days left this week to do it.")
-            },
-            style = TextStyle(
-                fontFamily = Geist,
-                fontSize = 11.rsp,
-                letterSpacing = (-0.22).sp,
-                color = colors.textPrimary
+        Row(verticalAlignment = Alignment.Bottom) {
+            // Two-tone caption: bold lead, regular tail — copy as authored in Figma (the
+            // "7 hrs" here doesn't match "My promise - ${promiseHours}Hrs/day" above;
+            // reproduced as-is, not reconciled).
+            BasicText(
+                text = if (unlocked) {
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
+                            append("You cleared the line with $daysClearedUnder days under. ")
+                        }
+                        append("Gold pay stays open until Sunday midnight.")
+                    }
+                } else {
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
+                            append("$daysUntilUnlock more days under 7 hrs opens gold pay, ")
+                        }
+                        append("and you have $daysLeftThisWeek days left this week to do it.")
+                    }
+                },
+                style = TextStyle(
+                    fontFamily = Geist,
+                    fontSize = 11.rsp,
+                    letterSpacing = (-0.22).sp,
+                    color = colors.textPrimary
+                ),
+                modifier = Modifier.weight(1f)
             )
+
+            if (unlocked) {
+                Spacer(modifier = Modifier.width(8.rdp))
+                UnlockedBadge()
+            }
+        }
+
+        if (!unlocked) {
+            Spacer(modifier = Modifier.height(12.rdp))
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.rdp))
+                    .background(colorResource(R.color.promise_badge_bg))
+                    .padding(horizontal = 10.rdp, vertical = 5.rdp)
+            ) {
+                Text(
+                    text = "IN PROGRESS",
+                    fontFamily = DepartureMono,
+                    fontSize = 9.5.rsp,
+                    letterSpacing = (-0.19).sp,
+                    color = PromiseKeptGreen
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UnlockedBadge() {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.rdp))
+            .background(PromiseKeptGreen)
+            .padding(horizontal = 10.rdp, vertical = 5.rdp)
+    ) {
+        Text(
+            text = "UNLOCKED",
+            fontFamily = DepartureMono,
+            fontSize = 9.5.rsp,
+            letterSpacing = (-0.19).sp,
+            color = Color.White
         )
+    }
+}
 
-        Spacer(modifier = Modifier.height(12.rdp))
+@Composable
+private fun WeeklyPromiseLegend() {
+    Column(verticalArrangement = Arrangement.spacedBy(4.rdp)) {
+        WeeklyPromiseLegendRow(color = PromiseKeptGreen, label = "Promise within limits")
+        WeeklyPromiseLegendRow(color = PromiseBrokenGray, label = "Promise Broken")
+    }
+}
 
+@Composable
+private fun WeeklyPromiseLegendRow(color: Color, label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.75.rdp)
+    ) {
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(6.rdp))
-                .background(colorResource(R.color.promise_badge_bg))
-                .padding(horizontal = 10.rdp, vertical = 5.rdp)
-        ) {
-            Text(
-                text = "IN PROGRESS",
-                fontFamily = DepartureMono,
-                fontSize = 9.5.rsp,
-                letterSpacing = (-0.19).sp,
-                color = PromiseKeptGreen
-            )
-        }
+                .size(6.75.rdp)
+                .clip(RoundedCornerShape(1.5.rdp))
+                .background(color)
+        )
+        Text(
+            text = label,
+            fontFamily = Geist,
+            fontSize = 7.5.rsp,
+            letterSpacing = (-0.075).sp,
+            color = Color.Black
+        )
     }
 }
 
@@ -579,7 +661,8 @@ private fun ForecastChart(modifier: Modifier = Modifier) {
             )
         }
 
-        val junctionX = w * 0.41f
+        // "Today" sits on its month's grid line (the axis spans 6 months, 5 gaps).
+        val junctionX = w * (AppConstants.PLACEHOLDER_FORECAST_TODAY_MONTH_INDEX / 5f)
 
         // Solid "recent" line: shallow valley, flat at both ends (~38% down from top).
         val solidPath = Path().apply {
@@ -646,31 +729,57 @@ private fun ViewAllPillButton(onClick: () -> Unit, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, onViewTermsClick: () -> Unit) {
+private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onViewTermsClick: () -> Unit) {
     val colors = ZenTheme.colors
-    val unlockOutOf = 7
+    val unlockOutOf = AppConstants.PROMISE_DAYS_TO_UNLOCK
     val unlockAt = unlockOutOf - daysUntilUnlock
+    val bodyColor = if (unlocked) colorResource(R.color.ink_soft) else colors.textPrimary
 
     BasicText(
-        text = buildAnnotatedString {
-            append("Invest gold opens at $unlockAt of $unlockOutOf days under your Promise. Stay under tomorrow and it opens then. ")
-            pushStringAnnotation(tag = "terms", annotation = "terms")
-            withStyle(
-                SpanStyle(
-                    fontWeight = FontWeight.SemiBold,
-                    color = PromiseKeptGreen,
-                    textDecoration = TextDecoration.Underline
-                )
-            ) {
-                append("View T&C")
+        text = if (unlocked) {
+            buildAnnotatedString {
+                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
+                    append("Gold pay is open.")
+                }
+                append(" You pick the quantity, we never pick it for you, and we take nothing from it. ")
+                pushStringAnnotation(tag = "terms", annotation = "terms")
+                withStyle(
+                    SpanStyle(
+                        fontWeight = FontWeight.SemiBold,
+                        color = PromiseKeptGreen,
+                        textDecoration = TextDecoration.Underline
+                    )
+                ) {
+                    append("View T&C")
+                }
+                pop()
             }
-            pop()
+        } else {
+            buildAnnotatedString {
+                val staySentence = if (daysUntilUnlock <= 1) {
+                    "Stay under tomorrow and it opens then."
+                } else {
+                    "Stay under $daysUntilUnlock more days and it opens then."
+                }
+                append("Invest gold opens at $unlockAt of $unlockOutOf days under your Promise. $staySentence ")
+                pushStringAnnotation(tag = "terms", annotation = "terms")
+                withStyle(
+                    SpanStyle(
+                        fontWeight = FontWeight.SemiBold,
+                        color = PromiseKeptGreen,
+                        textDecoration = TextDecoration.Underline
+                    )
+                ) {
+                    append("View T&C")
+                }
+                pop()
+            }
         },
         style = TextStyle(
             fontFamily = Geist,
             fontSize = 16.rsp,
             letterSpacing = (-0.16).sp,
-            color = colors.textPrimary
+            color = bodyColor
         ),
         modifier = Modifier.clickable(
             indication = null,

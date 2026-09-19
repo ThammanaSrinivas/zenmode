@@ -1,5 +1,8 @@
 package com.zenlauncher.zenmode.coreapi.services
 
+import com.zenlauncher.zenmode.coreapi.Circle
+import com.zenlauncher.zenmode.coreapi.CircleJoinResult
+import com.zenlauncher.zenmode.coreapi.ReactionType
 import com.zenlauncher.zenmode.coreapi.User
 import com.zenlauncher.zenmode.coreapi.UserStats
 
@@ -39,5 +42,36 @@ interface FirestoreDataSource {
 
     /** Persist the FCM device token for [uid] so Cloud Functions can target notifications. */
     suspend fun saveFcmToken(uid: String, token: String)
+
+    // ── Zen Circle ────────────────────────────────────────────────────
+
+    /** Reads users/{uid}.circle_id — mirrors [getBuddyUid]'s "find my connection" shape. */
+    suspend fun getMyCircleId(myUid: String): String?
+
+    /** Single-doc read — the whole point of the Approach 2 schema (see the plan doc). */
+    suspend fun getCircle(circleId: String): Circle?
+
+    /** Creates a new circle with [leaderUid] seeded as its sole initial member. */
+    suspend fun createCircle(leaderUid: String, leaderDisplayName: String?, circleName: String): Circle?
+
+    /**
+     * Joins [circleId] as [myUid]. Soft cap check (plain read-then-write, not a transaction —
+     * occasional 1-2 member overshoot on a race is acceptable and leader-correctable).
+     * Mutual-exclusivity (Buddy XOR Circle) IS transaction-guarded: fails with [CircleJoinResult.AlreadyInCircle]
+     * unless [confirmedSwitchFromBuddy] is set, mirroring findRandomBuddy's has_buddy transaction guard.
+     */
+    suspend fun joinCircle(circleId: String, myUid: String, myDisplayName: String?, confirmedSwitchFromBuddy: Boolean = false): CircleJoinResult
+
+    /** Self-leave. Triggers succession server-side if [myUid] was the leader. */
+    suspend fun leaveCircle(circleId: String, myUid: String): Boolean
+
+    /** Leader-only removal of another member. */
+    suspend fun removeCircleMember(circleId: String, leaderUid: String, targetUid: String): Boolean
+
+    /** Voluntary handoff while the leader is still present — distinct from automatic succession-on-leave. */
+    suspend fun transferLeadership(circleId: String, currentLeaderUid: String, newLeaderUid: String): Boolean
+
+    /** Atomic increment on reactions_<from>_<to>.<type>_sent. Rate limiting is enforced client-side, not here. */
+    suspend fun sendCircleReaction(circleId: String, fromUid: String, toUid: String, type: ReactionType): Boolean
 }
 

@@ -15,7 +15,6 @@ import androidx.lifecycle.lifecycleScope
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.ContentBlockingBottomSheet
-import com.zenlauncher.zenmode.ui.screens.DistractingAppsBottomSheet
 import com.zenlauncher.zenmode.ui.screens.SettingsScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.launch
@@ -39,7 +38,6 @@ class SettingsActivity : AppCompatActivity() {
 
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
-                var showDistractingSheet by remember { mutableStateOf(false) }
                 var showContentBlockSheet by remember { mutableStateOf(false) }
                 SettingsScreen(
                     weeklyHours = weeklyHours,
@@ -49,7 +47,6 @@ class SettingsActivity : AppCompatActivity() {
                         startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
                     },
                     onBackClick = { finish() },
-                    onChangeDistractingAppsClick = { showDistractingSheet = true },
                     onBlockInAppContentClick = { showContentBlockSheet = true },
                     onAccountabilityPartnerClick = {
                         val intent = Intent(this, MainActivity::class.java).apply {
@@ -64,9 +61,6 @@ class SettingsActivity : AppCompatActivity() {
                     onLogoutClick = { performLogout(repository) },
                     onDeleteAccountClick = { performDeleteAccount(repository) }
                 )
-                if (showDistractingSheet) {
-                    DistractingAppsBottomSheet(onDismiss = { showDistractingSheet = false })
-                }
                 if (showContentBlockSheet) {
                     ContentBlockingBottomSheet(onDismiss = { showContentBlockSheet = false })
                 }

@@ -72,8 +72,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -121,7 +119,6 @@ import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.FileResult
 import com.zenlauncher.zenmode.FileSearchRepository
-import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.coreapi.DailyUsage
@@ -139,9 +136,6 @@ import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
-import java.time.LocalDate
-import java.time.DayOfWeek
-import java.time.temporal.TemporalAdjusters
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -219,7 +213,6 @@ val GoldDeltaText: Color @Composable get() = colorResource(R.color.gold_delta_te
 fun HomeScreen(
     usage: DailyUsage?,
     streaks: Int,
-    weeklyScreenTimeMillis: List<Long> = List(7) { 0L },
     yesterdayChangePercent: Int?,
     hasBuddies: Boolean,
     buddyStats: BuddyStats?,
@@ -235,6 +228,7 @@ fun HomeScreen(
     onShowSearchChange: (Boolean) -> Unit,
     onSettingsClick: () -> Unit,
     onZenGoldClick: () -> Unit = {},
+    onZenScoreClick: () -> Unit = {},
     onGoogleSearch: (String) -> Unit,
     onPhoneClick: () -> Unit,
     onLockClick: () -> Unit,
@@ -242,7 +236,6 @@ fun HomeScreen(
     onSignInClick: () -> Unit,
     onBuddyCardClick: (() -> Unit)? = null,
     onAppClick: (AppInfo) -> Unit,
-    onAppLongClick: (AppInfo) -> Unit = {},
     onAppInfoClick: (AppInfo) -> Unit = {},
     apps: List<AppInfo>
 ) {
@@ -302,6 +295,7 @@ fun HomeScreen(
             HomeHeader(
                 zenScore = zenScore,
                 streaks = streaks,
+                onZenScoreClick = onZenScoreClick,
                 onStreakClick = { showStreakOverlay = true }
             )
 
@@ -351,7 +345,6 @@ fun HomeScreen(
             AppGrid(
                 apps = apps.take(appCount),
                 onAppClick = onAppClick,
-                onAppLongClick = onAppLongClick,
                 onAppInfoClick = onAppInfoClick
             )
 
@@ -399,10 +392,6 @@ fun HomeScreen(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            // weeklyScreenTimeMillis (HomeScreen's own param, still fed by MainActivity)
-            // no longer reaches this overlay — the v3 milestone-card design doesn't
-            // use a per-day weekly view. Left wired above pending real streak-history
-            // tracking (see AppConstants' milestone placeholders).
             StreakOverlay(
                 onDismiss = { showStreakOverlay = false }
             )
@@ -416,6 +405,7 @@ fun HomeScreen(
 private fun HomeHeader(
     zenScore: Int,
     streaks: Int,
+    onZenScoreClick: () -> Unit = {},
     onStreakClick: () -> Unit
 ) {
     val colors = ZenTheme.colors
@@ -427,8 +417,12 @@ private fun HomeHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Zen Score — real gradient mark from Figma node 2001:1504.
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Zen Score — real gradient mark from Figma node 2001:1504. Tap target for
+        // ZenScoreActivity (Figma node 2026:2035, ui/screens/ZenScoreScreen.kt).
+        Row(
+            modifier = Modifier.clickable { onZenScoreClick() },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Image(
                 painter = painterResource(R.drawable.ic_zen_mark_gradient),
                 contentDescription = null,
@@ -632,7 +626,6 @@ fun GoldInvestedRow(
 private fun AppGrid(
     apps: List<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
-    onAppLongClick: (AppInfo) -> Unit = {},
     onAppInfoClick: (AppInfo) -> Unit = {}
 ) {
     Column(
@@ -652,7 +645,6 @@ private fun AppGrid(
                         AppIconItem(
                             appInfo = app,
                             onClick = { onAppClick(app) },
-                            onLongClick = { onAppLongClick(app) },
                             onAppInfoClick = { onAppInfoClick(app) }
                         )
                     }
@@ -666,17 +658,17 @@ private fun AppGrid(
 }
 
 // ── App Icon Item ─────────────────────────────────────────────────
+// Long-press goes straight to App info — it's the only action, so a
+// single-item menu would just be an extra tap for no choice.
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun AppIconItem(
     appInfo: AppInfo,
     onClick: () -> Unit,
-    onLongClick: () -> Unit = {},
     onAppInfoClick: () -> Unit = {}
 ) {
     val view = LocalView.current
-    var showMenu by remember { mutableStateOf(false) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -684,7 +676,7 @@ private fun AppIconItem(
             onClick = onClick,
             onLongClick = {
                 view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
-                showMenu = true
+                onAppInfoClick()
             }
         )
     ) {
@@ -707,17 +699,6 @@ private fun AppIconItem(
                     .fillMaxSize()
                     .clip(RoundedCornerShape(AppTileRadius))
             )
-
-            // Pin star indicator — bottom-right of icon (outside clip)
-            if (appInfo.isPinned) {
-                Image(
-                    painter = painterResource(id = R.drawable.star),
-                    contentDescription = "Pinned",
-                    modifier = Modifier
-                        .size(14.rdp)
-                        .align(Alignment.BottomEnd)
-                )
-            }
 
             // Notification badge — top-right of icon
             if (appInfo.notificationCount > 0) {
@@ -749,37 +730,6 @@ private fun AppIconItem(
                     )
                 }
             }
-        }
-
-        // Long-press context menu
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { showMenu = false }
-        ) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = if (appInfo.isPinned) "Unpin" else "Pin app",
-                        fontFamily = Geist
-                    )
-                },
-                onClick = {
-                    showMenu = false
-                    onLongClick()
-                }
-            )
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = "App info",
-                        fontFamily = Geist
-                    )
-                },
-                onClick = {
-                    showMenu = false
-                    onAppInfoClick()
-                }
-            )
         }
     }
 }

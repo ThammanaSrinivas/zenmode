@@ -36,7 +36,6 @@ class HomeScreenScreenshotTest {
                 HomeScreen(
                     usage = DailyUsage(screenTimeInMillis = 5 * 60 * 1000L),
                     streaks = 3,
-                    weeklyScreenTimeMillis = List(7) { 10 * 60 * 1000L },
                     yesterdayChangePercent = -10,
                     hasBuddies = true,
                     buddyStats = BuddyStats(screenTimeMins = 20L),
@@ -74,7 +73,6 @@ class HomeScreenScreenshotTest {
                 HomeScreen(
                     usage = DailyUsage(screenTimeInMillis = 240 * 60 * 1000L),
                     streaks = 0,
-                    weeklyScreenTimeMillis = List(7) { 200 * 60 * 1000L },
                     yesterdayChangePercent = 15,
                     hasBuddies = false,
                     buddyStats = null,

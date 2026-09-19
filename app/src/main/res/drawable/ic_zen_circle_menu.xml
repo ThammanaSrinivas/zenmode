@@ -1,0 +1,10 @@
+<!-- "My Zen Circle" settings menu, Figma node 2026:2942. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="29.3086dp"
+    android:height="16.6756dp"
+    android:viewportWidth="29.3086"
+    android:viewportHeight="16.6756">
+  <path android:pathData="M1.2633,1.2633L28.0453,1.2633" android:strokeColor="#0E7A17" android:strokeWidth="2.52661" android:strokeLineCap="round"/>
+  <path android:pathData="M1.2633,8.3378L28.0453,8.3378" android:strokeColor="#0E7A17" android:strokeWidth="2.52661" android:strokeLineCap="round"/>
+  <path android:pathData="M1.2633,15.4123L28.0453,15.4123" android:strokeColor="#0E7A17" android:strokeWidth="2.52661" android:strokeLineCap="round"/>
+</vector>

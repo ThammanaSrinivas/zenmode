@@ -23,6 +23,9 @@ object ServiceLocator {
     /** Emitted when FCM delivers a buddy-reaction push while app is running. */
     val buddyReactedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
 
+    /** Emitted when FCM delivers a circle-reaction push while app is running. */
+    val circleReactedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
+
     /**
      * Returns true if the ServiceLocator has been fully initialized.
      */
