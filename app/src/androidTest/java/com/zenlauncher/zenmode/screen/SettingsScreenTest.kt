@@ -23,7 +23,6 @@ class SettingsScreenTest {
 
     private fun setContent(
         onBackClick: () -> Unit = {},
-        onChangeDistractingAppsClick: () -> Unit = {},
         onAccountabilityPartnerClick: () -> Unit = {},
         onContributeClick: () -> Unit = {},
         onRateClick: () -> Unit = {},
@@ -35,7 +34,6 @@ class SettingsScreenTest {
             ZenTheme(darkTheme = false) {
                 SettingsScreen(
                     onBackClick = onBackClick,
-                    onChangeDistractingAppsClick = onChangeDistractingAppsClick,
                     onAccountabilityPartnerClick = onAccountabilityPartnerClick,
                     onContributeClick = onContributeClick,
                     onRateClick = onRateClick,
@@ -76,14 +74,6 @@ class SettingsScreenTest {
         var clicked = false
         setContent(onBackClick = { clicked = true })
         composeTestRule.onNodeWithContentDescription("Back").performClick()
-        assertTrue(clicked)
-    }
-
-    @Test
-    fun settingsScreen_changeDistractingApps_callsCallback() {
-        var clicked = false
-        setContent(onChangeDistractingAppsClick = { clicked = true })
-        composeTestRule.onNodeWithText("Change distracting app list").performClick()
         assertTrue(clicked)
     }
 

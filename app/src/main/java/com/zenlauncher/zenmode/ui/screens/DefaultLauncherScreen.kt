@@ -10,12 +10,9 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import com.zenlauncher.zenmode.ThemePreferences
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -63,7 +60,6 @@ fun DefaultLauncherScreen(
 ) {
     val context = LocalContext.current
     var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
-    var showDistractingSheet by remember { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
 
     ZenTheme(darkTheme = isDarkMode) {
@@ -154,25 +150,6 @@ fun DefaultLauncherScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Change distracting app list card
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colors.bgSecondary, RoundedCornerShape(26.dp))
-                    .border(1.dp, colors.bgSecondary, RoundedCornerShape(26.dp))
-                    .clickable { showDistractingSheet = true }
-                    .padding(horizontal = 16.dp, vertical = 11.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Change distracting app list",
-                    color = colors.textBrand,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
             // Stats preview
@@ -246,9 +223,6 @@ fun DefaultLauncherScreen(
                         .firstOrNull()?.let { uriHandler.openUri(it.item) }
                 }
             )
-        }
-        if (showDistractingSheet) {
-            DistractingAppsBottomSheet(onDismiss = { showDistractingSheet = false })
         }
     }
     }

@@ -45,7 +45,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.zenlauncher.zenmode.coreapi.UsageAccess
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
@@ -152,7 +151,6 @@ class MainActivity : AppCompatActivity() {
             viewModel.onResumeCheck()
             viewModel.refreshBuddyStatsFromCache()
         }
-        checkAndStartDoomMonitor()
         loadInstalledApps()
         homeAppCount = AppGridPreferences.getAppCount(this)
 
@@ -183,26 +181,6 @@ class MainActivity : AppCompatActivity() {
         Class.forName("com.zenlauncher.zenmode.internal.StatSyncWorker") as Class<out androidx.work.ListenableWorker>
     } catch (e: ClassNotFoundException) {
         null
-    }
-
-    private fun checkAndStartDoomMonitor() {
-        if (DoomScrollingMonitorService.isRunning) return
-
-        val hasUsageStats = UsageAccess.isGranted(this)
-        val hasOverlayPermission = Settings.canDrawOverlays(this)
-
-        if (hasUsageStats && hasOverlayPermission) {
-            try {
-                val intent = Intent(this, DoomScrollingMonitorService::class.java)
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    startForegroundService(intent)
-                } else {
-                    startService(intent)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
     }
 
     private fun loadInstalledApps() {
