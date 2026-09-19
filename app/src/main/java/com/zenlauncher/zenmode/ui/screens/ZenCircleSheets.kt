@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.ui.text.TextStyle
+import com.zenlauncher.zenmode.ui.components.BrandedText
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -71,6 +73,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
@@ -275,7 +278,7 @@ private fun SheetContent(
             fontSize = 14.15.rsp,
             lineHeight = 17.rsp,
             letterSpacing = (-0.42).sp,
-            color = Color.Black,
+            color = ZenTheme.colors.textPrimary,
             modifier = Modifier.padding(start = 33.36.rdp)
         )
 
@@ -287,7 +290,7 @@ private fun SheetContent(
                 fontWeight = FontWeight.Medium,
                 fontSize = 20.22.rsp,
                 lineHeight = 24.3.rsp,
-                color = Color.Black,
+                color = ZenTheme.colors.textPrimary,
                 modifier = Modifier.semantics { heading() }
             )
             Spacer(Modifier.height(12.13.rdp))
@@ -412,13 +415,15 @@ private fun InviteOption(
                 transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
                 label = "inviteOptionSubtitle"
             ) { (text, highlighted) ->
-                Text(
+                BrandedText(
                     text = text,
-                    fontFamily = Geist,
-                    fontSize = 12.1.rsp,
-                    lineHeight = 14.5.rsp,
-                    letterSpacing = (-0.12).sp,
-                    color = if (highlighted) highlight else muted,
+                    style = TextStyle(
+                        fontFamily = Geist,
+                        fontSize = 12.1.rsp,
+                        lineHeight = 14.5.rsp,
+                        letterSpacing = (-0.12).sp,
+                        color = if (highlighted) highlight else muted
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

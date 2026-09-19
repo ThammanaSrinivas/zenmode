@@ -1,47 +1,39 @@
 package com.zenlauncher.zenmode.activity
 
-import androidx.test.core.app.ActivityScenario
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.viewpager2.widget.ViewPager2
 import com.zenlauncher.zenmode.OnboardingActivity
-import com.zenlauncher.zenmode.R
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * The onboarding is a Compose flow (onboarding/OnboardingFlow.kt), not a ViewPager.
+ * Step routing is unit-tested in OnboardingFlowTest; this checks the activity boots
+ * into it and puts the product on screen.
+ */
 @RunWith(AndroidJUnit4::class)
 class OnboardingActivityFlowTest {
 
+    @get:Rule
+    val composeTestRule = createAndroidComposeRule<OnboardingActivity>()
+
     @Test
     fun onboarding_launches_successfully() {
-        val scenario = ActivityScenario.launch(OnboardingActivity::class.java)
-        scenario.onActivity { activity ->
+        composeTestRule.activityRule.scenario.onActivity { activity ->
             assertNotNull(activity)
         }
-        scenario.close()
     }
 
     @Test
-    fun onboarding_startsOnFirstPage() {
-        val scenario = ActivityScenario.launch(OnboardingActivity::class.java)
-        scenario.onActivity { activity ->
-            val viewPager = activity.findViewById<ViewPager2>(R.id.viewPager)
-            assertNotNull(viewPager)
-            assertEquals(0, viewPager.currentItem)
-        }
-        scenario.close()
-    }
-
-    @Test
-    fun onboarding_hasCorrectPageCount() {
-        val scenario = ActivityScenario.launch(OnboardingActivity::class.java)
-        scenario.onActivity { activity ->
-            val viewPager = activity.findViewById<ViewPager2>(R.id.viewPager)
-            assertNotNull(viewPager)
-            assertNotNull(viewPager.adapter)
-            assertEquals(6, viewPager.adapter!!.itemCount)
-        }
-        scenario.close()
+    fun onboarding_showsZenModeOnFirstScreen() {
+        composeTestRule.waitForIdle()
+        val nodes = composeTestRule
+            .onAllNodes(hasText("ZenMode", substring = true), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+        assertTrue("Expected the first onboarding screen to name ZenMode", nodes.isNotEmpty())
     }
 }

@@ -19,6 +19,7 @@ data class BuddyStats(
 
 class MainViewModel(
     private val repository: UsageRepository,
+    private val scoreStore: ZenScoreStore,
     private val isResistanceEnabled: () -> Boolean
 ) : ViewModel() {
     private val firestoreDataSource = ServiceLocator.firestoreDataSource
@@ -28,6 +29,10 @@ class MainViewModel(
 
     private val _navigateToDelayedUnlock = MutableLiveData<Boolean>()
     val navigateToDelayedUnlock: LiveData<Boolean> get() = _navigateToDelayedUnlock
+
+    /** Today's Zen Score in tenths (93 = 9.3), see [ZenScore]. */
+    private val _zenScore = MutableLiveData<Int>()
+    val zenScore: LiveData<Int> get() = _zenScore
 
     private val _yesterdayChangePercent = MutableLiveData<Int?>()
     val yesterdayChangePercent: LiveData<Int?> get() = _yesterdayChangePercent
@@ -140,6 +145,7 @@ class MainViewModel(
     fun refreshStats() {
         val todayUsage = repository.getTodayUsage()
         _stats.value = todayUsage
+        _zenScore.value = scoreStore.refresh(todayUsage)
         _usagePermissionMissing.value = !todayUsage.usagePermissionGranted
 
         val yesterdayMillis = repository.getYesterdayScreenTimeMillis()
@@ -271,12 +277,13 @@ class MainViewModel(
 
 class MainViewModelFactory(
     private val repository: UsageRepository,
+    private val scoreStore: ZenScoreStore,
     private val isResistanceEnabled: () -> Boolean
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(repository, isResistanceEnabled) as T
+            return MainViewModel(repository, scoreStore, isResistanceEnabled) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

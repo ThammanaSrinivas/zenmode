@@ -77,10 +77,23 @@ class ZenAccessibilityService : AccessibilityService() {
     private var lastActionAt = 0L
     private var lastEventAt = 0L
 
+    // Blocker settings as of the last change; handleEvent reads this, never prefs directly.
+    @Volatile
+    private var blockPrefs: ContentBlockPrefs.Snapshot? = null
+
+    // Held as a field: SharedPreferences only keeps listeners weakly.
+    private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        blockPrefs = ContentBlockPrefs.snapshot(this)
+        if (ContentBlockPrefs.affectsWatchedPackages(key)) updateWatchedPackages()
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
         rules = ContentBlockRules.default()
+        ContentBlockPrefs.prefs(this).registerOnSharedPreferenceChangeListener(prefsListener)
+        blockPrefs = ContentBlockPrefs.snapshot(this)
+        updateWatchedPackages()
 
         getSharedPreferences(CRASH_PREFS, Context.MODE_PRIVATE)
             .getString(KEY_LAST_CRASH, null)?.let { last ->
@@ -126,9 +139,20 @@ class ZenAccessibilityService : AccessibilityService() {
         lastEventAt = now
 
         val pkg = event.packageName?.toString() ?: return
-        val debug = ContentBlockPrefs.isDebugDumpEnabled(this)
+        val prefs = blockPrefs ?: ContentBlockPrefs.snapshot(this).also { blockPrefs = it }
+        if (prefs.isPaused(now)) return
+
+        // A quieted app goes straight back home the moment its window comes up.
+        if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && pkg != packageName &&
+            prefs.isAppQuieted(pkg)
+        ) {
+            quietApp(pkg)
+            return
+        }
+
+        val debug = prefs.isDebugDumpEnabled
         val appRule = rules.appRule(pkg) ?: return
-        if (!ContentBlockPrefs.isAnyBlockEnabled(this)) return
+        if (!prefs.isAnyBlockEnabled) return
 
         val root = rootInActiveWindow
         if (root == null) {
@@ -141,7 +165,7 @@ class ZenAccessibilityService : AccessibilityService() {
         val surface = SurfaceDetector.detect(appRule, snapshot)
         if (debug) Log.d(TAG, "event pkg=$pkg detected surface=${surface?.id}")
         if (surface == null) return
-        if (!ContentBlockPrefs.isSurfaceBlocked(this, pkg, surface.id)) return
+        if (!prefs.isSurfaceBlocked(pkg, surface.id)) return
 
         block(pkg, surface)
     }
@@ -154,6 +178,7 @@ class ZenAccessibilityService : AccessibilityService() {
         Log.i(TAG, "Blocking $pkg / ${surface.id}")
         performGlobalAction(GLOBAL_ACTION_BACK)
         Toast.makeText(this, "Blocked by ZenMode", Toast.LENGTH_SHORT).show()
+        ContentBlockPrefs.recordStop(this)
 
         runCatching {
             ServiceLocator.analyticsManager.trackEvent(
@@ -163,6 +188,36 @@ class ZenAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun quietApp(pkg: String) {
+        val now = System.currentTimeMillis()
+        if (now - lastActionAt < MIN_ACTION_INTERVAL_MS) return
+        lastActionAt = now
+
+        Log.i(TAG, "Quieting $pkg")
+        performGlobalAction(GLOBAL_ACTION_HOME)
+        val label = runCatching {
+            packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
+        }.getOrDefault("This app")
+        Toast.makeText(this, "$label is quieted by ZenMode", Toast.LENGTH_SHORT).show()
+        ContentBlockPrefs.recordStop(this)
+
+        runCatching {
+            ServiceLocator.analyticsManager.trackEvent("quieted_app_blocked", mapOf("app" to pkg))
+        }
+    }
+
+    /**
+     * The static config only wakes this service for the short-form apps. Quieted apps are
+     * added at runtime, so the service still isn't woken for everything else on the phone.
+     */
+    private fun updateWatchedPackages() {
+        val info = serviceInfo ?: return
+        info.packageNames = (ContentBlockRules.TRACKED_PACKAGES + ContentBlockPrefs.quietedApps(this))
+            .distinct()
+            .toTypedArray()
+        serviceInfo = info
+    }
+
     override fun onInterrupt() {
         // No-op
     }
@@ -170,6 +225,7 @@ class ZenAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+        ContentBlockPrefs.prefs(this).unregisterOnSharedPreferenceChangeListener(prefsListener)
         instance = null
     }
 

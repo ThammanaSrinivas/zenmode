@@ -1,14 +1,21 @@
 package com.zenlauncher.zenmode.ui.screens
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalInspectionMode
+import com.zenlauncher.zenmode.ui.components.rememberReduceMotion
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +26,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,19 +37,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.minDimension
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,7 +55,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.ui.components.HomePage
+import com.zenlauncher.zenmode.ui.components.MoodBackdrop
+import com.zenlauncher.zenmode.ui.components.PinnedPageFooter
+import com.zenlauncher.zenmode.ui.components.moodWashColors
+import com.zenlauncher.zenmode.ui.components.rememberTodayMood
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.zenlauncher.zenmode.ui.components.dropShadow
+import com.zenlauncher.zenmode.ui.components.openSettings
+import com.zenlauncher.zenmode.ui.components.pageSwipe
+import com.zenlauncher.zenmode.ui.components.pressScale
+import com.zenlauncher.zenmode.ui.components.taperedBorder
+import coil.compose.AsyncImage
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import java.time.LocalDate
+import java.time.format.TextStyle as TextStyleJava
+import java.util.Locale
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -60,12 +87,10 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 
-// ── ZM_OS v3: Zen Score (Home tap target) ────────────────────────────
-// Figma node 2026:2035. Reached by tapping the "Zen Score" widget in
-// HomeHeader (top-left of Home) — see HomeScreen.kt's onZenScoreClick and
-// MainActivity's ZenScoreActivity launch. Mirrors ZenGoldScreen's chrome
-// (back arrow / centered title / hamburger) since both are secondary
-// full-screen destinations off Home, not reached by the same swipe gesture.
+// ── ZM_OS v3: Zen Score (Home right-swipe page) ─────────────────────
+// Figma node 2026:2035 ("home/ variant-green/ Zen Score"). The left-hand of the three home
+// pages: reached by swiping right on Home or tapping Home's Zen Score; swipe left (or back)
+// returns. The header greets the user; their avatar opens Settings, like every ☰ does.
 //
 // Category breakdown and session log both need real per-app usage
 // categorization that doesn't exist yet (see zenmode_core_private/docs/plans).
@@ -99,46 +124,61 @@ private fun defaultSessionLog() = listOf(
 
 @Composable
 fun ZenScoreScreen(
-    score: Int = AppConstants.PLACEHOLDER_ZEN_SCORE,
-    scoreMax: Int = 100,
-    insight: String = AppConstants.PLACEHOLDER_SCORE_INSIGHT,
+    /** Today's score in tenths (93 = 9.3), from [com.zenlauncher.zenmode.ZenScoreStore]. */
+    score: Int,
+    /** Yesterday's saved score in tenths, if there is one, for the insight line. */
+    yesterdayScore: Int? = null,
     categories: List<ZenScoreCategory> = remember { defaultCategories() },
     reclaimedMinutes: Int = AppConstants.PLACEHOLDER_RECLAIMED_MINUTES,
     sessionTotalLabel: String = AppConstants.PLACEHOLDER_SESSION_LOG_TOTAL,
     sessionLog: List<ZenSessionLogEntry> = remember { defaultSessionLog() },
+    userName: String? = null,
+    photoUrl: String? = null,
     isPro: Boolean = false,
+    today: LocalDate = LocalDate.now(),
     onBackClick: () -> Unit,
-    onMenuClick: () -> Unit = {},
+    onUpgradeProClick: () -> Unit = {},
     onDownloadReportClick: () -> Unit = {},
     onShareScoreClick: () -> Unit = {}
 ) {
-    val colors = ZenTheme.colors
+    val mood = rememberTodayMood()
+    var footerHeight by remember { mutableStateOf(0.dp) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bgPrimary)
-            .systemBarsPadding()
+            // Home sits to the right of this page, so swiping left goes back to it.
+            .pageSwipe(onSwipeLeft = onBackClick)
     ) {
+        MoodBackdrop(mood)
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            ZenScoreHeader(onBackClick = onBackClick, onMenuClick = onMenuClick)
+            Spacer(modifier = Modifier.height(16.rdp))
 
-            Spacer(modifier = Modifier.height(20.rdp))
+            GreetingHeader(
+                userName = userName,
+                photoUrl = photoUrl,
+                today = today,
+                isPro = isPro,
+                onUpgradeProClick = onUpgradeProClick
+            )
+
+            Spacer(modifier = Modifier.height(16.rdp))
 
             Column(
                 modifier = Modifier
                     .padding(horizontal = ScreenMargin)
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.rdp)
+                verticalArrangement = Arrangement.spacedBy(12.rdp)
             ) {
                 ZenScoreCard(
                     score = score,
-                    scoreMax = scoreMax,
-                    insight = insight,
+                    insight = scoreInsight(score, yesterdayScore),
                     categories = categories
                 )
 
@@ -149,87 +189,162 @@ fun ZenScoreScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.rdp))
+            // Room for the sticky footer, so the session log can scroll clear of it.
+            Spacer(modifier = Modifier.height(footerHeight + 8.rdp))
+        }
 
+        // Download / Share stay on screen however far the page scrolls.
+        PinnedPageFooter(
+            current = HomePage.ZEN_SCORE,
+            fadeTo = moodWashColors(mood).last(),
+            onHeightChanged = { footerHeight = it },
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = ScreenMargin)
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.rdp)
+                verticalArrangement = Arrangement.spacedBy(4.rdp)
             ) {
                 DownloadReportButton(isPro = isPro, onClick = onDownloadReportClick)
                 ShareScoreButton(onClick = onShareScoreClick)
             }
-
-            Spacer(modifier = Modifier.height(24.rdp))
         }
     }
 }
 
-// ── Header ────────────────────────────────────────────────────────
-// Mirrors ZenGoldHeader exactly — same chrome for every secondary
-// full-screen destination off Home.
+// ── Greeting header ───────────────────────────────────────────────
+// Avatar, "Hey, <first name>", today's date, and Upgrade Pro. The avatar is the way into
+// Settings from this page, standing in for the ☰ the other pages carry.
 
 @Composable
-private fun ZenScoreHeader(onBackClick: () -> Unit, onMenuClick: () -> Unit) {
+private fun GreetingHeader(
+    userName: String?,
+    photoUrl: String?,
+    today: LocalDate,
+    isPro: Boolean,
+    onUpgradeProClick: () -> Unit
+) {
+    val colors = ZenTheme.colors
+    val context = LocalContext.current
+    val firstName = userName?.trim()?.substringBefore(' ')?.takeIf { it.isNotEmpty() }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = ScreenMargin)
-            .padding(top = 12.rdp),
+            .padding(horizontal = ScreenMargin),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_arrow_back),
-            contentDescription = "Back",
+        ProfileAvatar(
+            name = firstName,
+            photoUrl = photoUrl,
             modifier = Modifier
-                .size(28.rdp)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = onBackClick
-                ),
-            colorFilter = ColorFilter.tint(colorResource(R.color.zen_900))
+                .size(46.rdp)
+                .clip(CircleShape)
+                .pressScale(onClick = { openSettings(context) }, onClickLabel = "Open settings")
         )
 
+        Spacer(modifier = Modifier.width(10.rdp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = if (firstName != null) "Hey, $firstName" else "Hey there",
+                fontFamily = Geist,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 20.rsp,
+                letterSpacing = (-0.6).sp,
+                color = colors.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = greetingDate(today),
+                fontFamily = Geist,
+                fontSize = 13.rsp,
+                letterSpacing = (-0.13).sp,
+                color = colors.textSecondary
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.rdp))
+
+        if (isPro) {
+            ProBadge()
+        } else {
+            Box(
+                modifier = Modifier
+                    .height(38.rdp)
+                    .clip(RoundedCornerShape(percent = 50))
+                    .background(colorResource(R.color.zen_700))
+                    .pressScale(onClick = onUpgradeProClick, onClickLabel = "Upgrade to PRO")
+                    .padding(horizontal = 18.rdp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Upgrade Pro",
+                    fontFamily = Geist,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.rsp,
+                    letterSpacing = (-0.3).sp,
+                    color = Color.White,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+/** "Tue · 12 may" — as the design sets it. */
+private fun greetingDate(date: LocalDate): String {
+    val day = date.dayOfWeek.getDisplayName(TextStyleJava.SHORT, Locale.getDefault())
+    val month = date.month.getDisplayName(TextStyleJava.SHORT, Locale.getDefault()).lowercase(Locale.getDefault())
+    return "$day · ${date.dayOfMonth} $month"
+}
+
+/** The Google profile photo when there is one; otherwise the first initial on brand green. */
+@Composable
+private fun ProfileAvatar(name: String?, photoUrl: String?, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .background(colorResource(R.color.zen_700))
+            .semantics { contentDescription = "Profile and settings" },
+        contentAlignment = Alignment.Center
+    ) {
         Text(
-            text = "ZEN SCORE",
+            text = name?.firstOrNull()?.uppercase() ?: "Z",
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
-            fontSize = 24.rsp,
-            letterSpacing = (-0.48).sp,
-            color = colorResource(R.color.zen_900),
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center
+            fontSize = 22.rsp,
+            color = Color.White
         )
-
-        Image(
-            painter = painterResource(R.drawable.ic_hamburger_menu),
-            contentDescription = "Menu",
-            modifier = Modifier
-                .width(29.rdp)
-                .height(17.5.rdp)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = onMenuClick
-                )
-        )
+        if (photoUrl != null) {
+            AsyncImage(
+                model = photoUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
 // ── Zen Score card ─────────────────────────────────────────────────
 
+private fun scoreInsight(score: Int, yesterday: Int?): String = when {
+    yesterday == null -> "Your score updates live through the day. Check back tomorrow to compare."
+    score > yesterday -> "Up ${ZenScore.formatDelta(score - yesterday)} from yesterday. Keep it calm."
+    score < yesterday -> "Down ${ZenScore.formatDelta(score - yesterday)} from yesterday. There's still time today."
+    else -> "Level with yesterday."
+}
+
 @Composable
 private fun ZenScoreCard(
     score: Int,
-    scoreMax: Int,
     insight: String,
     categories: List<ZenScoreCategory>
 ) {
     val colors = ZenTheme.colors
-    val topBorder = colorResource(R.color.zen_700)
-    val topBorderWidth = 1.rdp
+    val radius = 16.rdp
 
     // Same gradient tokens as HomeHeader's "Zen Score" number (ZenScoreGradient in
     // HomeScreen.kt) — that val is private to its file, so rebuilt here from the
@@ -245,16 +360,9 @@ private fun ZenScoreCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.rdp))
+            .clip(RoundedCornerShape(radius))
             .background(colors.bgSecondary)
-            .drawBehind {
-                drawLine(
-                    color = topBorder,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = topBorderWidth.toPx()
-                )
-            }
+            .taperedBorder(colorResource(R.color.zen_700), radius, top = 1.rdp)
             .padding(16.rdp)
     ) {
         Row(
@@ -267,7 +375,7 @@ private fun ZenScoreCard(
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.rsp,
                 letterSpacing = (-0.16).sp,
-                color = colorResource(R.color.zen_900),
+                color = ZenTheme.colors.textBrandStrong,
                 modifier = Modifier.weight(1f)
             )
             PeriodToggle()
@@ -281,14 +389,14 @@ private fun ZenScoreCard(
         ) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = "%02d".format(score),
+                    text = ZenScore.format(score),
                     fontFamily = DepartureMono,
                     fontSize = 31.5.rsp,
                     letterSpacing = (-2.5).sp,
                     style = TextStyle(brush = scoreGradient)
                 )
                 Text(
-                    text = "/$scoreMax",
+                    text = "/${ZenScore.MAX_DISPLAY}",
                     fontFamily = DepartureMono,
                     fontSize = 17.rsp,
                     color = colors.textSecondary,
@@ -298,7 +406,7 @@ private fun ZenScoreCard(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            ZenScoreDial(score = score, maxScore = scoreMax)
+            ZenScoreDial(score = score, maxScore = ZenScore.MAX_TENTHS)
         }
 
         Spacer(modifier = Modifier.height(10.rdp))
@@ -388,80 +496,107 @@ private fun CategoryLegendGrid(categories: List<ZenScoreCategory>) {
     }
 }
 
-// ── 3D score dial (glossy puck with sweep progress) ────────────────
-// Figma's own asset for this (imgGroup2147223863) is a flattened ring+bar
-// raster with no vector data to reproduce faithfully, so this is drawn
-// procedurally instead — a real gauge (sweep-gradient progress, a top-left
-// specular highlight, and a graphicsLayer tilt) rather than a static copy.
+// ── 3D score ring ─────────────────────────────────────────────────
+// A thick green ring seen from above at an angle, like the design's torus. It is drawn as a
+// real extruded solid — a stack of darker walls under a lit top face — and it turns: today's
+// score is a bright band that travels round the ring while the ring gently rocks on its tilt.
+// Lighting is fixed (front brighter than back) so the motion reads as rotation, not blinking.
 
 @Composable
 private fun ZenScoreDial(score: Int, maxScore: Int, modifier: Modifier = Modifier) {
     val progress = (score.toFloat() / maxScore.toFloat()).coerceIn(0f, 1f)
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(900, easing = FastOutSlowInEasing),
-        label = "zenScoreProgress"
+    val fill = remember { Animatable(0f) }
+    LaunchedEffect(progress) { fill.animateTo(progress, tween(1_100, easing = FastOutSlowInEasing)) }
+
+    val still = rememberReduceMotion() || LocalInspectionMode.current
+    val motion = rememberInfiniteTransition(label = "score-ring")
+    val spin by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(9_000, easing = LinearEasing)),
+        label = "score-ring-spin"
     )
-    val trackColor = colorResource(R.color.stone_200)
-    val progressStart = colorResource(R.color.zen_700)
-    val progressMid = colorResource(R.color.zen_300)
+    val rock by motion.animateFloat(
+        initialValue = 0.40f,
+        targetValue = 0.52f,
+        animationSpec = infiniteRepeatable(tween(3_400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "score-ring-rock"
+    )
 
-    Box(
+    val lit = colorResource(R.color.zen_300)
+    val litDeep = colorResource(R.color.zen_500)
+    val wall = colorResource(R.color.zen_900)
+    val track = colorResource(R.color.zen_700)
+
+    Canvas(
         modifier = modifier
-            .size(56.rdp)
-            .graphicsLayer {
-                rotationX = 10f
-                cameraDistance = 18f * density
-            }
-            .dropShadow(color = Color.Black.copy(alpha = 0.18f), blur = 10.rdp, cornerRadius = 28.rdp, offsetY = 4.rdp),
-        contentAlignment = Alignment.Center
+            .size(width = 118.rdp, height = 78.rdp)
+            .semantics { contentDescription = "Zen Score ring, ${(progress * 100).toInt()} percent" }
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = size.minDimension * 0.18f
-            val inset = strokeWidth / 2f
-            val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
-            val topLeft = Offset(inset, inset)
+        val band = size.width * 0.15f
+        val depth = size.height * 0.11f
+        val tilt = if (still) 0.46f else rock
+        val rx = size.width / 2f - band / 2f
+        val ry = rx * tilt
+        val cx = size.width / 2f
+        val cy = size.height / 2f - depth / 2f
+        val start = if (still) -90f else spin - 90f
+        val sweep = 360f * fill.value
 
-            // Dome shading — light source from top-left for a puck-like feel.
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color.White.copy(alpha = 0.45f), Color.Transparent),
-                    center = Offset(size.width * 0.32f, size.height * 0.28f),
-                    radius = size.minDimension * 0.55f
-                ),
-                radius = size.minDimension * 0.42f
-            )
+        // Contact shadow.
+        drawOval(
+            brush = Brush.radialGradient(
+                listOf(Color.Black.copy(alpha = 0.22f), Color.Transparent),
+                center = Offset(cx, cy + depth + ry * 0.35f),
+                radius = rx * 1.05f
+            ),
+            topLeft = Offset(cx - rx * 1.05f, cy + depth + ry * 0.35f - ry * 0.7f),
+            size = Size(rx * 2.1f, ry * 1.4f)
+        )
 
-            drawArc(
-                color = trackColor,
-                startAngle = -90f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
-
-            drawArc(
-                brush = Brush.sweepGradient(colors = listOf(progressStart, progressMid, progressStart)),
-                startAngle = -90f,
-                sweepAngle = 360f * animatedProgress,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
-
-            drawArc(
-                color = Color.White.copy(alpha = 0.5f),
-                startAngle = -150f,
-                sweepAngle = 45f,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth * 0.32f, cap = StrokeCap.Round)
+        // Walls: the same ring stacked downwards, darkening with depth.
+        val steps = depth.toInt().coerceAtLeast(1)
+        for (i in steps downTo 1) {
+            val shade = 0.55f + 0.35f * (1f - i / steps.toFloat())
+            drawOval(
+                color = wall.copy(alpha = shade),
+                topLeft = Offset(cx - rx, cy - ry + i),
+                size = Size(rx * 2, ry * 2),
+                style = Stroke(width = band)
             )
         }
+
+        // Top face in short segments, so each can take its own light and colour.
+        val segment = 4f
+        var a = 0f
+        while (a < 360f) {
+            val mid = Math.toRadians((a + segment / 2f).toDouble())
+            // Front of the ring (bottom of the ellipse) faces the viewer and catches the light.
+            val light = 0.72f + 0.28f * kotlin.math.sin(mid).toFloat()
+            val inBand = ((a - start) % 360f + 360f) % 360f < sweep
+            val base = if (inBand) lerp(litDeep, lit, light) else track.copy(alpha = 0.35f + 0.25f * light)
+            drawArc(
+                color = base,
+                startAngle = a,
+                sweepAngle = segment + 0.6f,
+                useCenter = false,
+                topLeft = Offset(cx - rx, cy - ry),
+                size = Size(rx * 2, ry * 2),
+                style = Stroke(width = band, cap = StrokeCap.Butt)
+            )
+            a += segment
+        }
+
+        // Fixed specular glint on the inner front edge.
+        drawArc(
+            color = Color.White.copy(alpha = 0.45f),
+            startAngle = 110f,
+            sweepAngle = 40f,
+            useCenter = false,
+            topLeft = Offset(cx - rx + band * 0.3f, cy - ry + band * 0.3f * tilt),
+            size = Size((rx - band * 0.3f) * 2, (ry - band * 0.3f * tilt) * 2),
+            style = Stroke(width = band * 0.18f, cap = StrokeCap.Round)
+        )
     }
 }
 
@@ -474,7 +609,7 @@ private fun SessionLogCard(
     sessionLog: List<ZenSessionLogEntry>
 ) {
     val colors = ZenTheme.colors
-    val topBorder = colorResource(R.color.zen_700)
+    val radius = 20.rdp
 
     Column(
         modifier = Modifier
@@ -483,20 +618,13 @@ private fun SessionLogCard(
                 rotationX = 3f
                 cameraDistance = 24f * density
             }
-            .clip(RoundedCornerShape(20.rdp))
+            .clip(RoundedCornerShape(radius))
             .background(
                 Brush.verticalGradient(
-                    listOf(colorResource(R.color.zen_050), colorResource(R.color.paper_sunk))
+                    listOf(ZenTheme.colors.bgMoodHappy, ZenTheme.colors.surfaceSunk)
                 )
             )
-            .drawBehind {
-                drawLine(
-                    color = topBorder,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = 1.5.dp.toPx()
-                )
-            }
+            .taperedBorder(colorResource(R.color.zen_700), radius, top = 1.5.dp)
             .padding(horizontal = 18.rdp, vertical = 20.rdp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -506,7 +634,7 @@ private fun SessionLogCard(
             fontWeight = FontWeight.Medium,
             fontSize = 12.rsp,
             letterSpacing = 1.2.sp,
-            color = colorResource(R.color.zen_900),
+            color = ZenTheme.colors.textBrandStrong,
             modifier = Modifier.align(Alignment.Start)
         )
 
@@ -526,7 +654,7 @@ private fun SessionLogCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(colorResource(R.color.stone_200))
+                    .background(ZenTheme.colors.borderSubtle)
                     .padding(horizontal = 10.rdp, vertical = 8.rdp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -594,78 +722,122 @@ private fun SessionLogRow(entry: ZenSessionLogEntry) {
     }
 }
 
-// ── 3D reclaimed-minutes dial (speedometer style) ──────────────────
-// Same rationale as ZenScoreDial — Figma's Repeat-group/Ellipse cluster here
-// (nodes 2026:2051/2054/2059) is raster, not vector, so redrawn as a real
-// tick-marked dial with a glass-dome highlight instead of a static copy.
+// ── Reclaimed-minutes dial ─────────────────────────────────────────
+// The session log's centrepiece (design: a ticked bezel round a thick two-tone ring round a
+// glowing green disc). On arrival the ring fills and the bezel's minute ticks light up in step
+// with it; afterwards a soft highlight keeps sweeping the lit ticks and the disc breathes, so
+// the dial feels live without pulling focus. Counts the minutes up as it fills.
 
 @Composable
 private fun ReclaimedMinutesDial(minutes: Int, modifier: Modifier = Modifier) {
-    val colors = ZenTheme.colors
     val progress = (minutes / 2000f).coerceIn(0f, 1f)
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(1000, easing = FastOutSlowInEasing),
-        label = "reclaimedProgress"
+    val fill = remember { Animatable(0f) }
+    LaunchedEffect(progress) { fill.animateTo(progress, tween(1_300, easing = FastOutSlowInEasing)) }
+
+    val still = rememberReduceMotion() || LocalInspectionMode.current
+    val motion = rememberInfiniteTransition(label = "reclaimed")
+    val scan by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(3_200, easing = LinearEasing)),
+        label = "reclaimed-scan"
     )
-    val litTickColor = colorResource(R.color.zen_700)
-    val dimTickColor = colorResource(R.color.stone_300).copy(alpha = 0.6f)
-    val progressStart = colorResource(R.color.zen_700)
-    val progressMid = colorResource(R.color.zen_300)
+    val breathe by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2_600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "reclaimed-breathe"
+    )
+
+    val tickLit = colorResource(R.color.zen_700)
+    val tickDim = colorResource(R.color.stone_300).copy(alpha = 0.45f)
+    val ringTrack = colorResource(R.color.stone_300).copy(alpha = 0.55f)
+    val ringFill = colorResource(R.color.zen_700)
+    val ringFillDeep = colorResource(R.color.zen_900)
+    val discCore = colorResource(R.color.zen_200)
+    val discEdge = colorResource(R.color.zen_100)
+    val ink = colorResource(R.color.ink_base)
+    val shown = (minutes * fill.value / progress.coerceAtLeast(0.0001f)).toInt().coerceAtMost(minutes)
 
     Box(
         modifier = modifier
-            .size(140.rdp)
-            .graphicsLayer {
-                rotationX = 12f
-                cameraDistance = 14f * density
-            }
-            .dropShadow(color = Color.Black.copy(alpha = 0.16f), blur = 18.rdp, cornerRadius = 70.rdp, offsetY = 8.rdp),
+            .size(168.rdp)
+            .semantics(mergeDescendants = true) { contentDescription = "Reclaimed today: $minutes minutes" },
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val tickCount = 48
-            val ringRadius = size.minDimension / 2f * 0.96f
-            val litTicks = (tickCount * animatedProgress).toInt()
+            val r = size.minDimension / 2f
+            val ticks = 60
+            val litTicks = ticks * fill.value
 
-            for (i in 0 until tickCount) {
-                val angle = i * (360f / tickCount)
-                val lit = i < litTicks
-                rotate(degrees = angle, pivot = center) {
+            // Bezel: 60 minute ticks, every fifth one longer.
+            for (i in 0 until ticks) {
+                val major = i % 5 == 0
+                val t = i / ticks.toFloat()
+                val on = i < litTicks
+                // The sweep highlight trails off behind a moving head.
+                val trail = (((scan - t) % 1f) + 1f) % 1f
+                val glow = if (on && !still) (1f - trail / 0.25f).coerceIn(0f, 1f) else 0f
+                val color = if (on) lerp(tickLit, discEdge, glow * 0.8f) else tickDim
+                rotate(degrees = t * 360f, pivot = center) {
                     drawLine(
-                        color = if (lit) litTickColor else dimTickColor,
-                        start = Offset(center.x, center.y - ringRadius),
-                        end = Offset(center.x, center.y - ringRadius + size.minDimension * 0.045f),
-                        strokeWidth = size.minDimension * 0.012f,
+                        color = color,
+                        start = Offset(center.x, center.y - r * 0.98f),
+                        end = Offset(center.x, center.y - r * (if (major) 0.86f else 0.9f)),
+                        strokeWidth = r * (if (major) 0.03f else 0.018f),
                         cap = StrokeCap.Round
                     )
                 }
             }
 
-            // Glass dome — the "3D" heart of the dial.
+            // Two-tone ring with a soft drop shadow underneath.
+            val ringR = r * 0.7f
+            val ringW = r * 0.16f
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.65f),
-                        Color.White.copy(alpha = 0.06f),
-                        Color.Transparent
-                    ),
-                    center = Offset(size.width * 0.35f, size.height * 0.28f),
-                    radius = size.minDimension * 0.6f
+                    listOf(Color.Black.copy(alpha = 0.16f), Color.Transparent),
+                    center = center.copy(y = center.y + r * 0.05f),
+                    radius = ringR + ringW
                 ),
-                radius = size.minDimension * 0.38f
+                radius = ringR + ringW,
+                center = center.copy(y = center.y + r * 0.05f)
             )
+            val arcTopLeft = Offset(center.x - ringR, center.y - ringR)
+            val arcSize = Size(ringR * 2, ringR * 2)
+            drawArc(ringTrack, -90f, 360f, false, arcTopLeft, arcSize, style = Stroke(width = ringW))
+            if (fill.value > 0f) {
+                drawArc(
+                    brush = Brush.sweepGradient(listOf(ringFillDeep, ringFill, ringFillDeep), center),
+                    startAngle = -90f,
+                    sweepAngle = 360f * fill.value,
+                    useCenter = false,
+                    topLeft = arcTopLeft,
+                    size = arcSize,
+                    style = Stroke(width = ringW, cap = StrokeCap.Round)
+                )
+            }
 
-            drawCircle(color = colors.surfaceElevated, radius = size.minDimension * 0.34f)
-
-            drawArc(
-                brush = Brush.sweepGradient(colors = listOf(progressStart, progressMid, progressStart)),
-                startAngle = -90f,
-                sweepAngle = 360f * animatedProgress,
-                useCenter = false,
-                topLeft = Offset(size.width * 0.145f, size.height * 0.145f),
-                size = Size(size.width * 0.71f, size.height * 0.71f),
-                style = Stroke(width = size.minDimension * 0.05f, cap = StrokeCap.Round)
+            // Glowing disc: light core, inner shadow at the rim, breathing halo.
+            val discR = ringR - ringW / 2f - r * 0.02f
+            drawCircle(
+                color = discEdge.copy(alpha = 0.35f + 0.25f * (if (still) 0.5f else breathe)),
+                radius = discR + r * 0.03f,
+                center = center
+            )
+            drawCircle(
+                brush = Brush.radialGradient(listOf(discCore, discEdge), center, discR),
+                radius = discR,
+                center = center
+            )
+            drawCircle(
+                brush = Brush.radialGradient(
+                    0.78f to Color.Transparent,
+                    1f to ringFillDeep.copy(alpha = 0.18f),
+                    center = center,
+                    radius = discR
+                ),
+                radius = discR,
+                center = center
             )
         }
 
@@ -675,16 +847,16 @@ private fun ReclaimedMinutesDial(minutes: Int, modifier: Modifier = Modifier) {
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 9.rsp,
-                color = colors.textSecondary,
+                color = ink.copy(alpha = 0.75f),
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "%,d".format(minutes),
-                fontFamily = DepartureMono,
-                fontWeight = FontWeight.Normal,
-                fontSize = 26.rsp,
-                letterSpacing = (-0.26).sp,
-                color = colors.textPrimary
+                text = "%,d".format(shown),
+                fontFamily = ClashDisplay,
+                fontWeight = FontWeight.Medium,
+                fontSize = 28.rsp,
+                letterSpacing = (-0.84).sp,
+                color = ink
             )
             Text(
                 text = "Minutes",
@@ -705,36 +877,26 @@ private fun ReclaimedMinutesDial(minutes: Int, modifier: Modifier = Modifier) {
 private fun DownloadReportButton(isPro: Boolean, onClick: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
         modifier = Modifier
             .fillMaxWidth()
-            .height(47.rdp)
+            .height(40.rdp)
             .clip(RoundedCornerShape(50))
-            .background(colorResource(R.color.milestone_outline_bg))
-            .border(1.rdp, colorResource(R.color.zen_700).copy(alpha = 0.26f), RoundedCornerShape(50))
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            )
+            .pressScale(onClick = onClick, onClickLabel = "Download report PDF", pressedScale = 0.96f)
+            .padding(top = 8.rdp)
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_download),
-            contentDescription = null,
-            modifier = Modifier.size(16.rdp)
-        )
-        Spacer(modifier = Modifier.width(8.rdp))
         Text(
             text = "Download Report PDF",
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
-            fontSize = 17.rsp,
-            letterSpacing = (-0.35).sp,
-            color = colorResource(R.color.gold_delta_text)
+            fontSize = 19.rsp,
+            letterSpacing = (-0.38).sp,
+            color = colorResource(R.color.zen_700)
         )
         if (!isPro) {
-            Spacer(modifier = Modifier.width(8.rdp))
-            ProBadge()
+            // Sits up at the cap height, like a superscript (as in the design).
+            Spacer(modifier = Modifier.width(6.rdp))
+            ProBadge(modifier = Modifier.offset(y = (-4).rdp))
         }
     }
 }
@@ -745,32 +907,28 @@ private fun ShareScoreButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .height(47.rdp)
+            .height(52.rdp)
             .clip(RoundedCornerShape(50))
-            .background(colorResource(R.color.zen_700))
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            )
+            .background(colorResource(R.color.zen_950))
+            .pressScale(onClick = onClick, onClickLabel = "Share Zen Score", pressedScale = 0.97f)
     ) {
         Text(
             text = "Share Zen Score",
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
-            fontSize = 17.rsp,
-            letterSpacing = (-0.35).sp,
+            fontSize = 18.rsp,
+            letterSpacing = (-0.36).sp,
             color = Color.White
         )
     }
 }
 
 @Composable
-private fun ProBadge() {
+private fun ProBadge(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(percent = 50))
-            .background(colorResource(R.color.ink_surface))
+            .background(colorResource(R.color.zen_700))
             .padding(horizontal = 5.rdp, vertical = 2.rdp)
     ) {
         Text(

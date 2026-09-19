@@ -6,7 +6,7 @@
     android:viewportWidth="11.7"
     android:viewportHeight="11.7">
     <path
-        android:strokeColor="@color/black"
+        android:strokeColor="@color/my_promise_stepper_glyph"
         android:strokeWidth="2.34"
         android:pathData="M5.84974,0L5.84974,11.7M11.7,5.84949L0,5.84949" />
 </vector>

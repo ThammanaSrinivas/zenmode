@@ -61,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -127,7 +128,7 @@ internal fun ZenCircleSettingsContent(
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 24.rsp,
-            color = colorResource(R.color.ink_base),
+            color = ZenTheme.colors.textPrimary,
             modifier = Modifier
                 .padding(start = 13.7.rdp)
                 .semantics { heading() }
@@ -279,7 +280,7 @@ private fun SettingsRow(
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 17.rsp,
                         letterSpacing = (-0.2).sp,
-                        color = if (destructive && confirming) danger else colorResource(R.color.ink_base)
+                        color = if (destructive && confirming) danger else ZenTheme.colors.textPrimary
                     )
                     if (comingSoon) {
                         Spacer(Modifier.width(7.rdp))
@@ -360,7 +361,7 @@ private fun ConfirmStrip(
                     .padding(horizontal = 18.rdp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Keep", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = colorResource(R.color.ink_base))
+                Text("Keep", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = ZenTheme.colors.textPrimary)
             }
             Box(
                 modifier = Modifier
