@@ -10,10 +10,6 @@ interface AnalyticsTrackerContract {
     fun trackPermissionScreenViewed(permissionType: String)
     fun trackPermissionGranted(permissionType: String)
     fun trackSetupCompleted(timeTakenSec: Int, permissionsGrantedCount: Int)
-    fun trackDoomScrollThresholdReached(appName: String)
-    fun trackOverlayDismissed(type: String)
-    fun trackRememberMeSelected(duration: String)
-    fun trackOverlayActionTaken(action: String)
     fun trackBuddyShareStarted(mode: String)
     fun trackBuddyCodeCopied(mode: String)
     fun trackBuddyCodePasted(mode: String)
@@ -33,4 +29,11 @@ interface AnalyticsTrackerContract {
     fun trackReportDownloaded(weekStart: String)
     /** [surface]: where the PRO upsell was shown, e.g. "settings_reports". */
     fun trackProUpsellViewed(surface: String)
+    fun trackCircleCreated()
+    fun trackCircleJoined(via: String)
+    fun trackCircleMemberRemoved(byLeader: Boolean)
+    fun trackCircleLeft()
+    fun trackBuddyToCircleSwitch()
+    fun trackCircleLeadershipTransferred(reason: String)
+    fun trackCircleReactionSent(type: String)
 }

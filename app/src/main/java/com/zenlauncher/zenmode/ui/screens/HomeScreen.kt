@@ -659,6 +659,8 @@ private fun AppGrid(
 }
 
 // ── App Icon Item ─────────────────────────────────────────────────
+// Long-press goes straight to App info — it's the only action, so a
+// single-item menu would just be an extra tap for no choice.
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

@@ -22,6 +22,17 @@ object AppLogic {
         return percentage.coerceIn(0, 100)
     }
 
+    /**
+     * Zen score (0-100, shown as x.y out of 10 in Circle UI) — delegates to
+     * [com.zenlauncher.zenmode.coreapi.ZenScoreCalculator], which is where the real formula
+     * lives (core-api, so StatSyncWorker in core-private can call it too; app can't be a
+     * dependency of core-private). Deliberately not routed through [getMindfulnessPercentage]
+     * even though the math is currently identical — this way "zen score" has its own single
+     * source of truth from day one instead of two formulas that happen to agree for now.
+     */
+    fun calculateZenScore(minutes: Long): Int =
+        com.zenlauncher.zenmode.coreapi.ZenScoreCalculator.calculateZenScore(minutes)
+
     fun getMindfulnessColor(minutes: Long): Int {
         return when {
              minutes <= AppConstants.THRESHOLD_HAPPY_MINUTES -> R.color.zen_mindfulness_happy

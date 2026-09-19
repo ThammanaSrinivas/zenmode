@@ -34,10 +34,8 @@ class SettingsScreenScreenshotTest {
                     displayName = "Kamal",
                     isProAvailable = true,
                     offers = offers,
-                    distractingAppCount = 6,
                     isContentBlockingOn = true,
                     onBackClick = {},
-                    onChangeDistractingAppsClick = {},
                     onAccountabilityPartnerClick = {},
                     onContributeClick = {},
                     onRateClick = {},
@@ -63,9 +61,7 @@ class SettingsScreenScreenshotTest {
                         renewsOn = 1_792_195_200_000L
                     ),
                     offers = offers,
-                    distractingAppCount = 6,
                     onBackClick = {},
-                    onChangeDistractingAppsClick = {},
                     onAccountabilityPartnerClick = {},
                     onContributeClick = {},
                     onRateClick = {},
@@ -82,7 +78,6 @@ class SettingsScreenScreenshotTest {
                 SettingsScreen(
                     weeklyHours = week,
                     onBackClick = {},
-                    onChangeDistractingAppsClick = {},
                     onAccountabilityPartnerClick = {},
                     onContributeClick = {},
                     onRateClick = {},

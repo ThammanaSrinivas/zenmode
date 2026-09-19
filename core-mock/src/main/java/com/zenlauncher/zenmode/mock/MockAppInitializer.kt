@@ -4,6 +4,9 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import com.zenlauncher.zenmode.coreapi.analytics.AnalyticsManager
+import com.zenlauncher.zenmode.coreapi.Circle
+import com.zenlauncher.zenmode.coreapi.CircleJoinResult
+import com.zenlauncher.zenmode.coreapi.ReactionType
 import com.zenlauncher.zenmode.coreapi.SignInResult
 import com.zenlauncher.zenmode.coreapi.User
 import com.zenlauncher.zenmode.coreapi.UserStats
@@ -102,6 +105,16 @@ class MockFirestoreDataSource : FirestoreDataSource {
     override suspend fun sendLike(relationshipId: String, senderUid: String): Boolean = true
     override suspend fun getTodayLikes(relationshipId: String, myUid: String, buddyUid: String): Pair<Long, Long> = 0L to 0L
     override suspend fun saveFcmToken(uid: String, token: String) {}
+
+    override suspend fun getMyCircleId(myUid: String): String? = null
+    override suspend fun getCircle(circleId: String): Circle? = null
+    override suspend fun createCircle(leaderUid: String, leaderDisplayName: String?, circleName: String): Circle? = null
+    override suspend fun joinCircle(circleId: String, myUid: String, myDisplayName: String?, confirmedSwitchFromBuddy: Boolean): CircleJoinResult =
+        CircleJoinResult.Success
+    override suspend fun leaveCircle(circleId: String, myUid: String): Boolean = true
+    override suspend fun removeCircleMember(circleId: String, leaderUid: String, targetUid: String): Boolean = true
+    override suspend fun transferLeadership(circleId: String, currentLeaderUid: String, newLeaderUid: String): Boolean = true
+    override suspend fun sendCircleReaction(circleId: String, fromUid: String, toUid: String, type: ReactionType): Boolean = true
 }
 
 class MockAnalyticsTracker : AnalyticsTrackerContract {
@@ -110,10 +123,6 @@ class MockAnalyticsTracker : AnalyticsTrackerContract {
     override fun trackPermissionScreenViewed(permissionType: String) {}
     override fun trackPermissionGranted(permissionType: String) {}
     override fun trackSetupCompleted(timeTakenSec: Int, permissionsGrantedCount: Int) {}
-    override fun trackDoomScrollThresholdReached(appName: String) {}
-    override fun trackOverlayDismissed(type: String) {}
-    override fun trackRememberMeSelected(duration: String) {}
-    override fun trackOverlayActionTaken(action: String) {}
     override fun trackBuddyShareStarted(mode: String) {}
     override fun trackBuddyCodeCopied(mode: String) {}
     override fun trackBuddyCodePasted(mode: String) {}
@@ -127,6 +136,13 @@ class MockAnalyticsTracker : AnalyticsTrackerContract {
     override fun trackRecapCtaClicked(weekStart: String, outcome: String, cta: String) {}
     override fun trackReportDownloaded(weekStart: String) {}
     override fun trackProUpsellViewed(surface: String) {}
+    override fun trackCircleCreated() {}
+    override fun trackCircleJoined(via: String) {}
+    override fun trackCircleMemberRemoved(byLeader: Boolean) {}
+    override fun trackCircleLeft() {}
+    override fun trackBuddyToCircleSwitch() {}
+    override fun trackCircleLeadershipTransferred(reason: String) {}
+    override fun trackCircleReactionSent(type: String) {}
 }
 
 class MockAnalyticsManager : AnalyticsManager {

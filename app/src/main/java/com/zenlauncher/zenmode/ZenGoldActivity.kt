@@ -25,6 +25,15 @@ class ZenGoldActivity : AppCompatActivity() {
                 ZenGoldScreen(
                     promiseHours = promiseHours.intValue,
                     onBackClick = { finish() },
+                    // TEMP: force-unlocked so the Kite basket-redirect spike is reachable
+                    // for testing — revert to the real PLACEHOLDER_INVEST_GOLD_UNLOCKED
+                    // gate once a real weekly-promise backend drives it.
+                    investGoldUnlocked = true,
+                    // TEMP: Invest Gold opens InvestGoldActivity, whose own "Review in Kite"
+                    // does a direct native-app redirect (no prefill) while a Zerodha partner
+                    // approval for prefilled native deep links is pending — see the email in
+                    // zenmode_docs/docs/features/gold-streak.md. KiteBasketActivity (WebView +
+                    // prefilled basket order) stays in the codebase to swap back in once approved.
                     onInvestGoldClick = {
                         startActivity(Intent(this@ZenGoldActivity, InvestGoldActivity::class.java))
                     },

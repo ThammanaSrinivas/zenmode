@@ -31,7 +31,6 @@ import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.ContentBlockingBottomSheet
-import com.zenlauncher.zenmode.ui.screens.DistractingAppsBottomSheet
 import com.zenlauncher.zenmode.ui.components.zenOverlayBlur
 import com.zenlauncher.zenmode.ui.screens.HomeAppsPickerOverlay
 import com.zenlauncher.zenmode.ui.screens.SettingsScreen
@@ -54,7 +53,6 @@ class SettingsActivity : AppCompatActivity() {
         pendingPickerWeek = null
         if (uri != null) writeReport(week) { recap -> contentResolver.openOutputStream(uri)?.use { RecapReport.write(this, recap, it) }; uri }
     }
-    private var distractingAppCount by mutableStateOf(0)
     private var contentBlockingOn by mutableStateOf(false)
     private var offers by mutableStateOf<List<PlanOffer>>(emptyList())
     private var homeAppsChosenCount by mutableStateOf(0)
@@ -62,13 +60,12 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // All three are changed outside this screen (system settings or a sheet), so re-read them.
+        // These are changed outside this screen (system settings or a sheet), so re-read them.
         notificationBadgesEnabled = ZenNotificationListenerService.isEnabledInSettings(this)
         lifecycleScope.launch {
             weeklyReports = withContext(Dispatchers.IO) { RecapStore(applicationContext).completedWeeks() }
             ServiceLocator.proEntitlementProvider.refresh()
         }
-        distractingAppCount = DistractingAppsRepository.getUserSelected(this).size
         contentBlockingOn = ContentBlockPrefs.isAnyBlockEnabled(this)
     }
 
@@ -82,7 +79,6 @@ class SettingsActivity : AppCompatActivity() {
         val displayName = ServiceLocator.authProvider.getDisplayName()
         val entitlements = ServiceLocator.entitlementProvider
         notificationBadgesEnabled = ZenNotificationListenerService.isEnabledInSettings(this)
-        distractingAppCount = DistractingAppsRepository.getUserSelected(this).size
         contentBlockingOn = ContentBlockPrefs.isAnyBlockEnabled(this)
         if (savedInstanceState == null) {
             ServiceLocator.analyticsManager.trackEvent(
@@ -93,7 +89,6 @@ class SettingsActivity : AppCompatActivity() {
 
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
-                var showDistractingSheet by remember { mutableStateOf(false) }
                 var showContentBlockSheet by remember { mutableStateOf(false) }
                 val entitlement by entitlements.entitlement.collectAsState()
                 LaunchedEffect(entitlements.isAvailable) {
@@ -106,7 +101,6 @@ class SettingsActivity : AppCompatActivity() {
                     isProAvailable = entitlements.isAvailable,
                     entitlement = entitlement,
                     offers = offers,
-                    distractingAppCount = distractingAppCount,
                     isContentBlockingOn = contentBlockingOn,
                     homeAppsChosenCount = homeAppsChosenCount,
                     onChooseHomeAppsClick = { showHomeAppsPicker = true },
@@ -120,7 +114,6 @@ class SettingsActivity : AppCompatActivity() {
                         startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
                     },
                     onBackClick = { finish() },
-                    onChangeDistractingAppsClick = { showDistractingSheet = true },
                     onBlockInAppContentClick = { showContentBlockSheet = true },
                     onAccountabilityPartnerClick = {
                         val intent = Intent(this, MainActivity::class.java).apply {
@@ -172,12 +165,6 @@ class SettingsActivity : AppCompatActivity() {
                             }
                         } else null
                     )
-                }
-                if (showDistractingSheet) {
-                    DistractingAppsBottomSheet(onDismiss = {
-                        showDistractingSheet = false
-                        distractingAppCount = DistractingAppsRepository.getUserSelected(this).size
-                    })
                 }
                 HomeAppsPickerOverlay(
                     visible = showHomeAppsPicker,

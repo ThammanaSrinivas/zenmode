@@ -29,13 +29,11 @@ object TestData {
     fun createAppInfo(
         label: String = "Test App",
         packageName: String = "com.test.app",
-        isPinned: Boolean = false,
         notificationCount: Int = 0
     ) = AppInfo(
         label = label,
         packageName = packageName,
         icon = ColorDrawable(Color.BLUE),
-        isPinned = isPinned,
         notificationCount = notificationCount
     )
 

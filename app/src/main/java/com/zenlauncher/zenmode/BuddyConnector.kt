@@ -32,17 +32,18 @@ class BuddyConnector(
         }
     }
 
-    /** "Share a link": the Play Store link plus this user's code, via the system share sheet. */
+    /** "Share a link": this user's invite link, via the system share sheet. */
     fun shareBuddyInvite(code: String) {
         ServiceLocator.analyticsTracker.trackBuddyShareStarted("link")
+        // One tap for anyone who already has ZenMode installed (App Links opens straight
+        // into the Connect screen via MainActivity.handleDeepLink); the same link also works
+        // with no app installed - the zenmodeos.com/b/ page there points to the Play Store instead.
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on ZenMode")
             putExtra(
                 Intent.EXTRA_TEXT,
-                "Be my Zen Bro on ZenMode! Get the app: " +
-                    "https://play.google.com/store/apps/details?id=${activity.packageName}\n" +
-                    "Then paste my Zen code in My Zen Circle: $code"
+                "Be my Zen Bro on ZenMode! ${AppConstants.BUDDY_INVITE_BASE_URL}$code"
             )
         }
         activity.startActivity(Intent.createChooser(intent, "Share invite"))

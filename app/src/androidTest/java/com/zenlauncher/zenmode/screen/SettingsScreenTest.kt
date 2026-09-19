@@ -39,7 +39,6 @@ class SettingsScreenTest {
         isProAvailable: Boolean = false,
         entitlement: Entitlement = Entitlement.Free,
         onBackClick: () -> Unit = {},
-        onChangeDistractingAppsClick: () -> Unit = {},
         onAccountabilityPartnerClick: () -> Unit = {},
         onContributeClick: () -> Unit = {},
         onRateClick: () -> Unit = {},
@@ -56,7 +55,6 @@ class SettingsScreenTest {
                     entitlement = entitlement,
                     offers = offers,
                     onBackClick = onBackClick,
-                    onChangeDistractingAppsClick = onChangeDistractingAppsClick,
                     onAccountabilityPartnerClick = onAccountabilityPartnerClick,
                     onContributeClick = onContributeClick,
                     onRateClick = onRateClick,
@@ -84,7 +82,6 @@ class SettingsScreenTest {
         setContent()
         listOf(
             "Resistance screen",
-            "Distracting apps",
             "Block in-app content",
             "Apps on home screen",
             "Notification badges",
@@ -101,14 +98,6 @@ class SettingsScreenTest {
         var clicked = false
         setContent(onBackClick = { clicked = true })
         composeTestRule.onNodeWithContentDescription("Back").performClick()
-        assertTrue(clicked)
-    }
-
-    @Test
-    fun distractingApps_callsCallback() {
-        var clicked = false
-        setContent(onChangeDistractingAppsClick = { clicked = true })
-        composeTestRule.onNodeWithText("Distracting apps").performScrollTo().performClick()
         assertTrue(clicked)
     }
 

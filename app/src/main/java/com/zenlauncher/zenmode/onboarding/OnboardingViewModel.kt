@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
@@ -11,7 +12,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.zenlauncher.zenmode.AppGridPreferences
-import com.zenlauncher.zenmode.DistractingAppsRepository
 import com.zenlauncher.zenmode.PromisePreferences
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
@@ -61,6 +61,15 @@ class OnboardingViewModel(
     companion object {
         /** Intent extra: open just the sign-in step (home's "Sign in"), then return home. */
         const val EXTRA_SIGN_IN_ONLY = "sign_in_only"
+
+        private val DISTRACTING_PACKAGES = setOf(
+            "com.instagram.android",
+            "com.facebook.katana",
+            "com.twitter.android",
+            "com.zhiliaoapp.musically", // TikTok
+            "com.google.android.youtube",
+            "com.netflix.mediaclient"
+        )
     }
 
     private val context: Context get() = getApplication()
@@ -232,7 +241,7 @@ class OnboardingViewModel(
             .toList()
 
         val distracting = apps.map { it.packageName }
-            .filter { DistractingAppsRepository.isDistracting(context, pm, it) }
+            .filter { isDistracting(pm, it) }
             .toSet()
         val suggested = HomeAppSuggestions.suggest(
             installed = apps.map { HomeAppSuggestions.Candidate(it.packageName, it.label) },
@@ -240,6 +249,15 @@ class OnboardingViewModel(
             usageMinutes = weeklyUsageMinutes()
         )
         return apps to suggested
+    }
+
+    /** Big feed apps plus anything Android files under social, video or games. Kept out of the home suggestions. */
+    private fun isDistracting(pm: PackageManager, pkg: String): Boolean {
+        if (pkg in DISTRACTING_PACKAGES) return true
+        val category = runCatching { pm.getApplicationInfo(pkg, 0).category }.getOrNull()
+        return category == ApplicationInfo.CATEGORY_SOCIAL ||
+            category == ApplicationInfo.CATEGORY_VIDEO ||
+            category == ApplicationInfo.CATEGORY_GAME
     }
 
     /** Last 7 days of foreground minutes per app, or empty without usage access. */

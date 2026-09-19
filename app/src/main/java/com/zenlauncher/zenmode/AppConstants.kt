@@ -19,6 +19,10 @@ object AppConstants {
     // Random Connect
     const val RANDOM_CONNECT_COOLDOWN_MS = 30 * 1000L
 
+    // Zen Circle cap and reaction rate-limit constants live in core-api (Circle.kt /
+    // UsageRepository.kt), not here — core-private's FirestoreDataSourceImpl needs the cap
+    // for its join check, and core-private cannot depend on the app module.
+
     // v3 home screen placeholders. Stand-ins until the scoring and rewards
     // backend exists — swap these for real values, not the UI around them.
     const val PLACEHOLDER_ZEN_SCORE = 93
@@ -91,6 +95,9 @@ object AppConstants {
     const val SUPPORT_EMAIL = "zenmode.help@gmail.com"
     const val TELEGRAM_URL = "https://t.me/zenmodeos" // TODO: confirm the community handle before release
     const val PLAY_RATING = "4.6"                     // live Play listing, 2026-07-18 snapshot
+    // Buddy invite links. Path must match the pathPrefix in AndroidManifest.xml's
+    // App Links intent-filter and the /b/ route on the zenmodeos.com Firebase Hosting site.
+    const val BUDDY_INVITE_BASE_URL = "https://zenmodeos.com/b/"
     const val YT_BUDDY_INVITE_URL = "https://youtu.be/48M1x2ryhpI"   // TODO: replace with actual YT link
     const val YT_BUDDY_CONFUSED_URL = "https://youtu.be/48M1x2ryhpI" // TODO: replace later
     const val PRIVACY_POLICY_URL = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"

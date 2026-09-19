@@ -102,14 +102,12 @@ fun SettingsScreen(
     isProAvailable: Boolean = false,
     entitlement: Entitlement = Entitlement.Free,
     offers: List<PlanOffer> = emptyList(),
-    distractingAppCount: Int = 0,
     isContentBlockingOn: Boolean = false,
     homeAppsChosenCount: Int = 0,
     isNotificationBadgesEnabled: Boolean = false,
     loadMonthlyHours: suspend () -> List<Float> = { emptyList() },
     onNotificationBadgesClick: () -> Unit = {},
     onBackClick: () -> Unit,
-    onChangeDistractingAppsClick: () -> Unit,
     onBlockInAppContentClick: () -> Unit = {},
     onChooseHomeAppsClick: () -> Unit = {},
     onAccountabilityPartnerClick: () -> Unit,
@@ -197,12 +195,6 @@ fun SettingsScreen(
                             isResistanceEnabled = enabled
                             ResistancePreferences.setEnabled(context, enabled)
                         }
-                    )
-                    ZenRowDivider()
-                    ZenSettingsRow(
-                        title = "Distracting apps",
-                        value = if (distractingAppCount == 0) "Defaults" else "$distractingAppCount chosen",
-                        onClick = onChangeDistractingAppsClick
                     )
                     ZenRowDivider()
                     ZenSettingsRow(

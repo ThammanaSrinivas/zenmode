@@ -7,7 +7,7 @@ import android.content.Context
  * developer view-id dump toggle used to tune detection rules on a real device.
  *
  * Keys are `block__<package>__<surfaceId>` so adding an app/surface needs no
- * schema change. Mirrors [DistractingAppsRepository]'s SharedPreferences style.
+ * schema change.
  */
 object ContentBlockPrefs {
     private const val PREFS = "zen_content_block"

@@ -62,7 +62,8 @@ fun AccountabilityScreen(
     onChangeBuddyConfirmed: () -> Unit,
     myLikes: Long = 0L,
     buddyLikes: Long = 0L,
-    onLikeClick: () -> Unit = {}
+    onLikeClick: () -> Unit = {},
+    onSwitchToZenCircle: () -> Unit = {}
 ) {
     val colors = ZenTheme.colors
     var showChangeBuddyDialog by remember { mutableStateOf(false) }
@@ -225,6 +226,20 @@ fun AccountabilityScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showChangeBuddyDialog = true }
+                    .padding(vertical = 8.rdp)
+            )
+
+            // Standing escape hatch into the new flow - always available, one-way once tapped.
+            Text(
+                text = "Switch to Zen Circle",
+                fontFamily = Geist,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.rsp,
+                color = colors.textSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSwitchToZenCircle() }
                     .padding(vertical = 8.rdp)
             )
         }

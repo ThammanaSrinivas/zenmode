@@ -5,9 +5,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 /**
  * Central service registry for the Open Core architecture.
  *
- * Populated at app startup by the private module's [AppInitializer].
- * Consumers access services through this singleton rather than
- * instantiating backend-specific classes directly.
+ * [WHAT] The only surface app code uses to reach auth, analytics, Firestore, or remote config.
+ * [WHY] Keeps app/ ignorant of whether core-mock or core-private backs it, so neither Firebase
+ * nor PostHog SDK types ever need to be imported outside those two modules.
+ * [HOW] Populated once at startup by whichever [AppInitializer] the ServiceLoader SPI discovers;
+ * consumers must check [isInitialized] before reading the lateinit properties.
+ * [WHERE] Sits between app/ (ViewModels, Activities, Services) and the AppInitializer
+ * implementations in core-mock/core-private.
  */
 object ServiceLocator {
     lateinit var analyticsManager: com.zenlauncher.zenmode.coreapi.analytics.AnalyticsManager
@@ -25,6 +29,9 @@ object ServiceLocator {
 
     /** Emitted when FCM delivers a buddy-reaction push while app is running. */
     val buddyReactedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
+
+    /** Emitted when FCM delivers a circle-reaction push while app is running. */
+    val circleReactedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
 
     /**
      * Returns true if the ServiceLocator has been fully initialized.

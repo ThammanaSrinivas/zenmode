@@ -731,7 +731,7 @@ private fun ViewAllPillButton(onClick: () -> Unit, modifier: Modifier = Modifier
 @Composable
 private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onViewTermsClick: () -> Unit) {
     val colors = ZenTheme.colors
-    val unlockOutOf = 7
+    val unlockOutOf = AppConstants.PROMISE_DAYS_TO_UNLOCK
     val unlockAt = unlockOutOf - daysUntilUnlock
     val bodyColor = if (unlocked) colorResource(R.color.ink_soft) else colors.textPrimary
 

@@ -9,8 +9,8 @@ import android.os.Process
  * Single source of truth for the "Usage Access" (PACKAGE_USAGE_STATS) grant check.
  *
  * Lives in core-api so [UsageRepository] can gate reads on it. The app module previously
- * duplicated this AppOps check in three places (MainActivity, UsageAccessPermissionScreen,
- * DoomScrollingMonitorService) — they now all delegate here.
+ * duplicated this AppOps check in multiple places (MainActivity, UsageAccessPermissionScreen)
+ * — they now all delegate here.
  */
 object UsageAccess {
     fun isGranted(context: Context): Boolean {

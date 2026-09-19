@@ -78,7 +78,7 @@ import kotlinx.coroutines.launch
 // "Soon" tag and spin their icon instead of doing nothing.
 
 /** Most people a circle can hold, you included ("up to 7 people you trust"). */
-internal const val ZenCircleCapacity = 7
+internal const val ZenCircleCapacity = com.zenlauncher.zenmode.coreapi.ZEN_CIRCLE_MAX_MEMBERS
 
 /** What the settings sheet needs from its page. */
 data class ZenCircleSettings(
