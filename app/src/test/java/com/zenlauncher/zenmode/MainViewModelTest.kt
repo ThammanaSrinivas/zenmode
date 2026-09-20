@@ -52,7 +52,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
 
         viewModel.onScreenUnlocked()
 
@@ -64,7 +64,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
 
         viewModel.onScreenUnlocked()
         viewModel.onScreenLocked()
@@ -80,7 +80,7 @@ class MainViewModelTest {
         val expectedUsage = DailyUsage(5000L)
         whenever(repository.getTodayUsage()).thenReturn(expectedUsage)
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
         viewModel.refreshStats()
 
         assertEquals(expectedUsage, viewModel.stats.value)
@@ -92,7 +92,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
         viewModel.onResumeCheck()
 
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -103,7 +103,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
         viewModel.onDelayedUnlockNavigated()
 
         assertEquals(false, viewModel.navigateToDelayedUnlock.value)
@@ -115,7 +115,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
 
         viewModel.onScreenUnlocked()
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -134,7 +134,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
 
         viewModel.onResumeCheck()
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -152,7 +152,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
 
         // First unlock cycle
         viewModel.onScreenUnlocked()
@@ -179,7 +179,7 @@ class MainViewModelTest {
         whenever(repository.hasCachedBuddy()).thenReturn(true)
         whenever(repository.getBuddyScreenTime()).thenReturn(45L)
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
         viewModel.refreshBuddyStatsFromCache()
 
         assertEquals(true, viewModel.hasBuddies.value)
@@ -192,7 +192,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.hasCachedBuddy()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
         viewModel.refreshBuddyStatsFromCache()
 
         assertEquals(false, viewModel.hasBuddies.value)
@@ -204,7 +204,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository) { false }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { false }
 
         viewModel.onScreenUnlocked()
 
@@ -217,7 +217,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository) { false }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { false }
 
         viewModel.onResumeCheck()
 
@@ -229,7 +229,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository) { false }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { false }
 
         viewModel.onScreenUnlocked()
         viewModel.onScreenLocked()
@@ -243,7 +243,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
         var resistanceEnabled = false
-        val viewModel = MainViewModel(repository) { resistanceEnabled }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { resistanceEnabled }
 
         viewModel.onScreenUnlocked()
         assertEquals(null, viewModel.navigateToDelayedUnlock.value)
@@ -264,7 +264,7 @@ class MainViewModelTest {
     fun `MainViewModelFactory creates ViewModel`() {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
-        val factory = MainViewModelFactory(repository) { true }
+        val factory = MainViewModelFactory(repository, mock<ZenScoreStore>()) { true }
         val viewModel = factory.create(MainViewModel::class.java)
 
         assert(viewModel is MainViewModel)

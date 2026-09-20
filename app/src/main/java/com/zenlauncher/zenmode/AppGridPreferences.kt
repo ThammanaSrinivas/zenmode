@@ -8,8 +8,6 @@ object AppGridPreferences {
 
     const val DEFAULT_APP_COUNT = 8
 
-    val APP_COUNT_OPTIONS = listOf(4, 8, 12, 16)
-
     fun getAppCount(context: Context): Int =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getInt(KEY_APP_COUNT, DEFAULT_APP_COUNT)

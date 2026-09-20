@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode
 
+import com.zenlauncher.zenmode.recap.WeeklyRecapWorker
 import android.app.Application
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.AppInitializer
@@ -37,6 +38,9 @@ class ZenModeApp : Application() {
                 )
                 repository.setFirstRunComplete()
             }
+
+            // Weekly recap: record finished days before Android forgets them, announce Mondays.
+            WeeklyRecapWorker.schedule(this)
 
             // Re-identify existing signed-in users (one-time backfill)
             if (ServiceLocator.authProvider.isSignedIn() && !repository.isPostHogIdentified()) {

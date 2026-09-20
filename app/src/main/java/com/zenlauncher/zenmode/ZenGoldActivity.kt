@@ -9,9 +9,9 @@ import com.zenlauncher.zenmode.ui.screens.ZenGoldScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
 /**
- * The home screen's right-swipe page (Figma node 2026:1648). Mirrors
- * [SettingsActivity]'s role on the left swipe — a standalone Activity so
- * MainActivity's own composition/state stays untouched by it.
+ * The home screen's left-swipe page (Figma node 2026:1648) — the right-hand of the three
+ * home pages, opposite [ZenScoreActivity]. A standalone Activity so MainActivity's own
+ * composition/state stays untouched by it.
  */
 class ZenGoldActivity : AppCompatActivity() {
 
@@ -19,6 +19,7 @@ class ZenGoldActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        HomePageSide.RIGHT.applyOnCreate(this)
 
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@ZenGoldActivity)) {
@@ -43,6 +44,11 @@ class ZenGoldActivity : AppCompatActivity() {
                 )
             }
         }
+    }
+
+    override fun finish() {
+        super.finish()
+        HomePageSide.RIGHT.applyOnFinish(this)
     }
 
     // Re-read on every resume so an edit made in MyPromiseActivity shows on return.

@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.ui.components.BrandedText
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.tween
@@ -47,13 +48,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
@@ -71,6 +67,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.MoodBackdrop
+import com.zenlauncher.zenmode.ui.components.taperedBorder
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -90,8 +89,16 @@ sealed class BuddyAddResult {
 // Three ways to connect: share a link, trade codes, or random connect.
 // Light-only like the other v3 sub-screens, so colors come straight from colors.xml.
 
-private val CardRadius: Dp @Composable get() = 24.rdp
-private val StepTextStart: Dp @Composable get() = 42.rdp
+// One grid for all three option cards: the step number sits in a 16dp gutter, and every
+// title, line of body copy, input and button starts on the same StepTextStart column and
+// stops StepTextEnd short of the card edge.
+private val CardRadius: Dp @Composable get() = 20.rdp
+private val StepNumberStart: Dp @Composable get() = 16.rdp
+private val StepTextStart: Dp @Composable get() = 46.rdp
+private val StepTextEnd: Dp @Composable get() = 16.rdp
+private val StepSectionGap: Dp @Composable get() = 14.rdp
+private val OptionPillHeight: Dp @Composable get() = 40.rdp
+private val OptionFontSize: TextUnit @Composable get() = 15.rsp
 internal val PillHeight: Dp @Composable get() = 47.rdp
 
 /**
@@ -110,60 +117,79 @@ fun ZenBroConnectScreen(
 ) {
     BackHandler(onBack = onBackClick)
 
-    val washEdge = colorResource(R.color.wash_neutral_edge)
-    val washCore = colorResource(R.color.wash_neutral_core)
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(washEdge, washCore, washEdge)))
             // Swallow touches so the home screen underneath never receives them.
             .pointerInput(Unit) { detectTapGestures() }
-            .systemBarsPadding()
-            .imePadding()
     ) {
+        MoodBackdrop()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .systemBarsPadding()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 32.rdp)
         ) {
             Spacer(Modifier.height(33.rdp))
             ZenCircleHeader(onBackClick = onBackClick)
 
-            Spacer(Modifier.height(39.rdp))
-            Column(modifier = Modifier.padding(horizontal = 32.rdp)) {
+            Spacer(Modifier.height(28.rdp))
+            Column(modifier = Modifier.padding(horizontal = 30.rdp)) {
                 Text(
                     text = "Connect with your Zen Bro",
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 28.rsp,
-                    lineHeight = 42.rsp,
-                    letterSpacing = (-0.56).sp,
-                    color = Color.Black,
+                    fontSize = 24.rsp,
+                    lineHeight = 30.rsp,
+                    letterSpacing = (-0.48).sp,
+                    color = ZenTheme.colors.textPrimary,
                     modifier = Modifier.semantics { heading() }
                 )
                 Text(
                     text = "Choose how you want to connect",
                     fontFamily = Geist,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 18.rsp,
-                    lineHeight = 27.rsp,
-                    letterSpacing = (-0.36).sp,
-                    color = colorResource(R.color.zen_circle_subtitle)
+                    fontSize = 15.rsp,
+                    lineHeight = 21.rsp,
+                    letterSpacing = (-0.3).sp,
+                    color = colorResource(R.color.zen_circle_subtitle),
+                    modifier = Modifier.padding(top = 4.rdp)
                 )
             }
 
-            Spacer(Modifier.height(23.rdp))
-            Column(
-                modifier = Modifier.padding(horizontal = 29.5.rdp),
-                verticalArrangement = Arrangement.spacedBy(20.rdp)
-            ) {
-                ShareLinkCard(enabled = userCode != null, onShareLink = onShareLink)
-                UseCodeCard(userCode = userCode, onCopyCode = onCopyCode, onAddBuddy = onAddBuddy)
-                RandomConnectCard(onRandomConnect = onRandomConnect)
-            }
+            Spacer(Modifier.height(20.rdp))
+            ZenCircleConnectOptions(
+                userCode = userCode,
+                onShareLink = onShareLink,
+                onCopyCode = onCopyCode,
+                onAddBuddy = onAddBuddy,
+                onRandomConnect = onRandomConnect,
+                modifier = Modifier.padding(horizontal = 30.rdp)
+            )
         }
+    }
+}
+
+/** The three ways into a Zen Circle — share a link, trade codes, random connect. Also used by onboarding. */
+@Composable
+internal fun ZenCircleConnectOptions(
+    userCode: String?,
+    onShareLink: () -> Unit,
+    onCopyCode: () -> Unit,
+    onAddBuddy: suspend (String) -> BuddyAddResult,
+    onRandomConnect: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.rdp)
+    ) {
+        ShareLinkCard(enabled = userCode != null, onShareLink = onShareLink)
+        UseCodeCard(userCode = userCode, onCopyCode = onCopyCode, onAddBuddy = onAddBuddy)
+        RandomConnectCard(onRandomConnect = onRandomConnect)
     }
 }
 
@@ -227,7 +253,7 @@ internal fun ZenCircleHeader(onBackClick: () -> Unit, onMenuClick: (() -> Unit)?
                     fontWeight = FontWeight.Medium,
                     fontSize = 30.2.rsp,
                     letterSpacing = (-2.4).sp,
-                    color = colorResource(R.color.zen_900),
+                    color = ZenTheme.colors.textBrandStrong,
                     maxLines = 1
                 )
                 // "Beta" tag hangs off the title's top-right corner (node 2026:2453).
@@ -296,32 +322,34 @@ private fun ShareLinkCard(enabled: Boolean, onShareLink: () -> Unit) {
     StepCard(number = "01", title = "Share a link", topAccent = brandGreen, trailing = {
         Box(
             modifier = Modifier
-                .width(70.rdp)
-                .height(20.rdp)
+                .height(18.rdp)
                 .clip(RoundedCornerShape(4.rdp))
-                .background(brandGreen.copy(alpha = 0.9f)),
+                .background(brandGreen.copy(alpha = 0.9f))
+                .padding(horizontal = 8.rdp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Easiest",
                 fontFamily = DepartureMono,
-                fontSize = 13.rsp,
-                lineHeight = 13.rsp,
-                letterSpacing = (-1.17).sp,
+                fontSize = 11.rsp,
+                lineHeight = 11.rsp,
+                letterSpacing = (-0.6).sp,
                 color = colorResource(R.color.zen_circle_chip_text),
                 maxLines = 1
             )
         }
     }) {
         StepBody("Anyone can join even without having ZenMode OS installed.")
-        Spacer(Modifier.height(18.rdp))
+        Spacer(Modifier.height(StepSectionGap))
         ZenCirclePillButton(
             text = "Share link",
             onClick = onShareLink,
             enabled = enabled,
             container = colorResource(R.color.zen_700),
             content = Color.White,
-            modifier = Modifier.padding(horizontal = 12.rdp)
+            height = OptionPillHeight,
+            fontSize = OptionFontSize,
+            modifier = Modifier.stepContentPadding()
         )
     }
 }
@@ -358,19 +386,19 @@ private fun UseCodeCard(
 
     StepCard(number = "02", title = "Use a code") {
         StepBody("Paste theirs or share yours.")
-        Spacer(Modifier.height(11.rdp))
+        Spacer(Modifier.height(StepSectionGap))
 
-        Column(modifier = Modifier.padding(start = StepTextStart, end = 15.rdp)) {
+        Column(modifier = Modifier.stepContentPadding()) {
             Text(
                 text = "PASTE ZEN-CODE",
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
-                fontSize = 12.rsp,
-                lineHeight = 15.6.rsp,
-                letterSpacing = (-0.13).sp,
+                fontSize = 11.rsp,
+                lineHeight = 14.rsp,
+                letterSpacing = 0.2.sp,
                 color = colorResource(R.color.zen_circle_body)
             )
-            Spacer(Modifier.height(5.rdp))
+            Spacer(Modifier.height(6.rdp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -393,7 +421,9 @@ private fun UseCodeCard(
                     dimWhenDisabled = false,
                     container = colorResource(R.color.ink_base),
                     content = Color.White,
-                    modifier = Modifier.weight(129f)
+                    height = OptionPillHeight,
+                    fontSize = OptionFontSize,
+                    modifier = Modifier.weight(110f)
                 )
             }
 
@@ -403,19 +433,20 @@ private fun UseCodeCard(
                     text = message,
                     fontFamily = Geist,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 13.rsp,
-                    lineHeight = 17.rsp,
+                    fontSize = 12.rsp,
+                    lineHeight = 16.rsp,
                     color = colorResource(if (success) R.color.gold_delta_text else R.color.ember_700)
                 )
             }
 
-            Spacer(Modifier.height(20.rdp))
+            Spacer(Modifier.height(StepSectionGap))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
                     .background(colorResource(R.color.zen_circle_divider))
             )
+            Spacer(Modifier.height(4.rdp))
 
             MyCodeRow(userCode = userCode, onCopyCode = onCopyCode)
         }
@@ -428,45 +459,21 @@ private fun RandomConnectCard(onRandomConnect: () -> Unit) {
 
     StepCard(number = "03", title = "Random connect") {
         StepBody("Meet someone building healthy phone habits.")
-        Spacer(Modifier.height(12.rdp))
+        Spacer(Modifier.height(StepSectionGap))
         ZenCirclePillButton(
             text = "Find a buddy",
             onClick = onRandomConnect,
             container = Color.Transparent,
             content = brandGreen,
             border = BorderStroke(1.dp, brandGreen),
-            modifier = Modifier.padding(horizontal = 12.rdp)
+            height = OptionPillHeight,
+            fontSize = OptionFontSize,
+            modifier = Modifier.stepContentPadding()
         )
     }
 }
 
 // ── Building blocks ───────────────────────────────────────────────
-
-/**
- * CSS-style top-only border on a rounded box: the outer rounded rect minus the box inset by
- * [width] at the top, so the rule tapers down into the corners like Figma's `border-t`.
- */
-internal fun Modifier.topAccentBorder(color: Color, width: Dp, cornerRadius: Dp): Modifier = drawWithCache {
-    val r = cornerRadius.toPx()
-    val b = width.toPx()
-    val outer = Path().apply {
-        addRoundRect(RoundRect(0f, 0f, size.width, size.height, CornerRadius(r)))
-    }
-    val innerTop = CornerRadius(r, (r - b).coerceAtLeast(0f))
-    val inner = Path().apply {
-        addRoundRect(
-            RoundRect(
-                left = 0f, top = b, right = size.width, bottom = size.height,
-                topLeftCornerRadius = innerTop,
-                topRightCornerRadius = innerTop,
-                bottomRightCornerRadius = CornerRadius(r),
-                bottomLeftCornerRadius = CornerRadius(r)
-            )
-        )
-    }
-    val border = Path.combine(PathOperation.Difference, outer, inner)
-    onDrawBehind { drawPath(border, color) }
-}
 
 /**
  * White rounded card with a mono step number in the left gutter and the title at
@@ -487,57 +494,66 @@ private fun StepCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(radius))
-            .background(Color.White)
-            .then(if (topAccent != null) Modifier.topAccentBorder(topAccent, accentWidth, radius) else Modifier)
-            .padding(top = 21.rdp, bottom = 18.rdp)
+            .background(ZenTheme.colors.surfaceElevated)
+            .then(if (topAccent != null) Modifier.taperedBorder(topAccent, radius, top = accentWidth) else Modifier)
+            .padding(vertical = 16.rdp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(end = StepTextEnd),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = number,
                 fontFamily = DepartureMono,
-                fontSize = 16.rsp,
+                fontSize = 13.rsp,
                 letterSpacing = (-0.18).sp,
                 color = colorResource(R.color.zen_circle_step_number),
                 modifier = Modifier
-                    .padding(start = 10.rdp)
-                    .width(StepTextStart - 10.rdp)
+                    .padding(start = StepNumberStart)
+                    .width(StepTextStart - StepNumberStart)
             )
             Text(
                 text = title,
                 fontFamily = Geist,
-                fontWeight = FontWeight.Medium,
-                fontSize = 20.rsp,
-                lineHeight = 30.rsp,
-                letterSpacing = (-0.22).sp,
-                color = Color.Black,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 17.rsp,
+                lineHeight = 22.rsp,
+                letterSpacing = (-0.34).sp,
+                color = ZenTheme.colors.textPrimary,
                 maxLines = 1,
                 modifier = Modifier
                     .weight(1f)
                     .semantics { heading() }
             )
             if (trailing != null) {
+                Spacer(Modifier.width(8.rdp))
                 trailing()
-                Spacer(Modifier.width(40.rdp))
             }
         }
-        Spacer(Modifier.height(3.rdp))
+        Spacer(Modifier.height(4.rdp))
         content()
     }
 }
 
 @Composable
 private fun StepBody(text: String) {
-    Text(
+    BrandedText(
         text = text,
-        fontFamily = Geist,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.rsp,
-        lineHeight = 20.8.rsp,
-        letterSpacing = (-0.18).sp,
-        color = colorResource(R.color.zen_circle_body),
-        modifier = Modifier.padding(start = StepTextStart, end = 29.rdp)
+        style = TextStyle(
+            fontFamily = Geist,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.rsp,
+            lineHeight = 19.rsp,
+            letterSpacing = (-0.14).sp,
+            color = colorResource(R.color.zen_circle_body)
+        ),
+        modifier = Modifier.stepContentPadding()
     )
 }
+
+/** Puts card content on the shared text column (see [StepTextStart]). */
+@Composable
+private fun Modifier.stepContentPadding(): Modifier = padding(start = StepTextStart, end = StepTextEnd)
 
 @Composable
 internal fun ZenCirclePillButton(
@@ -583,7 +599,7 @@ private fun CodeInput(
     onDone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val codeStyle = monoCodeStyle(15.rsp, colorResource(R.color.zen_circle_code_text))
+    val codeStyle = monoCodeStyle(13.rsp, colorResource(R.color.zen_circle_code_text))
     val hintColor = colorResource(R.color.zen_circle_input_hint)
 
     BasicTextField(
@@ -599,13 +615,13 @@ private fun CodeInput(
         ),
         keyboardActions = KeyboardActions(onDone = { onDone() }),
         modifier = modifier
-            .height(PillHeight)
+            .height(OptionPillHeight)
             .clip(RoundedCornerShape(8.rdp))
             .background(colorResource(R.color.zen_circle_input_bg))
             .border(1.dp, colorResource(R.color.zen_circle_input_border), RoundedCornerShape(8.rdp)),
         decorationBox = { inner ->
             Box(
-                modifier = Modifier.padding(horizontal = 14.rdp),
+                modifier = Modifier.padding(horizontal = 12.rdp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (value.isEmpty()) {
@@ -635,7 +651,7 @@ private fun MyCodeRow(userCode: String?, onCopyCode: () -> Unit) {
         Text(
             // Codes are long; the row shows a prefix and "Copy my code" copies all of it.
             text = userCode?.let { if (it.length > 8) "${it.take(8)}…" else it } ?: "Sign in first",
-            style = monoCodeStyle(16.rsp, colorResource(R.color.zen_circle_code_text)),
+            style = monoCodeStyle(14.rsp, colorResource(R.color.zen_circle_code_text)),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false)
@@ -644,8 +660,7 @@ private fun MyCodeRow(userCode: String?, onCopyCode: () -> Unit) {
             painter = painterResource(R.drawable.ic_zen_circle_copy),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = (-4).rdp)
-                .size(31.rdp)
+                .size(26.rdp)
                 .alpha(if (canCopy) 1f else 0.4f)
         )
         Spacer(Modifier.weight(1f))
@@ -653,8 +668,8 @@ private fun MyCodeRow(userCode: String?, onCopyCode: () -> Unit) {
             text = "Copy my code",
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
-            fontSize = 16.rsp,
-            letterSpacing = (-0.32).sp,
+            fontSize = 14.rsp,
+            letterSpacing = (-0.28).sp,
             color = brandGreen.copy(alpha = if (canCopy) 1f else 0.4f),
             maxLines = 1
         )

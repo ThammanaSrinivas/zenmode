@@ -1,11 +1,8 @@
 package com.zenlauncher.zenmode.ui.screens
 
-import com.zenlauncher.zenmode.AppGridPreferences
-import com.zenlauncher.zenmode.ResistancePreferences
-import com.zenlauncher.zenmode.ThemePreferences
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,576 +12,404 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ui.theme.Spacing
-import com.zenlauncher.zenmode.ui.theme.Geist
-import com.zenlauncher.zenmode.ui.theme.DepartureMono
-import com.zenlauncher.zenmode.ui.theme.ZenTheme
-import com.zenlauncher.zenmode.ui.theme.rsp
-import com.zenlauncher.zenmode.ui.theme.rdp
+import com.zenlauncher.zenmode.AppGridPreferences
+import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
+import com.zenlauncher.zenmode.ResistancePreferences
+import com.zenlauncher.zenmode.ThemePreferences
+import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
+import com.zenlauncher.zenmode.coreapi.services.Entitlement
+import com.zenlauncher.zenmode.coreapi.services.PlanOffer
+import com.zenlauncher.zenmode.coreapi.services.ProFeature
+import com.zenlauncher.zenmode.ui.components.GlyphKind
+import com.zenlauncher.zenmode.ui.components.ProTagState
+import com.zenlauncher.zenmode.ui.components.RowTrailing
+import com.zenlauncher.zenmode.ui.components.SegmentOption
+import com.zenlauncher.zenmode.ui.components.ZenButton
+import com.zenlauncher.zenmode.ui.components.ZenButtonStyle
+import com.zenlauncher.zenmode.ui.components.ZenEyebrow
+import com.zenlauncher.zenmode.ui.components.ZenGlyph
+import com.zenlauncher.zenmode.ui.components.ZenProTag
+import com.zenlauncher.zenmode.ui.components.ZenRowDivider
+import com.zenlauncher.zenmode.ui.components.ZenSegmented
 import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
+import com.zenlauncher.zenmode.ui.components.ZenSettingsGroup
+import com.zenlauncher.zenmode.ui.components.ZenSettingsRow
+import com.zenlauncher.zenmode.ui.components.ZenSheet
+import com.zenlauncher.zenmode.ui.components.ZenSheetBody
+import com.zenlauncher.zenmode.ui.components.ZenSheetTitle
+import com.zenlauncher.zenmode.ui.components.zenCard
+import com.zenlauncher.zenmode.ui.theme.DepartureMono
+import com.zenlauncher.zenmode.ui.theme.Geist
+import com.zenlauncher.zenmode.ui.theme.Spacing
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.ZenTypography
+import com.zenlauncher.zenmode.ui.theme.rdp
+import com.zenlauncher.zenmode.ui.theme.rsp
 import java.time.LocalDate
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
 
-// ── Constants ─────────────────────────────────────────────────────
+// ZenMode OS v3 settings.
+//
+// Groups follow what someone is trying to do: Focus, Home screen, Accountability, Your data,
+// ZenMode. Account actions live behind the avatar. Every v2 flow is still here.
+//
+// Pro surfaces (plan card, PRO tags, gates) only render when [isProAvailable] — a backend
+// that can't sell Pro shows the plain free app with nothing locked.
 
-private const val GRAPH_OPACITY = 0.42f
-private const val MAX_GRAPH_HOURS = 6f
-private const val GRAPH_HOUR_LINES = 4 // 0h, 2h, 4h, 6h
+private enum class ScreenTimeRange { WEEK, MONTH }
 
-// ── Main Settings Screen ──────────────────────────────────────────
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     weeklyHours: List<Float> = List(7) { 0f },
     profilePhotoUrl: String? = null,
+    displayName: String? = null,
+    isProAvailable: Boolean = false,
+    entitlement: Entitlement = Entitlement.Free,
+    /** From [com.zenlauncher.zenmode.ProAccess], the same answer every other screen gets. */
+    isPro: Boolean = entitlement.isPro,
+    offers: List<PlanOffer> = emptyList(),
+    isContentBlockingOn: Boolean = false,
+    homeAppsChosenCount: Int = 0,
     isNotificationBadgesEnabled: Boolean = false,
+    loadMonthlyHours: suspend () -> List<Float> = { emptyList() },
     onNotificationBadgesClick: () -> Unit = {},
     onBackClick: () -> Unit,
     onBlockInAppContentClick: () -> Unit = {},
+    onChooseHomeAppsClick: () -> Unit = {},
     onAccountabilityPartnerClick: () -> Unit,
     onContributeClick: () -> Unit,
     onRateClick: () -> Unit,
     onShareClick: () -> Unit,
+    onOpenPro: (ProEntry) -> Unit = {},
+    onProGateShown: (ProFeature) -> Unit = {},
     onLogoutClick: () -> Unit = {},
-    onDeleteAccountClick: () -> Unit = {}
+    onDeleteAccountClick: () -> Unit = {},
+    weeklyReports: (@Composable () -> Unit)? = null,
+    modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
     val context = LocalContext.current
     var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
     var isResistanceEnabled by remember { mutableStateOf(ResistancePreferences.isEnabled(context)) }
-    var homeAppCount by remember { mutableStateOf(AppGridPreferences.getAppCount(context)) }
-    var showProfileSheet by remember { mutableStateOf(false) }
+    val homeAppCount = remember { AppGridPreferences.getAppCount(context) }
+    var showAccountSheet by remember { mutableStateOf(false) }
+    var gate by remember { mutableStateOf<ProFeature?>(null) }
+    var soon by remember { mutableStateOf<ProFeature?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    @Suppress("NAME_SHADOWING")
+    val isPro = isProAvailable && isPro
+    fun proTag() = when {
+        !isProAvailable -> ProTagState.None
+        isPro -> ProTagState.Unlocked
+        else -> ProTagState.Locked
+    }
+    /** Free → the gate sheet. Pro → an honest "arriving" note until the feature's surface ships. */
+    fun openProFeature(feature: ProFeature) {
+        if (isPro) {
+            soon = feature
+        } else {
+            gate = feature
+            onProGateShown(feature)
+        }
+    }
+
+    // Plain paper, not the mood backdrop: Settings is a place to read and change things.
+    Box(modifier = modifier.fillMaxSize().background(colors.bgPrimary)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.bgPrimary)
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
         ) {
-            // ── Header ────────────────────────────────────────────────
-            SettingsHeader(
-                onBackClick = onBackClick,
+            SettingsTopBar(
                 profilePhotoUrl = profilePhotoUrl,
-                onProfileClick = { showProfileSheet = true }
+                displayName = displayName,
+                onBackClick = onBackClick,
+                onAccountClick = { showAccountSheet = true }
             )
 
-            Spacer(modifier = Modifier.height(24.rdp))
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = Spacing.screenMargin)
+                    .padding(top = 4.rdp, bottom = 40.rdp),
+                verticalArrangement = Arrangement.spacedBy(24.rdp)
+            ) {
+                if (isProAvailable) {
+                    PlanCard(
+                        entitlement = entitlement,
+                        offers = offers,
+                        onClick = { onOpenPro(if (isPro) ProEntry.MANAGE else ProEntry.PLAN_CARD) }
+                    )
+                }
 
-            // ── My Weekly Stats ───────────────────────────────────────
-            WeeklyStatsSection(weeklyHours = weeklyHours)
+                ScreenTimeCard(
+                    weeklyHours = weeklyHours,
+                    showMonthOption = isProAvailable,
+                    isPro = isPro,
+                    loadMonthlyHours = loadMonthlyHours,
+                    onMonthLocked = { openProFeature(ProFeature.FULL_HISTORY) }
+                )
 
-            Spacer(modifier = Modifier.height(28.rdp))
+                // ── Weekly reports (PRO) ──
+                weeklyReports?.invoke()
 
-            // ── Personalise, Your Way! ────────────────────────────────
-            PersonaliseSection(
-                isDarkMode = isDarkMode,
-                onDarkModeChange = { enabled ->
-                    isDarkMode = enabled
-                    ThemePreferences.setDarkMode(context, enabled)
-                },
-                isResistanceEnabled = isResistanceEnabled,
-                onResistanceChange = { enabled ->
-                    isResistanceEnabled = enabled
-                    ResistancePreferences.setEnabled(context, enabled)
-                },
-                homeAppCount = homeAppCount,
-                onHomeAppCountChange = { count ->
-                    homeAppCount = count
-                    AppGridPreferences.setAppCount(context, count)
-                },
-                isNotificationBadgesEnabled = isNotificationBadgesEnabled,
-                onNotificationBadgesClick = onNotificationBadgesClick,
-                onBlockInAppContentClick = onBlockInAppContentClick,
-                onAccountabilityPartnerClick = onAccountabilityPartnerClick,
-                onContributeClick = onContributeClick
-            )
+                ZenSettingsGroup(label = "Focus") {
+                    ZenSettingToggleItem(
+                        text = "Resistance screen",
+                        subtitle = "A short pause before a distracting app opens.",
+                        checked = isResistanceEnabled,
+                        onCheckedChange = { enabled ->
+                            isResistanceEnabled = enabled
+                            ResistancePreferences.setEnabled(context, enabled)
+                        }
+                    )
+                    ZenRowDivider()
+                    ZenSettingsRow(
+                        title = "Distraction Blocker",
+                        subtitle = "Quiet reels, shorts and the apps that pull you in.",
+                        value = if (isContentBlockingOn) "On" else "Off",
+                        onClick = onBlockInAppContentClick
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(28.rdp))
+                ZenSettingsGroup(label = "Home screen") {
+                    ZenSettingsRow(
+                        title = "Choose home apps",
+                        subtitle = "Pick which apps sit on home, and in what order.",
+                        value = if (homeAppsChosenCount == 0) "A–Z"
+                        else "${homeAppsChosenCount.coerceAtMost(homeAppCount)} of $homeAppCount",
+                        onClick = onChooseHomeAppsClick
+                    )
+                    ZenRowDivider()
+                    ZenSettingToggleItem(
+                        text = "Notification badges",
+                        subtitle = if (isNotificationBadgesEnabled) "Dots show on app icons."
+                        else "Needs notification access in Android settings.",
+                        checked = isNotificationBadgesEnabled,
+                        // Access is granted or revoked in system settings; the switch reflects it on resume.
+                        onCheckedChange = { onNotificationBadgesClick() }
+                    )
+                    ZenRowDivider()
+                    ZenSettingToggleItem(
+                        text = "Dark mode (beta)",
+                        subtitle = "Ink theme. Still being finished.",
+                        checked = isDarkMode,
+                        onCheckedChange = { enabled ->
+                            isDarkMode = enabled
+                            ThemePreferences.setDarkMode(context, enabled)
+                        }
+                    )
+                    if (isProAvailable) {
+                        ZenRowDivider()
+                        ZenSettingsRow(
+                            title = "Home-screen themes",
+                            subtitle = "Keep the mood washes, or pick your own.",
+                            pro = proTag(),
+                            onClick = { openProFeature(ProFeature.HOME_THEMES) }
+                        )
+                    }
+                }
 
-            // ── You're the Hero! ─────────────────────────────────────
-            HeroSection()
+                ZenSettingsGroup(
+                    label = "Accountability",
+                    trailingLabel = if (isProAvailable) {
+                        "Partners · ${if (isPro) Entitlement.PRO_PARTNER_LIMIT else Entitlement.FREE_PARTNER_LIMIT} max"
+                    } else null
+                ) {
+                    ZenSettingsRow(
+                        title = "Accountability partner",
+                        subtitle = "They see your score and its direction. Nothing else.",
+                        onClick = onAccountabilityPartnerClick
+                    )
+                    if (isProAvailable) {
+                        ZenRowDivider()
+                        ZenSettingsRow(
+                            title = "Add another partner",
+                            value = if (isPro) "Up to ${Entitlement.PRO_PARTNER_LIMIT}" else null,
+                            pro = proTag(),
+                            onClick = { openProFeature(ProFeature.EXTRA_PARTNERS) }
+                        )
+                    }
+                }
 
-            Spacer(modifier = Modifier.height(24.rdp))
+                if (isProAvailable) {
+                    ZenSettingsGroup(label = "Your data") {
+                        ZenSettingsRow(
+                            title = "Export data",
+                            subtitle = "A CSV of your sessions and scores.",
+                            pro = proTag(),
+                            onClick = { openProFeature(ProFeature.DATA_EXPORT) }
+                        )
+                    }
+                }
 
-            // ── Rate Us Button ────────────────────────────────────────
-            RateUsButton(onClick = onRateClick)
+                PhoneSettingsGroup()
 
-            Spacer(modifier = Modifier.height(16.rdp))
+                ZenSettingsGroup(label = "ZenMode") {
+                    ZenSettingsRow(title = "Rate on Play Store", trailing = RowTrailing.External, onClick = onRateClick)
+                    ZenRowDivider()
+                    ZenSettingsRow(title = "Share ZenMode", trailing = RowTrailing.External, onClick = onShareClick)
+                    ZenRowDivider()
+                    ZenSettingsRow(
+                        title = "Contribute on GitHub",
+                        subtitle = "The whole app is open source.",
+                        trailing = RowTrailing.External,
+                        onClick = onContributeClick
+                    )
+                }
 
-            // ── Share ZenMode ─────────────────────────────────────────
-            ShareZenModeRow(onClick = onShareClick)
-
-            Spacer(modifier = Modifier.height(32.rdp))
+                SettingsFooter()
+            }
         }
 
-        // ── Profile Bottom Sheet ──────────────────────────────────
-        if (showProfileSheet) {
-            ProfileBottomSheet(
-                onDismiss = { showProfileSheet = false },
+        if (showAccountSheet) {
+            AccountSheet(
+                displayName = displayName,
+                isPro = isPro,
+                onDismiss = { showAccountSheet = false },
                 onLogoutClick = {
-                    showProfileSheet = false
+                    showAccountSheet = false
                     onLogoutClick()
                 },
                 onDeleteAccountClick = {
-                    showProfileSheet = false
+                    showAccountSheet = false
                     onDeleteAccountClick()
                 }
             )
         }
-    }
-}
 
-// ── Header ────────────────────────────────────────────────────────
-
-@Composable
-private fun SettingsHeader(
-    onBackClick: () -> Unit,
-    profilePhotoUrl: String? = null,
-    onProfileClick: () -> Unit = {}
-) {
-    val colors = ZenTheme.colors
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.screenMargin, vertical = 16.rdp)
-    ) {
-        // Back button — left
-        Image(
-            painter = painterResource(R.drawable.button_back),
-            contentDescription = "Back",
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .clip(RoundedCornerShape(20.dp))
-                .clickable { onBackClick() }
-                .height(36.rdp),
-            contentScale = ContentScale.Fit
-        )
-
-        // App icon — center
-        Image(
-            painter = painterResource(R.drawable.ic_zen_mark_gradient),
-            contentDescription = "ZenMode",
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(36.rdp)
-        )
-
-        // Profile picture — right
-        if (profilePhotoUrl != null) {
-            AsyncImage(
-                model = profilePhotoUrl,
-                contentDescription = "Profile picture",
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(36.rdp)
-                    .clip(CircleShape)
-                    .clickable { onProfileClick() },
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(36.rdp)
-                    .clip(CircleShape)
-                    .background(colors.textSecondary.copy(alpha = 0.3f))
-                    .clickable { onProfileClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.log_out),
-                    contentDescription = "Profile",
-                    modifier = Modifier.size(18.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
-        }
-    }
-}
-
-// ── Weekly Stats Section ──────────────────────────────────────────
-
-@Composable
-private fun WeeklyStatsSection(weeklyHours: List<Float>) {
-    val colors = ZenTheme.colors
-
-    Column(modifier = Modifier.padding(horizontal = Spacing.screenMargin)) {
-        // Section title row
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(R.drawable.onboarding_usage_access_permission),
-                contentDescription = null,
-                modifier = Modifier.size(28.rdp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "My Weekly stats",
-                fontFamily = Geist,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.rsp,
-                color = colors.textPrimary
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.rdp))
-
-        // Graph card
-        ScreenTimeGraphCard(weeklyHours = weeklyHours)
-    }
-}
-
-// ── Screen Time Graph Card ────────────────────────────────────────
-
-@Composable
-private fun ScreenTimeGraphCard(weeklyHours: List<Float>) {
-    val colors = ZenTheme.colors
-    val brandColor = colors.textBrand
-
-    // Calculate dynamic max based on data (at least 6h, rounded to multiple of 3 for nice labels)
-    val maxOfData = weeklyHours.maxOrNull() ?: 0f
-    val dynamicMax = maxOf(6f, (kotlin.math.ceil(maxOfData / 3f) * 3f))
-
-    // Compute last 7 day labels from today
-    val dayLabels = remember {
-        val today = LocalDate.now()
-        (6 downTo 0).map { daysAgo ->
-            today.minusDays(daysAgo.toLong())
-                .dayOfWeek
-                .getDisplayName(JavaTextStyle.SHORT, Locale.ENGLISH)
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(colors.bgSecondary)
-            .padding(16.rdp)
-    ) {
-        // Title
-        Text(
-            text = "My  Screen time",
-            fontFamily = Geist,
-            fontWeight = FontWeight.Medium,
-            fontSize = 14.rsp,
-            color = colors.textPrimary
-        )
-
-        Spacer(modifier = Modifier.height(16.rdp))
-
-        // Graph area
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.rdp)
-        ) {
-            // Y-axis labels
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(end = 8.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                for (h in listOf(dynamicMax.toInt(), (dynamicMax * 2 / 3).toInt(), (dynamicMax / 3).toInt(), 0)) {
-                    Text(
-                        text = "${h}h",
-                        fontFamily = DepartureMono,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 10.rsp,
-                        color = colors.textSecondary
-                    )
-                }
-            }
-
-            // Canvas for graph
-            Canvas(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = 28.rdp)
-            ) {
-                val graphWidth = size.width
-                val graphHeight = size.height
-                val dashEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
-
-                // Dashed horizontal lines at 1/3, 2/3, 3/3 of dynamicMax
-                for (i in 1..3) {
-                    val y = graphHeight - (graphHeight * (i / 3f))
-                    drawLine(
-                        color = brandColor.copy(alpha = 0.15f),
-                        start = Offset(0f, y),
-                        end = Offset(graphWidth, y),
-                        strokeWidth = 1f,
-                        pathEffect = dashEffect
-                    )
-                }
-
-                // Build line path from data
-                val points = weeklyHours.mapIndexed { index, hours ->
-                    val x = if (weeklyHours.size <= 1) graphWidth / 2
-                    else graphWidth * index / (weeklyHours.size - 1)
-                    val y = graphHeight - (graphHeight * (hours / dynamicMax))
-                    Offset(x, y)
-                }
-
-                // Filled area under the curve
-                if (points.size >= 2) {
-                    val fillPath = Path().apply {
-                        moveTo(points.first().x, graphHeight)
-                        lineTo(points.first().x, points.first().y)
-                        for (i in 1 until points.size) {
-                            val prev = points[i - 1]
-                            val curr = points[i]
-                            val cx1 = (prev.x + curr.x) / 2
-                            cubicTo(cx1, prev.y, cx1, curr.y, curr.x, curr.y)
-                        }
-                        lineTo(points.last().x, graphHeight)
-                        close()
-                    }
-                    drawPath(
-                        path = fillPath,
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                brandColor.copy(alpha = GRAPH_OPACITY),
-                                brandColor.copy(alpha = 0.05f)
-                            ),
-                            startY = 0f,
-                            endY = graphHeight
-                        ),
-                        style = Fill
-                    )
-
-                    // Line stroke
-                    val linePath = Path().apply {
-                        moveTo(points.first().x, points.first().y)
-                        for (i in 1 until points.size) {
-                            val prev = points[i - 1]
-                            val curr = points[i]
-                            val cx1 = (prev.x + curr.x) / 2
-                            cubicTo(cx1, prev.y, cx1, curr.y, curr.x, curr.y)
-                        }
-                    }
-                    drawPath(
-                        path = linePath,
-                        color = brandColor,
-                        style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // X-axis day labels
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 28.rdp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            dayLabels.forEach { label ->
-                Text(
-                    text = label,
-                    fontFamily = Geist,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 10.rsp,
-                    color = colors.textSecondary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(36.rdp)
-                )
-            }
-        }
-    }
-}
-
-// ── Personalise Section ───────────────────────────────────────────
-
-@Composable
-private fun PersonaliseSection(
-    isDarkMode: Boolean,
-    onDarkModeChange: (Boolean) -> Unit,
-    isResistanceEnabled: Boolean,
-    onResistanceChange: (Boolean) -> Unit,
-    homeAppCount: Int,
-    onHomeAppCountChange: (Int) -> Unit,
-    isNotificationBadgesEnabled: Boolean,
-    onNotificationBadgesClick: () -> Unit,
-    onBlockInAppContentClick: () -> Unit,
-    onAccountabilityPartnerClick: () -> Unit,
-    onContributeClick: () -> Unit
-) {
-    val colors = ZenTheme.colors
-
-    Column(modifier = Modifier.padding(horizontal = Spacing.screenMargin)) {
-        // Section title
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(R.drawable.star),
-                contentDescription = null,
-                modifier = Modifier.size(28.rdp)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = "Personalise, Your Way!",
-                fontFamily = Geist,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.rsp,
-                color = colors.textPrimary
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.rdp))
-
-        // Settings card
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(colors.bgSecondary)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            // Dark mode toggle
-            ZenSettingToggleItem(
-                text = "Dark mode (beta)",
-                checked = isDarkMode,
-                onCheckedChange = onDarkModeChange,
-                modifier = Modifier.padding(vertical = 6.dp)
-            )
-
-            // Resistance screen toggle
-            ZenSettingToggleItem(
-                text = "Resistance screen",
-                checked = isResistanceEnabled,
-                onCheckedChange = onResistanceChange,
-                modifier = Modifier.padding(vertical = 6.dp)
-            )
-
-            // How many apps the home screen grid shows per page
-            HomeAppCountItem(
-                selected = homeAppCount,
-                onSelect = onHomeAppCountChange
-            )
-
-            // Notification badges toggle
-            ZenSettingToggleItem(
-                text = "Notification badges",
-                checked = isNotificationBadgesEnabled,
-                onCheckedChange = { enabled ->
-                    if (enabled) {
-                        onNotificationBadgesClick()
-                    }
+        gate?.let { feature ->
+            ProGateSheet(
+                feature = feature,
+                offers = offers,
+                onSeePro = {
+                    gate = null
+                    onOpenPro(ProEntry.GATE)
                 },
-                modifier = Modifier.padding(vertical = 6.dp)
+                onDismiss = { gate = null }
             )
+        }
 
-            // Block in-app content (YouTube Shorts / home feed, etc.)
-            SettingsClickableItem(
-                text = "Block in-app content",
-                color = colors.textBrand,
-                onClick = onBlockInAppContentClick
-            )
-
-            // Accountability partner settings
-            SettingsClickableItem(
-                text = "Accountability partner settings",
-                color = colors.textBrand,
-                onClick = onAccountabilityPartnerClick
-            )
-
-            // Contribute zenmode (via GitHub)
-            SettingsClickableItem(
-                text = "Contribute zenmode (via GitHub)",
-                color = colors.textBrand,
-                onClick = onContributeClick
-            )
+        soon?.let { feature ->
+            ZenSheet(onDismiss = { soon = null }) {
+                ZenEyebrow("Included in your Pro")
+                ZenSheetTitle(feature.gateCopy().first)
+                ZenSheetBody("This arrives in the next update. It'll be in the changelog, not a notification.")
+                ZenButton(text = "Got it", onClick = { soon = null }, style = ZenButtonStyle.Outline)
+            }
         }
     }
 }
 
+// ── Top bar ────────────────────────────────────────────────────────
+
 @Composable
-private fun HomeAppCountItem(
-    selected: Int,
-    onSelect: (Int) -> Unit
+private fun SettingsTopBar(
+    profilePhotoUrl: String?,
+    displayName: String?,
+    onBackClick: () -> Unit,
+    onAccountClick: () -> Unit
 ) {
     val colors = ZenTheme.colors
-
+    // The back button and avatar draw at 38dp inside 48dp touch targets; pulling the row in by
+    // the difference puts both visible circles exactly on the cards' margin below.
+    val touchInset = (Spacing.touchTarget - 38.rdp) / 2
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(horizontal = Spacing.screenMargin - touchInset, vertical = 8.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Apps on home screen",
-            fontFamily = Geist,
-            fontWeight = FontWeight.Normal,
-            fontSize = 16.rsp,
-            color = colors.textPrimary,
-            modifier = Modifier.weight(1f)
-        )
-
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            AppGridPreferences.APP_COUNT_OPTIONS.forEach { count ->
-                val isSelected = count == selected
+        Box(
+            modifier = Modifier
+                .size(Spacing.touchTarget)
+                .clip(CircleShape)
+                .clickable(role = Role.Button, onClick = onBackClick)
+                .semantics { contentDescription = "Back" },
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.rdp)
+                    .clip(CircleShape)
+                    .background(colors.bgSecondary)
+                    .border(1.dp, colors.borderOutline, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                ZenGlyph(GlyphKind.Back, colors.textPrimary, Modifier.size(18.rdp))
+            }
+        }
+        Spacer(Modifier.width(8.rdp))
+        Box(modifier = Modifier.weight(1f).semantics { heading() }) {
+            ZenModeOsSettingsTitle(fontSize = 22.rsp, color = colors.textPrimary)
+        }
+        Box(
+            modifier = Modifier
+                .size(Spacing.touchTarget)
+                .clip(CircleShape)
+                .clickable(role = Role.Button, onClick = onAccountClick)
+                .semantics { contentDescription = "Account" },
+            contentAlignment = Alignment.Center
+        ) {
+            if (profilePhotoUrl != null) {
+                AsyncImage(
+                    model = profilePhotoUrl,
+                    contentDescription = null,
+                    modifier = Modifier.size(38.rdp).clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
                 Box(
                     modifier = Modifier
-                        .size(36.rdp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) colors.textBrand else colors.bgPrimary)
-                        .clickable { onSelect(count) },
+                        .size(38.rdp)
+                        .clip(CircleShape)
+                        .background(colors.surfaceTint)
+                        .border(1.dp, colors.surfaceTintLine, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = count.toString(),
-                        fontFamily = DepartureMono,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 14.rsp,
-                        color = if (isSelected) colors.actionPrimaryText else colors.textSecondary
+                        text = displayName?.trim()?.firstOrNull()?.uppercase() ?: "Z",
+                        fontFamily = Geist,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.rsp,
+                        color = colors.textOnTint
                     )
                 }
             }
@@ -592,359 +417,361 @@ private fun HomeAppCountItem(
     }
 }
 
+// ── Plan card ──────────────────────────────────────────────────────
+
 @Composable
-private fun SettingsClickableItem(
-    text: String,
-    color: Color,
-    onClick: () -> Unit
-) {
-    Text(
-        text = text,
-        fontFamily = Geist,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.rsp,
-        color = color,
+private fun PlanCard(entitlement: Entitlement, offers: List<PlanOffer>, onClick: () -> Unit) {
+    val colors = ZenTheme.colors
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 12.dp)
+            .zenCard()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(16.rdp),
+        verticalArrangement = Arrangement.spacedBy(8.rdp)
+    ) {
+        if (entitlement.isPro) OsRule(Modifier.padding(bottom = 2.rdp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ZenEyebrow(
+                text = if (entitlement.isPro) {
+                    "Supporter" + (entitlement.since?.let { " since ${it.asZenMonth()}" } ?: "")
+                } else "Your plan",
+                modifier = Modifier.weight(1f)
+            )
+            if (entitlement.isPro) {
+                ZenProTag(unlocked = true)
+            } else {
+                Text(
+                    text = "FREE",
+                    style = ZenTypography.monoLabel,
+                    color = colors.textSecondary,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.rdp))
+                        .background(colors.surfaceElevated)
+                        .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.rdp))
+                        .padding(horizontal = 8.rdp, vertical = 2.rdp)
+                )
+            }
+        }
+        Text(
+            text = "ZenMode Pro",
+            fontFamily = Geist,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.rsp,
+            lineHeight = 28.rsp,
+            color = colors.textPrimary
+        )
+        if (entitlement.isPro) {
+            Text(
+                text = entitlement.statusLine(offers),
+                fontFamily = Geist,
+                fontSize = 14.rsp,
+                lineHeight = 20.rsp,
+                color = colors.textSecondary
+            )
+        } else {
+            Text(
+                text = "Adds range, not access. The whole loop stays free.",
+                fontFamily = Geist,
+                fontSize = 14.rsp,
+                lineHeight = 20.rsp,
+                color = colors.textSecondary
+            )
+            // The price sits in the row, not behind the tap.
+            offers.priceSummary()?.let { price ->
+                Text(text = price, fontFamily = DepartureMono, fontSize = 14.rsp, color = colors.textPrimary)
+            }
+        }
+        HorizontalDivider(thickness = 1.dp, color = colors.borderSubtle, modifier = Modifier.padding(top = 4.rdp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = if (entitlement.isPro) "Manage" else "See what it adds",
+                fontFamily = Geist,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.rsp,
+                color = colors.textBrand,
+                modifier = Modifier.weight(1f)
+            )
+            ZenGlyph(GlyphKind.Chevron, colors.textBrand, Modifier.size(18.rdp))
+        }
+    }
+}
+
+// ── Screen time ────────────────────────────────────────────────────
+
+@Composable
+private fun ScreenTimeCard(
+    weeklyHours: List<Float>,
+    showMonthOption: Boolean,
+    isPro: Boolean,
+    loadMonthlyHours: suspend () -> List<Float>,
+    onMonthLocked: () -> Unit
+) {
+    val colors = ZenTheme.colors
+    var range by rememberSaveable { mutableStateOf(ScreenTimeRange.WEEK) }
+    var monthlyHours by remember { mutableStateOf<List<Float>?>(null) }
+    val showingMonth = range == ScreenTimeRange.MONTH && isPro
+
+    LaunchedEffect(showingMonth) {
+        if (showingMonth && monthlyHours == null) monthlyHours = loadMonthlyHours()
+    }
+    // A cancelled subscription drops back to the week without leaving a locked range selected.
+    LaunchedEffect(isPro) { if (!isPro) range = ScreenTimeRange.WEEK }
+
+    val data = if (showingMonth) monthlyHours.orEmpty() else weeklyHours
+    val total = data.sum()
+    val average = if (data.isEmpty()) 0f else total / data.size
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .zenCard()
+            .padding(16.rdp)
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
+            Column(Modifier.weight(1f)) {
+                ZenEyebrow(if (showingMonth) "Last 30 days" else "This week")
+                Text(
+                    text = formatHours(total),
+                    fontFamily = DepartureMono,
+                    fontSize = 34.rsp,
+                    lineHeight = 40.rsp,
+                    color = colors.textPrimary,
+                    modifier = Modifier.padding(top = 4.rdp)
+                )
+                Text(
+                    text = "${formatHours(average)} a day on average",
+                    fontFamily = Geist,
+                    fontSize = 13.rsp,
+                    color = colors.textSecondary
+                )
+            }
+            if (showMonthOption) {
+                ZenSegmented(
+                    options = listOf(
+                        SegmentOption(ScreenTimeRange.WEEK, "7D"),
+                        SegmentOption(ScreenTimeRange.MONTH, "30D", locked = !isPro)
+                    ),
+                    selected = if (showingMonth) ScreenTimeRange.MONTH else ScreenTimeRange.WEEK,
+                    onSelect = { option ->
+                        if (option.locked) {
+                            onMonthLocked()
+                        } else {
+                            range = option.value
+                        }
+                    }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.rdp))
+        if (showingMonth && monthlyHours == null) {
+            Box(Modifier.fillMaxWidth().height(150.rdp), contentAlignment = Alignment.Center) {
+                Text("Counting the month…", fontFamily = Geist, fontSize = 13.rsp, color = colors.textSecondary)
+            }
+        } else {
+            ScreenTimeBars(data, labelDays = !showingMonth)
+        }
+        Text(
+            text = "Counted on this phone. Your partner sees your Zen Score, never these hours.",
+            fontFamily = Geist,
+            fontSize = 13.rsp,
+            lineHeight = 18.rsp,
+            color = colors.textSecondary,
+            modifier = Modifier.padding(top = 10.rdp)
+        )
+    }
+}
+
+@Composable
+private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
+    val colors = ZenTheme.colors
+    val bar = colors.textBrand
+    val grid = colors.borderHairlineSoft
+    val max = maxOf(6f, kotlin.math.ceil(hours.maxOrNull() ?: 0f))
+    val dayLabels = remember(hours.size) {
+        val today = LocalDate.now()
+        (hours.size - 1 downTo 0).map {
+            today.minusDays(it.toLong()).dayOfWeek.getDisplayName(JavaTextStyle.SHORT, Locale.ENGLISH).uppercase()
+        }
+    }
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(130.rdp)
+            .semantics {
+                contentDescription = "Screen time per day, ${hours.size} days. Today ${formatHours(hours.lastOrNull() ?: 0f)}."
+            }
+    ) {
+        val n = hours.size.coerceAtLeast(1)
+        val gap = if (n > 7) 3.dp.toPx() else 10.dp.toPx()
+        val barWidth = (size.width - gap * (n - 1)) / n
+        listOf(0f, 0.5f, 1f).forEach { f ->
+            val y = size.height * (1 - f)
+            drawLine(grid, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
+        }
+        hours.forEachIndexed { i, h ->
+            val barHeight = (h / max).coerceIn(0f, 1f) * size.height
+            val isToday = i == hours.lastIndex
+            drawRoundRect(
+                color = if (isToday) bar else bar.copy(alpha = 0.3f),
+                topLeft = Offset(i * (barWidth + gap), size.height - barHeight),
+                size = Size(barWidth, barHeight),
+                cornerRadius = CornerRadius(if (n > 7) 2.dp.toPx() else 6.dp.toPx())
+            )
+        }
+    }
+    Spacer(Modifier.height(6.rdp))
+    if (labelDays) {
+        Row(Modifier.fillMaxWidth()) {
+            dayLabels.forEachIndexed { i, label ->
+                Text(
+                    text = label,
+                    style = ZenTypography.monoLabel,
+                    color = if (i == dayLabels.lastIndex) colors.textPrimary else colors.textMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    } else {
+        Row(Modifier.fillMaxWidth()) {
+            Text("30 DAYS AGO", style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
+            Text("TODAY", style = ZenTypography.monoLabel, color = colors.textPrimary)
+        }
+    }
+}
+
+private fun formatHours(hours: Float): String {
+    val minutes = (hours * 60).toInt()
+    return "${minutes / 60}h ${(minutes % 60).toString().padStart(2, '0')}m"
+}
+
+// ── Footer ─────────────────────────────────────────────────────────
+
+// ── Sheets ─────────────────────────────────────────────────────────
+
+/** Title, what free keeps, what Pro adds. Free's promise is always named before the price. */
+private fun ProFeature.gateCopy(): Triple<String, String, String> = when (this) {
+    ProFeature.FULL_HISTORY -> Triple(
+        "Full history",
+        "Free shows the last 7 days.",
+        "Pro opens everything since you installed. None of it is deleted on free, it just isn't shown."
+    )
+    ProFeature.EXTRA_PARTNERS -> Triple(
+        "Add a second partner",
+        "One partner is enough for the loop to work. Free keeps one partner, forever.",
+        "Pro lets you keep up to three: a friend, a sibling, and the person who actually notices."
+    )
+    ProFeature.HOME_THEMES -> Triple(
+        "Home-screen themes",
+        "The mood washes still follow your day on free.",
+        "Pro lets you pick the wash yourself and keep it."
+    )
+    ProFeature.DATA_EXPORT -> Triple(
+        "Export your data",
+        "Everything already stays on your phone.",
+        "Pro lets you take it with you as a CSV of sessions and scores."
+    )
+    ProFeature.PERIOD_REPORTS -> Triple(
+        "Weekly and monthly reports",
+        "Your daily Zen Report stays free, every item and every minute.",
+        "Pro adds the week and the month, so you can see the direction and not just the day."
+    )
+    ProFeature.CUSTOM_SESSION_LENGTHS -> Triple(
+        "Custom session lengths",
+        "Free keeps four lengths: 5, 15, 25 and 45 minutes.",
+        "Pro lets you set your own, down to the minute."
+    )
+    ProFeature.RANDOM_CONNECT -> Triple(
+        "Random Connect",
+        "Free keeps the partner you already have.",
+        "Pro pairs you with one other ZenMode user. No feed, no profile."
+    )
+    ProFeature.SUPPORTERS_LIST -> Triple(
+        "Supporters list",
+        "The app is the same either way.",
+        "Pro puts your name, if you want it there, in the list of people who keep it running."
     )
 }
 
-// ── Hero Section ──────────────────────────────────────────────────
-
 @Composable
-private fun HeroSection() {
+private fun ProGateSheet(
+    feature: ProFeature,
+    offers: List<PlanOffer>,
+    onSeePro: () -> Unit,
+    onDismiss: () -> Unit
+) {
     val colors = ZenTheme.colors
-
-    val missionLineHeight = 20.rsp
-    Column(
-        modifier = Modifier.padding(horizontal = Spacing.screenMargin)
-    ) {
-        // Title row
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(R.drawable.king),
-                contentDescription = null,
-                modifier = Modifier.size(28.rdp)
-            )
-            Text(
-                text = "You're the Hero!",
-                fontFamily = Geist,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.rsp,
-                color = colors.textPrimary
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = "⭐",
-                fontSize = 14.rsp
-            )
+    val (title, free, pro) = feature.gateCopy()
+    ZenSheet(onDismiss = onDismiss) {
+        ZenEyebrow("Part of Pro")
+        ZenSheetTitle(title)
+        ZenSheetBody(free)
+        ZenSheetBody(pro)
+        offers.priceSummary()?.let { price ->
+            val trial = offers.offer(BillingPeriod.ANNUAL)
+                ?.freeTrialDays?.let { it > 0 } == true
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.rdp))
+                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(16.rdp))
+                    .padding(horizontal = 14.rdp, vertical = 12.rdp)
+            ) {
+                ZenEyebrow("What it costs")
+                Text(
+                    text = price + if (trial) ". The first month of the annual plan is free." else ".",
+                    fontFamily = Geist,
+                    fontSize = 15.rsp,
+                    lineHeight = 22.rsp,
+                    color = colors.textPrimary,
+                    modifier = Modifier.padding(top = 4.rdp)
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Mission text
-        Text(
-            text = "You can be anywhere, but thanks for joining our journey to help people with mindful digital time.",
-            fontFamily = Geist,
-            fontWeight = FontWeight.Normal,
-            fontSize = 14.rsp,
-            color = colors.textSecondary,
-            lineHeight = missionLineHeight
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Copyright
-        Text(
-            text = "\u00A9 2026 Zenmode. All rights reserved.",
-            fontFamily = Geist,
-            fontWeight = FontWeight.Normal,
-            fontSize = 12.rsp,
-            color = colors.textSecondary
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Hashtags row
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(SpanStyle(color = colors.textBrand, fontWeight = FontWeight.Bold)) {
-                        append("#Zenmode ")
-                    }
-                    withStyle(SpanStyle(color = colors.textBrand, fontWeight = FontWeight.Bold)) {
-                        append("#IMZ ")
-                    }
-                    withStyle(SpanStyle(color = colors.textBrand, fontWeight = FontWeight.Bold)) {
-                        append("#InMyZone")
-                    }
-                },
-                fontFamily = Geist,
-                fontSize = 14.rsp
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Image(
-                painter = painterResource(R.drawable.heart_byhand),
-                contentDescription = null,
-                modifier = Modifier.size(20.rdp)
-            )
-        }
+        ZenButton(text = "See what Pro adds", onClick = onSeePro)
+        ZenButton(text = "Not now", onClick = onDismiss, style = ZenButtonStyle.Ghost)
     }
 }
 
-// ── Rate Us Button ────────────────────────────────────────────────
-
 @Composable
-private fun RateUsButton(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.screenMargin)
-            .clip(RoundedCornerShape(12.dp))
-            .background(ZenTheme.colors.actionPrimary)
-            .clickable { onClick() }
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Rate us on play store",
-            fontFamily = Geist,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.rsp,
-            color = ZenTheme.colors.actionPrimaryText
-        )
-    }
-}
-
-// ── Share ZenMode Row ─────────────────────────────────────────────
-
-@Composable
-private fun ShareZenModeRow(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Share zenmode",
-            fontFamily = Geist,
-            fontWeight = FontWeight.Medium,
-            fontSize = 18.rsp,
-            color = ZenTheme.colors.textBrand
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Image(
-            painter = painterResource(R.drawable.share_zenmode),
-            contentDescription = "Share",
-            modifier = Modifier.size(20.rdp),
-            contentScale = ContentScale.Fit
-        )
-    }
-}
-
-// ── Profile Bottom Sheet ──────────────────────────────────────────
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ProfileBottomSheet(
+private fun AccountSheet(
+    displayName: String?,
+    isPro: Boolean,
     onDismiss: () -> Unit,
     onLogoutClick: () -> Unit,
     onDeleteAccountClick: () -> Unit
 ) {
     val colors = ZenTheme.colors
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = colors.bgSecondary,
-        scrimColor = Color.Black.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp, bottom = 8.dp)
-                    .width(40.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(colors.textSecondary.copy(alpha = 0.4f))
+    var confirmDelete by remember { mutableStateOf(false) }
+    ZenSheet(onDismiss = onDismiss) {
+        if (!confirmDelete) {
+            ZenSheetTitle(displayName?.let { "Signed in as $it" } ?: "Your account")
+            ZenSheetBody("You're about to break our heart a little. We'll be right here if you come back.")
+            ZenButton(text = "Log out", onClick = onLogoutClick, style = ZenButtonStyle.Outline)
+            ZenButton(
+                text = "Delete account",
+                onClick = { confirmDelete = true },
+                style = ZenButtonStyle.Ghost,
+                contentColor = colors.accentDeduct
             )
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.rdp)
-                .padding(bottom = 32.rdp)
-        ) {
-            if (!showDeleteConfirmation) {
-                // Title row with app icon
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        // Main title
-                        Text(
-                            text = buildAnnotatedString {
-                                append("You\u2019re about to break my ")
-                                withStyle(SpanStyle(color = colors.textBrand)) {
-                                    append("\uD83D\uDC9A")
-                                }
-                            },
-                            fontFamily = Geist,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.rsp,
-                            color = colors.textPrimary,
-                            lineHeight = 28.rsp
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Subtitle
-                        Text(
-                            text = "Hey though I\u2019m always here waiting to help you!",
-                            fontFamily = Geist,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 14.rsp,
-                            color = colors.textSecondary,
-                            lineHeight = 20.rsp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // App icon — top right
-                    Image(
-                        painter = painterResource(R.drawable.ic_zen_mark_gradient),
-                        contentDescription = "ZenMode",
-                        modifier = Modifier.size(48.rdp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(28.rdp))
-
-                // Delete account row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showDeleteConfirmation = true }
-                        .padding(vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.delete_account),
-                        contentDescription = "Delete account",
-                        modifier = Modifier.size(20.rdp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Delete account",
-                        fontFamily = Geist,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.rsp,
-                        color = colors.moodAnnoyed
-                    )
-                }
-
-                // Divider
-                HorizontalDivider(
-                    color = colors.textSecondary.copy(alpha = 0.15f),
-                    thickness = 1.dp
+        } else {
+            ZenEyebrow("Permanent", color = colors.accentDeduct)
+            ZenSheetTitle("Delete your account?")
+            ZenSheetBody(
+                "This removes your account, your partner link and your scores from our servers, " +
+                    "and clears usage history on this phone. It can't be undone."
+            )
+            if (isPro) {
+                ZenSheetBody(
+                    "Pro is billed by Google Play. Deleting your account doesn't cancel it, so cancel Pro first.",
+                    emphasis = true
                 )
-
-                // Log out row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onLogoutClick() }
-                        .padding(vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.log_out),
-                        contentDescription = "Log out",
-                        modifier = Modifier.size(20.rdp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Log out",
-                        fontFamily = Geist,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 16.rsp,
-                        color = colors.textPrimary
-                    )
-                }
-            } else {
-                // Delete confirmation view
-                Text(
-                    text = "Are you sure?",
-                    fontFamily = Geist,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.rsp,
-                    color = colors.textPrimary
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "This will permanently delete your account and all associated data. This action cannot be undone.",
-                    fontFamily = Geist,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 14.rsp,
-                    color = colors.textSecondary,
-                    lineHeight = 20.rsp
-                )
-
-                Spacer(modifier = Modifier.height(24.rdp))
-
-                // Delete button
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.moodAnnoyed)
-                        .clickable { onDeleteAccountClick() }
-                        .padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Delete my account",
-                        fontFamily = Geist,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.rsp,
-                        color = Color.White
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Cancel button
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.bgPrimary)
-                        .clickable { showDeleteConfirmation = false }
-                        .padding(vertical = 14.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Cancel",
-                        fontFamily = Geist,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.rsp,
-                        color = colors.textPrimary
-                    )
-                }
             }
+            ZenButton(text = "Delete my account", onClick = onDeleteAccountClick, style = ZenButtonStyle.Danger)
+            ZenButton(text = "Keep my account", onClick = { confirmDelete = false }, style = ZenButtonStyle.Outline)
         }
     }
 }

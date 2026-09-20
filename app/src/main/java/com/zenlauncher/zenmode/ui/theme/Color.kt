@@ -23,6 +23,8 @@ data class ZenColors(
     val textPrimary: Color,
     val textSecondary: Color,
     val textBrand: Color,
+    /** Deep brand green for headings and titles: zen_900 on paper, zen_300 on ink. */
+    val textBrandStrong: Color,
     val actionPrimary: Color,
     val actionPrimaryText: Color,
     val accentReward: Color,
@@ -47,7 +49,21 @@ data class ZenColors(
     val strokeHappy: Color,
     val strokeNeutral: Color,
     val strokeAnnoyed: Color,
-    val notificationBadgeStroke: Color
+    val notificationBadgeStroke: Color,
+    // Settings / Pro surfaces (v3). Pairing budget: green + amber on the settings screen;
+    // ember only inside the destructive account sheet.
+    val surfaceSunk: Color,
+    val surfaceTint: Color,
+    val surfaceTintLine: Color,
+    val textOnTint: Color,
+    val textMuted: Color,
+    val borderOutline: Color,
+    val borderHairlineSoft: Color,
+    val rewardSurface: Color,
+    val rewardSurfaceLine: Color,
+    val accentDeduct: Color,
+    val textOnDeduct: Color,
+    val switchThumb: Color
 )
 
 fun ZenColors.statsCardFill(mood: MoodState): Color =
@@ -98,6 +114,7 @@ val LightZenColors: ZenColors
         textPrimary = colorResource(R.color.ink_surface),
         textSecondary = colorResource(R.color.stone_600),
         textBrand = colorResource(R.color.zen_700),
+        textBrandStrong = colorResource(R.color.zen_900),
         actionPrimary = colorResource(R.color.ink_surface),
         actionPrimaryText = colorResource(R.color.paper_ink),
         accentReward = colorResource(R.color.amber_800),
@@ -143,7 +160,19 @@ val LightZenColors: ZenColors
         strokeHappy = colorResource(R.color.zen_700),
         strokeNeutral = colorResource(R.color.amber_500),
         strokeAnnoyed = colorResource(R.color.ember_500),
-        notificationBadgeStroke = colorResource(R.color.ink_surface)
+        notificationBadgeStroke = colorResource(R.color.ink_surface),
+        surfaceSunk = colorResource(R.color.paper_sunk),
+        surfaceTint = colorResource(R.color.zen_050),
+        surfaceTintLine = colorResource(R.color.zen_050_line),
+        textOnTint = colorResource(R.color.zen_ink),
+        textMuted = colorResource(R.color.stone_400),
+        borderOutline = colorResource(R.color.paper_outline),
+        borderHairlineSoft = colorResource(R.color.paper_hairline_soft),
+        rewardSurface = colorResource(R.color.amber_on),
+        rewardSurfaceLine = colorResource(R.color.amber_on_line),
+        accentDeduct = colorResource(R.color.ember_700),
+        textOnDeduct = colorResource(R.color.ember_on),
+        switchThumb = colorResource(R.color.paper_white)
     )
 
 val DarkZenColors: ZenColors
@@ -157,6 +186,7 @@ val DarkZenColors: ZenColors
         textPrimary = colorResource(R.color.paper_ink),
         textSecondary = colorResource(R.color.stone_300),
         textBrand = colorResource(R.color.zen_300),
+        textBrandStrong = colorResource(R.color.zen_300),
         actionPrimary = colorResource(R.color.zen_300),
         actionPrimaryText = colorResource(R.color.ink_base),
         accentReward = colorResource(R.color.amber_500),
@@ -202,7 +232,19 @@ val DarkZenColors: ZenColors
         strokeHappy = colorResource(R.color.zen_300),
         strokeNeutral = colorResource(R.color.amber_500),
         strokeAnnoyed = colorResource(R.color.ember_300),
-        notificationBadgeStroke = colorResource(R.color.paper_ink)
+        notificationBadgeStroke = colorResource(R.color.paper_ink),
+        surfaceSunk = colorResource(R.color.ink_raised),
+        surfaceTint = colorResource(R.color.ink_gain),
+        surfaceTintLine = colorResource(R.color.ink_line),
+        textOnTint = colorResource(R.color.zen_300),
+        textMuted = colorResource(R.color.stone_250),
+        borderOutline = colorResource(R.color.ink_line),
+        borderHairlineSoft = colorResource(R.color.ink_line),
+        rewardSurface = colorResource(R.color.ink_reward),
+        rewardSurfaceLine = colorResource(R.color.ink_line),
+        accentDeduct = colorResource(R.color.ember_300),
+        textOnDeduct = colorResource(R.color.ink_base),
+        switchThumb = colorResource(R.color.paper_ink)
     )
 
 val LocalZenColors = staticCompositionLocalOf {
@@ -215,6 +257,7 @@ val LocalZenColors = staticCompositionLocalOf {
         textPrimary = Color.Unspecified,
         textSecondary = Color.Unspecified,
         textBrand = Color.Unspecified,
+        textBrandStrong = Color.Unspecified,
         actionPrimary = Color.Unspecified,
         actionPrimaryText = Color.Unspecified,
         accentReward = Color.Unspecified,
@@ -239,6 +282,18 @@ val LocalZenColors = staticCompositionLocalOf {
         strokeHappy = Color.Unspecified,
         strokeNeutral = Color.Unspecified,
         strokeAnnoyed = Color.Unspecified,
-        notificationBadgeStroke = Color.Unspecified
+        notificationBadgeStroke = Color.Unspecified,
+        surfaceSunk = Color.Unspecified,
+        surfaceTint = Color.Unspecified,
+        surfaceTintLine = Color.Unspecified,
+        textOnTint = Color.Unspecified,
+        textMuted = Color.Unspecified,
+        borderOutline = Color.Unspecified,
+        borderHairlineSoft = Color.Unspecified,
+        rewardSurface = Color.Unspecified,
+        rewardSurfaceLine = Color.Unspecified,
+        accentDeduct = Color.Unspecified,
+        textOnDeduct = Color.Unspecified,
+        switchThumb = Color.Unspecified
     )
 }

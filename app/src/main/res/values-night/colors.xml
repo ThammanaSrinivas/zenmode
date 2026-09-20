@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dark-mode values for the screen-specific v3 tokens. The app flips night mode through
+  AppCompatDelegate (ThemePreferences), so every colorResource() below picks these up.
+  Shared primitives (zen_*, ink_*, paper_*, stone_*) are deliberately NOT overridden:
+  they're used both as text and as fills, and ui/theme/Color.kt already maps them to
+  light/dark semantics. Onboarding and the Zen Circle share card stay light regardless.
+-->
+<resources>
+    <!-- Home header + gold row -->
+    <color name="streak_days">#B4B4AE</color>
+    <color name="gold_label">#A8A8A2</color>
+    <color name="gold_delta_bg">#2B2B2B</color>
+
+    <!-- Zen Gold -->
+    <color name="promise_badge_bg">#34342F</color>
+    <color name="toggle_inactive_text">#A0A09A</color>
+    <color name="chart_axis_label">#9A9A94</color>
+    <color name="disabled_button_bg">#2E2E2A</color>
+    <color name="disabled_button_text">#7A7A72</color>
+
+    <!-- My Promise (surfaces also shared by Invest Gold) -->
+    <color name="my_promise_bg">#111111</color>
+    <color name="my_promise_subtitle">#B4B4AE</color>
+    <color name="my_promise_card_top">#222222</color>
+    <color name="my_promise_card_bottom">#1A1A1A</color>
+    <color name="my_promise_stepper_border">#3A3A36</color>
+    <color name="my_promise_divider">#2B2B2B</color>
+    <color name="my_promise_note_bg">#1AFFFFFF</color>
+    <color name="my_promise_note_text">#BFEDEDE8</color>
+    <color name="my_promise_logo_text">#E8E8E2</color>
+    <color name="my_promise_secondary_button_bg">#262622</color>
+    <color name="my_promise_stepper_fill">#222222</color>
+    <color name="my_promise_stepper_glyph">#F5F5F1</color>
+
+    <!-- Invest Gold -->
+    <color name="invest_gold_title_text">#D8D8D2</color>
+    <color name="invest_gold_instrument_bg">#1FFFFFFF</color>
+    <color name="invest_gold_symbol_text">#EDEDE8</color>
+    <color name="invest_gold_secondary_text">#B4B4AE</color>
+    <color name="invest_gold_amount_text">#FFD54A</color>
+    <color name="invest_gold_chip_text">#E0E0DA</color>
+    <color name="invest_gold_terms_link">#5BDF62</color>
+    <color name="invest_gold_success_icon">#5BDF62</color>
+
+    <!-- Zen Circle / Zen Bro screens -->
+    <color name="zen_circle_wash_edge">#141208</color>
+    <color name="zen_circle_wash_core">#221D0A</color>
+    <color name="zen_circle_subtitle">#B4B4AE</color>
+    <color name="zen_circle_body">#C4C4BE</color>
+    <color name="zen_circle_step_number">#9A9A94</color>
+    <color name="zen_circle_input_bg">#1A1A1A</color>
+    <color name="zen_circle_input_border">#3A3A36</color>
+    <color name="zen_circle_input_hint">#8C8E86</color>
+    <color name="zen_circle_code_text">#EDEDE8</color>
+    <color name="zen_circle_divider">#3A3A36</color>
+    <color name="zen_circle_connected_body">#C4C4BE</color>
+    <color name="zen_circle_connected_caption">#A8A8A2</color>
+    <color name="zen_circle_scrim">#66000000</color>
+    <color name="zen_circle_sheet_bg">#E61A1A1A</color>
+    <color name="zen_circle_sheet_option">#E8E8E2</color>
+    <color name="zen_circle_sheet_muted">#A8A8A2</color>
+    <color name="zen_circle_reset_text">#A8A8A2</color>
+    <color name="zen_circle_band_bg">#14FFFFFF</color>
+    <color name="zen_circle_band_label">#B4B4AE</color>
+    <color name="zen_circle_wheel_name">#A8A8A2</color>
+    <color name="zen_circle_swipe_hint">#7A7A72</color>
+</resources>

@@ -46,6 +46,7 @@ import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -185,7 +186,6 @@ private fun MoodCard(
     mood: MoodState,
     zenScore: Int?,
     streaks: Int,
-    changePercent: Int?,
     isWinner: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -224,8 +224,12 @@ private fun MoodCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(bottom = 20.rdp),
-                verticalArrangement = Arrangement.Center,
+                    // Clears the score chip and flame in the bottom corners (Figma: the time
+                    // row sits fully above them). When the card is short, the block rises into
+                    // the face's lower edge rather than clipping the digits or hitting the chip.
+                    .padding(bottom = 30.rdp)
+                    .wrapContentHeight(Alignment.Bottom, unbounded = true),
+                verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -246,20 +250,7 @@ private fun MoodCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    if (changePercent != null) {
-                        Spacer(modifier = Modifier.width(4.rdp))
-                        Text(
-                            text = "${if (changePercent >= 0) "+" else ""}$changePercent%",
-                            fontFamily = DepartureMono,
-                            fontSize = 9.rsp,
-                            color = CardInk.copy(alpha = 0.55f),
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
                 }
-
-                Spacer(modifier = Modifier.height(2.rdp))
 
                 Row(verticalAlignment = Alignment.Bottom) {
                     TimeUnit(value = minutes / 60, unit = "HRS", unitSize = 6.8.rsp)
@@ -295,7 +286,7 @@ private fun MoodCard(
                     .padding(start = 9.rdp, end = 10.rdp, top = 4.rdp, bottom = 5.rdp)
             ) {
                 Text(
-                    text = score.toString(),
+                    text = ZenScore.format(score),
                     fontFamily = DepartureMono,
                     fontSize = 12.rsp,
                     letterSpacing = (-2).sp,
@@ -307,16 +298,15 @@ private fun MoodCard(
             }
         }
 
-        // Streak, bottom-right — Figma node 71:5457: the real flame silhouette
-        // at 80% opacity with the count set in Geist SemiBold, not mono.
-        if (streaks > 0) {
-            Box(
+        // Streak, bottom-right — Figma node 71:5457: the flame silhouette with the count
+        // set in Geist SemiBold. Always shown, at full strength, so the streak is readable
+        // at a glance (a fresh start reads "0").
+        Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 8.rdp, bottom = 4.rdp)
-                    .width(22.rdp)
+                    .padding(end = 7.rdp, bottom = 5.rdp)
+                    .width(25.rdp)
                     .aspectRatio(27.3856f / 35.3743f)
-                    .alpha(0.8f)
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_card_flame),
@@ -327,9 +317,9 @@ private fun MoodCard(
                     text = streaks.toString(),
                     fontFamily = Geist,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 10.rsp,
+                    fontSize = 11.rsp,
                     letterSpacing = (-0.6).sp,
-                    color = Color.Black,
+                    color = CardInk,
                     modifier = Modifier
                         .align(Alignment.Center)
                         .offset(y = 4.rdp),
@@ -338,7 +328,6 @@ private fun MoodCard(
                     )
                 )
             }
-        }
 
         // Crown — hand-drawn, hanging off the winner's top-left corner.
         // Figma node 2001:1521; real proportions, not a square icon.
@@ -374,8 +363,9 @@ private fun TimeUnit(value: Long, unit: String, unitSize: androidx.compose.ui.un
             }
         },
         fontFamily = DepartureMono,
-        fontSize = 32.rsp,
-        letterSpacing = (-2.5).sp,
+        fontSize = 30.rsp,
+        lineHeight = 32.rsp,
+        letterSpacing = (-2.3).sp,
         color = CardInk,
         maxLines = 1,
         softWrap = false
@@ -415,7 +405,6 @@ fun MyScreenTimeCard(
             mood = moodState,
             zenScore = zenScore,
             streaks = streaks,
-            changePercent = yesterdayChangePercent,
             isWinner = isWinner
         )
 
@@ -430,6 +419,35 @@ fun MyScreenTimeCard(
             )
         }
     }
+}
+
+// ── Circle Member Card ────────────────────────────────────────────
+
+/**
+ * One member's card in a Zen Circle, labelled like "Kamal's Time" as in the Figma
+ * "Sharable" leaderboard (node 74:8055). Display only: no reactions, no click.
+ */
+@Composable
+fun CircleMemberCard(
+    label: String,
+    screenTimeMinutes: Long,
+    modifier: Modifier = Modifier,
+    zenScore: Int? = null,
+    streaks: Int = 0,
+    isWinner: Boolean = false
+) {
+    val moodState = AppLogic.getMoodState(screenTimeMinutes)
+    MoodCard(
+        faceRes = faceFor(moodState),
+        faceDescription = "Mood face",
+        label = label,
+        minutes = screenTimeMinutes,
+        mood = moodState,
+        zenScore = zenScore,
+        streaks = streaks,
+        isWinner = isWinner,
+        modifier = modifier
+    )
 }
 
 // ── Buddy Stats Card ──────────────────────────────────────────────
@@ -462,8 +480,7 @@ fun BuddyStatsCard(
             mood = moodState,
             zenScore = zenScore,
             streaks = streaks,
-            changePercent = null,
-            isWinner = isWinner
+                isWinner = isWinner
         )
 
         if (showReactions) {

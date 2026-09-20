@@ -76,6 +76,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -181,7 +182,7 @@ internal fun V3ScreenHeader(
                 fontSize = 24.rsp,
                 lineHeight = (24 * ClashLineHeight).rsp,
                 letterSpacing = (-0.48).sp,
-                color = colorResource(R.color.zen_900),
+                color = ZenTheme.colors.textBrandStrong,
                 maxLines = 1,
                 style = FullLineBox
             )
@@ -333,7 +334,7 @@ internal fun V3ValueStepper(
                         fontSize = 67.019.rsp,
                         lineHeight = (67.019 * DepartureMonoLineHeight).rsp,
                         letterSpacing = (-2.0106).sp,
-                        color = Color.Black
+                        color = ZenTheme.colors.textPrimary
                     ),
                     modifier = Modifier.wrapContentHeight(Alignment.Top, unbounded = true)
                 )
@@ -344,7 +345,7 @@ internal fun V3ValueStepper(
                 fontSize = 13.404.rsp,
                 lineHeight = (13.404 * DepartureMonoLineHeight).rsp,
                 letterSpacing = captionLetterSpacing,
-                color = Color.Black,
+                color = ZenTheme.colors.textPrimary,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 style = FullLineBox
@@ -363,7 +364,7 @@ internal fun V3ValueStepper(
                 modifier = Modifier
                     .size(42.8.rdp)
                     .clip(CircleShape)
-                    .background(Color.White)
+                    .background(colorResource(R.color.my_promise_stepper_fill))
                     .border(1.dp, colorResource(R.color.my_promise_stepper_border), CircleShape),
                 contentAlignment = Alignment.Center
             ) {

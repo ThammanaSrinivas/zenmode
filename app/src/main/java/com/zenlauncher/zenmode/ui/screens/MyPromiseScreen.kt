@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -58,10 +59,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.components.ClashLineHeight
 import com.zenlauncher.zenmode.ui.components.FullLineBox
 import com.zenlauncher.zenmode.ui.components.GeistLineHeight
 import com.zenlauncher.zenmode.ui.components.V3BrandGreen
+import com.zenlauncher.zenmode.ui.components.rememberBrandOsGradient
 import com.zenlauncher.zenmode.ui.components.V3BulletDot
 import com.zenlauncher.zenmode.ui.components.V3CardDivider
 import com.zenlauncher.zenmode.ui.components.V3PillButtonText
@@ -112,6 +115,7 @@ fun MyPromiseScreen(
             painter = painterResource(R.drawable.bg_my_promise_glow),
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            alpha = integerResource(R.integer.my_promise_glow_alpha_pct) / 100f,
             modifier = Modifier.matchParentSize()
         )
 
@@ -173,7 +177,7 @@ private fun IntroText() {
         fontSize = 28.rsp,
         lineHeight = (28 * ClashLineHeight).rsp,
         letterSpacing = (-0.84).sp,
-        color = Color.Black,
+        color = ZenTheme.colors.textPrimary,
         style = FullLineBox,
         modifier = Modifier
             .padding(horizontal = HeadingMargin)
@@ -198,7 +202,7 @@ private fun IntroText() {
 // ── Promise card ──────────────────────────────────────────────────
 
 @Composable
-private fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
+internal fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
     // Set from the tap itself so both rolling numbers agree on direction.
     var rollUp by remember { mutableStateOf(true) }
 
@@ -213,7 +217,7 @@ private fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             CardLabel("SCREEN TIME")
-            V3BulletDot(slotWidth = 19.rdp, dotSize = 3.5.rdp, color = Color.Black)
+            V3BulletDot(slotWidth = 19.rdp, dotSize = 3.5.rdp, color = ZenTheme.colors.textPrimary)
             CardLabel("PER WEEK")
         }
 
@@ -244,7 +248,7 @@ private fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
             fontSize = 12.rsp,
             lineHeight = 18.72.rsp,
             letterSpacing = (-0.36).sp,
-            color = Color.Black,
+            color = ZenTheme.colors.textPrimary,
             style = FullLineBox,
             modifier = Modifier.padding(start = 27.rdp, end = 28.rdp)
         )
@@ -260,7 +264,7 @@ private fun CardLabel(text: String) {
         fontSize = 12.rsp,
         lineHeight = (12 * GeistLineHeight).rsp,
         letterSpacing = (-0.36).sp,
-        color = Color.Black,
+        color = ZenTheme.colors.textPrimary,
         maxLines = 1,
         style = FullLineBox
     )
@@ -292,7 +296,7 @@ private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
         fontSize = 15.rsp,
         lineHeight = (15 * GeistLineHeight).rsp,
         letterSpacing = (-0.45).sp,
-        color = BrandGreen
+        color = ZenTheme.colors.textBrand
     )
     val mono = base.copy(fontFamily = DepartureMono)
     val bold = base.copy(fontFamily = Geist, fontWeight = FontWeight.Bold)
@@ -323,8 +327,8 @@ private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
 // ── Rules note ────────────────────────────────────────────────────
 
 @Composable
-private fun PromiseRulesNote(dailyHours: Int) {
-    val green = BrandGreen
+internal fun PromiseRulesNote(dailyHours: Int) {
+    val green = ZenTheme.colors.textBrand
     val hrs = if (dailyHours == 1) "hr" else "hrs"
     Row(
         modifier = Modifier
@@ -427,43 +431,6 @@ private fun BrandStrip() {
         }
     }
 }
-
-/**
- * Figma's "Branf zen gradient" style: a CSS linear-gradient at -67.92deg through
- * score_grad_start / score_grad_mid / score_orange. Brush.linearGradient can't express
- * a CSS angle against an unknown text box, so the line is resolved from the laid-out size.
- */
-@Composable
-private fun rememberBrandOsGradient(): Brush {
-    val start = colorResource(R.color.score_grad_start)
-    val mid = colorResource(R.color.score_grad_mid)
-    val end = colorResource(R.color.score_orange)
-    return remember(start, mid, end) {
-        cssLinearGradient(
-            angleDegrees = -67.92291865051479f,
-            colors = listOf(start, mid, end),
-            stops = listOf(0.23558f, 0.50636f, 0.71412f)
-        )
-    }
-}
-
-private fun cssLinearGradient(angleDegrees: Float, colors: List<Color>, stops: List<Float>): ShaderBrush =
-    object : ShaderBrush() {
-        override fun createShader(size: Size): Shader {
-            val radians = Math.toRadians(angleDegrees.toDouble())
-            val dx = sin(radians).toFloat()
-            val dy = -cos(radians).toFloat()
-            val halfLength = (abs(size.width * dx) + abs(size.height * dy)) / 2f
-            val cx = size.width / 2f
-            val cy = size.height / 2f
-            return LinearGradientShader(
-                from = Offset(cx - dx * halfLength, cy - dy * halfLength),
-                to = Offset(cx + dx * halfLength, cy + dy * halfLength),
-                colors = colors,
-                colorStops = stops
-            )
-        }
-    }
 
 @Composable
 private fun OutlinedPillButton(text: String, onClick: () -> Unit) {

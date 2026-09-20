@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="my_promise_glow_alpha_pct">10</integer>
+</resources>

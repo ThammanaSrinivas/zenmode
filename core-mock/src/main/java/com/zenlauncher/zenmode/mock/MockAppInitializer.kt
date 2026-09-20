@@ -15,6 +15,7 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.coreapi.services.AuthProvider
 import com.zenlauncher.zenmode.coreapi.services.FirestoreDataSource
 import com.zenlauncher.zenmode.coreapi.services.AnalyticsTrackerContract
+import com.zenlauncher.zenmode.coreapi.services.ProEntitlementProvider
 
 import com.zenlauncher.zenmode.coreapi.services.RemoteConfigProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,18 @@ class MockAppInitializer : AppInitializer {
         ServiceLocator.analyticsTracker = MockAnalyticsTracker()
         ServiceLocator.analyticsManager = MockAnalyticsManager()
         ServiceLocator.remoteConfigProvider = MockRemoteConfigProvider()
+        ServiceLocator.proEntitlementProvider = MockProEntitlementProvider()
+        ServiceLocator.entitlementProvider = MockEntitlementProvider(application)
     }
+}
+
+/**
+ * No server grants in open-source builds: Pro comes from [MockEntitlementProvider]'s simulated
+ * purchase (free and instant), so Settings' plan card and every Pro gate agree.
+ */
+class MockProEntitlementProvider : ProEntitlementProvider {
+    override val isPro: StateFlow<Boolean> = MutableStateFlow(false)
+    override suspend fun refresh() {}
 }
 
 class MockRemoteConfigProvider : RemoteConfigProvider {
@@ -120,6 +132,13 @@ class MockAnalyticsTracker : AnalyticsTrackerContract {
     override fun trackBuddyConnected(mode: String) {}
     override fun trackDailyScreenTime(minutes: Long) {}
     override fun trackWeeklyScreenTime(minutes: Long) {}
+    override fun trackRecapReady(weekStart: String, outcome: String) {}
+    override fun trackRecapOpened(weekStart: String, outcome: String, source: String) {}
+    override fun trackRecapCardViewed(weekStart: String, outcome: String, card: String, position: Int) {}
+    override fun trackRecapCompleted(weekStart: String, outcome: String) {}
+    override fun trackRecapCtaClicked(weekStart: String, outcome: String, cta: String) {}
+    override fun trackReportDownloaded(weekStart: String) {}
+    override fun trackProUpsellViewed(surface: String) {}
     override fun trackCircleCreated() {}
     override fun trackCircleJoined(via: String) {}
     override fun trackCircleMemberRemoved(byLeader: Boolean) {}

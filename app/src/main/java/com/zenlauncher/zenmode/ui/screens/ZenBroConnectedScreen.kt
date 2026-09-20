@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.MoodBackdrop
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.components.StatsCardsRow
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
@@ -90,17 +92,16 @@ fun ZenBroConnectedScreen(
 ) {
     BackHandler(onBack = onBackClick)
 
-    val washEdge = colorResource(R.color.wash_neutral_edge)
-    val washCore = colorResource(R.color.wash_neutral_core)
     val inspection = LocalInspectionMode.current
     var cardsEntering by remember { mutableStateOf(inspection) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(washEdge, washCore, washEdge)))
             .pointerInput(Unit) { detectTapGestures() }
     ) {
+        MoodBackdrop()
+
         // "Invite people" opens the Zen Circle invite sheet over this page (Figma node 2026:2383).
         ZenCircleSheetHost(
             userCode = userCode,
@@ -225,7 +226,7 @@ private fun Headline(buddyName: String) {
             fontWeight = FontWeight.Medium,
             fontSize = 32.3.rsp,
             letterSpacing = (-0.65).sp,
-            color = Color.Black,
+            color = ZenTheme.colors.textPrimary,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .semantics { heading() }
@@ -270,7 +271,7 @@ private fun SharedStatTag(label: String, delayMillis: Int) {
                 alpha = p.coerceIn(0f, 1f)
             }
             .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.6f))
+            .background(ZenTheme.colors.surfaceElevated.copy(alpha = 0.6f))
             .padding(horizontal = 10.rdp, vertical = 3.rdp)
     )
 }
@@ -361,7 +362,7 @@ private fun ZenCirclePanel(visible: Boolean, onInvitePeople: () -> Unit, onMaybe
             .fillMaxWidth()
             .riseIn(delayMillis = 420, rise = 40.dp, start = visible)
             .clip(RoundedCornerShape(20.7.rdp))
-            .background(colorResource(R.color.milestone_outline_bg))
+            .background(ZenTheme.colors.bgMoodHappy)
             .padding(horizontal = 20.7.rdp, vertical = 16.rdp)
     ) {
         Text(
@@ -370,7 +371,7 @@ private fun ZenCirclePanel(visible: Boolean, onInvitePeople: () -> Unit, onMaybe
             fontWeight = FontWeight.Medium,
             fontSize = 24.9.rsp,
             letterSpacing = (-0.5).sp,
-            color = Color.Black,
+            color = ZenTheme.colors.textPrimary,
             modifier = Modifier.semantics { heading() }
         )
         Spacer(Modifier.height(12.rdp))

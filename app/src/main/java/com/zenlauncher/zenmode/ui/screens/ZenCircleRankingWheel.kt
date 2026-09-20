@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -63,8 +64,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.delay
@@ -84,6 +87,9 @@ import kotlin.math.sin
 /** Degrees between neighbouring names on the wheel (Figma: ~94dp of arc on a 251dp radius). */
 private const val WheelStepDegrees = 21.5f
 
+/** Minute-mark divisions between neighbouring names (5 marks per gap). Even, so one sits halfway. */
+private const val MinutesPerStep = 6
+
 // ── Ranking band ──────────────────────────────────────────────────
 
 @Composable
@@ -95,7 +101,7 @@ fun RankingBand(members: List<ZenCircleMember>, ranks: Map<Int, Int>, selected: 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.6.rdp)
+                .heightIn(min = 56.6.rdp)
                 .graphicsLayer {
                     scaleX = draw.value
                     alpha = draw.value.coerceIn(0f, 1f)
@@ -124,7 +130,7 @@ fun RankingBand(members: List<ZenCircleMember>, ranks: Map<Int, Int>, selected: 
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.17.rsp,
                         letterSpacing = (-0.32).sp,
-                        color = Color.Black
+                        color = ZenTheme.colors.textPrimary
                     )
                 }
             }
@@ -135,13 +141,13 @@ fun RankingBand(members: List<ZenCircleMember>, ranks: Map<Int, Int>, selected: 
                     fontWeight = FontWeight.Medium,
                     fontSize = 16.17.rsp,
                     letterSpacing = (-0.97).sp,
-                    color = colorResource(R.color.zen_700),
+                    color = ZenTheme.colors.textBrand,
                     maxLines = 1
                 )
             }
             BandColumn(label = "Zen Score", labelWeight = FontWeight.Normal, selected = selected) { i ->
                 Text(
-                    text = String.format(Locale.US, "%.1f", members[i].zenScore / 10f),
+                    text = ZenScore.format(members[i].zenScore),
                     style = TextStyle(
                         brush = Brush.linearGradient(
                             0.29f to colorResource(R.color.zen_circle_score_green),
@@ -185,7 +191,8 @@ private fun androidx.compose.foundation.layout.RowScope.BandColumn(
     Column(
         modifier = Modifier
             .weight(1f)
-            .padding(top = 9.09.rdp),
+            // Room under the value too, so the name card doesn't sit on the needle below it.
+            .padding(top = 9.09.rdp, bottom = 10.rdp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -242,7 +249,7 @@ fun NameWheel(
     val density = LocalDensity.current
     val radiusPx = with(density) { radius.toPx() }
     val arcTopPx = with(density) { arcTop.toPx() }
-    val green = colorResource(R.color.gold_delta_text)
+    val green = ZenTheme.colors.textBrand
     val muted = colorResource(R.color.zen_circle_wheel_name)
 
     // One-time nudge of the chevrons after the entrance, to hint that this swipes.
@@ -286,15 +293,18 @@ fun NameWheel(
                     val pos = position()
                     val first = floor(pos).toInt() - 3
                     for (major in first..first + 7) {
-                        // Minor ticks: three between every pair of names.
-                        for (quarter in 1..3) {
-                            val d = major + quarter / 4f - pos
+                        // Minute marks, like a watch face: five between every pair of names,
+                        // with the middle one a touch longer so the dial reads in halves.
+                        for (minute in 1 until MinutesPerStep) {
+                            val d = major + minute / MinutesPerStep.toFloat() - pos
                             val angle = d * WheelStepDegrees
                             if (abs(angle) > 64f) continue
+                            val half = minute * 2 == MinutesPerStep
                             drawNeedle(
                                 cx, cy, radiusPx, angle,
-                                length = 5.dp.toPx(), baseWidth = 1.dp.toPx(),
-                                color = muted.copy(alpha = 0.35f), hub = 0f
+                                length = (if (half) 7.5f else 5.5f).dp.toPx(),
+                                baseWidth = (if (half) 1.3f else 1.1f).dp.toPx(),
+                                color = muted.copy(alpha = if (half) 0.6f else 0.45f), hub = 0f
                             )
                         }
                         val d = major - pos
@@ -418,7 +428,7 @@ private fun BoxScope.WheelName(
                     val o = offset()
                     val angle = o * WheelStepDegrees * (PI.toFloat() / 180f)
                     val needle = needleLengthDp(needleCloseness(abs(o)))
-                    val inset = with(density) { (needle + 5f).dp.toPx() }
+                    val inset = with(density) { (needle + 7f).dp.toPx() }
                     val centreX = constraints.maxWidth / 2f + with(density) { 0.5.dp.toPx() }
                     val centreY = arcTopPx + radiusPx
                     val px = centreX + (radiusPx - inset) * sin(angle)

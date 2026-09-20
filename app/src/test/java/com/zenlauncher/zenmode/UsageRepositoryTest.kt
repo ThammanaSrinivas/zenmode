@@ -66,24 +66,38 @@ class UsageRepositoryTest {
     }
 
     @Test
-    fun `onboarding current page is stored and retrieved`() {
+    fun `os onboarding flag is independent of v2 onboarding`() {
         val (repository, prefs, editor) = createMockedRepository()
 
-        repository.setOnboardingCurrentPage(3)
-        verify(editor).putInt("onboarding_current_page", 3)
-        verify(editor).apply()
+        repository.setOsOnboardingComplete(true)
+        verify(editor).putBoolean("is_os_onboarding_complete", true)
+        verify(editor).commit()
 
-        whenever(prefs.getInt("onboarding_current_page", 0)).thenReturn(3)
-        assertEquals(3, repository.getOnboardingCurrentPage())
+        whenever(prefs.getBoolean("is_onboarding_complete", false)).thenReturn(true)
+        whenever(prefs.getBoolean("is_os_onboarding_complete", false)).thenReturn(false)
+        assertEquals(true, repository.isOnboardingComplete())
+        assertEquals(false, repository.isOsOnboardingComplete())
     }
 
     @Test
-    fun `clearOnboardingCurrentPage removes key`() {
+    fun `onboarding current step is stored and retrieved`() {
+        val (repository, prefs, editor) = createMockedRepository()
+
+        repository.setOnboardingCurrentStep("PROMISE")
+        verify(editor).putString("onboarding_current_step", "PROMISE")
+        verify(editor).apply()
+
+        whenever(prefs.getString("onboarding_current_step", null)).thenReturn("PROMISE")
+        assertEquals("PROMISE", repository.getOnboardingCurrentStep())
+    }
+
+    @Test
+    fun `clearOnboardingCurrentStep removes key`() {
         val (repository, _, editor) = createMockedRepository()
 
-        repository.clearOnboardingCurrentPage()
+        repository.clearOnboardingCurrentStep()
 
-        verify(editor).remove("onboarding_current_page")
+        verify(editor).remove("onboarding_current_step")
         verify(editor).apply()
     }
 

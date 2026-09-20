@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.zenlauncher.zenmode.testing.TestActivity
 import com.zenlauncher.zenmode.ui.screens.ZenCircleMember
@@ -53,9 +54,20 @@ class ZenCircleScreenTest {
         }
     }
 
+    /**
+     * The screen opens one member back and spins the first one into place after a short
+     * real-time delay, which the test clock doesn't cover. Wait for the leader to land.
+     */
+    private fun awaitEntrance() {
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("#01").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     @Test
     fun circle_showsTagRankingAndDailyToggle() {
         setContent()
+        awaitEntrance()
         composeTestRule.onNodeWithText("ZENCIR-02").assertIsDisplayed()
         composeTestRule.onNodeWithText("Daily").assertIsDisplayed()
         composeTestRule.onNodeWithText("#01").assertExists()
@@ -65,7 +77,7 @@ class ZenCircleScreenTest {
     fun reactions_disabledOnYourself_enabledOnYourBuddy() {
         var loved: ZenCircleMember? = null
         setContent(onSendLove = { loved = it })
-        composeTestRule.waitForIdle()
+        awaitEntrance()
 
         composeTestRule.onNodeWithContentDescription("Send love to You", useUnmergedTree = true).assertIsNotEnabled()
 
@@ -91,10 +103,13 @@ class ZenCircleScreenTest {
     }
 
     @Test
-    fun shareAndInvite_opensInviteSheet() {
+    fun shareAndInvite_opensShareCardPreview() {
         setContent()
         composeTestRule.onNodeWithText("Share & Invite to Zen Circle").performScrollTo().performClick()
-        composeTestRule.onNodeWithText("Invite your people!").assertIsDisplayed()
+        // The leaderboard card (Figma "Sharable") with its share/save actions.
+        composeTestRule.onNodeWithText("Zencircle daily leaderboard").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Share my Zen Circle").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Save as image").assertIsDisplayed()
     }
 
     @Test
@@ -108,7 +123,8 @@ class ZenCircleScreenTest {
 
         composeTestRule.onNodeWithText("Remove buddy").performClick()
         assertTrue("first tap only asks", !removed)
-        composeTestRule.onNodeWithText("Remove").performScrollTo().performClick()
+        // The confirm row sits in the (non-scrolling) sheet itself.
+        composeTestRule.onNodeWithText("Remove").performClick()
         assertTrue(removed)
     }
 
