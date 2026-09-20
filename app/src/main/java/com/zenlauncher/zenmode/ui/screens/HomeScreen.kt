@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import android.graphics.Bitmap
 import android.widget.ImageView
 import androidx.compose.ui.geometry.Rect
@@ -45,7 +47,7 @@ import com.zenlauncher.zenmode.ui.components.pageSwipe
 import androidx.compose.foundation.systemGestureExclusion
 import com.zenlauncher.zenmode.ui.components.rememberCountUp
 import com.zenlauncher.zenmode.ui.components.rememberReduceMotion
-import com.zenlauncher.zenmode.ui.components.rememberResumeCount
+import com.zenlauncher.zenmode.ui.components.HomeRevealCue
 import com.zenlauncher.zenmode.ui.components.revealPop
 import com.zenlauncher.zenmode.ui.components.revealRise
 import com.zenlauncher.zenmode.ui.components.revealSpin
@@ -99,6 +101,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import java.time.LocalDate
+import java.util.Locale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -124,6 +128,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.launch
 import com.zenlauncher.zenmode.AppGridPreferences
@@ -141,7 +146,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.zenlauncher.zenmode.AppSearchRanking
-import com.zenlauncher.zenmode.coreapi.ZenScore
+import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
 import com.zenlauncher.zenmode.ui.components.shareImage
 import com.zenlauncher.zenmode.ui.components.taperedBorder
@@ -164,7 +169,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import com.zenlauncher.zenmode.coreapi.PromisePreferences
+import com.zenlauncher.zenmode.PromisePreferences
 import com.zenlauncher.zenmode.recap.RecapStore
 import android.util.Log
 
@@ -201,7 +206,9 @@ private val HeaderIconTextGap: Dp @Composable get() = 6.rdp
 
 // Figma node 2001:1504 — header text colours and gradients. Values live in colors.xml
 // (SOURCE OF TRUTH: design tokens) — never inline a Color(0x...) literal here.
-private val ZenScoreGradient: Brush
+// Not private — the Zen Score share card (HomeShareOverlays.kt) draws its big number
+// with the same left-to-right green→orange ramp the header uses, so the two match.
+internal val ZenScoreGradient: Brush
     @Composable get() = Brush.linearGradient(
         listOf(
             colorResource(R.color.score_grad_start),
@@ -248,12 +255,16 @@ fun HomeScreen(
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
     apps: List<AppInfo>,
+    // Plays Home's entrance when the phone is unlocked onto it (see HomeMotion.kt).
+    reveal: HomeRevealCue = HomeRevealCue(),
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
+    // Streaks and Gold have no page of their own, so their stat opens a shareable card
+    // here (HomeShareOverlays.kt). Zen Score has a page — its tap opens that, and the
+    // card lives behind the page's own "Share Zen Score".
     var showStreakOverlay by remember { mutableStateOf(false) }
-    // Bumps every time Home comes into view, replaying the reveal (see HomeMotion.kt).
-    val reveal = rememberResumeCount()
+    var showGoldOverlay by remember { mutableStateOf(false) }
     // Where the home pill sits on screen; the search bar opens in exactly that spot.
     var searchPillBounds by remember { mutableStateOf<Rect?>(null) }
 
@@ -317,6 +328,7 @@ fun HomeScreen(
             GoldInvestedRow(
                 gold = goldInvested,
                 changePercent = goldChangePercent,
+                onClick = { showGoldOverlay = true },
                 modifier = Modifier.revealRise(reveal, HomeReveal.GOLD)
             )
 
@@ -346,6 +358,7 @@ fun HomeScreen(
                 leftCardModifier = Modifier.revealPop(reveal, HomeReveal.MY_CARD),
                 rightCardModifier = Modifier.revealPop(reveal, HomeReveal.BUDDY_CARD),
                 boltModifier = Modifier.revealStrike(reveal, HomeReveal.BOLT),
+                crownCue = reveal,
                 modifier = Modifier.padding(horizontal = ScreenMargin)
             )
 
@@ -430,7 +443,22 @@ fun HomeScreen(
                 onDismiss = { showStreakOverlay = false },
                 totalMindfulDays = totalMindfulDays,
                 longestStreakDays = longestStreakDays,
-                longestStreakRange = longestStreakRange
+                longestStreakRange = longestStreakRange,
+                currentStreakDays = streaks
+            )
+        }
+
+        // Gold Invested overlay
+        AnimatedVisibility(
+            visible = showGoldOverlay,
+            modifier = Modifier.systemBarsPadding(),
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            GoldInvestedOverlay(
+                gold = goldInvested,
+                changePercent = goldChangePercent,
+                onDismiss = { showGoldOverlay = false }
             )
         }
     }
@@ -442,7 +470,7 @@ fun HomeScreen(
 private fun HomeHeader(
     zenScore: Int,
     streaks: Int,
-    reveal: Int,
+    reveal: HomeRevealCue,
     onZenScoreClick: () -> Unit = {},
     onStreakClick: () -> Unit
 ) {
@@ -473,30 +501,23 @@ private fun HomeHeader(
             }
         ) {
             Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
-                Text(
-                    text = "Zen Score",
-                    fontFamily = ClashDisplay,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.rsp,
-                    lineHeight = 16.rsp,
-                    color = colors.textPrimary,
-                    style = HeaderTextStyle
-                )
+                HeaderLabel("Zen Score")
+                Spacer(modifier = Modifier.height(HeaderLineGap))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = ZenScore.format(shownScore),
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 22.rsp,
-                        lineHeight = 24.rsp,
+                        fontSize = HeaderValueSize,
+                        lineHeight = HeaderValueSize,
                         style = HeaderTextStyle.copy(brush = ZenScoreGradient)
                     )
                     Text(
                         text = "/${ZenScore.MAX_DISPLAY}",
                         fontFamily = ClashDisplay,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.rsp,
-                        lineHeight = 20.rsp,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = HeaderUnitSize,
+                        lineHeight = HeaderUnitSize,
                         color = colors.textSecondary,
                         style = HeaderTextStyle
                     )
@@ -512,13 +533,15 @@ private fun HomeHeader(
                 .systemGestureExclusion(),
             icon = {
                 BlazingFlame(
-                    revealKey = reveal,
+                    cue = reveal,
                     lit = streaks > 0,
                     contentDescription = null
                 )
             }
         ) {
             Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
+                HeaderLabel("Streaks")
+                Spacer(modifier = Modifier.height(HeaderLineGap))
                 Row(verticalAlignment = Alignment.Bottom) {
                     // Solid ink, not the brand gradient: the gradient's yellow-green washed out
                     // on the green home wash. textPrimary flips dark/light with the theme.
@@ -526,8 +549,8 @@ private fun HomeHeader(
                         text = shownStreak.toString(),
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.rsp,
-                        lineHeight = 20.rsp,
+                        fontSize = HeaderValueSize,
+                        lineHeight = HeaderValueSize,
                         color = colors.textPrimary,
                         style = HeaderTextStyle
                     )
@@ -536,25 +559,37 @@ private fun HomeHeader(
                         text = if (streaks == 1) "day" else "days",
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 18.rsp,
-                        lineHeight = 20.rsp,
-                        color = colors.textPrimary,
+                        fontSize = HeaderUnitSize,
+                        lineHeight = HeaderUnitSize,
+                        color = colors.textSecondary,
                         style = HeaderTextStyle
                     )
                 }
-                Text(
-                    text = "Streaks",
-                    fontFamily = ClashDisplay,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 18.rsp,
-                    lineHeight = 20.rsp,
-                    color = colors.textPrimary,
-                    style = HeaderTextStyle
-                )
             }
         }
     }
 }
+
+/** The small caption above each header number, shared so both blocks line up exactly. */
+@Composable
+private fun HeaderLabel(text: String) {
+    Text(
+        text = text,
+        fontFamily = ClashDisplay,
+        fontWeight = FontWeight.Medium,
+        fontSize = HeaderLabelSize,
+        lineHeight = HeaderLabelSize,
+        color = ZenTheme.colors.textPrimary,
+        style = HeaderTextStyle
+    )
+}
+
+// Zen Score and Streaks share one type scale (label over value) so their blocks, and the
+// icons sized to them, come out the same height and sit on the same lines.
+private val HeaderLabelSize: TextUnit @Composable get() = 12.rsp
+private val HeaderValueSize: TextUnit @Composable get() = 18.rsp
+private val HeaderUnitSize: TextUnit @Composable get() = 12.rsp
+private val HeaderLineGap: Dp @Composable get() = 3.rdp
 
 /** Tight line boxes, so a two-line block's height is its type and nothing else. */
 private val HeaderTextStyle = TextStyle(
@@ -598,6 +633,8 @@ fun GoldInvestedRow(
     changePercent: Int,
     modifier: Modifier = Modifier,
     fullWidth: Boolean = false,
+    /** Home opens the shareable gold card from here; Zen Gold's own row isn't tappable. */
+    onClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null
 ) {
     var amountVisible by remember { mutableStateOf(true) }
@@ -613,16 +650,25 @@ fun GoldInvestedRow(
         Row(
             modifier = Modifier
                 .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier)
-                .height(56.4.rdp)
+                .height(48.rdp)
                 .taperedBorder(rule, radius, top = 1.rdp, bottom = if (fullWidth) 1.rdp else 0.dp)
-                .padding(start = 15.5.rdp, end = if (fullWidth) 12.rdp else 15.5.rdp),
-            horizontalArrangement = Arrangement.spacedBy(6.4.rdp),
+                // No ripple: the pill has no filled surface to ripple inside, only a rule.
+                .then(
+                    if (onClick != null) Modifier.clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                        onClickLabel = "Open Gold Invested",
+                        onClick = onClick
+                    ) else Modifier
+                )
+                .padding(start = 13.rdp, end = if (fullWidth) 12.rdp else 13.rdp),
+            horizontalArrangement = Arrangement.spacedBy(8.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_coin_gold),
                 contentDescription = null,
-                modifier = Modifier.size(49.3.rdp)
+                modifier = Modifier.size(38.rdp)
             )
 
             Column(horizontalAlignment = Alignment.Start) {
@@ -631,7 +677,7 @@ fun GoldInvestedRow(
                         text = "GOLD INVESTED",
                         fontFamily = Geist,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 10.rsp,
+                        fontSize = 9.rsp,
                         color = GoldLabel
                     )
                     Spacer(modifier = Modifier.width(6.rdp))
@@ -639,8 +685,8 @@ fun GoldInvestedRow(
                         painter = painterResource(R.drawable.ic_eye),
                         contentDescription = if (amountVisible) "Hide amount" else "Show amount",
                         modifier = Modifier
-                            .width(15.9.rdp)
-                            .height(10.9.rdp)
+                            .width(13.rdp)
+                            .height(9.rdp)
                             .clickable { amountVisible = !amountVisible },
                         colorFilter = ColorFilter.tint(GoldLabel)
                     )
@@ -659,8 +705,8 @@ fun GoldInvestedRow(
                     Text(
                         text = if (hideAmount && !canBlurAmount) "\u20B9\u2022\u2022\u2022\u2022\u2022\u2022" else "\u20B9$gold",
                         fontFamily = DepartureMono,
-                        fontSize = 20.9.rsp,
-                        letterSpacing = (-1.045).sp,
+                        fontSize = 17.rsp,
+                        letterSpacing = (-0.85).sp,
                         color = GoldAmount,
                         modifier = if (hideAmount && canBlurAmount)
                             Modifier.blur(5.35.rdp, BlurredEdgeTreatment.Unbounded)
@@ -756,6 +802,7 @@ private fun AppIconItem(
                 onClick = onClick,
                 onLongClick = {
                     view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                    ZenSound.play(Sfx.SELECT)
                     onLongClick()
                 }
             )
@@ -857,7 +904,8 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 // Matches the home pill (not Figma's 46) so the pressed state lands exactly on top of it.
 private val SearchBarHeight: Dp @Composable get() = SearchPillHeight
-private val SearchStrokeWidth: Dp @Composable get() = 5.rdp
+// Same weight as the resting pill's border, so pressing it doesn't thicken the outline.
+private val SearchStrokeWidth: Dp @Composable get() = 3.rdp
 private val SearchGlyphSize: Dp @Composable get() = 19.2.rdp
 // Results sit 26dp in from the bar's edge (x=56 against the bar's x=30).
 private val SearchResultInset: Dp @Composable get() = 26.rdp
@@ -1450,18 +1498,8 @@ private fun GoogleFallbackRow(query: String, onClick: () -> Unit, modifier: Modi
 // mindful days, community percentile and longest streak all need real streak-
 // history tracking that doesn't exist yet (see AppConstants placeholders).
 
-// SOURCE OF TRUTH: design tokens — values live in colors.xml (never a bare
-// Color(0x...) literal here). Where Figma's own sampled value sits within a
-// hair of an existing token (this card and zen_700 differ by one hex digit),
-// reuse the token rather than add a near-duplicate.
-private val MilestoneCardBg: Color @Composable get() = colorResource(R.color.ink_base)
-private val MilestoneMuted: Color @Composable get() = colorResource(R.color.milestone_muted)
-private val MilestoneDim: Color @Composable get() = colorResource(R.color.milestone_dim)
-private val MilestoneDaysColor: Color @Composable get() = colorResource(R.color.amber_500)
-private val MilestoneTagline: Color @Composable get() = colorResource(R.color.milestone_tagline)
-private val MilestoneOutlineBg: Color @Composable get() = colorResource(R.color.milestone_outline_bg)
-private val MilestoneOutlineBorder: Color @Composable get() = colorResource(R.color.zen_700)
-private val MilestoneSolidBg: Color @Composable get() = colorResource(R.color.zen_700)
+// The dark card's colour tokens, the sheet chrome around it and the Save/Share
+// capture are shared with the Zen Score and Gold cards — see HomeShareOverlays.kt.
 
 @Composable
 private fun StreakOverlay(
@@ -1470,165 +1508,78 @@ private fun StreakOverlay(
     longestStreakDays: Int,
     longestStreakRange: String,
     topPercentile: Int = AppConstants.PLACEHOLDER_MILESTONE_PERCENTILE,
-    zenScoreThreshold: Int = AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD
+    zenScoreThreshold: Int = AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD,
+    /** The same live count as the flame in Home's header. */
+    currentStreakDays: Int = 0
 ) {
     val colors = ZenTheme.colors
-    val context = LocalContext.current
-    val view = LocalView.current
-    val scope = rememberCoroutineScope()
-    var offsetY by remember { mutableStateOf(0f) }
-    var cardBounds by remember { mutableStateOf<Rect?>(null) }
 
-    BackHandler(enabled = true) { onDismiss() }
+    ShareSheet(
+        eyebrow = "STREAKS",
+        shareLabel = "Share my streaks",
+        fileBaseName = "zenmode_milestone",
+        shareText = "$totalMindfulDays days of intentional time with ZenMode.",
+        chooserTitle = "Share Streak",
+        onDismiss = onDismiss
+    ) { cardModifier ->
+        Spacer(modifier = Modifier.height(35.rdp))
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .offset(y = offsetY.coerceAtLeast(0f).dp)
-            .background(Color.Black.copy(alpha = 0.45f))
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onDragEnd = {
-                        if (offsetY > 150f) onDismiss()
-                        offsetY = 0f
-                    },
-                    onVerticalDrag = { _, dragAmount -> offsetY += dragAmount }
-                )
-            }
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) { onDismiss() },
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .clip(RoundedCornerShape(topStart = 24.rdp, topEnd = 24.rdp))
-                .background(colors.bgSecondary.copy(alpha = 0.96f))
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { /* consume click */ }
-                .padding(horizontal = ScreenMargin)
-                .padding(top = 17.rdp, bottom = 32.rdp)
-        ) {
-            // Header row: "STREAKS" eyebrow + dismiss
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "STREAKS",
-                    fontFamily = Geist,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.rsp,
-                    letterSpacing = (-0.42).sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.align(Alignment.CenterStart)
-                )
-                Image(
-                    painter = painterResource(R.drawable.ic_milestone_close),
-                    contentDescription = "Close",
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(24.rdp)
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) { onDismiss() }
-                )
-            }
+        // Headline — spelled-out day count, matching the design's voice
+        Text(
+            text = "${numberToWords(totalMindfulDays)} days of intentional time with mobile & promise kept safe.",
+            fontFamily = ClashDisplay,
+            fontWeight = FontWeight.Medium,
+            fontSize = 20.rsp,
+            lineHeight = 24.rsp,
+            letterSpacing = (-0.6).sp,
+            color = colors.textPrimary
+        )
 
-            Spacer(modifier = Modifier.height(35.rdp))
+        Spacer(modifier = Modifier.height(15.rdp))
 
-            // Headline — spelled-out day count, matching the design's voice
-            Text(
-                text = "${numberToWords(totalMindfulDays)} days of intentional time with mobile & promise kept safe.",
-                fontFamily = ClashDisplay,
-                fontWeight = FontWeight.Medium,
-                fontSize = 20.rsp,
-                lineHeight = 24.rsp,
-                letterSpacing = (-0.6).sp,
-                color = colors.textPrimary
-            )
+        Text(
+            text = "You're in the top $topPercentile% of the Zen Bros",
+            fontFamily = Geist,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.rsp,
+            letterSpacing = (-0.16).sp,
+            color = colors.textBrand
+        )
 
-            Spacer(modifier = Modifier.height(15.rdp))
+        Spacer(modifier = Modifier.height(15.rdp))
 
-            Text(
-                text = "You're in the top $topPercentile% of the Zen Bros",
-                fontFamily = Geist,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.rsp,
-                letterSpacing = (-0.16).sp,
-                color = colors.textBrand
-            )
+        // The shareable milestone card — "Save as image" / "Share my streaks"
+        // crop exactly this, not the whole sheet.
+        MilestoneCard(
+            modifier = cardModifier,
+            totalMindfulDays = totalMindfulDays,
+            zenScoreThreshold = zenScoreThreshold
+        )
 
-            Spacer(modifier = Modifier.height(15.rdp))
+        Spacer(modifier = Modifier.height(20.rdp))
 
-            // The shareable milestone card — "Save as image" / "Share my streaks"
-            // crop exactly this, not the whole sheet.
-            MilestoneCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned { coords -> cardBounds = coords.boundsInWindow() },
-                totalMindfulDays = totalMindfulDays,
-                zenScoreThreshold = zenScoreThreshold
-            )
+        ShareStatLine(
+            lead = "LONGEST \u00B7 $longestStreakDays DAYS",
+            trail = "($longestStreakRange)"
+        )
 
-            Spacer(modifier = Modifier.height(20.rdp))
+        Spacer(modifier = Modifier.height(10.rdp))
 
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(SpanStyle(color = colors.textPrimary)) {
-                        append("LONGEST · $longestStreakDays DAYS ")
-                    }
-                    withStyle(SpanStyle(color = colors.textSecondary)) {
-                        append("($longestStreakRange)")
-                    }
-                },
-                fontFamily = DepartureMono,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.rsp,
-                letterSpacing = (-0.14).sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.rdp))
-
-            // Save as image / Share my streaks
-            Column(verticalArrangement = Arrangement.spacedBy(12.rdp)) {
-                MilestoneOutlineButton(
-                    text = "Save as image",
-                    onClick = {
-                        scope.launch {
-                            saveOrShareMilestoneCard(
-                                view = view,
-                                context = context,
-                                cardBounds = cardBounds,
-                                share = false,
-                                totalMindfulDays = totalMindfulDays
-                            )
-                        }
-                    }
-                )
-                MilestoneSolidButton(
-                    text = "Share my streaks",
-                    onClick = {
-                        scope.launch {
-                            saveOrShareMilestoneCard(
-                                view = view,
-                                context = context,
-                                cardBounds = cardBounds,
-                                share = true,
-                                totalMindfulDays = totalMindfulDays
-                            )
-                        }
-                    }
-                )
-            }
-        }
+        ShareStatLine(
+            lead = "CURRENT \u00B7 ${"%02d".format(Locale.US, currentStreakDays)} DAYS",
+            trail = "(${currentStreakRange(currentStreakDays)})"
+        )
     }
 }
+
+/** "SEP 11–PRESENT": the streak counts today, so it began [days] − 1 days ago. */
+internal fun currentStreakRange(days: Int, today: LocalDate = LocalDate.now()): String {
+    if (days <= 0) return "STARTS TODAY"
+    val start = today.minusDays((days - 1).toLong())
+    return "${StreakDateFormat.format(start).uppercase(Locale.US)}–PRESENT"
+}
+
+private val StreakDateFormat = java.time.format.DateTimeFormatter.ofPattern("MMM d", Locale.US)
 
 @Composable
 private fun MilestoneCard(
@@ -1636,124 +1587,28 @@ private fun MilestoneCard(
     zenScoreThreshold: Int,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(24.rdp))
-            .background(MilestoneCardBg)
-            .padding(20.rdp)
-    ) {
-        Column {
-            // Header: logo + milestone label
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(R.drawable.logo_only_pins),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.rdp)
-                    )
-                    Spacer(modifier = Modifier.width(6.rdp))
-                    Text(text = "ZenMode", fontFamily = ClashDisplay, fontWeight = FontWeight.Medium, fontSize = 18.rsp, color = Color.White)
-                    Text(text = "OS", fontFamily = ClashDisplay, fontWeight = FontWeight.Medium, fontSize = 18.rsp, style = TextStyle(brush = ZenScoreGradient))
-                }
-                Text(
-                    text = "$totalMindfulDays DAY MILESTONE",
-                    fontFamily = DepartureMono,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 12.rsp,
-                    color = MilestoneMuted
+    ShareCardFrame(stamp = "$totalMindfulDays DAY MILESTONE", modifier = modifier) {
+        ShareCardHero(
+            unit = "DAYS",
+            caption = "That's ${approxMonths(totalMindfulDays)} of days that ended above Zen score $zenScoreThreshold.",
+            badge = {
+                Image(
+                    painter = painterResource(R.drawable.ic_streak_fire),
+                    contentDescription = null,
+                    modifier = Modifier.size(46.rdp)
                 )
-            }
+            },
+            value = { ShareCardValue(text = "$totalMindfulDays", color = ShareCardAmber) }
+        )
 
-            Spacer(modifier = Modifier.height(28.rdp))
+        Spacer(modifier = Modifier.height(20.rdp))
 
-            // Flame circle + big count + description
-            Row(verticalAlignment = Alignment.Top) {
-                Box(
-                    modifier = Modifier
-                        .size(73.rdp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_streak_fire),
-                        contentDescription = null,
-                        modifier = Modifier.size(46.rdp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(14.rdp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = "$totalMindfulDays",
-                            fontFamily = DepartureMono,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 32.rsp,
-                            letterSpacing = (-0.96).sp,
-                            color = MilestoneDaysColor
-                        )
-                        Spacer(modifier = Modifier.width(8.rdp))
-                        Text(
-                            text = "DAYS",
-                            fontFamily = DepartureMono,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 16.rsp,
-                            letterSpacing = (-0.96).sp,
-                            color = MilestoneDim,
-                            modifier = Modifier.padding(bottom = 5.rdp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.rdp))
-                    Text(
-                        text = "That's ${approxMonths(totalMindfulDays)} of days that ended above Zen score $zenScoreThreshold.",
-                        fontFamily = Geist,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 12.rsp,
-                        letterSpacing = (-0.12).sp,
-                        lineHeight = 16.rsp,
-                        color = MilestoneMuted
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.rdp))
-
-            MilestoneDotGrid(
-                filledCells = totalMindfulDays,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.rdp)
-            )
-
-            Spacer(modifier = Modifier.height(16.rdp))
-
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Quiet the noise.",
-                    fontFamily = ClashDisplay,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.rsp,
-                    letterSpacing = (-0.16).sp,
-                    color = MilestoneTagline
-                )
-                Text(
-                    text = "Zenmodeos.com",
-                    fontFamily = DepartureMono,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 12.rsp,
-                    letterSpacing = (-0.12).sp,
-                    color = MilestoneMuted
-                )
-            }
-        }
+        MilestoneDotGrid(
+            filledCells = totalMindfulDays,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(46.rdp)
+        )
     }
 }
 
@@ -1765,7 +1620,7 @@ private fun MilestoneCard(
  */
 @Composable
 private fun MilestoneDotGrid(filledCells: Int, modifier: Modifier = Modifier) {
-    val filledColor = MilestoneDaysColor
+    val filledColor = ShareCardAmber
     val emptyColor = Color.White.copy(alpha = 0.08f)
     Canvas(modifier = modifier) {
         val columns = 30
@@ -1788,66 +1643,6 @@ private fun MilestoneDotGrid(filledCells: Int, modifier: Modifier = Modifier) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun MilestoneOutlineButton(text: String, onClick: () -> Unit) {
-    Row(
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(47.rdp)
-            .clip(RoundedCornerShape(50))
-            .background(MilestoneOutlineBg)
-            .border(1.rdp, MilestoneOutlineBorder.copy(alpha = 0.26f), RoundedCornerShape(50))
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            )
-    ) {
-        Image(
-            painter = painterResource(R.drawable.ic_download),
-            contentDescription = null,
-            modifier = Modifier.size(16.rdp)
-        )
-        Spacer(modifier = Modifier.width(8.rdp))
-        Text(
-            text = text,
-            fontFamily = Geist,
-            fontWeight = FontWeight.Medium,
-            fontSize = 17.rsp,
-            letterSpacing = (-0.35).sp,
-            color = GoldDeltaText
-        )
-    }
-}
-
-@Composable
-private fun MilestoneSolidButton(text: String, onClick: () -> Unit) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(47.rdp)
-            .clip(RoundedCornerShape(50))
-            .background(MilestoneSolidBg)
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            )
-    ) {
-        Text(
-            text = text,
-            fontFamily = Geist,
-            fontWeight = FontWeight.Medium,
-            fontSize = 17.rsp,
-            letterSpacing = (-0.35).sp,
-            color = Color.White
-        )
     }
 }
 
@@ -1886,46 +1681,4 @@ private fun numberToWords(n: Int): String =
 private fun approxMonths(days: Int): String {
     val months = (days / 30).coerceAtLeast(1)
     return "${numberWordsRaw(months)} month${if (months == 1) "" else "s"}"
-}
-
-/**
- * Crops the milestone card out of the current frame and either shares it (matches the
- * old share-to-bitmap flow this replaces) or saves it as a PNG. Save targets the public
- * Pictures/ZenMode gallery folder via MediaStore on Android 10+; below that (no scoped
- * storage, and not worth a runtime WRITE_EXTERNAL_STORAGE prompt for a shrinking API
- * tail) it falls back to app-private storage.
- */
-private suspend fun saveOrShareMilestoneCard(
-    view: android.view.View,
-    context: android.content.Context,
-    cardBounds: Rect?,
-    share: Boolean,
-    totalMindfulDays: Int
-) {
-    val bounds = cardBounds ?: run {
-        Log.e("StreakOverlayShare", "cardBounds is null")
-        return
-    }
-    // Capture on Main thread (required by drawToBitmap)
-    val fullBitmap = view.drawToBitmap()
-    val left = bounds.left.toInt().coerceAtLeast(0)
-    val top = bounds.top.toInt().coerceAtLeast(0)
-    val cropped = Bitmap.createBitmap(
-        fullBitmap,
-        left,
-        top,
-        bounds.width.toInt().coerceAtMost(fullBitmap.width - left),
-        bounds.height.toInt().coerceAtMost(fullBitmap.height - top)
-    )
-    if (share) {
-        shareImage(
-            context = context,
-            bitmap = cropped,
-            fileName = "zenmode_milestone.png",
-            text = "$totalMindfulDays days of intentional time with ZenMode.",
-            chooserTitle = "Share Streak"
-        )
-    } else {
-        saveImageToPictures(context, cropped, fileBaseName = "zenmode_milestone")
-    }
 }

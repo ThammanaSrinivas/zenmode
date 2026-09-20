@@ -22,7 +22,7 @@ class ZenGoldActivity : AppCompatActivity() {
         HomePageSide.RIGHT.applyOnCreate(this)
 
         setContent {
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@ZenGoldActivity)) {
+            ZenTheme() {
                 ZenGoldScreen(
                     promiseHours = promiseHours.intValue,
                     onBackClick = { finish() },

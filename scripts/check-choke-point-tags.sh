@@ -11,10 +11,16 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CHOKE_POINT_FILES="$REPO_ROOT/core-api/src/main/java/com/zenlauncher/zenmode/coreapi/services/ServiceLocator.kt $REPO_ROOT/app/src/main/java/com/zenlauncher/zenmode/ZenModeApp.kt"
+# An array, not a space-joined string: a checkout path with a space in it ("ZenMode OS/")
+# word-split the old form into fragments that matched no file, so every tag check was
+# skipped and the guardrail passed silently on exactly the repos it was meant to guard.
+CHOKE_POINT_FILES=(
+  "$REPO_ROOT/core-api/src/main/java/com/zenlauncher/zenmode/coreapi/services/ServiceLocator.kt"
+  "$REPO_ROOT/app/src/main/java/com/zenlauncher/zenmode/ZenModeApp.kt"
+)
 
 fail=0
-for f in $CHOKE_POINT_FILES; do
+for f in "${CHOKE_POINT_FILES[@]}"; do
   [ -f "$f" ] || continue
   for tag in '\[WHAT\]' '\[WHY\]' '\[HOW\]' '\[WHERE\]'; do
     if ! grep -qE "$tag" "$f"; then

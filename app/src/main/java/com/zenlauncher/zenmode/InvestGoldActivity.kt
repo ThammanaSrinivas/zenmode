@@ -38,7 +38,7 @@ class InvestGoldActivity : AppCompatActivity() {
             var units by rememberSaveable { mutableIntStateOf(AppConstants.INVEST_GOLD_MIN_UNITS) }
             var reviewing by rememberSaveable { mutableStateOf(false) }
 
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@InvestGoldActivity)) {
+            ZenTheme() {
                 AnimatedContent(
                     targetState = reviewing,
                     transitionSpec = {

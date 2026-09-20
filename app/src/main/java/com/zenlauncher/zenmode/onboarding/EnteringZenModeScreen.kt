@@ -52,8 +52,6 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.PathParser
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.semantics.contentDescription
@@ -61,6 +59,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
 import com.zenlauncher.zenmode.ui.components.staggeredEntrance
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -113,7 +112,7 @@ private fun contours(pathData: String): List<Path> =
  */
 @Composable
 internal fun EnteringZenModeScreen(onFinished: () -> Unit) {
-    val haptics = LocalHapticFeedback.current
+    val feedback = rememberZenFeedback()
     val inspection = LocalInspectionMode.current
     val trace = remember { List(3) { Animatable(if (inspection) 1f else 0f) } }
     val glow = remember { Animatable(if (inspection) 1f else 0f) }
@@ -132,14 +131,18 @@ internal fun EnteringZenModeScreen(onFinished: () -> Unit) {
         if (inspection) return@LaunchedEffect
         delay(350)
         toggledOn = true
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        feedback.toggle(true)
+        // Z · E · N: a small detent under the thumb as each letter starts to draw.
         trace.forEachIndexed { i, anim ->
             launch {
                 delay(i * 220L)
+                feedback.detent()
                 anim.animateTo(1f, tween(1_100, easing = FastOutSlowInEasing))
             }
         }
         delay(1_550)
+        // The word lights up and the chord lands with it.
+        feedback.enter()
         glow.animateTo(1f, tween(500))
         delay(1_300)
         finish()

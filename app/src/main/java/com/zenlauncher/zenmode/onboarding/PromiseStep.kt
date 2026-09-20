@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.onboarding
 
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -64,12 +65,12 @@ internal fun PromiseStep(
                 .padding(horizontal = OnboardingMargin)
         ) {
             Spacer(Modifier.height(20.rdp))
-            OnboardingEyebrow("Zen Gold", color = colorResource(R.color.amber_800), modifier = Modifier.staggeredEntrance(0))
+            OnboardingEyebrow("Zen Gold", color = ZenTheme.colors.accentReward, modifier = Modifier.staggeredEntrance(0))
             Spacer(Modifier.height(10.rdp))
             OnboardingHeadline("Make a promise to yourself.", modifier = Modifier.staggeredEntrance(1))
             Spacer(Modifier.height(12.rdp))
             OnboardingBody(
-                "Pick a daily screen-time limit you can actually keep. Start gentle — you can tighten it later.",
+                "Pick a daily screen-time limit you can actually keep. Start gentle. You can tighten it later.",
                 modifier = Modifier.staggeredEntrance(2)
             )
 
@@ -113,8 +114,8 @@ private fun GoldBeat(
     modifier: Modifier = Modifier,
     highlight: Boolean = false
 ) {
-    val container = if (highlight) colorResource(R.color.amber_on) else Color.White
-    val accent = if (highlight) colorResource(R.color.amber_800) else colorResource(R.color.zen_700)
+    val container = if (highlight) ZenTheme.colors.rewardSurface else ZenTheme.colors.surfaceElevated
+    val accent = if (highlight) ZenTheme.colors.accentReward else ZenTheme.colors.textBrand
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -130,7 +131,7 @@ private fun GoldBeat(
                 .background(accent),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = number, fontFamily = DepartureMono, fontSize = 12.rsp, color = Color.White, textAlign = TextAlign.Center)
+            Text(text = number, fontFamily = DepartureMono, fontSize = 12.rsp, color = ZenTheme.colors.actionPrimaryText, textAlign = TextAlign.Center)
         }
         Spacer(Modifier.height(10.rdp))
         Text(
@@ -138,7 +139,7 @@ private fun GoldBeat(
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 15.rsp,
-            color = colorResource(R.color.ink_surface),
+            color = ZenTheme.colors.textPrimary,
             maxLines = 1
         )
         Text(
@@ -146,7 +147,7 @@ private fun GoldBeat(
             fontFamily = Geist,
             fontSize = 12.rsp,
             lineHeight = 16.rsp,
-            color = colorResource(R.color.stone_600)
+            color = ZenTheme.colors.textSecondary
         )
     }
 }

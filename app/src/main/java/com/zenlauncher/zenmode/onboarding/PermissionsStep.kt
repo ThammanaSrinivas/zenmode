@@ -1,5 +1,12 @@
 package com.zenlauncher.zenmode.onboarding
 
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -105,14 +112,14 @@ internal fun PermissionsStep(
                     text = "$requiredGranted/$requiredCount",
                     fontFamily = DepartureMono,
                     fontSize = 20.rsp,
-                    color = colorResource(if (requiredDone) R.color.zen_700 else R.color.ink_surface)
+                    color = (if (requiredDone) ZenTheme.colors.textBrand else ZenTheme.colors.textPrimary)
                 )
                 Spacer(Modifier.width(8.rdp))
                 Text(
-                    text = if (requiredDone) "required allowed — you're set" else "required allowed",
+                    text = if (requiredDone) "required allowed, you're set" else "required allowed",
                     fontFamily = Geist,
                     fontSize = 14.rsp,
-                    color = colorResource(R.color.stone_600)
+                    color = ZenTheme.colors.textSecondary
                 )
             }
 
@@ -136,12 +143,19 @@ internal fun PermissionsStep(
 
 @Composable
 private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: () -> Unit) {
-    val border = if (granted) colorResource(R.color.zen_100) else colorResource(R.color.paper_hairline)
+    val border = if (granted) ZenTheme.colors.surfaceTintLine else ZenTheme.colors.borderSubtle
+    val feedback = rememberZenFeedback()
+    // Grants happen in system Settings; the chime plays when the user comes back and it's done.
+    var wasGranted by remember { mutableStateOf(granted) }
+    LaunchedEffect(granted) {
+        if (granted && !wasGranted) feedback.success()
+        wasGranted = granted
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.rdp))
-            .background(if (granted) colorResource(R.color.zen_050) else Color.White)
+            .background(if (granted) ZenTheme.colors.surfaceTint else ZenTheme.colors.surfaceElevated)
             .border(1.dp, border, RoundedCornerShape(20.rdp))
             .pressScale(onClick = onAllow, enabled = !granted, onClickLabel = "Allow ${permission.title}", pressedScale = 0.98f)
             .semantics(mergeDescendants = true) {
@@ -156,13 +170,13 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
             modifier = Modifier
                 .size(42.rdp)
                 .clip(RoundedCornerShape(12.rdp))
-                .background(if (granted) Color.White else colorResource(R.color.paper_base)),
+                .background(if (granted) ZenTheme.colors.surfaceElevated else ZenTheme.colors.bgPrimary),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = permission.icon,
                 contentDescription = null,
-                tint = colorResource(if (granted) R.color.zen_700 else R.color.ink_surface),
+                tint = (if (granted) ZenTheme.colors.textBrand else ZenTheme.colors.textPrimary),
                 modifier = Modifier.size(22.rdp)
             )
         }
@@ -173,14 +187,14 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
                 fontFamily = DepartureMono,
                 fontSize = 10.rsp,
                 letterSpacing = 0.8.sp,
-                color = colorResource(if (permission.required) R.color.ember_700 else R.color.stone_500)
+                color = (if (permission.required) ZenTheme.colors.accentDeduct else ZenTheme.colors.textTertiary)
             )
             Text(
                 text = permission.title,
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.rsp,
-                color = colorResource(R.color.ink_surface)
+                color = ZenTheme.colors.textPrimary
             )
             Spacer(Modifier.height(2.rdp))
             Text(
@@ -188,7 +202,7 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
                 fontFamily = Geist,
                 fontSize = 13.rsp,
                 lineHeight = 18.rsp,
-                color = colorResource(R.color.stone_600)
+                color = ZenTheme.colors.textSecondary
             )
         }
         Spacer(Modifier.width(10.rdp))
@@ -202,16 +216,16 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
                     modifier = Modifier
                         .size(30.rdp)
                         .clip(CircleShape)
-                        .background(colorResource(R.color.zen_700)),
+                        .background(ZenTheme.colors.textBrand),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.rdp))
+                    Icon(Icons.Rounded.Check, contentDescription = null, tint = ZenTheme.colors.textOnBrand, modifier = Modifier.size(18.rdp))
                 }
             } else {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(percent = 50))
-                        .background(colorResource(R.color.ink_surface))
+                        .background(ZenTheme.colors.actionPrimary)
                         .padding(horizontal = 14.rdp, vertical = 8.rdp)
                 ) {
                     Text(
@@ -219,7 +233,7 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
                         fontFamily = Geist,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.rsp,
-                        color = Color.White
+                        color = ZenTheme.colors.actionPrimaryText
                     )
                 }
             }

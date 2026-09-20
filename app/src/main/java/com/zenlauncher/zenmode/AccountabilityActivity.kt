@@ -28,7 +28,7 @@ class AccountabilityActivity : AppCompatActivity() {
         )[AccountabilityViewModel::class.java]
 
         setContent {
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@AccountabilityActivity)) {
+            ZenTheme() {
                 val uiState by viewModel.uiState.observeAsState(AccountabilityUiState())
                 val myLikes by viewModel.myLikes.observeAsState(initial = 0L)
                 val buddyLikes by viewModel.buddyLikes.observeAsState(initial = 0L)

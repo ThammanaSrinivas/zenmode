@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.view.HapticFeedbackConstants
@@ -156,6 +158,7 @@ fun HomeAppsPickerOverlay(
             selection.size < limit -> update(selection + pkg)
             else -> {
                 view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                ZenSound.play(Sfx.ERROR)
                 showFullHint = true
             }
         }
@@ -337,6 +340,7 @@ private fun HomeSlotGrid(
                 order = order.toMutableList().apply { add(to, removeAt(from)) }
                 dragOffset -= Offset(((to % columns) - col) * pitch, ((to / columns) - row) * pitch)
                 view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                ZenSound.play(Sfx.TAP)
             }
         }
 
@@ -381,6 +385,7 @@ private fun HomeSlotGrid(
                                             detectDragGesturesAfterLongPress(
                                                 onDragStart = {
                                                     view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                                    ZenSound.play(Sfx.SELECT)
                                                     dragging = pkg
                                                     dragOffset = Offset.Zero
                                                 },

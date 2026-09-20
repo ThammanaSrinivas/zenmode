@@ -124,7 +124,7 @@ object RecapStory {
         val calmest = recap.calmestDay
         return RecapCard.Highlight(
             headline = "Your calmest day",
-            value = calmest?.fullDayName() ?: "—",
+            value = calmest?.fullDayName() ?: "-",
             caption = calmest?.let { "Just ${formatMinutes(it.screenTimeMinutes)} on screen. More days like this one." }
                 ?: "More days like this one."
         )

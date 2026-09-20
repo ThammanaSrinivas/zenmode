@@ -50,7 +50,12 @@ import coil.compose.AsyncImage
 import com.zenlauncher.zenmode.AppGridPreferences
 import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
 import com.zenlauncher.zenmode.ResistancePreferences
+import com.zenlauncher.zenmode.HomeThemePreferences
 import com.zenlauncher.zenmode.ThemePreferences
+import com.zenlauncher.zenmode.ZenSound
+import com.zenlauncher.zenmode.ui.components.ZenMotion
+import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
+import androidx.compose.runtime.collectAsState
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
@@ -118,6 +123,8 @@ fun SettingsScreen(
     onShareClick: () -> Unit,
     onOpenPro: (ProEntry) -> Unit = {},
     onProGateShown: (ProFeature) -> Unit = {},
+    /** Pro: writes the CSV export and opens the share sheet. */
+    onExportData: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onDeleteAccountClick: () -> Unit = {},
     weeklyReports: (@Composable () -> Unit)? = null,
@@ -125,12 +132,16 @@ fun SettingsScreen(
 ) {
     val colors = ZenTheme.colors
     val context = LocalContext.current
-    var isDarkMode by remember { mutableStateOf(ThemePreferences.isDarkMode(context)) }
+    val themeMode by remember { ThemePreferences.modeState(context) }.collectAsState()
+    val soundsOn by ZenSound.enabled.collectAsState()
+    val feedback = rememberZenFeedback()
     var isResistanceEnabled by remember { mutableStateOf(ResistancePreferences.isEnabled(context)) }
     val homeAppCount = remember { AppGridPreferences.getAppCount(context) }
     var showAccountSheet by remember { mutableStateOf(false) }
     var gate by remember { mutableStateOf<ProFeature?>(null) }
     var soon by remember { mutableStateOf<ProFeature?>(null) }
+    var themePicker by remember { mutableStateOf(false) }
+    val homeTheme by remember { HomeThemePreferences.state(context) }.collectAsState()
 
     @Suppress("NAME_SHADOWING")
     val isPro = isProAvailable && isPro
@@ -139,10 +150,14 @@ fun SettingsScreen(
         isPro -> ProTagState.Unlocked
         else -> ProTagState.Locked
     }
-    /** Free → the gate sheet. Pro → an honest "arriving" note until the feature's surface ships. */
+    /** Free → the gate sheet. Pro → the feature, or an honest "arriving" note until its surface ships. */
     fun openProFeature(feature: ProFeature) {
         if (isPro) {
-            soon = feature
+            when (feature) {
+                ProFeature.HOME_THEMES -> themePicker = true
+                ProFeature.DATA_EXPORT -> onExportData()
+                else -> soon = feature
+            }
         } else {
             gate = feature
             onProGateShown(feature)
@@ -227,25 +242,41 @@ fun SettingsScreen(
                         // Access is granted or revoked in system settings; the switch reflects it on resume.
                         onCheckedChange = { onNotificationBadgesClick() }
                     )
-                    ZenRowDivider()
-                    ZenSettingToggleItem(
-                        text = "Dark mode (beta)",
-                        subtitle = "Ink theme. Still being finished.",
-                        checked = isDarkMode,
-                        onCheckedChange = { enabled ->
-                            isDarkMode = enabled
-                            ThemePreferences.setDarkMode(context, enabled)
-                        }
-                    )
                     if (isProAvailable) {
                         ZenRowDivider()
                         ZenSettingsRow(
                             title = "Home-screen themes",
                             subtitle = "Keep the mood washes, or pick your own.",
+                            value = if (isPro) homeTheme.label else null,
                             pro = proTag(),
                             onClick = { openProFeature(ProFeature.HOME_THEMES) }
                         )
                     }
+                }
+
+                ZenSettingsGroup(label = "Look & sound") {
+                    AppearanceRow(
+                        mode = themeMode,
+                        onModeChange = { mode ->
+                            val wasDark = ThemePreferences.isDarkMode(context)
+                            // Let ZenTheme's crossfade play on this screen first; AppCompat then
+                            // recreates every open activity onto colours that already match.
+                            ThemePreferences.setMode(context, mode, applyAfterMillis = ZenMotion.SLOW + 60L)
+                            val nowDark = ThemePreferences.isDarkMode(context)
+                            if (nowDark != wasDark) feedback.theme(nowDark)
+                        }
+                    )
+                    ZenRowDivider()
+                    ZenSettingToggleItem(
+                        text = "Interface sounds",
+                        subtitle = "Soft ticks and chimes. Silent whenever your phone is.",
+                        checked = soundsOn,
+                        onCheckedChange = { on ->
+                            ZenSound.setEnabled(context, on)
+                            // Turning sounds on should prove itself.
+                            if (on) feedback.toggle(true)
+                        }
+                    )
                 }
 
                 ZenSettingsGroup(
@@ -274,7 +305,7 @@ fun SettingsScreen(
                     ZenSettingsGroup(label = "Your data") {
                         ZenSettingsRow(
                             title = "Export data",
-                            subtitle = "A CSV of your sessions and scores.",
+                            subtitle = "A CSV of every day ZenMode remembers.",
                             pro = proTag(),
                             onClick = { openProFeature(ProFeature.DATA_EXPORT) }
                         )
@@ -325,6 +356,14 @@ fun SettingsScreen(
                     onOpenPro(ProEntry.GATE)
                 },
                 onDismiss = { gate = null }
+            )
+        }
+
+        if (themePicker) {
+            HomeThemeSheet(
+                current = homeTheme,
+                onPick = { HomeThemePreferences.set(context, it) },
+                onDismiss = { themePicker = false }
             )
         }
 
@@ -673,7 +712,7 @@ private fun ProFeature.gateCopy(): Triple<String, String, String> = when (this) 
     ProFeature.DATA_EXPORT -> Triple(
         "Export your data",
         "Everything already stays on your phone.",
-        "Pro lets you take it with you as a CSV of sessions and scores."
+        "Pro lets you take it with you: a CSV of your days, promises and scores."
     )
     ProFeature.PERIOD_REPORTS -> Triple(
         "Weekly and monthly reports",

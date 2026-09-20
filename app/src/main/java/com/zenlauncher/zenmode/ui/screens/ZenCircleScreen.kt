@@ -1,6 +1,8 @@
 package com.zenlauncher.zenmode.ui.screens
 
 import com.zenlauncher.zenmode.BuddyConnector
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -206,6 +208,7 @@ fun ZenCircleScreen(
     LaunchedEffect(selected) {
         if (selected != lastSelected) {
             haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            ZenSound.play(Sfx.TAP)
             lastSelected = selected
         }
     }
@@ -402,6 +405,8 @@ private fun DailyWeeklyToggle(onWeeklyClick: () -> Unit, modifier: Modifier = Mo
                 .clip(CircleShape)
                 .clickable(onClickLabel = "Weekly ranking (PRO)") {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    // Locked: a soft "not yet", never a buzzer.
+                    ZenSound.play(Sfx.ERROR)
                     scope.launch {
                         for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, tween(55))
                     }
@@ -727,6 +732,7 @@ private fun ReactionButton(
                 .semantics { contentDescription = label }
                 .clickable(enabled = enabled, onClickLabel = label) {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    ZenSound.play(Sfx.TOGGLE_ON)
                     scope.launch {
                         pop.snapTo(0.78f)
                         pop.animateTo(1f, spring(dampingRatio = 0.3f, stiffness = Spring.StiffnessMedium))

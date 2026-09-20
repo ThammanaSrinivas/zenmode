@@ -24,6 +24,7 @@ import android.os.Bundle
 import android.widget.Toast
 import android.provider.Settings
 import androidx.activity.OnBackPressedCallback
+import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -39,10 +40,13 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.zenlauncher.zenmode.ui.components.HomeRevealCue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.zenlauncher.zenmode.coreapi.UsageRepository
@@ -86,12 +90,12 @@ private sealed interface DeepLink {
 }
 
 /** What to auto-fire once a circle-mode Share/Use-a-code tap's createCircle() completes. */
-private enum class PendingCircleAction { SHARE, COPY }
+internal enum class PendingCircleAction { SHARE, COPY }
 
 class MainActivity : AppCompatActivity() {
     private var isReceiverRegistered = false
     private lateinit var viewModel: MainViewModel
-    private lateinit var repository: UsageRepository
+    internal lateinit var repository: UsageRepository
 
     private var installedApps by mutableStateOf<List<AppInfo>>(emptyList())
     // Same reasoning as installedApps: a plain `remember` here only reads the pref
@@ -104,45 +108,101 @@ class MainActivity : AppCompatActivity() {
     private var showHomeAppsPicker by mutableStateOf(false)
     // The app whose actions opened the picker, so back returns to them.
     private var pickerReturnApp: AppInfo? = null
-    private var showBuddyConnect by mutableStateOf(false)
+    internal var showBuddyConnect by mutableStateOf(false)
     private var showEnteringZenMode by mutableStateOf(false)
     // Set from a zenmodeos.com/b/{code} App Link tap; consumed once the Connect screen
     // is actually on-screen (see the LaunchedEffect next to ZenBroStage.Connect below).
-    private var pendingInviteCode by mutableStateOf<String?>(null)
+    internal var pendingInviteCode by mutableStateOf<String?>(null)
     // Share/Use a code in circle mode create or join a real circle directly, then navigate
     // to the dashboard -- no separate setup/join screens. Set right before createCircle();
     // consumed by the justEnteredCircle LaunchedEffect below to fire the actual share/copy
     // once the circle exists.
-    private var pendingCircleAutoAction by mutableStateOf<PendingCircleAction?>(null)
+    internal var pendingCircleAutoAction by mutableStateOf<PendingCircleAction?>(null)
     // Set when a connect succeeds; swaps My Zen Circle for the "You're Zen Bros now" screen.
-    private var connectedBuddyName by mutableStateOf<String?>(null)
+    internal var connectedBuddyName by mutableStateOf<String?>(null)
     // "Maybe later" on the connected screen, or the buddy card on home, opens the circle dashboard.
-    private var showZenCircle by mutableStateOf(false)
+    internal var showZenCircle by mutableStateOf(false)
     // Buddy's display name when the dashboard is opened from home (no connect flow to carry it).
-    private var circleBuddyName by mutableStateOf<String?>(null)
+    internal var circleBuddyName by mutableStateOf<String?>(null)
     // Pending "Connected with …" → celebration handoff; cancelled if the user backs out early
     // so it can't set connectedBuddyName after the flow has already been closed.
-    private var connectSuccessJob: Job? = null
+    internal var connectSuccessJob: Job? = null
     // True while "Remove buddy" / "Leave Circle" is waiting on the server.
-    private var removingBuddy by mutableStateOf(false)
-    private var showBuddyBattle by mutableStateOf(false)
+    internal var removingBuddy by mutableStateOf(false)
+    internal var showBuddyBattle by mutableStateOf(false)
     // First-time Zen Buddy -> Zen Circle choice, shown at most once (see BuddyFlowPreferences).
-    private var showBuddyFlowMigrationPrompt by mutableStateOf(false)
+    internal var showBuddyFlowMigrationPrompt by mutableStateOf(false)
     private var showAccessibilityDisclosure by mutableStateOf(false)
-    private lateinit var accountabilityViewModel: AccountabilityViewModel
-    private val buddyConnector by lazy {
+    internal lateinit var accountabilityViewModel: AccountabilityViewModel
+    internal val buddyConnector by lazy {
         BuddyConnector(this, repository) { viewModel.fetchBuddyData() }
     }
-    private lateinit var circleViewModel: CircleViewModel
+    internal lateinit var circleViewModel: CircleViewModel
+
+    // Home's entrance plays once per unlock, and only when the unlock lands on Home: hidden
+    // while the screen is off, played on unlock, settled if the unlock went somewhere else.
+    private var homeRevealCue by mutableStateOf(HomeRevealCue())
+    private var screenOffAt = 0L
+    private var unlockedAt = 0L
+    private var settleRevealJob: Job? = null
+    private var revealAfterDelayedUnlock = false
 
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
             when (intent.action) {
                 Intent.ACTION_USER_PRESENT -> {
                     viewModel.onScreenUnlocked()
+                    unlockedAt = SystemClock.elapsedRealtime()
+                    // The Delayed Unlock pause opens over Home; save the entrance for after it.
+                    revealAfterDelayedUnlock = viewModel.navigateToDelayedUnlock.value == true
+                    if (!revealAfterDelayedUnlock && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                        playUnlockReveal()
+                    }
                 }
                 Intent.ACTION_SCREEN_OFF -> {
                     viewModel.onScreenLocked()
+                    hideHomeForUnlock()
+                }
+            }
+        }
+    }
+
+    private fun hideHomeForUnlock() {
+        screenOffAt = SystemClock.elapsedRealtime()
+        revealAfterDelayedUnlock = false
+        settleRevealJob?.cancel()
+        homeRevealCue = homeRevealCue.hidden()
+    }
+
+    private fun playUnlockReveal() {
+        if (homeRevealCue.phase != HomeRevealCue.Phase.Hidden) return
+        settleRevealJob?.cancel()
+        homeRevealCue = homeRevealCue.play()
+    }
+
+    /** Called on resume: decides what a hidden Home does now that it's on screen. */
+    private fun resolveUnlockReveal() {
+        if (homeRevealCue.phase != HomeRevealCue.Phase.Hidden) return
+        val now = SystemClock.elapsedRealtime()
+        when {
+            // Back from the Delayed Unlock pause: let its exit transition finish first.
+            revealAfterDelayedUnlock -> {
+                revealAfterDelayedUnlock = false
+                settleRevealJob?.cancel()
+                settleRevealJob = lifecycleScope.launch {
+                    delay(DELAYED_UNLOCK_EXIT_MS)
+                    homeRevealCue = homeRevealCue.play()
+                }
+            }
+            unlockedAt > screenOffAt && now - unlockedAt <= UNLOCK_REVEAL_WINDOW_MS -> playUnlockReveal()
+            // Unlocked into another app a while ago; coming back to Home isn't an unlock.
+            unlockedAt > screenOffAt -> homeRevealCue = homeRevealCue.settled()
+            // Resumed just ahead of USER_PRESENT; wait for it, but never leave Home blank.
+            else -> {
+                settleRevealJob?.cancel()
+                settleRevealJob = lifecycleScope.launch {
+                    delay(UNLOCK_REVEAL_WINDOW_MS)
+                    if (homeRevealCue.phase == HomeRevealCue.Phase.Hidden) homeRevealCue = homeRevealCue.settled()
                 }
             }
         }
@@ -206,8 +266,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        // Paused by the screen going off: hide now, while Home can still draw a frame, so the
+        // wake-up shows a blank stage rather than a flash of the old Home before the reveal.
+        if (!getSystemService(android.os.PowerManager::class.java).isInteractive) hideHomeForUnlock()
+    }
+
     override fun onResume() {
         super.onResume()
+        resolveUnlockReveal()
         if (::viewModel.isInitialized) {
             viewModel.onResumeCheck()
             viewModel.refreshBuddyStatsFromCache()
@@ -346,7 +414,7 @@ class MainActivity : AppCompatActivity() {
         handleIntentDeepLink(intent)
 
         setContent {
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@MainActivity)) {
+            ZenTheme {
                 val usage by viewModel.stats.observeAsState()
                 val usagePermissionMissing by viewModel.usagePermissionMissing.observeAsState(initial = false)
                 val yesterdayChangePercent by viewModel.yesterdayChangePercent.observeAsState()
@@ -523,6 +591,7 @@ class MainActivity : AppCompatActivity() {
                     },
                     onAppLongClick = { longPressedApp = it },
                     modifier = Modifier.zenOverlayBlur(longPressedApp != null || showHomeAppsPicker),
+                    reveal = homeRevealCue,
                     apps = run {
                         val notifCounts = ZenNotificationListenerService.notificationCounts
                         installedApps.map { app ->
@@ -843,123 +912,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun closeBuddyConnect() {
-        connectSuccessJob?.cancel()
-        connectSuccessJob = null
-        showBuddyConnect = false
-        connectedBuddyName = null
-        showZenCircle = false
-        circleBuddyName = null
-        // Drops a still-pending invite-link code if the flow closed before it ever
-        // reached the Connect screen (e.g. the migration prompt intercepted it).
-        pendingInviteCode = null
-    }
-
-    /**
-     * Share-link/Use-a-code tap in circle mode: shares the existing circle's link/code
-     * immediately, or creates one first and defers the actual share/copy to the
-     * justEnteredCircle LaunchedEffect once that finishes. [fallback] runs unchanged
-     * outside circle mode (the classic Buddy share/copy actions).
-     */
-    private fun startOrShareCircle(isCircleMode: Boolean, action: PendingCircleAction, fallback: () -> Unit) {
-        if (!isCircleMode) {
-            fallback()
-            return
-        }
-        val existing = circleViewModel.uiState.value?.circle
-        if (existing != null) {
-            when (action) {
-                PendingCircleAction.SHARE -> buddyConnector.shareCircleInvite(existing.id)
-                PendingCircleAction.COPY -> buddyConnector.copyUserCode(existing.id, showToast = true)
-            }
-        } else {
-            pendingCircleAutoAction = action
-            circleViewModel.createCircle("My Zen Circle")
-        }
-        showZenCircle = true
-    }
-
-    /**
-     * Single entry point for "open the buddy area" - Settings, an old push-notification
-     * deep link, the home invite button and the home buddy card all funnel through here so
-     * they all respect the cached [BuddyFlowPreferences] decision instead of hardcoding a
-     * screen. See BuddyFlowPreferences for the decision rules.
-     */
-    private fun openBuddyFlow() {
-        when (BuddyFlowPreferences.decision(this)) {
-            BuddyFlow.ZEN_CIRCLE -> {
-                // A real circle has no classic buddy relationship to check -- getBuddyUid()
-                // alone missed circle-only users entirely, always bouncing them back to the
-                // Connect screen instead of their actual dashboard.
-                val hasSomethingToShow = repository.getBuddyUid() != null || !repository.getCachedCircleId().isNullOrEmpty()
-                if (hasSomethingToShow) openZenCircleFromHome() else showBuddyConnect = true
-            }
-            BuddyFlow.ZEN_BUDDY_CLASSIC -> showBuddyBattle = true
-            null -> {
-                if (repository.getBuddyUid() != null) {
-                    showBuddyFlowMigrationPrompt = true
-                } else {
-                    // Nothing to migrate - silently and permanently on Zen Circle.
-                    BuddyFlowPreferences.setDecision(this, BuddyFlow.ZEN_CIRCLE)
-                    showBuddyConnect = true
-                }
-            }
-        }
-    }
-
-    /** Home's buddy card: straight to the circle dashboard, fetching the buddy's name alongside. */
-    private fun openZenCircleFromHome() {
-        connectSuccessJob?.cancel()
-        connectSuccessJob = null
-        connectedBuddyName = null
-        circleBuddyName = null
-        showZenCircle = true
-        showBuddyConnect = true
-        val buddyUid = repository.getBuddyUid() ?: return
-        lifecycleScope.launch {
-            circleBuddyName = runCatching { ServiceLocator.firestoreDataSource.getUser(buddyUid)?.displayName }
-                .getOrNull()
-                ?.takeIf { it.isNotBlank() }
-        }
-    }
-
-    /**
-     * "Remove buddy" and "Leave Circle" — with one buddy per circle today, both end the
-     * relationship. The result lands in the DisconnectResult effect above.
-     */
-    private fun removeBuddy() {
-        if (removingBuddy) return
-        // Same preconditions disconnectBuddy() checks; without them it returns silently and
-        // the confirm button would sit on "Removing…" forever.
-        val signedIn = (repository.getUserUid() ?: ServiceLocator.authProvider.getCurrentUserId()) != null
-        if (!signedIn || repository.getBuddyUid() == null) {
-            Toast.makeText(this, "You don\u2019t have a Zen Bro to remove.", Toast.LENGTH_SHORT).show()
-            return
-        }
-        removingBuddy = true
-        accountabilityViewModel.disconnectBuddy()
-    }
-
-    /** Auto-connect path for a zenmodeos.com/b/{code} App Link tap - same outcome as pasting
-     *  the code into "Use a code", minus the inline status text (there's no field to show it in). */
-    private fun connectWithInviteCode(targetUid: String) {
-        lifecycleScope.launch {
-            when (val result = buddyConnector.addBuddy(targetUid)) {
-                is BuddyAddResult.Success -> {
-                    connectSuccessJob = lifecycleScope.launch {
-                        kotlinx.coroutines.delay(700)
-                        connectedBuddyName = result.buddyName
-                    }
-                }
-                is BuddyAddResult.AlreadyBuddies ->
-                    Toast.makeText(this@MainActivity, "You're already connected with ${result.buddyName}.", Toast.LENGTH_SHORT).show()
-                is BuddyAddResult.SelfAdd ->
-                    Toast.makeText(this@MainActivity, "That's your own invite link.", Toast.LENGTH_SHORT).show()
-                is BuddyAddResult.Error ->
-                    Toast.makeText(this@MainActivity, result.message, Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+    // removeBuddy and connectWithInviteCode live in MainActivityBuddyFlow.kt as extension
+    // functions -- split out to keep this file under the 1000-line ceiling.
 
     private fun requestPostNotificationsIfNeeded() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
@@ -993,3 +947,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+
+/** How soon after unlocking Home must appear for the entrance to count as "the unlock". */
+private const val UNLOCK_REVEAL_WINDOW_MS = 1_500L
+
+/** Roughly how long the Delayed Unlock screen takes to close over Home. */
+private const val DELAYED_UNLOCK_EXIT_MS = 300L

@@ -2,7 +2,16 @@ package com.zenlauncher.zenmode.ui.theme
 
 import android.app.Activity
 import android.os.Build
+import com.zenlauncher.zenmode.ThemeMode
 import com.zenlauncher.zenmode.ThemePreferences
+import com.zenlauncher.zenmode.ui.components.ZenMotion
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -15,14 +24,40 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+/**
+ * Whether ink should render, live: recomposes the moment the Appearance setting changes so an
+ * open screen can crossfade instead of waiting for AppCompat to recreate it.
+ */
+@Composable
+fun rememberDarkTheme(): Boolean {
+    val context = LocalContext.current
+    val mode by remember(context) { ThemePreferences.modeState(context) }.collectAsState()
+    return when (mode) {
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+        // The activity's own configuration still says whatever AppCompat forced; ask the system.
+        ThemeMode.SYSTEM -> remember(mode, LocalConfiguration.current) { ThemePreferences.isSystemDark() }
+    }
+}
+
 @Composable
 fun ZenTheme(
-    context: android.content.Context = LocalContext.current,
-    darkTheme: Boolean = ThemePreferences.isDarkMode(context),
+    darkTheme: Boolean = rememberDarkTheme(),
     dynamicColor: Boolean = false, // Dynamic color is disabled by default for ZenLauncher styling
     content: @Composable () -> Unit
 ) {
-    val zenColors = if (darkTheme) DarkZenColors else LightZenColors
+    // Paper ↔ ink is a 420ms crossfade of every token rather than a cut. First composition
+    // lands directly on the right theme; only a change while on screen animates.
+    val inkAmount by animateFloatAsState(
+        targetValue = if (darkTheme) 1f else 0f,
+        animationSpec = tween(ZenMotion.SLOW, easing = FastOutSlowInEasing),
+        label = "themeCrossfade"
+    )
+    val zenColors = when (inkAmount) {
+        0f -> LightZenColors
+        1f -> DarkZenColors
+        else -> lerp(LightZenColors, DarkZenColors, inkAmount)
+    }
 
     val darkColorScheme = darkColorScheme(
         primary = zenColors.textBrand,

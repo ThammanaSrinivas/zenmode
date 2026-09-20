@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,6 +68,7 @@ import com.zenlauncher.zenmode.ContentBlockPrefs
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
 import com.zenlauncher.zenmode.ui.components.ZenSwitch
+import com.zenlauncher.zenmode.ui.components.zenToggleable
 import com.zenlauncher.zenmode.ui.components.dropShadow
 import com.zenlauncher.zenmode.ui.components.pressScale
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
@@ -295,6 +295,7 @@ private fun BlockerHeader(state: BlockerState, onBackClick: () -> Unit, onPauseC
 /** "Pause 30m" (dark, PRO) → tap → "Paused 24m" (light green, counting down); tap again to resume. */
 @Composable
 private fun PausePill(paused: Boolean, pausedUntil: Long, isPro: Boolean, onClick: () -> Unit) {
+    val colors = ZenTheme.colors
     val green = colorResource(R.color.gold_delta_text)
     Box {
         Box(
@@ -303,9 +304,9 @@ private fun PausePill(paused: Boolean, pausedUntil: Long, isPro: Boolean, onClic
                 .clip(CircleShape)
                 .then(
                     if (paused) Modifier
-                        .background(colorResource(R.color.zen_050))
+                        .background(colors.surfaceTint)
                         .border(1.dp, green, CircleShape)
-                    else Modifier.background(colorResource(R.color.ink_surface))
+                    else Modifier.background(colors.actionPrimary)
                 )
                 .pressScale(onClick = onClick, onClickLabel = if (paused) "Resume blocking" else "Pause blocking for 30 minutes")
                 .padding(horizontal = 18.rdp),
@@ -317,7 +318,7 @@ private fun PausePill(paused: Boolean, pausedUntil: Long, isPro: Boolean, onClic
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.rsp,
                 letterSpacing = (-0.28).sp,
-                color = if (paused) green else Color.White,
+                color = if (paused) green else colors.actionPrimaryText,
                 maxLines = 1
             )
         }
@@ -395,7 +396,7 @@ private fun QuietReelsCard(
             .dropShadow(color = Color.Black.copy(alpha = 0.13f), blur = 24.rdp, cornerRadius = radius, offsetY = 7.rdp)
             .clip(RoundedCornerShape(radius))
             .background(cardGreen)
-            .toggleable(value = on, role = Role.Switch, onValueChange = onToggle)
+            .zenToggleable(value = on, onValueChange = onToggle)
             .padding(horizontal = 26.rdp, vertical = 24.rdp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -411,9 +412,9 @@ private fun QuietReelsCard(
                 )
                 Text(
                     text = when {
-                        paused -> "Paused — feeds are open until the pause ends."
+                        paused -> "Paused. Feeds are open until the pause ends."
                         on -> "Break the endless scrolling, right now."
-                        else -> "Off — Reels, Shorts and Spotlight scroll freely."
+                        else -> "Off. Reels, Shorts and Spotlight scroll freely."
                     },
                     fontFamily = Geist,
                     fontSize = 12.rsp,
@@ -522,15 +523,15 @@ private fun FilterChip(label: String, count: Int, selected: Boolean, onClick: ()
             .height(34.rdp)
             .clip(CircleShape)
             .then(
-                if (selected) Modifier.background(colorResource(R.color.ink_surface))
+                if (selected) Modifier.background(colors.actionPrimary)
                 else Modifier.background(colors.surfaceElevated).border(1.dp, green, CircleShape)
             )
-            .toggleable(value = selected, role = Role.Tab, onValueChange = { onClick() })
+            .zenToggleable(value = selected, onValueChange = { onClick() }, role = Role.Tab)
             .padding(horizontal = 18.rdp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.rdp)
     ) {
-        val content = if (selected) Color.White else colors.textSecondary
+        val content = if (selected) colors.actionPrimaryText else colors.textSecondary
         Text(label, fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = content)
         Text(String.format(Locale.US, "%02d", count), fontFamily = Geist, fontWeight = FontWeight.SemiBold, fontSize = 15.rsp, color = content)
     }
@@ -572,7 +573,7 @@ private fun AppRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 72.rdp)
-                .toggleable(value = quieted, role = Role.Switch, onValueChange = onToggle)
+                .zenToggleable(value = quieted, onValueChange = onToggle)
                 .padding(horizontal = 10.rdp, vertical = 12.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -635,7 +636,7 @@ private fun AppRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.rdp))
-                            .toggleable(value = blocked, role = Role.Switch, onValueChange = { onSurfaceToggle(id, it) })
+                            .zenToggleable(value = blocked, onValueChange = { onSurfaceToggle(id, it) })
                             .padding(vertical = 8.rdp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -701,7 +702,7 @@ private fun InitialsTile(label: String) {
         modifier = Modifier
             .size(40.rdp)
             .clip(RoundedCornerShape(10.rdp))
-            .background(colorResource(R.color.zen_050)),
+            .background(ZenTheme.colors.surfaceTint),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -757,7 +758,7 @@ private fun DebugTools(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .toggleable(value = debugDump, role = Role.Switch, onValueChange = onDebugDumpToggle)
+                .zenToggleable(value = debugDump, onValueChange = onDebugDumpToggle)
                 .padding(vertical = 8.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -774,7 +775,7 @@ private fun DebugTools(
         }
         if (lastCrash != null) {
             Text(
-                text = "Blocker last crashed: $lastCrash — tap to clear.",
+                text = "Blocker last crashed: $lastCrash. Tap to clear.",
                 fontFamily = Geist,
                 fontSize = 12.rsp,
                 color = colors.textSecondary,

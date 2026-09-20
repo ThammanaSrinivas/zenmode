@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.components
 
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -149,7 +150,7 @@ fun ZenModeOsWordmark(
     fontSize: TextUnit = 21.sp,
     markSize: Dp? = null,
     markGap: Dp? = null,
-    zenModeColor: Color = colorResource(R.color.ink_surface),
+    zenModeColor: Color = ZenTheme.colors.textPrimary,
     letterSpacing: TextUnit = (-0.3).sp
 ) {
     val gradient = rememberBrandOsGradient()
@@ -185,7 +186,7 @@ fun ZenModeOsWordmark(
 fun ZenModeOsSettingsTitle(
     modifier: Modifier = Modifier,
     fontSize: TextUnit = 22.sp,
-    color: Color = colorResource(R.color.ink_surface),
+    color: Color = ZenTheme.colors.textPrimary,
     letterSpacing: TextUnit = (-0.44).sp
 ) {
     Row(

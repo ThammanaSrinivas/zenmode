@@ -4,9 +4,13 @@
   AppCompatDelegate (ThemePreferences), so every colorResource() below picks these up.
   Shared primitives (zen_*, ink_*, paper_*, stone_*) are deliberately NOT overridden:
   they're used both as text and as fills, and ui/theme/Color.kt already maps them to
-  light/dark semantics. Onboarding and the Zen Circle share card stay light regardless.
+  light/dark semantics. Onboarding follows the theme; the Zen Circle share card stays light
+  regardless, because it is rendered to an image that is shared outside the app.
 -->
 <resources>
+    <!-- Onboarding: the welcome sunrise becomes an ember-warm dawn over ink -->
+    <color name="onboarding_sunrise">#2A2111</color>
+
     <!-- Home header + gold row -->
     <color name="streak_days">#B4B4AE</color>
     <color name="gold_label">#A8A8A2</color>

@@ -63,7 +63,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.coreapi.ZenScore
+import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.ui.components.FanMember
 import com.zenlauncher.zenmode.ui.components.MemberCardFan
 import com.zenlauncher.zenmode.ui.components.ZenModeOsWordmark
@@ -198,7 +198,8 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
         Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text = "FROM", fontFamily = Geist, fontSize = 11.sp, letterSpacing = 1.sp, color = colorResource(R.color.stone_600))
             Spacer(Modifier.height(4.dp))
-            ZenModeOsWordmark(fontSize = 20.sp, markSize = 22.dp, markGap = 6.dp)
+            // The card is always paper, whatever the app theme — so its ink is fixed too.
+            ZenModeOsWordmark(fontSize = 20.sp, markSize = 22.dp, markGap = 6.dp, zenModeColor = colorResource(R.color.ink_surface))
         }
         Spacer(Modifier.height(18.dp))
         Text(

@@ -45,7 +45,7 @@ class DistractionBlockerActivity : AppCompatActivity() {
         loadApps()
 
         setContent {
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@DistractionBlockerActivity)) {
+            ZenTheme() {
                 val isPro = ProAccess.isProState(this@DistractionBlockerActivity)
                 // Ticks the "Paused 24m" countdown and flips back to "Pause" when it runs out.
                 LaunchedEffect(state.pausedUntil) {

@@ -87,9 +87,9 @@ fun AccessibilityDisclosureScreen(
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
                 text = "ZenMode uses Android's Accessibility Service API for two features:\n\n" +
-                        "1. Lock screen — Android gives a launcher no other way to lock the screen, " +
+                        "1. Lock screen: Android gives a launcher no other way to lock the screen, " +
                         "so this permission is required for the lock button to work.\n\n" +
-                        "2. In-app content blocking (optional) — when you turn on blocking for a " +
+                        "2. In-app content blocking (optional): when you turn on blocking for a " +
                         "surface such as YouTube Shorts, the service checks " +
                         "whether that screen is currently open and, if so, navigates you away. It runs " +
                         "only for apps you have explicitly chosen to block.",
@@ -136,7 +136,7 @@ fun AccessibilityDisclosureScreen(
                         "• Does NOT monitor apps that are not in your block list\n" +
                         "• Does NOT perform gestures or tap anything inside other apps\n" +
                         "• Does NOT collect, store, transmit, or share any personal data\n" +
-                        "• Sends nothing off your device — all checks happen locally",
+                        "• Sends nothing off your device; all checks happen locally",
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )

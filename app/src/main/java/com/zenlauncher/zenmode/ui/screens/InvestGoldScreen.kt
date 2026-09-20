@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -459,6 +461,8 @@ private fun QuantityCard(
                     selected = preset == units,
                     onClick = {
                         haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                        // Picking an amount of gold gets the one sound that means gold.
+                        ZenSound.play(Sfx.COIN)
                         select(preset)
                     }
                 )

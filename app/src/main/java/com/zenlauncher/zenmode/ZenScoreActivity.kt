@@ -41,7 +41,7 @@ class ZenScoreActivity : AppCompatActivity() {
         val auth = ServiceLocator.authProvider
 
         setContent {
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@ZenScoreActivity)) {
+            ZenTheme {
                 val isPro = ProAccess.isProState(this@ZenScoreActivity)
                 ZenScoreScreen(
                     score = score,
@@ -53,8 +53,7 @@ class ZenScoreActivity : AppCompatActivity() {
                     onUpgradeProClick = { openProSheet("zen_score_header") },
                     onDownloadReportClick = {
                         if (isPro) downloadLatestReport() else openProSheet("zen_score_report")
-                    },
-                    onShareScoreClick = { shareScore(score) }
+                    }
                 )
                 if (showProSheet) {
                     ProUpsellSheet(
@@ -83,15 +82,6 @@ class ZenScoreActivity : AppCompatActivity() {
     private fun openProSheet(source: String) {
         ServiceLocator.analyticsTracker.trackProUpsellViewed(source)
         showProSheet = true
-    }
-
-    private fun shareScore(score: Int) {
-        val text = "My Zen Score today is ${ZenScore.format(score)}/${ZenScore.MAX_DISPLAY} on ZenMode OS — " +
-            "less scrolling, more living. zenmodeos.com"
-        val send = Intent(Intent.ACTION_SEND)
-            .setType("text/plain")
-            .putExtra(Intent.EXTRA_TEXT, text)
-        startActivity(Intent.createChooser(send, "Share Zen Score"))
     }
 
     /**
