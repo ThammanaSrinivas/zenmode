@@ -1,7 +1,6 @@
 package com.zenlauncher.zenmode
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.compose.setContent
@@ -151,10 +150,8 @@ class DistractionBlockerActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val apps = withContext(Dispatchers.IO) {
                 val pm = packageManager
-                val launchable = pm.queryIntentActivities(
-                    Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
-                    PackageManager.MATCH_ALL
-                ).map { it.activityInfo.packageName }.distinct().filter { it != packageName }
+                val launchable = LauncherActivities.query(pm)
+                    .map { it.activityInfo.packageName }.distinct().filter { it != packageName }
                 val minutes = todayMinutesByApp()
                 val surfaces = ContentBlockRules.default().apps
                 launchable.map { pkg ->

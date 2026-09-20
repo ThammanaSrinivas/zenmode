@@ -50,6 +50,7 @@ class ZenProActivity : AppCompatActivity() {
 
                 ZenProScreen(
                     entitlement = entitlement,
+                    isPro = ProAccess.isProState(this@ZenProActivity),
                     offers = offers,
                     isWorking = isWorking,
                     errorMessage = errorMessage,

@@ -23,10 +23,11 @@ object ProAccess {
     @Volatile
     private var debugOverride: MutableStateFlow<Boolean>? = null
 
-    fun isPro(context: Context): Boolean =
-        ServiceLocator.proEntitlementProvider.isPro.value ||
-            ServiceLocator.entitlementProvider.entitlement.value.isPro ||
-            debugOverride(context).value
+    fun isPro(context: Context): Boolean = combine(
+        granted = ServiceLocator.proEntitlementProvider.isPro.value,
+        subscribed = ServiceLocator.entitlementProvider.entitlement.value.isPro,
+        overridden = debugOverride(context).value
+    )
 
     /** Recomposes when either entitlement changes (e.g. after sign-in or a purchase). */
     @Composable
@@ -34,8 +35,12 @@ object ProAccess {
         val granted by ServiceLocator.proEntitlementProvider.isPro.collectAsState()
         val subscription by ServiceLocator.entitlementProvider.entitlement.collectAsState()
         val overridden by debugOverride(context).collectAsState()
-        return granted || subscription.isPro || overridden
+        return combine(granted, subscription.isPro, overridden)
     }
+
+    /** The one place the three signals are combined, so [isPro] and [isProState] can't drift. */
+    private fun combine(granted: Boolean, subscribed: Boolean, overridden: Boolean): Boolean =
+        granted || subscribed || overridden
 
     val canUseDebugOverride: Boolean get() = BuildConfig.DEBUG
 

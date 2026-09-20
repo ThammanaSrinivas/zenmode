@@ -39,9 +39,12 @@ class RecapCollector(
         val end = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
         val totalMillis = repository.getScreenTimeMillisForDate(date.toString())
         val sessions = repository.getForegroundSessions(start, end)
-        // No sessions means the raw events already rolled off (the total may still come from
-        // the aggregated stats fallback); don't store a day with a false-empty breakdown.
-        if (totalMillis <= 0L || sessions.isEmpty()) return null
+        // Only skip a day that's truly empty (rolled off raw events, nothing to show at all).
+        // A day can have a real total (from the OEM stats fallback) with no session breakdown;
+        // storing it with an empty app list under-reports that one day's top apps, but skipping
+        // it entirely is worse: backfill only looks back LOOKBACK_DAYS, so a skipped day -- and
+        // the whole week's recap, which requires all 7 days -- becomes permanently unrecoverable.
+        if (totalMillis <= 0L && sessions.isEmpty()) return null
 
         val breakdown = DayAggregator.aggregate(sessions, start, end, excluded)
         return DayRecord(
