@@ -47,7 +47,7 @@ class ZenProActivity : AppCompatActivity() {
         }
 
         setContent {
-            ZenTheme() {
+            ZenTheme {
                 val entitlement by provider.entitlement.collectAsState()
                 LaunchedEffect(Unit) { offers = provider.offers() }
 

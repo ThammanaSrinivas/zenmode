@@ -366,7 +366,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContent {
-            ZenTheme() {
+            ZenTheme {
                 val usage by viewModel.stats.observeAsState()
                 val usagePermissionMissing by viewModel.usagePermissionMissing.observeAsState(initial = false)
                 val yesterdayChangePercent by viewModel.yesterdayChangePercent.observeAsState()

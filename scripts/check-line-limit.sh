@@ -29,9 +29,17 @@ limit_for() {
 if [ "$#" -gt 0 ]; then
   files=("$@")
 else
-  mapfile -t files < <(find "$REPO_ROOT/app/src" "$REPO_ROOT/core-api/src" "$REPO_ROOT/core-mock/src" \
+  # A read loop, not mapfile: macOS ships bash 3.2, where mapfile doesn't exist and this
+  # check would die before looking at a single file.
+  files=()
+  while IFS= read -r found; do
+    files+=("$found")
+  done < <(find "$REPO_ROOT/app/src" "$REPO_ROOT/core-api/src" "$REPO_ROOT/core-mock/src" \
     \( -name "*.kt" -o -name "*.ts" \) 2>/dev/null)
 fi
+
+# An empty array is an unbound variable under `set -u` in bash 3.2.
+[ "${#files[@]}" -eq 0 ] && exit 0
 
 fail=0
 for f in "${files[@]}"; do

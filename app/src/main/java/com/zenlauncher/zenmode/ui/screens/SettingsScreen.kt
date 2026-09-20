@@ -51,16 +51,11 @@ import com.zenlauncher.zenmode.AppGridPreferences
 import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
 import com.zenlauncher.zenmode.ResistancePreferences
 import com.zenlauncher.zenmode.HomeThemePreferences
-import com.zenlauncher.zenmode.ui.components.wash
-import androidx.compose.foundation.layout.fillMaxSize
 import com.zenlauncher.zenmode.ThemePreferences
 import com.zenlauncher.zenmode.ZenSound
 import com.zenlauncher.zenmode.ui.components.ZenMotion
 import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
@@ -140,7 +135,6 @@ fun SettingsScreen(
     val themeMode by remember { ThemePreferences.modeState(context) }.collectAsState()
     val soundsOn by ZenSound.enabled.collectAsState()
     val feedback = rememberZenFeedback()
-    val scope = rememberCoroutineScope()
     var isResistanceEnabled by remember { mutableStateOf(ResistancePreferences.isEnabled(context)) }
     val homeAppCount = remember { AppGridPreferences.getAppCount(context) }
     var showAccountSheet by remember { mutableStateOf(false) }
@@ -265,15 +259,11 @@ fun SettingsScreen(
                         mode = themeMode,
                         onModeChange = { mode ->
                             val wasDark = ThemePreferences.isDarkMode(context)
-                            ThemePreferences.setMode(context, mode)
-                            val nowDark = ThemePreferences.isDarkMode(context)
-                            if (nowDark != wasDark) feedback.theme(nowDark)
                             // Let ZenTheme's crossfade play on this screen first; AppCompat then
                             // recreates every open activity onto colours that already match.
-                            scope.launch {
-                                delay(ZenMotion.SLOW + 60L)
-                                ThemePreferences.applyStoredTheme(context)
-                            }
+                            ThemePreferences.setMode(context, mode, applyAfterMillis = ZenMotion.SLOW + 60L)
+                            val nowDark = ThemePreferences.isDarkMode(context)
+                            if (nowDark != wasDark) feedback.theme(nowDark)
                         }
                     )
                     ZenRowDivider()

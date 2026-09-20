@@ -3,6 +3,8 @@ package com.zenlauncher.zenmode
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.os.Handler
+import android.os.Looper
 import androidx.appcompat.app.AppCompatDelegate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +26,10 @@ object ThemePreferences {
 
     @Volatile
     private var modeFlow: MutableStateFlow<ThemeMode>? = null
+
+    // Built on first use, not at class-init: unit tests touch [mode] without a Looper.
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
+    private var pendingApply: Runnable? = null
 
     /** Live [mode], so an open screen can crossfade the moment the choice changes. */
     fun modeState(context: Context): StateFlow<ThemeMode> = flow(context)
@@ -60,23 +66,46 @@ object ThemePreferences {
         Resources.getSystem().configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
     /**
-     * Saves [mode] without applying it. Settings calls [applyStoredTheme] once its crossfade has
-     * played, so the activity recreation that AppCompat triggers lands on already-matching colours.
+     * Saves [mode] and applies it, optionally [applyAfterMillis] later so a screen that is
+     * crossfading can finish before AppCompat recreates every open activity onto the matching
+     * colours. The delayed apply is posted to the main thread rather than run in a composition
+     * scope: leaving Settings mid-crossfade must not strand the night-qualified resources on the
+     * old theme until the next launch.
      */
-    fun setMode(context: Context, mode: ThemeMode) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setMode(context: Context, mode: ThemeMode, applyAfterMillis: Long = 0L) {
+        val app = context.applicationContext
+        app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY_MODE, mode.name)
             .remove(KEY_LEGACY_DARK)
             .apply()
-        flow(context).value = mode
+        flow(app).value = mode
+        pendingApply?.let(mainHandler::removeCallbacks)
+        pendingApply = null
+        if (applyAfterMillis <= 0L) {
+            applyStoredTheme(app)
+        } else {
+            val task = Runnable {
+                pendingApply = null
+                applyStoredTheme(app)
+            }
+            pendingApply = task
+            mainHandler.postDelayed(task, applyAfterMillis)
+        }
     }
 
     fun applyStoredTheme(context: Context) = mode(context).apply()
 
+    /**
+     * Wipes the whole `zenmode_prefs` file on account delete. [HomeThemePreferences] and
+     * [ZenSound] cache their own keys from this same file, so they are re-read here too —
+     * otherwise a deleted account keeps its home theme and sound setting until the next launch.
+     */
     fun clear(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit().clear().apply()
         modeFlow?.value = ThemeMode.SYSTEM
+        HomeThemePreferences.reload(context)
+        ZenSound.reload(context)
     }
 }

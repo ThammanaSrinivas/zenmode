@@ -288,7 +288,7 @@ private fun ReviewsCard(modifier: Modifier = Modifier) {
                     )
                     Spacer(Modifier.height(6.rdp))
                     Text(
-                        text = "${review.author}",
+                        text = review.author,
                         fontFamily = Geist,
                         fontSize = 13.rsp,
                         color = ZenTheme.colors.textTertiary

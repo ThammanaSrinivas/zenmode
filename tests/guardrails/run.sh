@@ -65,7 +65,9 @@ SL="core-api/src/main/java/com/zenlauncher/zenmode/coreapi/services/ServiceLocat
 cp "$SL" /tmp/__guardrail_sl_backup.kt
 restore_sl() { cp /tmp/__guardrail_sl_backup.kt "$SL" 2>/dev/null; rm -f /tmp/__guardrail_sl_backup.kt; }
 trap restore_sl EXIT
-sed -i 's/\[WHY\]//' "$SL"
+# Filter the backup into place rather than `sed -i`: BSD sed (macOS) reads the next
+# argument as the backup suffix, so the GNU form fails there.
+sed 's/\[WHY\]//' /tmp/__guardrail_sl_backup.kt > "$SL"
 expect_fail "check-choke-point-tags.sh" ./scripts/check-choke-point-tags.sh
 restore_sl
 trap - EXIT

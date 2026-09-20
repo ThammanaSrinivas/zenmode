@@ -41,7 +41,7 @@ class ZenScoreActivity : AppCompatActivity() {
         val auth = ServiceLocator.authProvider
 
         setContent {
-            ZenTheme() {
+            ZenTheme {
                 val isPro = ProAccess.isProState(this@ZenScoreActivity)
                 ZenScoreScreen(
                     score = score,

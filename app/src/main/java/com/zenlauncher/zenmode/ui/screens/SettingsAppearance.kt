@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,7 +36,6 @@ import com.zenlauncher.zenmode.ui.theme.isInk
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.graphics.Brush
-import com.zenlauncher.zenmode.ThemePreferences
 import com.zenlauncher.zenmode.ui.components.ZenMotion
 import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
 import androidx.compose.animation.AnimatedContent
@@ -61,6 +59,7 @@ import com.zenlauncher.zenmode.ui.components.ZenSheetBody
 import com.zenlauncher.zenmode.ui.components.ZenSheetTitle
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rememberDarkTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 
@@ -228,7 +227,7 @@ internal fun AppearanceRow(mode: ThemeMode, onModeChange: (ThemeMode) -> Unit) {
                     )
                 }
             }
-            ThemeSwatch(dark = ThemePreferences.isDarkMode(LocalContext.current))
+            ThemeSwatch(dark = rememberDarkTheme())
         }
         ZenSegmented(
             options = ThemeMode.entries.map { SegmentOption(it, it.label) },

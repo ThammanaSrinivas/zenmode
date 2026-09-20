@@ -35,7 +35,7 @@ enum class Sfx(@RawRes val res: Int, val volume: Float) {
 /**
  * Plays [Sfx] through one shared [SoundPool]. Rules:
  *  · off entirely unless the ringer is on "sound" — silent and vibrate mean silent here too
- *  · the user can switch sounds off in Settings → Sound & motion (haptics stay)
+ *  · the user can switch sounds off in Settings → Look & sound (haptics stay)
  *  · the same sound never stacks: a repeat inside [MIN_GAP_MS] is dropped
  *  · sonification stream, so it follows the system's own "touch sounds" volume
  */
@@ -82,6 +82,12 @@ object ZenSound {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit().putBoolean(KEY_ENABLED, enabled).apply()
         _enabled.value = enabled
+    }
+
+    /** Re-reads the stored switch; called when the prefs file is wiped out from under the cache. */
+    internal fun reload(context: Context) {
+        _enabled.value = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_ENABLED, true)
     }
 
     fun play(sfx: Sfx) {

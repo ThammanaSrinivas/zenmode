@@ -39,6 +39,11 @@ object HomeThemePreferences {
             flow ?: MutableStateFlow(read(context)).also { flow = it }
         }
 
+    /** Re-reads the stored pick; called when the prefs file is wiped out from under the cache. */
+    internal fun reload(context: Context) {
+        flow?.value = read(context)
+    }
+
     private fun read(context: Context): HomeTheme =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_THEME, null)
             ?.let { name -> HomeTheme.entries.firstOrNull { it.name == name } }

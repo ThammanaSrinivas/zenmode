@@ -98,7 +98,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         setContent {
-            ZenTheme() {
+            ZenTheme {
                 val entitlement by entitlements.entitlement.collectAsState()
                 val isPro = ProAccess.isProState(this@SettingsActivity)
                 LaunchedEffect(entitlements.isAvailable) {
