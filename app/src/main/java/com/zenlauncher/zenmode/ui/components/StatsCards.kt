@@ -47,7 +47,7 @@ import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.coreapi.ZenScore
+import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist

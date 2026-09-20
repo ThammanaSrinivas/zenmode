@@ -146,7 +146,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.zenlauncher.zenmode.AppSearchRanking
-import com.zenlauncher.zenmode.coreapi.ZenScore
+import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
 import com.zenlauncher.zenmode.ui.components.shareImage
 import com.zenlauncher.zenmode.ui.components.taperedBorder
@@ -169,7 +169,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import com.zenlauncher.zenmode.coreapi.PromisePreferences
+import com.zenlauncher.zenmode.PromisePreferences
 import com.zenlauncher.zenmode.recap.RecapStore
 import android.util.Log
 
