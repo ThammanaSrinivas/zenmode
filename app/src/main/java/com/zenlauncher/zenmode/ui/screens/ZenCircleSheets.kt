@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import androidx.compose.ui.text.TextStyle
 import com.zenlauncher.zenmode.ui.components.BrandedText
 import android.os.Build
@@ -321,13 +323,14 @@ private fun SheetContent(
                 iconRes = R.drawable.ic_zen_circle_copy,
                 iconSize = 26.79.rdp,
                 title = "Copy Invite code",
-                subtitle = if (copied) "Copied — paste it to your people" else userCode ?: "Sign in to get your code",
+                subtitle = if (copied) "Copied. Paste it to your people" else userCode ?: "Sign in to get your code",
                 subtitleHighlighted = copied,
                 enabled = userCode != null,
                 entranceDelay = 210,
                 onClick = {
                     onCopyInviteCode()
                     haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    ZenSound.play(Sfx.TOGGLE_ON)
                     copied = true
                 }
             )

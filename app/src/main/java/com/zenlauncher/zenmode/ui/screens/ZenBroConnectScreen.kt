@@ -377,7 +377,7 @@ private fun UseCodeCard(
             status = when (val result = onAddBuddy(buddyCode.trim())) {
                 is BuddyAddResult.Success -> "Connected with ${result.buddyName}!" to true
                 is BuddyAddResult.AlreadyBuddies -> "You're already connected with ${result.buddyName}." to false
-                is BuddyAddResult.SelfAdd -> "That's your own code — paste your Zen Bro's." to false
+                is BuddyAddResult.SelfAdd -> "That's your own code. Paste your Zen Bro's." to false
                 is BuddyAddResult.Error -> result.message to false
             }
             isConnecting = false

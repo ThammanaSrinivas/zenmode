@@ -1,7 +1,22 @@
 package com.zenlauncher.zenmode.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -22,7 +37,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -196,11 +210,15 @@ fun ZenSettingsRow(
     trailing: RowTrailing = RowTrailing.Chevron
 ) {
     val colors = ZenTheme.colors
+    val feedback = rememberZenFeedback()
     Row(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.rdp)
-            .clickable(onClickLabel = title, role = Role.Button, onClick = onClick)
+            .clickable(onClickLabel = title, role = Role.Button) {
+                feedback.tap()
+                onClick()
+            }
             .padding(horizontal = 16.rdp, vertical = 10.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -276,8 +294,13 @@ fun ZenSwitch(
     outlineWhenOff: Boolean = true
 ) {
     val colors = ZenTheme.colors
-    val track by animateColorAsState(if (checked) onTrack else offTrack, label = "track")
-    val offset by animateDpAsState(if (checked) 20.rdp else 0.rdp, label = "thumb")
+    val track by animateColorAsState(if (checked) onTrack else offTrack, ZenMotion.arrive(ZenMotion.MEDIUM), label = "track")
+    // 0 → 1 travel on a spring with a little overshoot; the thumb stretches toward where it's
+    // going mid-flight and snaps round again as it lands, like a drop of something viscous.
+    val travel by animateFloatAsState(if (checked) 1f else 0f, ZenMotion.bouncy(), label = "thumb")
+    val inFlight = (1f - abs(travel * 2f - 1f)).coerceIn(0f, 1f)
+    val stretch = 6.rdp * inFlight
+    val offset = 20.rdp * travel - if (checked) stretch else 0.rdp
     Box(
         modifier = modifier
             .size(width = 52.rdp, height = 32.rdp)
@@ -289,7 +312,7 @@ fun ZenSwitch(
         Box(
             Modifier
                 .offset(x = offset)
-                .size(24.rdp)
+                .size(width = 24.rdp + stretch, height = 24.rdp)
                 .shadow(2.rdp, CircleShape)
                 .clip(CircleShape)
                 .background(colors.switchThumb)
@@ -309,7 +332,7 @@ fun ZenSettingToggleItem(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.rdp)
-            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .zenToggleable(value = checked, onValueChange = onCheckedChange)
             .padding(horizontal = 16.rdp, vertical = 10.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -334,24 +357,51 @@ fun <T> ZenSegmented(
     mono: Boolean = true
 ) {
     val colors = ZenTheme.colors
-    Row(
+    val feedback = rememberZenFeedback()
+    val density = LocalDensity.current
+    // Each option reports where it sits; one pill slides between them on a spring rather than
+    // each option painting its own background.
+    val bounds = remember(options.size) { mutableStateListOf(*Array(options.size) { 0f to 0f }) }
+    val selectedIndex = options.indexOfFirst { it.value == selected }.coerceAtLeast(0)
+    val target = bounds.getOrElse(selectedIndex) { 0f to 0f }
+    val pillX by animateFloatAsState(target.first, ZenMotion.bouncy(), label = "segmentX")
+    val pillW by animateFloatAsState(target.second, ZenMotion.settle(), label = "segmentW")
+    Box(
         modifier = modifier
             .clip(CircleShape)
             .background(colors.surfaceSunk)
-            .padding(3.rdp),
-        horizontalArrangement = Arrangement.spacedBy(2.rdp)
+            .padding(3.rdp)
     ) {
-        options.forEach { option ->
+        if (target.second > 0f) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .wrapContentWidth(Alignment.Start, unbounded = true)
+                    .offset { IntOffset(pillX.roundToInt(), 0) }
+                    .width(with(density) { pillW.toDp() })
+                    .fillMaxHeight()
+                    .shadow(1.rdp, CircleShape)
+                    .clip(CircleShape)
+                    .background(colors.surfaceElevated)
+            )
+        }
+    Row(horizontalArrangement = Arrangement.spacedBy(2.rdp)) {
+        options.forEachIndexed { index, option ->
             val isSelected = option.value == selected
+            val label by animateColorAsState(
+                if (isSelected) colors.textPrimary else colors.textSecondary,
+                ZenMotion.arrive(ZenMotion.FAST),
+                label = "segmentLabel"
+            )
             Row(
                 modifier = Modifier
                     .heightIn(min = 36.rdp)
+                    .onPlaced { bounds[index] = it.positionInParent().x to it.size.width.toFloat() }
                     .clip(CircleShape)
-                    .then(
-                        if (isSelected) Modifier.shadow(1.rdp, CircleShape).background(colors.surfaceElevated)
-                        else Modifier
-                    )
-                    .selectable(selected = isSelected, role = Role.Tab, onClick = { onSelect(option) })
+                    .selectable(selected = isSelected, role = Role.Tab, onClick = {
+                        if (!isSelected) feedback.select()
+                        onSelect(option)
+                    })
                     .padding(horizontal = 12.rdp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -360,7 +410,7 @@ fun <T> ZenSegmented(
                     fontFamily = if (mono) DepartureMono else Geist,
                     fontWeight = if (mono) FontWeight.Normal else FontWeight.Medium,
                     fontSize = if (mono) 12.rsp else 13.rsp,
-                    color = if (isSelected) colors.textPrimary else colors.textSecondary
+                    color = label
                 )
                 if (option.locked) {
                     Spacer(Modifier.width(6.rdp))
@@ -368,6 +418,7 @@ fun <T> ZenSegmented(
                 }
             }
         }
+    }
     }
 }
 
@@ -390,14 +441,30 @@ fun ZenButton(
         ZenButtonStyle.Ghost -> Triple(null, colors.textSecondary, null)
         ZenButtonStyle.Danger -> Triple(colors.accentDeduct, colors.textOnDeduct, null)
     }
+    val feedback = rememberZenFeedback()
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    // Sinks fast under the finger, springs back with a touch of give.
+    val scale by animateFloatAsState(
+        if (pressed) 0.97f else 1f,
+        if (pressed) ZenMotion.snappy() else ZenMotion.bouncy(),
+        label = "buttonPress"
+    )
     Box(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = if (style == ZenButtonStyle.Ghost) 48.rdp else 52.rdp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(shape)
             .then(if (bg != null) Modifier.background(bg) else Modifier)
             .then(if (border != null) Modifier.border(border, shape) else Modifier)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .clickable(interactionSource = interaction, indication = LocalIndication.current, enabled = enabled, role = Role.Button) {
+                feedback.tap()
+                onClick()
+            }
             .padding(horizontal = 20.rdp),
         contentAlignment = Alignment.Center
     ) {
@@ -419,6 +486,11 @@ fun ZenSheet(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val colors = ZenTheme.colors
+    val feedback = rememberZenFeedback()
+    DisposableEffect(Unit) {
+        feedback.sheetOpen()
+        onDispose { feedback.sheetClose() }
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -438,6 +510,7 @@ fun ZenSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .staggeredEntrance(index = 1, stepMillis = 70, rise = 12.dp)
                 .padding(horizontal = 20.rdp)
                 .padding(bottom = 28.rdp),
             verticalArrangement = Arrangement.spacedBy(14.rdp),

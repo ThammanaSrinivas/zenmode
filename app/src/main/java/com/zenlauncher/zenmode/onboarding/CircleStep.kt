@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.onboarding
 
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,10 +48,10 @@ internal fun CircleStep(
             )
             if (connectedBuddyName == null) {
                 Text(
-                    text = "No rush — you can build your circle anytime from home.",
+                    text = "No rush. You can build your circle anytime from home.",
                     fontFamily = Geist,
                     fontSize = 12.rsp,
-                    color = colorResource(R.color.stone_500)
+                    color = ZenTheme.colors.textTertiary
                 )
             }
         }

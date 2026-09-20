@@ -76,7 +76,7 @@ object RecapReport {
      */
     suspend fun share(context: Context, recap: WeeklyRecap, attachPdf: Boolean) {
         val summary = "My week in Zen (${recap.rangeLabel()}): ${formatMinutes(recap.totalMinutes)} on my phone, " +
-            "promise kept ${recap.daysKept} of 7 days. Tracked with ZenMode OS — zenmodeos.com"
+            "promise kept ${recap.daysKept} of 7 days. Tracked with ZenMode OS: zenmodeos.com"
         val send = Intent(Intent.ACTION_SEND).apply {
             putExtra(Intent.EXTRA_SUBJECT, "My week in Zen · ${recap.rangeLabel()}")
             putExtra(Intent.EXTRA_TEXT, summary)
@@ -167,7 +167,7 @@ object RecapReport {
                 "DAILY AVERAGE" to formatMinutes(recap.dailyAverageMinutes),
                 "DAYS KEPT" to "${recap.daysKept}/7",
                 "VS LAST WEEK" to when {
-                    change == null -> "—"
+                    change == null -> "-"
                     change <= 0 -> "−${formatMinutes(-change)}"
                     else -> "+${formatMinutes(change)}"
                 }
@@ -189,7 +189,7 @@ object RecapReport {
             val body = if (kept) {
                 "You stayed under ${recap.promiseHours}h on ${recap.daysKept} of 7 days (${recap.daysToUnlock} needed)."
             } else {
-                "${recap.daysKept} of 7 days under ${recap.promiseHours}h — ${recap.daysToUnlock} needed. " +
+                "${recap.daysKept} of 7 days under ${recap.promiseHours}h, ${recap.daysToUnlock} needed. " +
                     "Missed days ran ${formatMinutes(recap.minutesOverPromise)} over. Nothing is taken away."
             }
             c.drawText(title, margin + 16f, top + 26f, text(clash, 15f, color(if (kept) R.color.zen_900 else R.color.ember_700)))

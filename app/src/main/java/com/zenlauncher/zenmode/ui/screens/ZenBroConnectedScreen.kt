@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -312,6 +314,7 @@ private fun ConnectedCards(
             // Snap the bolt in as the cards meet.
             delay(260)
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            ZenSound.play(Sfx.SUCCESS)
             bolt.animateTo(1f, spring(dampingRatio = 0.35f, stiffness = Spring.StiffnessMedium))
         }
         cards.animateTo(1f, spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessLow))

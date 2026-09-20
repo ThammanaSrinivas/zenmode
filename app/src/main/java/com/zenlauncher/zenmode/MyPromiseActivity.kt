@@ -39,7 +39,7 @@ class MyPromiseActivity : AppCompatActivity() {
         setContent {
             var dailyHours by rememberSaveable { mutableIntStateOf(storedHours) }
 
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@MyPromiseActivity)) {
+            ZenTheme() {
                 MyPromiseScreen(
                     dailyHours = dailyHours,
                     onDailyHoursChange = { dailyHours = it },

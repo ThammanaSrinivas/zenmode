@@ -24,6 +24,7 @@ import android.os.Bundle
 import android.widget.Toast
 import android.provider.Settings
 import androidx.activity.OnBackPressedCallback
+import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -39,10 +40,13 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.zenlauncher.zenmode.ui.components.HomeRevealCue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.zenlauncher.zenmode.coreapi.UsageRepository
@@ -120,14 +124,70 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var circleViewModel: CircleViewModel
 
+    // Home's entrance plays once per unlock, and only when the unlock lands on Home: hidden
+    // while the screen is off, played on unlock, settled if the unlock went somewhere else.
+    private var homeRevealCue by mutableStateOf(HomeRevealCue())
+    private var screenOffAt = 0L
+    private var unlockedAt = 0L
+    private var settleRevealJob: Job? = null
+    private var revealAfterDelayedUnlock = false
+
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
             when (intent.action) {
                 Intent.ACTION_USER_PRESENT -> {
                     viewModel.onScreenUnlocked()
+                    unlockedAt = SystemClock.elapsedRealtime()
+                    // The Delayed Unlock pause opens over Home; save the entrance for after it.
+                    revealAfterDelayedUnlock = viewModel.navigateToDelayedUnlock.value == true
+                    if (!revealAfterDelayedUnlock && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                        playUnlockReveal()
+                    }
                 }
                 Intent.ACTION_SCREEN_OFF -> {
                     viewModel.onScreenLocked()
+                    hideHomeForUnlock()
+                }
+            }
+        }
+    }
+
+    private fun hideHomeForUnlock() {
+        screenOffAt = SystemClock.elapsedRealtime()
+        revealAfterDelayedUnlock = false
+        settleRevealJob?.cancel()
+        homeRevealCue = homeRevealCue.hidden()
+    }
+
+    private fun playUnlockReveal() {
+        if (homeRevealCue.phase != HomeRevealCue.Phase.Hidden) return
+        settleRevealJob?.cancel()
+        homeRevealCue = homeRevealCue.play()
+    }
+
+    /** Called on resume: decides what a hidden Home does now that it's on screen. */
+    private fun resolveUnlockReveal() {
+        if (homeRevealCue.phase != HomeRevealCue.Phase.Hidden) return
+        val now = SystemClock.elapsedRealtime()
+        when {
+            // Back from the Delayed Unlock pause: let its exit transition finish first.
+            revealAfterDelayedUnlock -> {
+                revealAfterDelayedUnlock = false
+                settleRevealJob?.cancel()
+                settleRevealJob = lifecycleScope.launch {
+                    delay(DELAYED_UNLOCK_EXIT_MS)
+                    homeRevealCue = homeRevealCue.play()
+                }
+            }
+            unlockedAt > screenOffAt && now - unlockedAt <= UNLOCK_REVEAL_WINDOW_MS -> playUnlockReveal()
+            // Unlocked into another app a while ago; coming back to Home isn't an unlock.
+            unlockedAt > screenOffAt -> homeRevealCue = homeRevealCue.settled()
+            // Resumed just ahead of USER_PRESENT; wait for it, but never leave Home blank.
+            else -> {
+                settleRevealJob?.cancel()
+                settleRevealJob = lifecycleScope.launch {
+                    delay(UNLOCK_REVEAL_WINDOW_MS)
+                    if (homeRevealCue.phase == HomeRevealCue.Phase.Hidden) homeRevealCue = homeRevealCue.settled()
                 }
             }
         }
@@ -162,8 +222,16 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPause() {
+        super.onPause()
+        // Paused by the screen going off: hide now, while Home can still draw a frame, so the
+        // wake-up shows a blank stage rather than a flash of the old Home before the reveal.
+        if (!getSystemService(android.os.PowerManager::class.java).isInteractive) hideHomeForUnlock()
+    }
+
     override fun onResume() {
         super.onResume()
+        resolveUnlockReveal()
         if (::viewModel.isInitialized) {
             viewModel.onResumeCheck()
             viewModel.refreshBuddyStatsFromCache()
@@ -298,7 +366,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContent {
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@MainActivity)) {
+            ZenTheme() {
                 val usage by viewModel.stats.observeAsState()
                 val usagePermissionMissing by viewModel.usagePermissionMissing.observeAsState(initial = false)
                 val yesterdayChangePercent by viewModel.yesterdayChangePercent.observeAsState()
@@ -470,6 +538,7 @@ class MainActivity : AppCompatActivity() {
                     },
                     onAppLongClick = { longPressedApp = it },
                     modifier = Modifier.zenOverlayBlur(longPressedApp != null || showHomeAppsPicker),
+                    reveal = homeRevealCue,
                     apps = run {
                         val notifCounts = ZenNotificationListenerService.notificationCounts
                         installedApps.map { app ->
@@ -887,3 +956,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+
+/** How soon after unlocking Home must appear for the entrance to count as "the unlock". */
+private const val UNLOCK_REVEAL_WINDOW_MS = 1_500L
+
+/** Roughly how long the Delayed Unlock screen takes to close over Home. */
+private const val DELAYED_UNLOCK_EXIT_MS = 300L

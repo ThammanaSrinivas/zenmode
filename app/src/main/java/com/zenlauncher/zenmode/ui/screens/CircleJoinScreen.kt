@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -76,7 +77,7 @@ fun CircleJoinScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colorResource(R.color.paper_base))
+            .background(ZenTheme.colors.bgPrimary)
             .systemBarsPadding()
             .padding(horizontal = 20.rdp)
     ) {
@@ -95,7 +96,7 @@ fun CircleJoinScreen(
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 28.rsp,
-                color = colorResource(R.color.ink_base)
+                color = ZenTheme.colors.textPrimary
             )
             Spacer(Modifier.height(32.rdp))
 
@@ -113,13 +114,13 @@ fun CircleJoinScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.rdp))
-                    .border(1.dp, colorResource(R.color.paper_hairline), RoundedCornerShape(14.rdp))
+                    .border(1.dp, ZenTheme.colors.borderSubtle, RoundedCornerShape(14.rdp))
                     .padding(horizontal = 16.rdp, vertical = 14.rdp)
             ) {
                 BasicTextField(
                     value = code,
                     onValueChange = { code = it.trim() },
-                    textStyle = TextStyle(fontFamily = DepartureMono, fontSize = 16.rsp, color = colorResource(R.color.ink_base)),
+                    textStyle = TextStyle(fontFamily = DepartureMono, fontSize = 16.rsp, color = ZenTheme.colors.textPrimary),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { if (canJoin) onJoin(code) })
@@ -132,7 +133,7 @@ fun CircleJoinScreen(
                     text = errorMessage,
                     fontFamily = Geist,
                     fontSize = 14.rsp,
-                    color = colorResource(R.color.ember_700)
+                    color = ZenTheme.colors.accentDeduct
                 )
             }
 
@@ -142,7 +143,7 @@ fun CircleJoinScreen(
                     .fillMaxWidth()
                     .height(52.rdp)
                     .clip(CircleShape)
-                    .background(if (canJoin) colorResource(R.color.zen_700) else colorResource(R.color.paper_hairline))
+                    .background(if (canJoin) ZenTheme.colors.textBrand else ZenTheme.colors.borderSubtle)
                     .clickable(enabled = canJoin) { onClearError(); onJoin(code) },
                 contentAlignment = Alignment.Center
             ) {
@@ -151,7 +152,7 @@ fun CircleJoinScreen(
                     fontFamily = Geist,
                     fontWeight = FontWeight.Medium,
                     fontSize = 16.rsp,
-                    color = if (canJoin) Color.White else colorResource(R.color.zen_circle_wheel_name)
+                    color = if (canJoin) ZenTheme.colors.textOnBrand else colorResource(R.color.zen_circle_wheel_name)
                 )
             }
         }
@@ -187,7 +188,7 @@ private fun BuddySwitchConfirmDialog(
             modifier = Modifier
                 .padding(horizontal = 28.rdp)
                 .clip(RoundedCornerShape(20.rdp))
-                .background(colorResource(R.color.paper_base))
+                .background(ZenTheme.colors.bgPrimary)
                 // Enabled (not disabled) clickable with no indication -- the standard, reliable
                 // Compose idiom for "swallow this tap" so it doesn't fall through to the scrim's
                 // dismiss handler behind it. A disabled clickable's tap-consumption behavior has
@@ -201,7 +202,7 @@ private fun BuddySwitchConfirmDialog(
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = 20.rsp,
-                    color = colorResource(R.color.ink_base)
+                    color = ZenTheme.colors.textPrimary
                 )
                 Spacer(Modifier.height(10.rdp))
                 Text(
@@ -218,7 +219,7 @@ private fun BuddySwitchConfirmDialog(
                         fontFamily = Geist,
                         fontSize = 14.5.rsp,
                         lineHeight = 20.rsp,
-                        color = colorResource(R.color.zen_700)
+                        color = ZenTheme.colors.textBrand
                     )
                     Spacer(Modifier.height(8.rdp))
                     Text(
@@ -226,7 +227,7 @@ private fun BuddySwitchConfirmDialog(
                         fontFamily = Geist,
                         fontWeight = FontWeight.Medium,
                         fontSize = 14.rsp,
-                        color = colorResource(R.color.zen_700),
+                        color = ZenTheme.colors.textBrand,
                         modifier = Modifier.clickable(onClick = onShareWithBuddy)
                     )
                 }
@@ -237,24 +238,24 @@ private fun BuddySwitchConfirmDialog(
                             .weight(1f)
                             .height(44.rdp)
                             .clip(CircleShape)
-                            .border(1.dp, colorResource(R.color.paper_hairline), CircleShape)
+                            .border(1.dp, ZenTheme.colors.borderSubtle, CircleShape)
                             .clickable(onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Cancel", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = colorResource(R.color.ink_base))
+                        Text("Cancel", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = ZenTheme.colors.textPrimary)
                     }
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .height(44.rdp)
                             .clip(CircleShape)
-                            .background(colorResource(R.color.zen_700))
+                            .background(ZenTheme.colors.textBrand)
                             .clickable(onClick = onConfirm),
                         contentAlignment = Alignment.Center
                     ) {
                         // "(Recommended)" per the plan doc -- this is a steering moment during
                         // Buddy's ~1-month deprecation runway, not a neutral either-way choice.
-                        Text("Join Circle (Recommended)", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, color = Color.White)
+                        Text("Join Circle (Recommended)", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, color = ZenTheme.colors.textOnBrand)
                     }
                 }
             }

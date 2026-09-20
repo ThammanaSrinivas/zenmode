@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -108,20 +109,26 @@ fun StatsCardsRow(
     leftCardModifier: Modifier = Modifier,
     rightCardModifier: Modifier = Modifier,
     boltModifier: Modifier = Modifier,
+    // Set on Home: the row draws the crown itself and hands it to the winner on unlock
+    // (see CrownHandoff). Null keeps the plain crown on the winning card.
+    crownCue: HomeRevealCue? = null,
     modifier: Modifier = Modifier
 ) {
     val myMinutes = ((usage?.screenTimeInMillis ?: 0L) / 1000) / 60
     // King goes to whoever has less screen time; default to me if no buddy
     val kingOnBuddy = hasBuddies && buddyStats != null && buddyStats.screenTimeMins < myMinutes
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    val contested = isSignedIn && hasBuddies && buddyStats != null
+    val cardCrown = crownCue == null
+
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 14.rdp),
+                .padding(top = CardsTop),
             // Figma: card1 ends at x=181.67 (31+150.67), card2 starts at x=231 — a
             // 49.33dp gap, not the 20dp I'd guessed. Narrower cards, wider gap.
-            horizontalArrangement = Arrangement.spacedBy(49.rdp)
+            horizontalArrangement = Arrangement.spacedBy(CardsGap)
         ) {
             if (isSignedIn) {
                 MyScreenTimeCard(
@@ -130,7 +137,7 @@ fun StatsCardsRow(
                     isWeekly = isWeekly,
                     zenScore = zenScore,
                     streaks = streaks,
-                    isWinner = !kingOnBuddy,
+                    isWinner = cardCrown && !kingOnBuddy,
                     buddyLikes = if (hasBuddies && showReactions) buddyLikes else 0L,
                     modifier = Modifier.weight(1f).then(leftCardModifier)
                 )
@@ -147,7 +154,7 @@ fun StatsCardsRow(
                     onCardClick = onBuddyCardClick,
                     zenScore = buddyZenScore,
                     streaks = buddyStreaks,
-                    isWinner = kingOnBuddy,
+                    isWinner = cardCrown && kingOnBuddy,
                     showReactions = showReactions,
                     myLikes = myLikes,
                     onLikeClick = onLikeClick,
@@ -172,8 +179,38 @@ fun StatsCardsRow(
                 .zIndex(1f)
                 .then(boltModifier)
         )
+
+        // Same spot MoodCard hangs its crown: off the winning card's top-left corner.
+        if (crownCue != null && (kingOnBuddy || isSignedIn)) {
+            val cardWidth = (maxWidth - CardsGap) / 2
+            val restY = CardsTop + CrownOffset.y
+            val rest = DpOffset(
+                x = CrownOffset.x + if (kingOnBuddy) cardWidth + CardsGap else 0.dp,
+                y = restY
+            )
+            CrownHandoff(
+                cue = crownCue,
+                rest = rest,
+                // Above the bolt, between the two cards; with no rival it drops straight in.
+                stage = if (contested) DpOffset((maxWidth - CrownWidth) / 2, restY - 8.dp) else rest,
+                contested = contested,
+                towardRight = kingOnBuddy,
+                contentDescription = "Lowest screen time",
+                modifier = Modifier
+                    .zIndex(2f)
+                    .width(CrownWidth)
+                    .height(CrownHeight)
+            )
+        }
     }
 }
+
+private val CardsTop: Dp @Composable get() = 14.rdp
+// Figma: card1 ends at x=181.67, card2 starts at x=231.
+private val CardsGap: Dp @Composable get() = 49.rdp
+private val CrownWidth: Dp @Composable get() = 30.5.rdp
+private val CrownHeight: Dp @Composable get() = 26.5.rdp
+private val CrownOffset = DpOffset((-4).dp, (-16).dp)
 
 // ── Mood Card ─────────────────────────────────────────────────────
 
@@ -337,9 +374,9 @@ private fun MoodCard(
                 contentDescription = "Lowest screen time",
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = (-4).dp, y = (-16).dp)
-                    .width(30.5.rdp)
-                    .height(26.5.rdp)
+                    .offset(x = CrownOffset.x, y = CrownOffset.y)
+                    .width(CrownWidth)
+                    .height(CrownHeight)
             )
         }
     }

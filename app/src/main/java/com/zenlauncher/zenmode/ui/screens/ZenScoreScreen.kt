@@ -1,5 +1,8 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -62,6 +65,7 @@ import com.zenlauncher.zenmode.ui.components.PinnedPageFooter
 import com.zenlauncher.zenmode.ui.components.moodWashColors
 import com.zenlauncher.zenmode.ui.components.rememberTodayMood
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zenlauncher.zenmode.ui.components.dropShadow
@@ -138,11 +142,13 @@ fun ZenScoreScreen(
     today: LocalDate = LocalDate.now(),
     onBackClick: () -> Unit,
     onUpgradeProClick: () -> Unit = {},
-    onDownloadReportClick: () -> Unit = {},
-    onShareScoreClick: () -> Unit = {}
+    onDownloadReportClick: () -> Unit = {}
 ) {
     val mood = rememberTodayMood()
     var footerHeight by remember { mutableStateOf(0.dp) }
+    // "Share Zen Score" opens the shareable card rather than a bare text share — the same
+    // sheet Home's Streaks and Gold stats open (HomeShareOverlays.kt).
+    var showShareOverlay by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -207,8 +213,22 @@ fun ZenScoreScreen(
                 verticalArrangement = Arrangement.spacedBy(4.rdp)
             ) {
                 DownloadReportButton(isPro = isPro, onClick = onDownloadReportClick)
-                ShareScoreButton(onClick = onShareScoreClick)
+                ShareScoreButton(onClick = { showShareOverlay = true })
             }
+        }
+
+        AnimatedVisibility(
+            visible = showShareOverlay,
+            modifier = Modifier.systemBarsPadding(),
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            ZenScoreOverlay(
+                zenScore = score,
+                reclaimedMinutes = reclaimedMinutes,
+                today = today,
+                onDismiss = { showShareOverlay = false }
+            )
         }
     }
 }
@@ -870,8 +890,8 @@ private fun ReclaimedMinutesDial(minutes: Int, modifier: Modifier = Modifier) {
 }
 
 // ── CTA buttons ─────────────────────────────────────────────────────
-// Same pill visual language as HomeScreen's MilestoneOutlineButton /
-// MilestoneSolidButton and ZenGoldScreen's InvestGoldButton / EditPromiseButton.
+// Same pill visual language as HomeShareOverlays' ShareOutlineButton /
+// ShareSolidButton and ZenGoldScreen's InvestGoldButton / EditPromiseButton.
 
 @Composable
 private fun DownloadReportButton(isPro: Boolean, onClick: () -> Unit) {

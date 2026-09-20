@@ -71,6 +71,8 @@ import com.zenlauncher.zenmode.ui.components.staggeredEntrance
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.isInk
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.delay
@@ -86,7 +88,7 @@ internal fun WelcomeStep(
     onContinue: () -> Unit
 ) {
     val sunrise = colorResource(R.color.onboarding_sunrise)
-    val paper = colorResource(R.color.paper_base)
+    val paper = ZenTheme.colors.bgPrimary
 
     OnboardingPage(
         modifier = Modifier.background(Brush.verticalGradient(0f to sunrise, 0.55f to paper)),
@@ -98,7 +100,7 @@ internal fun WelcomeStep(
                 fontWeight = FontWeight.Medium,
                 fontSize = 17.rsp,
                 letterSpacing = (-0.2).sp,
-                color = colorResource(R.color.zen_900),
+                color = ZenTheme.colors.textBrandStrong,
                 modifier = Modifier.staggeredEntrance(6)
             )
             OnboardingButton(
@@ -127,7 +129,7 @@ internal fun WelcomeStep(
             MissionHeadline(modifier = Modifier.staggeredEntrance(2))
             Spacer(Modifier.height(14.rdp))
             OnboardingBody(
-                text = "ZenMode OS is a calmer home screen that helps you use your phone on purpose — " +
+                text = "ZenMode OS is a calmer home screen that helps you use your phone on purpose, " +
                     "and brings the people you love along.",
                 modifier = Modifier.staggeredEntrance(3)
             )
@@ -153,8 +155,8 @@ private fun BrandRow(modifier: Modifier = Modifier) {
         )
         OnboardingChip(
             text = "Open source",
-            container = Color.White.copy(alpha = 0.7f),
-            content = colorResource(R.color.ink_surface),
+            container = ZenTheme.colors.surfaceElevated.copy(alpha = 0.7f),
+            content = ZenTheme.colors.textPrimary,
             leading = {
                 Box(
                     Modifier
@@ -174,7 +176,8 @@ private fun RevampBanner(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.rdp))
-            .background(colorResource(R.color.zen_900))
+            .background(colorResource(if (ZenTheme.colors.isInk) R.color.zen_950 else R.color.zen_900))
+            .then(if (ZenTheme.colors.isInk) Modifier.border(1.dp, ZenTheme.colors.surfaceTintLine, RoundedCornerShape(18.rdp)) else Modifier)
             .padding(horizontal = 16.rdp, vertical = 14.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -203,8 +206,8 @@ private fun RevampBanner(modifier: Modifier = Modifier) {
 
 @Composable
 private fun MissionHeadline(modifier: Modifier = Modifier) {
-    val ink = colorResource(R.color.ink_surface)
-    val green = colorResource(R.color.zen_700)
+    val ink = ZenTheme.colors.textPrimary
+    val green = ZenTheme.colors.textBrand
     Text(
         text = buildAnnotatedString {
             append("We can't live without our phones.\n")
@@ -239,8 +242,8 @@ private fun ReviewsCard(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.rdp))
-            .background(Color.White.copy(alpha = 0.78f))
-            .border(1.dp, colorResource(R.color.paper_hairline), RoundedCornerShape(22.rdp))
+            .background(ZenTheme.colors.surfaceElevated.copy(alpha = 0.78f))
+            .border(1.dp, ZenTheme.colors.borderSubtle, RoundedCornerShape(22.rdp))
             .padding(18.rdp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -258,7 +261,7 @@ private fun ReviewsCard(modifier: Modifier = Modifier) {
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.rsp,
-                color = colorResource(R.color.ink_surface),
+                color = ZenTheme.colors.textPrimary,
                 modifier = Modifier.semantics { contentDescription = "Rated ${AppConstants.PLAY_RATING} out of 5 on Google Play" }
             )
         }
@@ -281,14 +284,14 @@ private fun ReviewsCard(modifier: Modifier = Modifier) {
                         fontStyle = FontStyle.Italic,
                         fontSize = 16.rsp,
                         lineHeight = 23.rsp,
-                        color = colorResource(R.color.ink_surface)
+                        color = ZenTheme.colors.textPrimary
                     )
                     Spacer(Modifier.height(6.rdp))
                     Text(
-                        text = "— ${review.author}",
+                        text = "${review.author}",
                         fontFamily = Geist,
                         fontSize = 13.rsp,
-                        color = colorResource(R.color.stone_500)
+                        color = ZenTheme.colors.textTertiary
                     )
                 }
             }
@@ -301,8 +304,8 @@ private fun ReviewsCard(modifier: Modifier = Modifier) {
                             .width(if (i == index) 16.rdp else 4.rdp)
                             .clip(CircleShape)
                             .background(
-                                if (i == index) colorResource(R.color.zen_700)
-                                else colorResource(R.color.paper_hairline)
+                                if (i == index) ZenTheme.colors.textBrand
+                                else ZenTheme.colors.borderSubtle
                             )
                     )
                 }
@@ -314,7 +317,7 @@ private fun ReviewsCard(modifier: Modifier = Modifier) {
                 fontFamily = Geist,
                 fontSize = 15.rsp,
                 lineHeight = 21.rsp,
-                color = colorResource(R.color.stone_600)
+                color = ZenTheme.colors.textSecondary
             )
         }
     }
@@ -332,6 +335,8 @@ private fun OpenSourceCard(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.rdp))
             .background(colorResource(R.color.ink_surface))
+            // Already an ink card; on the ink theme a hairline keeps it from dissolving into the page.
+            .then(if (ZenTheme.colors.isInk) Modifier.border(1.dp, ZenTheme.colors.borderSubtle, RoundedCornerShape(22.rdp)) else Modifier)
             .padding(18.rdp)
     ) {
         OnboardingEyebrow("Built in the open", color = colorResource(R.color.zen_300))

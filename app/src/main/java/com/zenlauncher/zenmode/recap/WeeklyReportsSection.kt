@@ -85,7 +85,7 @@ fun WeeklyReportsSection(
         }
         Spacer(Modifier.height(4.rdp))
         Text(
-            text = "Every week you've spent in Zen — replay it or download it as a PDF.",
+            text = "Every week you've spent in Zen. Replay it or download it as a PDF.",
             fontFamily = Geist,
             fontSize = 14.rsp,
             color = colors.textSecondary

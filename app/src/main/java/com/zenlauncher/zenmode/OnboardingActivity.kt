@@ -1,5 +1,8 @@
 package com.zenlauncher.zenmode
 
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
 import android.Manifest
 import android.app.Activity
 import android.app.role.RoleManager
@@ -97,7 +100,7 @@ class OnboardingActivity : ComponentActivity() {
         observeSignIn()
 
         setContent {
-            ZenTheme(darkTheme = false) {
+            ZenTheme {
                 val state by viewModel.uiState.collectAsState()
                 LaunchedEffect(state.finished) { if (state.finished) openHome() }
                 if (showAccessibilityDisclosure) {
@@ -126,6 +129,16 @@ class OnboardingActivity : ComponentActivity() {
 
     @Composable
     private fun OnboardingSteps(state: OnboardingUiState) {
+        // Forward a page: one marimba note. Back: a haptic only.
+        val feedback = rememberZenFeedback()
+        var lastIndex by remember { mutableIntStateOf(state.index) }
+        LaunchedEffect(state.index) {
+            when {
+                state.index > lastIndex -> feedback.step()
+                state.index < lastIndex -> feedback.back()
+            }
+            lastIndex = state.index
+        }
         AnimatedContent(
             targetState = state.step,
             transitionSpec = {

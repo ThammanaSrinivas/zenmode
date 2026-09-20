@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -249,6 +251,7 @@ private fun SettingsRow(
                 .clickable(enabled = enabled, onClickLabel = title) {
                     if (comingSoon) {
                         haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        ZenSound.play(Sfx.SELECT)
                         scope.launch { spin.animateTo(spin.value + 90f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow)) }
                         scope.launch { for (a in listOf(-12f, 10f, -6f, 3f, 0f)) wiggle.animateTo(a, tween(55)) }
                     } else {

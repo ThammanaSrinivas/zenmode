@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.colorResource
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.MoodState
@@ -57,6 +59,10 @@ data class ZenColors(
     val surfaceTintLine: Color,
     val textOnTint: Color,
     val textMuted: Color,
+    /** Between secondary and muted: captions and eyebrows that still need to read (stone_500 / stone_400). */
+    val textTertiary: Color,
+    /** Text and icons sitting on a [textBrand] fill: white on paper, ink on the brighter ink-theme green. */
+    val textOnBrand: Color,
     val borderOutline: Color,
     val borderHairlineSoft: Color,
     val rewardSurface: Color,
@@ -65,6 +71,62 @@ data class ZenColors(
     val textOnDeduct: Color,
     val switchThumb: Color
 )
+
+/** Every token of [a] blended toward [b] by [t] — drives the paper ↔ ink crossfade in ZenTheme. */
+fun lerp(a: ZenColors, b: ZenColors, t: Float): ZenColors =
+    ZenColors(
+        bgPrimary = lerp(a.bgPrimary, b.bgPrimary, t),
+        bgSecondary = lerp(a.bgSecondary, b.bgSecondary, t),
+        surfaceElevated = lerp(a.surfaceElevated, b.surfaceElevated, t),
+        borderSubtle = lerp(a.borderSubtle, b.borderSubtle, t),
+        borderFocus = lerp(a.borderFocus, b.borderFocus, t),
+        textPrimary = lerp(a.textPrimary, b.textPrimary, t),
+        textSecondary = lerp(a.textSecondary, b.textSecondary, t),
+        textBrand = lerp(a.textBrand, b.textBrand, t),
+        textBrandStrong = lerp(a.textBrandStrong, b.textBrandStrong, t),
+        actionPrimary = lerp(a.actionPrimary, b.actionPrimary, t),
+        actionPrimaryText = lerp(a.actionPrimaryText, b.actionPrimaryText, t),
+        accentReward = lerp(a.accentReward, b.accentReward, t),
+        accentRewardGraphic = lerp(a.accentRewardGraphic, b.accentRewardGraphic, t),
+        accentScore = lerp(a.accentScore, b.accentScore, t),
+        washHappy = a.washHappy.zip(b.washHappy) { x, y -> lerp(x, y, t) },
+        washNeutral = a.washNeutral.zip(b.washNeutral) { x, y -> lerp(x, y, t) },
+        washAnnoyed = a.washAnnoyed.zip(b.washAnnoyed) { x, y -> lerp(x, y, t) },
+        cardHappy = a.cardHappy.zip(b.cardHappy) { x, y -> lerp(x, y, t) },
+        cardNeutral = a.cardNeutral.zip(b.cardNeutral) { x, y -> lerp(x, y, t) },
+        cardAnnoyed = a.cardAnnoyed.zip(b.cardAnnoyed) { x, y -> lerp(x, y, t) },
+        moodHappy = lerp(a.moodHappy, b.moodHappy, t),
+        moodNeutral = lerp(a.moodNeutral, b.moodNeutral, t),
+        moodAnnoyed = lerp(a.moodAnnoyed, b.moodAnnoyed, t),
+        innerShadow = lerp(a.innerShadow, b.innerShadow, t),
+        bgMoodHappy = lerp(a.bgMoodHappy, b.bgMoodHappy, t),
+        bgMoodNeutral = lerp(a.bgMoodNeutral, b.bgMoodNeutral, t),
+        bgMoodAnnoyed = lerp(a.bgMoodAnnoyed, b.bgMoodAnnoyed, t),
+        statsCardFillHappy = lerp(a.statsCardFillHappy, b.statsCardFillHappy, t),
+        statsCardFillNeutral = lerp(a.statsCardFillNeutral, b.statsCardFillNeutral, t),
+        statsCardFillAnnoyed = lerp(a.statsCardFillAnnoyed, b.statsCardFillAnnoyed, t),
+        strokeHappy = lerp(a.strokeHappy, b.strokeHappy, t),
+        strokeNeutral = lerp(a.strokeNeutral, b.strokeNeutral, t),
+        strokeAnnoyed = lerp(a.strokeAnnoyed, b.strokeAnnoyed, t),
+        notificationBadgeStroke = lerp(a.notificationBadgeStroke, b.notificationBadgeStroke, t),
+        surfaceSunk = lerp(a.surfaceSunk, b.surfaceSunk, t),
+        surfaceTint = lerp(a.surfaceTint, b.surfaceTint, t),
+        surfaceTintLine = lerp(a.surfaceTintLine, b.surfaceTintLine, t),
+        textOnTint = lerp(a.textOnTint, b.textOnTint, t),
+        textMuted = lerp(a.textMuted, b.textMuted, t),
+        textTertiary = lerp(a.textTertiary, b.textTertiary, t),
+        textOnBrand = lerp(a.textOnBrand, b.textOnBrand, t),
+        borderOutline = lerp(a.borderOutline, b.borderOutline, t),
+        borderHairlineSoft = lerp(a.borderHairlineSoft, b.borderHairlineSoft, t),
+        rewardSurface = lerp(a.rewardSurface, b.rewardSurface, t),
+        rewardSurfaceLine = lerp(a.rewardSurfaceLine, b.rewardSurfaceLine, t),
+        accentDeduct = lerp(a.accentDeduct, b.accentDeduct, t),
+        textOnDeduct = lerp(a.textOnDeduct, b.textOnDeduct, t),
+        switchThumb = lerp(a.switchThumb, b.switchThumb, t)
+    )
+
+/** True on the ink (dark) palette, and past the midpoint of a crossfade toward it. */
+val ZenColors.isInk: Boolean get() = bgPrimary.luminance() < 0.5f
 
 fun ZenColors.statsCardFill(mood: MoodState): Color =
     when (mood) {
@@ -166,6 +228,8 @@ val LightZenColors: ZenColors
         surfaceTintLine = colorResource(R.color.zen_050_line),
         textOnTint = colorResource(R.color.zen_ink),
         textMuted = colorResource(R.color.stone_400),
+        textTertiary = colorResource(R.color.stone_500),
+        textOnBrand = colorResource(R.color.paper_white),
         borderOutline = colorResource(R.color.paper_outline),
         borderHairlineSoft = colorResource(R.color.paper_hairline_soft),
         rewardSurface = colorResource(R.color.amber_on),
@@ -238,6 +302,8 @@ val DarkZenColors: ZenColors
         surfaceTintLine = colorResource(R.color.ink_line),
         textOnTint = colorResource(R.color.zen_300),
         textMuted = colorResource(R.color.stone_250),
+        textTertiary = colorResource(R.color.stone_400),
+        textOnBrand = colorResource(R.color.ink_base),
         borderOutline = colorResource(R.color.ink_line),
         borderHairlineSoft = colorResource(R.color.ink_line),
         rewardSurface = colorResource(R.color.ink_reward),
@@ -288,6 +354,8 @@ val LocalZenColors = staticCompositionLocalOf {
         surfaceTintLine = Color.Unspecified,
         textOnTint = Color.Unspecified,
         textMuted = Color.Unspecified,
+        textTertiary = Color.Unspecified,
+        textOnBrand = Color.Unspecified,
         borderOutline = Color.Unspecified,
         borderHairlineSoft = Color.Unspecified,
         rewardSurface = Color.Unspecified,

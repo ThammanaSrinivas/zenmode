@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.onboarding
 
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.isInk
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -73,13 +75,13 @@ internal fun SignInStep(
                 onClick = onGoogleSignIn,
                 enabled = !isLoading,
                 style = OnboardingButtonStyle.Light,
-                modifier = Modifier.border(1.dp, colorResource(R.color.paper_hairline), RoundedCornerShape(percent = 50)),
+                modifier = Modifier.border(1.dp, ZenTheme.colors.borderSubtle, RoundedCornerShape(percent = 50)),
                 leading = {
                     if (isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(18.rdp),
                             strokeWidth = 2.dp,
-                            color = colorResource(R.color.zen_700)
+                            color = ZenTheme.colors.textBrand
                         )
                     } else {
                         Image(
@@ -99,7 +101,7 @@ internal fun SignInStep(
                 },
                 fontFamily = Geist,
                 fontSize = 12.rsp,
-                color = colorResource(R.color.stone_500),
+                color = ZenTheme.colors.textTertiary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.pressScale(
                     onClick = { uriHandler.openUri(AppConstants.PRIVACY_POLICY_URL) },
@@ -131,8 +133,8 @@ internal fun SignInStep(
                     .fillMaxWidth()
                     .staggeredEntrance(3)
                     .clip(RoundedCornerShape(22.rdp))
-                    .background(Color.White)
-                    .border(1.dp, colorResource(R.color.paper_hairline), RoundedCornerShape(22.rdp))
+                    .background(ZenTheme.colors.surfaceElevated)
+                    .border(1.dp, ZenTheme.colors.borderSubtle, RoundedCornerShape(22.rdp))
                     .padding(vertical = 6.rdp)
             ) {
                 PromiseRow("Your messages, photos and browsing never leave your phone.")
@@ -162,7 +164,7 @@ private fun ReviewerSignIn(isLoading: Boolean, onSignIn: (email: String, passwor
             OnboardingTextButton(
                 text = "Reviewer? Sign in here",
                 onClick = { expanded = true },
-                color = colorResource(R.color.stone_500)
+                color = ZenTheme.colors.textTertiary
             )
         }
         AnimatedVisibility(visible = expanded) {
@@ -189,7 +191,7 @@ private fun ReviewerSignIn(isLoading: Boolean, onSignIn: (email: String, passwor
                     onClick = {
                         if (!isLoading && email.isNotBlank() && password.isNotBlank()) onSignIn(email.trim(), password)
                     },
-                    color = colorResource(R.color.zen_700),
+                    color = ZenTheme.colors.textBrand,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             }
@@ -211,13 +213,13 @@ private fun PromiseRow(text: String, last: Boolean = false) {
                 modifier = Modifier
                     .size(24.rdp)
                     .clip(CircleShape)
-                    .background(colorResource(R.color.zen_050)),
+                    .background(ZenTheme.colors.surfaceTint),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = null,
-                    tint = colorResource(R.color.zen_700),
+                    tint = ZenTheme.colors.textBrand,
                     modifier = Modifier.size(15.rdp)
                 )
             }
@@ -226,7 +228,7 @@ private fun PromiseRow(text: String, last: Boolean = false) {
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 15.rsp,
-                color = colorResource(R.color.ink_surface),
+                color = ZenTheme.colors.textPrimary,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -236,7 +238,7 @@ private fun PromiseRow(text: String, last: Boolean = false) {
                     .padding(start = 52.rdp)
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(colorResource(R.color.paper_sunk))
+                    .background(ZenTheme.colors.surfaceSunk)
             )
         }
     }

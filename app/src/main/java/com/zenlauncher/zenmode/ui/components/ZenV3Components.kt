@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.components
 
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
@@ -408,6 +410,7 @@ private fun V3StepperButton(
                 onClickLabel = label,
                 onClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    ZenSound.play(Sfx.TAP)
                     scope.launch {
                         scale.animateTo(0.88f, tween(durationMillis = 70))
                         scale.animateTo(1f, spring(dampingRatio = 0.35f, stiffness = Spring.StiffnessMedium))
@@ -504,8 +507,11 @@ internal fun Modifier.pressScale(
     onClick: () -> Unit,
     enabled: Boolean = true,
     onClickLabel: String? = null,
-    pressedScale: Float = 0.92f
+    pressedScale: Float = 0.92f,
+    /** Soft tick + key haptic on tap. Off for surfaces that play their own feedback. */
+    sound: Boolean = true
 ): Modifier {
+    val feedback = rememberZenFeedback()
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale = remember { Animatable(1f) }
@@ -526,7 +532,10 @@ internal fun Modifier.pressScale(
             interactionSource = interaction,
             role = Role.Button,
             onClickLabel = onClickLabel,
-            onClick = onClick
+            onClick = {
+                if (sound) feedback.tap()
+                onClick()
+            }
         )
 }
 

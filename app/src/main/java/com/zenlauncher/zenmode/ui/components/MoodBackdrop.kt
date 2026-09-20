@@ -26,6 +26,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import com.zenlauncher.zenmode.AppLogic
+import com.zenlauncher.zenmode.HomeTheme
+import com.zenlauncher.zenmode.HomeThemePreferences
+import com.zenlauncher.zenmode.ProAccess
+import com.zenlauncher.zenmode.ui.theme.isInk
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
@@ -66,6 +72,43 @@ fun rememberTodayMood(): MoodState {
     return mood
 }
 
+/**
+ * The home theme actually in force: the user's pick while they're Pro, otherwise [HomeTheme.MOOD].
+ * Lapsing back to free quietly returns the mood wash; the pick is kept for if they come back.
+ */
+@Composable
+fun rememberActiveHomeTheme(): HomeTheme {
+    if (LocalInspectionMode.current || !ServiceLocator.isInitialized) return HomeTheme.MOOD
+    val context = LocalContext.current.applicationContext
+    val picked by remember(context) { HomeThemePreferences.state(context) }.collectAsState()
+    return if (ProAccess.isProState(context)) picked else HomeTheme.MOOD
+}
+
+/** Edge, core, edge — the same three-stop shape as the mood washes. */
+fun HomeTheme.wash(ink: Boolean): List<Color> {
+    val (edge, core) = when (this) {
+        HomeTheme.MOOD -> error("Mood wash comes from ZenColors.moodWash")
+        HomeTheme.MOSS -> if (ink) 0xFF0F140C to 0xFF1C2B15 else 0xFFEEF2E6 to 0xFFD8E7C6
+        HomeTheme.TIDE -> if (ink) 0xFF0B1316 to 0xFF11272F else 0xFFE8F0F2 to 0xFFCBE1E9
+        HomeTheme.DUSK -> if (ink) 0xFF120F16 to 0xFF241A30 else 0xFFF1ECF2 to 0xFFE1D3EA
+        HomeTheme.SAND -> if (ink) 0xFF15120C to 0xFF2A2216 else 0xFFF4EFE6 to 0xFFEAD9BE
+        HomeTheme.STONE -> if (ink) 0xFF111111 to 0xFF1D1D1C else 0xFFF2F1ED to 0xFFE0DFDA
+    }
+    return listOf(Color(edge), Color(core), Color(edge))
+}
+
+/** The colour the drifting pools lean toward. */
+fun HomeTheme.accent(ink: Boolean): Color = Color(
+    when (this) {
+        HomeTheme.MOOD -> error("Mood accent comes from ZenColors.statsCardStroke")
+        HomeTheme.MOSS -> if (ink) 0xFF4E7A35 else 0xFF8DBA68
+        HomeTheme.TIDE -> if (ink) 0xFF2F6F84 else 0xFF76B0C4
+        HomeTheme.DUSK -> if (ink) 0xFF6A4A8A else 0xFFB095CC
+        HomeTheme.SAND -> if (ink) 0xFF8A6A36 else 0xFFD8B278
+        HomeTheme.STONE -> if (ink) 0xFF3A3A38 else 0xFFB5B4AE
+    }
+)
+
 /** The wash colours for [mood] — [first] is the top edge, [last] the bottom edge. */
 @Composable
 fun moodWashColors(mood: MoodState): List<Color> = ZenTheme.colors.moodWash(mood)
@@ -77,12 +120,14 @@ fun moodWashColors(mood: MoodState): List<Color> = ZenTheme.colors.moodWash(mood
 @Composable
 fun MoodBackdrop(mood: MoodState = rememberTodayMood(), modifier: Modifier = Modifier) {
     val colors = ZenTheme.colors
-    val wash = colors.moodWash(mood)
-    // Cross-fade when the mood changes (e.g. crossing a threshold mid-day).
+    val theme = rememberActiveHomeTheme()
+    val wash = if (theme == HomeTheme.MOOD) colors.moodWash(mood) else theme.wash(colors.isInk)
+    val pull = if (theme == HomeTheme.MOOD) colors.statsCardStroke(mood) else theme.accent(colors.isInk)
+    // Cross-fade when the mood (or the picked theme) changes.
     val top by animateColorAsState(wash.first(), tween(700), label = "wash-top")
     val core by animateColorAsState(wash[1], tween(700), label = "wash-core")
     val bottom by animateColorAsState(wash.last(), tween(700), label = "wash-bottom")
-    val accent by animateColorAsState(lerp(wash[1], colors.statsCardStroke(mood), 0.28f), tween(700), label = "wash-accent")
+    val accent by animateColorAsState(lerp(wash[1], pull, 0.28f), tween(700), label = "wash-accent")
 
     val still = rememberReduceMotion() || LocalInspectionMode.current
     val drift = rememberInfiniteTransition(label = "wash-drift")

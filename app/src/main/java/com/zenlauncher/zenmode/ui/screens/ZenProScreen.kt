@@ -50,6 +50,32 @@ import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
 import com.zenlauncher.zenmode.coreapi.services.ProStatus
 import com.zenlauncher.zenmode.ui.components.GlyphKind
+import com.zenlauncher.zenmode.ui.components.ZenMotion
+import com.zenlauncher.zenmode.ui.components.ZenProTag
+import com.zenlauncher.zenmode.ui.components.rememberReduceMotion
+import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
+import com.zenlauncher.zenmode.ui.components.staggeredEntrance
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalInspectionMode
 import com.zenlauncher.zenmode.ui.components.ZenButton
 import com.zenlauncher.zenmode.ui.components.ZenButtonStyle
 import com.zenlauncher.zenmode.ui.components.ZenEyebrow
@@ -155,6 +181,8 @@ fun ZenProScreen(
     onResume: () -> Unit
 ) {
     val colors = ZenTheme.colors
+    val feedback = rememberZenFeedback()
+    LaunchedEffect(errorMessage) { if (errorMessage != null) feedback.error() }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -243,7 +271,11 @@ private fun PlanPage(
     val chosen = offers.offer(picked)
     val trial = (chosen?.freeTrialDays ?: 0) > 0
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.rdp)) {
+    Column(
+        modifier = Modifier.staggeredEntrance(0),
+        verticalArrangement = Arrangement.spacedBy(12.rdp)
+    ) {
+        OsRule(Modifier.width(48.rdp))
         Text(
             text = "Two of us built this. Pro is how it keeps going.",
             fontFamily = ClashDisplay,
@@ -262,7 +294,7 @@ private fun PlanPage(
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).staggeredEntrance(1),
         horizontalArrangement = Arrangement.spacedBy(10.rdp)
     ) {
         TierColumn(
@@ -284,7 +316,7 @@ private fun PlanPage(
     }
 
     Column(
-        modifier = Modifier.selectableGroup(),
+        modifier = Modifier.selectableGroup().staggeredEntrance(2),
         verticalArrangement = Arrangement.spacedBy(8.rdp)
     ) {
         ZenEyebrow("Pick a plan")
@@ -318,9 +350,21 @@ private fun PlanPage(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(10.rdp)) {
+    Column(
+        modifier = Modifier.staggeredEntrance(3),
+        verticalArrangement = Arrangement.spacedBy(10.rdp)
+    ) {
         if (chosen != null) {
-            PriceLine(chosen.priceLine())
+            // The line under the button re-states the price whenever the plan changes; it
+            // rolls rather than cuts so the eye catches that it changed.
+            AnimatedContent(
+                targetState = chosen.priceLine(),
+                transitionSpec = {
+                    (fadeIn(ZenMotion.arrive()) + slideInVertically(ZenMotion.arrive()) { it / 2 })
+                        .togetherWith(fadeOut(ZenMotion.leave()) + slideOutVertically(ZenMotion.leave()) { -it / 2 })
+                },
+                label = "priceLine"
+            ) { line -> PriceLine(line) }
         }
         ZenButton(
             text = if (trial) "Start the free month" else "Subscribe",
@@ -338,7 +382,7 @@ private fun PlanPage(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().staggeredEntrance(4),
         verticalArrangement = Arrangement.spacedBy(8.rdp)
     ) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
@@ -417,6 +461,7 @@ private fun TierColumn(
             .padding(14.rdp),
         verticalArrangement = Arrangement.spacedBy(6.rdp)
     ) {
+        if (highlighted) OsRule(Modifier.padding(bottom = 4.rdp))
         ZenEyebrow(label, color = if (highlighted) colors.textBrand else colors.textSecondary)
         Text(amount, fontFamily = DepartureMono, fontSize = 24.rsp, lineHeight = 28.rsp, color = colors.textPrimary)
         Text(caption.uppercase(), style = ZenTypography.monoLabel, color = colors.textMuted)
@@ -443,14 +488,27 @@ private fun PlanOption(
 ) {
     val colors = ZenTheme.colors
     val shape = RoundedCornerShape(16.rdp)
+    val feedback = rememberZenFeedback()
+    // One 0→1 value drives the whole selection: fill, ring, border weight and the radio dot,
+    // which pops in on a spring slightly behind the ring.
+    val on by animateFloatAsState(if (selected) 1f else 0f, ZenMotion.settle(), label = "planSelected")
+    val dot by animateFloatAsState(if (selected) 1f else 0f, ZenMotion.bouncy(), label = "planDot")
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.rdp)
+            .graphicsLayer {
+                val scale = 0.985f + 0.015f * on
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(shape)
-            .background(if (selected) colors.bgSecondary else colors.bgPrimary)
-            .border(if (selected) 2.dp else 1.dp, if (selected) colors.textBrand else colors.borderSubtle, shape)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .background(lerp(colors.bgPrimary, colors.bgSecondary, on))
+            .border((1f + on).dp, lerp(colors.borderSubtle, colors.textBrand, on), shape)
+            .selectable(selected = selected, role = Role.RadioButton) {
+                if (!selected) feedback.select()
+                onSelect()
+            }
             .padding(horizontal = 16.rdp, vertical = 14.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -458,10 +516,21 @@ private fun PlanOption(
             modifier = Modifier
                 .size(20.rdp)
                 .clip(CircleShape)
-                .border(2.dp, if (selected) colors.textBrand else colors.borderOutline, CircleShape),
+                .border(2.dp, lerp(colors.borderOutline, colors.textBrand, on), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            if (selected) Box(Modifier.size(10.rdp).clip(CircleShape).background(colors.textBrand))
+            if (dot > 0.01f) {
+                Box(
+                    Modifier
+                        .size(10.rdp)
+                        .graphicsLayer {
+                            scaleX = dot
+                            scaleY = dot
+                        }
+                        .clip(CircleShape)
+                        .background(colors.textBrand)
+                )
+            }
         }
         Spacer(Modifier.width(12.rdp))
         Column(Modifier.weight(1f)) {
@@ -523,7 +592,7 @@ private fun ManagePro(
     val unit = if (entitlement.period == BillingPeriod.MONTHLY) "month" else "year"
 
     Column(
-        modifier = Modifier.fillMaxWidth().zenCard().padding(16.rdp),
+        modifier = Modifier.fillMaxWidth().staggeredEntrance(0).zenCard().padding(16.rdp),
         verticalArrangement = Arrangement.spacedBy(6.rdp)
     ) {
         OsRule()
@@ -550,13 +619,13 @@ private fun ManagePro(
                 }
             )
             when (entitlement.status) {
-                ProStatus.TRIAL -> ZenReceiptLine("First charge", entitlement.trialEndsOn?.asZenDate() ?: "—")
-                ProStatus.ENDING -> ZenReceiptLine("Pro until", entitlement.endsOn?.asZenDate() ?: "—")
-                else -> ZenReceiptLine("Renews", entitlement.renewsOn?.asZenDate() ?: "—")
+                ProStatus.TRIAL -> ZenReceiptLine("First charge", entitlement.trialEndsOn?.asZenDate() ?: "-")
+                ProStatus.ENDING -> ZenReceiptLine("Pro until", entitlement.endsOn?.asZenDate() ?: "-")
+                else -> ZenReceiptLine("Renews", entitlement.renewsOn?.asZenDate() ?: "-")
             }
             ZenReceiptLine(
                 "Then",
-                if (ending) "Back to free" else offer?.let { "${it.formattedPrice} a $unit" } ?: "—",
+                if (ending) "Back to free" else offer?.let { "${it.formattedPrice} a $unit" } ?: "-",
                 showDivider = false
             )
         }
@@ -608,22 +677,147 @@ private fun ManagePro(
     }
 }
 
-/** The OS gradient as a 3dp rule. A reward mark on Pro surfaces only — never a background. */
+/**
+ * The OS gradient as a 3dp rule. A reward mark on Pro surfaces only — never a background.
+ * The colours drift slowly along it (one pass every 6s) so it reads as alive, not as a border.
+ */
 @Composable
 internal fun OsRule(modifier: Modifier = Modifier) {
+    val stops = listOf(
+        colorResource(R.color.ember_500),
+        colorResource(R.color.amber_500),
+        colorResource(R.color.zen_700)
+    )
+    val still = rememberReduceMotion() || LocalInspectionMode.current
+    val drift = rememberInfiniteTransition(label = "osRule")
+    val shift = drift.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(6_000, easing = LinearEasing)),
+        label = "osRuleShift"
+    )
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(3.rdp)
             .clip(RoundedCornerShape(3.rdp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        colorResource(R.color.ember_500),
-                        colorResource(R.color.amber_500),
-                        colorResource(R.color.zen_700)
+            .drawBehind {
+                val w = size.width
+                val offset = if (still) 0f else shift.value * w * 2f
+                drawRect(
+                    Brush.linearGradient(
+                        colors = stops,
+                        start = Offset(offset - w, 0f),
+                        end = Offset(offset, 0f),
+                        tileMode = TileMode.Mirror
                     )
                 )
-            )
+            }
     )
+}
+
+// ── "You're Pro" ───────────────────────────────────────────────────
+
+/**
+ * The one flourish in the sales path, and it comes *after* the money: a quiet bloom of the OS
+ * gradient, a chord, the list of what just opened up, then back to where they were.
+ */
+@Composable
+fun ProWelcome(onContinue: () -> Unit) {
+    val colors = ZenTheme.colors
+    val feedback = rememberZenFeedback()
+    val inspection = LocalInspectionMode.current
+    val bloom = remember { Animatable(if (inspection) 1f else 0f) }
+    LaunchedEffect(Unit) {
+        feedback.proUnlocked()
+        bloom.animateTo(1f, tween(1_400, easing = ZenMotion.EaseOut))
+    }
+    val ember = colorResource(R.color.ember_500)
+    val amber = colorResource(R.color.amber_500)
+    val green = colorResource(R.color.zen_300)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.bgPrimary)
+            .drawBehind {
+                // Three soft rings of the OS gradient open out from behind the title.
+                val c = Offset(size.width / 2f, size.height * 0.34f)
+                val b = bloom.value
+                listOf(ember to 0.9f, amber to 0.65f, green to 0.42f).forEachIndexed { i, (col, reach) ->
+                    val r = size.width * reach * (0.35f + 0.65f * b)
+                    drawCircle(
+                        Brush.radialGradient(listOf(col.copy(alpha = 0.22f * b), col.copy(alpha = 0f)), c, r),
+                        radius = r,
+                        center = c
+                    )
+                    drawCircle(
+                        color = col.copy(alpha = (0.35f - i * 0.08f) * (1f - b * 0.6f)),
+                        radius = r * 0.62f,
+                        center = c,
+                        style = Stroke(width = 1.5.dp.toPx())
+                    )
+                }
+            }
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = Spacing.screenMargin),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.weight(0.9f))
+            ZenProTag(unlocked = true, modifier = Modifier.staggeredEntrance(2, stepMillis = 120))
+            Spacer(Modifier.height(16.rdp))
+            Text(
+                text = "You're Pro. Thank you.",
+                fontFamily = ClashDisplay,
+                fontWeight = FontWeight.Medium,
+                fontSize = 32.rsp,
+                lineHeight = 36.rsp,
+                color = colors.textPrimary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.staggeredEntrance(3, stepMillis = 120).semantics { heading() }
+            )
+            Spacer(Modifier.height(10.rdp))
+            Text(
+                text = "You're keeping the servers on and the app ad-free. We're grateful.",
+                fontFamily = Geist,
+                fontSize = 15.rsp,
+                lineHeight = 22.rsp,
+                color = colors.textSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.staggeredEntrance(4, stepMillis = 120)
+            )
+            Spacer(Modifier.height(28.rdp))
+            Column(
+                modifier = Modifier.fillMaxWidth().zenCard().padding(16.rdp),
+                verticalArrangement = Arrangement.spacedBy(10.rdp)
+            ) {
+                // Only what works today. Features still arriving land in the changelog, not here.
+                listOf("Full history", "Weekly and monthly reports", "Home-screen themes", "Data export")
+                    .forEachIndexed { i, item ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.staggeredEntrance(6 + i, stepMillis = 90)
+                    ) {
+                        Box(
+                            Modifier.size(18.rdp).clip(CircleShape).background(colors.surfaceTint),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("✓", fontSize = 10.rsp, color = colors.textOnTint)
+                        }
+                        Spacer(Modifier.width(10.rdp))
+                        Text(item, fontFamily = Geist, fontSize = 14.rsp, color = colors.textPrimary)
+                    }
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            ZenButton(
+                text = "Back to ZenMode",
+                onClick = onContinue,
+                modifier = Modifier.padding(bottom = 16.rdp).staggeredEntrance(12, stepMillis = 90)
+            )
+        }
+    }
 }

@@ -1,5 +1,8 @@
 package com.zenlauncher.zenmode.onboarding
 
+import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.isInk
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -108,7 +111,7 @@ internal fun HomeAppsStep(
     ) {
         if (apps == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = colorResource(R.color.zen_700), strokeWidth = 2.dp)
+                CircularProgressIndicator(color = ZenTheme.colors.textBrand, strokeWidth = 2.dp)
             }
             return@OnboardingPage
         }
@@ -124,10 +127,10 @@ internal fun HomeAppsStep(
             Spacer(Modifier.height(20.rdp))
             DockPreview(selected = selected.mapNotNull { byPackage[it] }, limit = limit)
             Spacer(Modifier.height(22.rdp))
-            OnboardingEyebrow("All apps", color = colorResource(R.color.stone_500))
+            OnboardingEyebrow("All apps", color = ZenTheme.colors.textTertiary)
             Spacer(Modifier.height(10.rdp))
         }
-        HorizontalDivider(color = colorResource(R.color.paper_hairline), thickness = 1.dp)
+        HorizontalDivider(color = ZenTheme.colors.borderSubtle, thickness = 1.dp)
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
             modifier = Modifier
@@ -157,7 +160,8 @@ private fun DockPreview(selected: List<HomeAppOption>, limit: Int) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.rdp))
-            .background(colorResource(R.color.zen_900))
+            .background(colorResource(if (ZenTheme.colors.isInk) R.color.zen_950 else R.color.zen_900))
+            .then(if (ZenTheme.colors.isInk) Modifier.border(1.dp, ZenTheme.colors.borderSubtle, RoundedCornerShape(24.rdp)) else Modifier)
             .padding(16.rdp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -218,15 +222,24 @@ private fun DockPreview(selected: List<HomeAppOption>, limit: Int) {
 private fun AppTile(app: HomeAppOption, isSelected: Boolean, isFull: Boolean, onToggle: () -> Unit) {
     val enabled = isSelected || !isFull
     val ring by animateColorAsState(
-        if (isSelected) colorResource(R.color.zen_700) else Color.Transparent,
+        if (isSelected) ZenTheme.colors.textBrand else Color.Transparent,
         label = "ring"
     )
     val scale by animateFloatAsState(if (isSelected) 1f else 0.94f, spring(dampingRatio = 0.55f), label = "tileScale")
+    val feedback = rememberZenFeedback()
 
     Column(
         modifier = Modifier
             .alpha(if (enabled) 1f else 0.38f)
-            .pressScale(onClick = onToggle, enabled = enabled, pressedScale = 0.9f)
+            .pressScale(
+                onClick = {
+                    feedback.toggle(!isSelected)
+                    onToggle()
+                },
+                enabled = enabled,
+                pressedScale = 0.9f,
+                sound = false
+            )
             .semantics(mergeDescendants = true) {
                 role = Role.Checkbox
                 selected = isSelected
@@ -239,7 +252,7 @@ private fun AppTile(app: HomeAppOption, isSelected: Boolean, isFull: Boolean, on
                     .size(60.rdp)
                     .clip(RoundedCornerShape(18.rdp))
                     .border(2.dp, ring, RoundedCornerShape(18.rdp))
-                    .background(if (isSelected) colorResource(R.color.zen_050) else Color.Transparent),
+                    .background(if (isSelected) ZenTheme.colors.surfaceTint else Color.Transparent),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -257,11 +270,11 @@ private fun AppTile(app: HomeAppOption, isSelected: Boolean, isFull: Boolean, on
                         .offset(x = 4.rdp, y = (-4).rdp)
                         .size(20.rdp)
                         .clip(CircleShape)
-                        .background(colorResource(R.color.zen_700))
-                        .border(2.dp, colorResource(R.color.paper_base), CircleShape),
+                        .background(ZenTheme.colors.textBrand)
+                        .border(2.dp, ZenTheme.colors.bgPrimary, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.rdp))
+                    Icon(Icons.Rounded.Check, contentDescription = null, tint = ZenTheme.colors.textOnBrand, modifier = Modifier.size(12.rdp))
                 }
             }
         }
@@ -271,7 +284,7 @@ private fun AppTile(app: HomeAppOption, isSelected: Boolean, isFull: Boolean, on
             fontFamily = Geist,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
             fontSize = 12.rsp,
-            color = colorResource(R.color.ink_surface),
+            color = ZenTheme.colors.textPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,

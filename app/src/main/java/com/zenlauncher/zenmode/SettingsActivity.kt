@@ -3,6 +3,7 @@ package com.zenlauncher.zenmode
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import com.zenlauncher.zenmode.recap.DataExport
 import com.zenlauncher.zenmode.recap.ProUpsellSheet
 import com.zenlauncher.zenmode.recap.RecapActivity
 import com.zenlauncher.zenmode.recap.RecapReport
@@ -97,7 +98,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         setContent {
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@SettingsActivity)) {
+            ZenTheme() {
                 val entitlement by entitlements.entitlement.collectAsState()
                 val isPro = ProAccess.isProState(this@SettingsActivity)
                 LaunchedEffect(entitlements.isAvailable) {
@@ -144,6 +145,7 @@ class SettingsActivity : AppCompatActivity() {
                             mapOf("feature" to feature.name.lowercase())
                         )
                     },
+                    onExportData = { exportData() },
                     onLogoutClick = { performLogout(repository) },
                     onDeleteAccountClick = { performDeleteAccount(repository) },
                     weeklyReports = {
@@ -304,6 +306,20 @@ class SettingsActivity : AppCompatActivity() {
             ThemePreferences.clear(this@SettingsActivity)
             navigateToOnboarding()
         }
+    }
+
+    private fun exportData() {
+        val days = runCatching { DataExport.share(this) }.getOrElse {
+            ZenSound.play(Sfx.ERROR)
+            Toast.makeText(this, "Couldn't write the export. Try again in a moment.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (days == 0) {
+            Toast.makeText(this, "Nothing to export yet. A day is saved once it's over.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        ZenSound.play(Sfx.SUCCESS)
+        ServiceLocator.analyticsManager.trackEvent("pro_data_exported", mapOf("days" to days))
     }
 
     private fun navigateToOnboarding() {

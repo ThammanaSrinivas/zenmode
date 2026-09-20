@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.onboarding
 
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.components.BrandedText
 import android.app.Activity
 import androidx.compose.animation.core.animateFloatAsState
@@ -66,8 +67,9 @@ import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 
 // ── ZenMode OS onboarding chrome ────────────────────────────────────
-// Light-only like the other v3 sub-screens, so colors come straight from colors.xml.
-// The stories step is the one dark screen and passes `dark = true` where it matters.
+// Follows the app theme through ZenTheme.colors. The stories step is always night and passes
+// `dark = true` where it matters; a few brand moments (the dock preview, the Google button)
+// keep fixed colours on purpose.
 
 internal val OnboardingMargin: Dp @Composable get() = 24.rdp
 
@@ -75,7 +77,7 @@ internal val OnboardingMargin: Dp @Composable get() = 24.rdp
 @Composable
 internal fun OnboardingPage(
     modifier: Modifier = Modifier,
-    background: Color = colorResource(R.color.paper_base),
+    background: Color = ZenTheme.colors.bgPrimary,
     topBar: (@Composable () -> Unit)? = null,
     bottomBar: (@Composable ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -114,8 +116,8 @@ internal fun SegmentedProgress(
     currentFraction: Float = 1f,
     dark: Boolean = false
 ) {
-    val track = if (dark) Color.White.copy(alpha = 0.22f) else colorResource(R.color.paper_hairline)
-    val fill = if (dark) Color.White else colorResource(R.color.ink_surface)
+    val track = if (dark) Color.White.copy(alpha = 0.22f) else ZenTheme.colors.borderSubtle
+    val fill = if (dark) Color.White else ZenTheme.colors.textPrimary
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -192,7 +194,7 @@ internal fun OnboardingTopBar(
     eyebrow: String = "Welcome to ZenMode OS",
     trailing: (@Composable () -> Unit)? = null
 ) {
-    val content = if (dark) Color.White else colorResource(R.color.ink_surface)
+    val content = if (dark) Color.White else ZenTheme.colors.textPrimary
     Column(modifier = modifier.padding(horizontal = 16.rdp).padding(top = 10.rdp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             SegmentedProgress(
@@ -209,7 +211,7 @@ internal fun OnboardingTopBar(
                     fontFamily = DepartureMono,
                     fontSize = 12.rsp,
                     lineHeight = 14.rsp,
-                    color = if (dark) Color.White.copy(alpha = 0.72f) else colorResource(R.color.stone_600),
+                    color = if (dark) Color.White.copy(alpha = 0.72f) else ZenTheme.colors.textSecondary,
                     textAlign = TextAlign.End,
                     maxLines = 1,
                     // Wide enough for "100%" so the bar doesn't twitch as the number grows.
@@ -266,7 +268,7 @@ internal fun OnboardingTopBar(
 internal fun OnboardingHeadline(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = colorResource(R.color.ink_surface),
+    color: Color = ZenTheme.colors.textPrimary,
     size: Float = 34f,
     textAlign: TextAlign = TextAlign.Start
 ) {
@@ -288,7 +290,7 @@ internal fun OnboardingHeadline(
 internal fun OnboardingBody(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = colorResource(R.color.stone_600),
+    color: Color = ZenTheme.colors.textSecondary,
     size: Float = 16f,
     textAlign: TextAlign = TextAlign.Start
 ) {
@@ -311,7 +313,7 @@ internal fun OnboardingBody(
 internal fun OnboardingEyebrow(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = colorResource(R.color.zen_700)
+    color: Color = ZenTheme.colors.textBrand
 ) {
     Text(
         text = text,
@@ -339,13 +341,14 @@ internal fun OnboardingButton(
     leading: (@Composable () -> Unit)? = null
 ) {
     val (container, content, border) = when (style) {
-        OnboardingButtonStyle.Ink -> Triple(colorResource(R.color.ink_surface), colorResource(R.color.paper_ink), null)
-        OnboardingButtonStyle.Brand -> Triple(colorResource(R.color.zen_700), Color.White, null)
+        OnboardingButtonStyle.Ink -> Triple(ZenTheme.colors.actionPrimary, ZenTheme.colors.actionPrimaryText, null)
+        OnboardingButtonStyle.Brand -> Triple(ZenTheme.colors.textBrand, ZenTheme.colors.textOnBrand, null)
+        // Always a white chip with ink text: it sits on the night stories and is Google's button.
         OnboardingButtonStyle.Light -> Triple(Color.White, colorResource(R.color.ink_surface), null)
         OnboardingButtonStyle.Outline -> Triple(
             Color.Transparent,
-            colorResource(R.color.ink_surface),
-            BorderStroke(1.dp, colorResource(R.color.paper_hairline))
+            ZenTheme.colors.textPrimary,
+            BorderStroke(1.dp, ZenTheme.colors.borderSubtle)
         )
     }
     Row(
@@ -384,7 +387,7 @@ internal fun OnboardingTextButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    color: Color = colorResource(R.color.stone_600)
+    color: Color = ZenTheme.colors.textSecondary
 ) {
     Box(
         modifier = modifier
@@ -409,8 +412,8 @@ internal fun OnboardingTextButton(
 internal fun OnboardingChip(
     text: String,
     modifier: Modifier = Modifier,
-    container: Color = colorResource(R.color.zen_050),
-    content: Color = colorResource(R.color.zen_700),
+    container: Color = ZenTheme.colors.surfaceTint,
+    content: Color = ZenTheme.colors.textBrand,
     leading: (@Composable () -> Unit)? = null
 ) {
     Row(

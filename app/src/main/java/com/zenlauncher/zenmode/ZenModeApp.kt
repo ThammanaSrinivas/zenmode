@@ -13,6 +13,7 @@ class ZenModeApp : Application() {
 
         // Restore persisted dark/light theme before any activity renders
         ThemePreferences.applyStoredTheme(this)
+        ZenSound.init(this)
 
         // [WHAT] Discovers and runs the backend AppInitializer via the ServiceLoader SPI.
         // [WHY] The one place core-mock vs core-private gets selected - no other file branches

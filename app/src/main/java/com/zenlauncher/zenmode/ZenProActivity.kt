@@ -16,6 +16,8 @@ import com.zenlauncher.zenmode.coreapi.services.PlanOffer
 import com.zenlauncher.zenmode.coreapi.services.PurchaseResult
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.ProEntry
+import com.zenlauncher.zenmode.ui.screens.ProWelcome
+import androidx.activity.compose.BackHandler
 import com.zenlauncher.zenmode.ui.screens.ZenProScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.launch
@@ -29,6 +31,7 @@ class ZenProActivity : AppCompatActivity() {
     private var offers by mutableStateOf<List<PlanOffer>>(emptyList())
     private var isWorking by mutableStateOf(false)
     private var errorMessage by mutableStateOf<String?>(null)
+    private var celebrating by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,10 +47,15 @@ class ZenProActivity : AppCompatActivity() {
         }
 
         setContent {
-            ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@ZenProActivity)) {
+            ZenTheme() {
                 val entitlement by provider.entitlement.collectAsState()
                 LaunchedEffect(Unit) { offers = provider.offers() }
 
+                if (celebrating) {
+                    BackHandler { finish() }
+                    ProWelcome(onContinue = { finish() })
+                    return@ZenTheme
+                }
                 ZenProScreen(
                     entitlement = entitlement,
                     offers = offers,
@@ -73,8 +81,8 @@ class ZenProActivity : AppCompatActivity() {
             when (val result = provider.purchase(this@ZenProActivity, period)) {
                 PurchaseResult.Success -> {
                     track("pro_purchase_completed", props)
-                    // Straight back to where they came from; the plan card now shows Pro.
-                    finish()
+                    // One thank-you screen, then straight back to where they came from.
+                    celebrating = true
                 }
                 PurchaseResult.Cancelled -> Unit
                 is PurchaseResult.Failed -> errorMessage = result.message
@@ -92,7 +100,7 @@ class ZenProActivity : AppCompatActivity() {
                 val e = ServiceLocator.entitlementProvider.entitlement.value
                 track(event, mapOf("period" to (e.period?.name?.lowercase() ?: "none")))
             } else {
-                errorMessage = "That didn't go through. Nothing was changed — try again in a moment."
+                errorMessage = "That didn't go through. Nothing was changed. Try again in a moment."
             }
             isWorking = false
         }

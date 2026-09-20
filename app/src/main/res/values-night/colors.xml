@@ -7,6 +7,9 @@
   light/dark semantics. Onboarding and the Zen Circle share card stay light regardless.
 -->
 <resources>
+    <!-- Onboarding: the welcome sunrise becomes an ember-warm dawn over ink -->
+    <color name="onboarding_sunrise">#2A2111</color>
+
     <!-- Home header + gold row -->
     <color name="streak_days">#B4B4AE</color>
     <color name="gold_label">#A8A8A2</color>

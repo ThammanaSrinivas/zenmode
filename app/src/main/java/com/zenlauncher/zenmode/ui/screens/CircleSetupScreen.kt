@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,7 +69,7 @@ fun CircleSetupScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colorResource(R.color.paper_base))
+            .background(ZenTheme.colors.bgPrimary)
             .systemBarsPadding()
             .padding(horizontal = 20.rdp)
     ) {
@@ -87,7 +88,7 @@ fun CircleSetupScreen(
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 28.rsp,
-                color = colorResource(R.color.ink_base)
+                color = ZenTheme.colors.textPrimary
             )
             Spacer(Modifier.height(32.rdp))
 
@@ -122,13 +123,13 @@ private fun CreateCircleForm(creating: Boolean, onCreate: (name: String) -> Unit
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.rdp))
-            .border(1.dp, colorResource(R.color.paper_hairline), RoundedCornerShape(14.rdp))
+            .border(1.dp, ZenTheme.colors.borderSubtle, RoundedCornerShape(14.rdp))
             .padding(horizontal = 16.rdp, vertical = 14.rdp)
     ) {
         BasicTextField(
             value = name,
             onValueChange = { if (it.length <= 40) name = it },
-            textStyle = TextStyle(fontFamily = Geist, fontSize = 16.rsp, color = colorResource(R.color.ink_base)),
+            textStyle = TextStyle(fontFamily = Geist, fontSize = 16.rsp, color = ZenTheme.colors.textPrimary),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
@@ -143,7 +144,7 @@ private fun CreateCircleForm(creating: Boolean, onCreate: (name: String) -> Unit
             .fillMaxWidth()
             .height(52.rdp)
             .clip(CircleShape)
-            .background(if (canCreate) colorResource(R.color.zen_700) else colorResource(R.color.paper_hairline))
+            .background(if (canCreate) ZenTheme.colors.textBrand else ZenTheme.colors.borderSubtle)
             .clickable(enabled = canCreate) { onCreate(name.trim()) },
         contentAlignment = Alignment.Center
     ) {
@@ -152,7 +153,7 @@ private fun CreateCircleForm(creating: Boolean, onCreate: (name: String) -> Unit
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 16.rsp,
-            color = if (canCreate) Color.White else colorResource(R.color.zen_circle_wheel_name)
+            color = if (canCreate) ZenTheme.colors.textOnBrand else colorResource(R.color.zen_circle_wheel_name)
         )
     }
 }
@@ -177,10 +178,10 @@ private fun CircleCreatedConfirmation(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.rdp))
-            .border(1.dp, colorResource(R.color.paper_hairline), RoundedCornerShape(14.rdp))
+            .border(1.dp, ZenTheme.colors.borderSubtle, RoundedCornerShape(14.rdp))
             .padding(16.rdp)
     ) {
-        Text(text = circleId, fontFamily = DepartureMono, fontSize = 15.rsp, color = colorResource(R.color.ink_base))
+        Text(text = circleId, fontFamily = DepartureMono, fontSize = 15.rsp, color = ZenTheme.colors.textPrimary)
     }
     Spacer(Modifier.height(16.rdp))
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.rdp)) {
@@ -189,22 +190,22 @@ private fun CircleCreatedConfirmation(
                 .weight(1f)
                 .height(48.rdp)
                 .clip(CircleShape)
-                .background(colorResource(R.color.zen_700))
+                .background(ZenTheme.colors.textBrand)
                 .clickable { onShareInviteLink(circleId) },
             contentAlignment = Alignment.Center
         ) {
-            Text("Share link", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = Color.White)
+            Text("Share link", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = ZenTheme.colors.textOnBrand)
         }
         Box(
             modifier = Modifier
                 .weight(1f)
                 .height(48.rdp)
                 .clip(CircleShape)
-                .border(1.dp, colorResource(R.color.paper_hairline), CircleShape)
+                .border(1.dp, ZenTheme.colors.borderSubtle, CircleShape)
                 .clickable { onCopyCode(circleId) },
             contentAlignment = Alignment.Center
         ) {
-            Text("Copy code", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = colorResource(R.color.ink_base))
+            Text("Copy code", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = ZenTheme.colors.textPrimary)
         }
     }
     Spacer(Modifier.height(28.rdp))
@@ -213,10 +214,10 @@ private fun CircleCreatedConfirmation(
             .fillMaxWidth()
             .height(52.rdp)
             .clip(CircleShape)
-            .background(colorResource(R.color.zen_700))
+            .background(ZenTheme.colors.textBrand)
             .clickable(onClick = onDone),
         contentAlignment = Alignment.Center
     ) {
-        Text("Done", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 16.rsp, color = Color.White)
+        Text("Done", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 16.rsp, color = ZenTheme.colors.textOnBrand)
     }
 }
