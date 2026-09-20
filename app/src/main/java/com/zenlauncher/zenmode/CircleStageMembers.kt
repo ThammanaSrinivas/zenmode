@@ -29,7 +29,10 @@ fun buildCircleStageMembers(
             ZenCircleMember(
                 name = if (m.uid == userCode) "You" else (m.displayName?.takeIf { it.isNotBlank() } ?: "Member"),
                 isYou = m.uid == userCode,
-                screenTimeMinutes = if (m.uid == userCode) (usage?.screenTimeInMillis ?: 0L) / 60_000 else 0L,
+                // "You" gets the live local value (updates immediately, not just on the next
+                // sync); other members get the server-mirrored screenTimeMinutes -- see
+                // onUserScoreSynced (functions/src/index.ts) in zenmode_core_private.
+                screenTimeMinutes = if (m.uid == userCode) (usage?.screenTimeInMillis ?: 0L) / 60_000 else m.screenTimeMinutes,
                 zenScore = m.zenScore,
                 // Real circles don't track per-member streaks yet (not in the schema) --
                 // only "you" gets the real local value.

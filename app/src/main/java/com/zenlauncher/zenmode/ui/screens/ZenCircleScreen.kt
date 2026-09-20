@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.BuddyConnector
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -154,7 +155,14 @@ private const val BackCardScale = 190.25f / 150.67f
 @Composable
 fun ZenCircleScreen(
     members: List<ZenCircleMember>,
-    userCode: String?,
+    // The code/link to display and share -- the real circle's ID once one exists, the
+    // classic Buddy code otherwise. Resolve this once at the call site (don't re-derive
+    // circle-vs-buddy state in here or in ZenCircleSheetHost/ZenCircleSharePreview below,
+    // which both just display whatever they're given).
+    shareCode: String?,
+    // True when shareCode is a real Circle ID (so the share card's message uses /c/ and
+    // Circle wording), false for the classic Buddy code (/b/). Same "resolve once" reasoning.
+    shareCodeIsCircle: Boolean = false,
     // "Remind With Share Link" while a real circle still has an invite pending (only you +
     // a placeholder second member); the normal label once someone's actually joined.
     primaryShareLabel: String = "Share & Invite to Zen Circle",
@@ -240,7 +248,7 @@ fun ZenCircleScreen(
         MoodBackdrop()
 
         ZenCircleSheetHost(
-            userCode = userCode,
+            userCode = shareCode,
             onShareInviteLink = onShareInviteLink,
             onCopyInviteCode = onCopyInviteCode,
             settings = ZenCircleSettings(
@@ -344,7 +352,9 @@ fun ZenCircleScreen(
             visible = showShareCard,
             members = members,
             ranks = ranks,
-            userCode = userCode,
+            shareText = shareCode?.let {
+                if (shareCodeIsCircle) BuddyConnector.circleInviteMessage(it) else BuddyConnector.inviteMessage(it)
+            },
             onDismiss = { showShareCard = false }
         )
     }
