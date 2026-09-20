@@ -195,6 +195,7 @@ fun SettingsScreen(
                 if (isProAvailable) {
                     PlanCard(
                         entitlement = entitlement,
+                        isPro = isPro,
                         offers = offers,
                         onClick = { onOpenPro(if (isPro) ProEntry.MANAGE else ProEntry.PLAN_CARD) }
                     )
@@ -469,7 +470,7 @@ private fun SettingsTopBar(
 // ── Plan card ──────────────────────────────────────────────────────
 
 @Composable
-private fun PlanCard(entitlement: Entitlement, offers: List<PlanOffer>, onClick: () -> Unit) {
+private fun PlanCard(entitlement: Entitlement, isPro: Boolean, offers: List<PlanOffer>, onClick: () -> Unit) {
     val colors = ZenTheme.colors
     Column(
         modifier = Modifier
@@ -479,15 +480,15 @@ private fun PlanCard(entitlement: Entitlement, offers: List<PlanOffer>, onClick:
             .padding(16.rdp),
         verticalArrangement = Arrangement.spacedBy(8.rdp)
     ) {
-        if (entitlement.isPro) OsRule(Modifier.padding(bottom = 2.rdp))
+        if (isPro) OsRule(Modifier.padding(bottom = 2.rdp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             ZenEyebrow(
-                text = if (entitlement.isPro) {
+                text = if (isPro) {
                     "Supporter" + (entitlement.since?.let { " since ${it.asZenMonth()}" } ?: "")
                 } else "Your plan",
                 modifier = Modifier.weight(1f)
             )
-            if (entitlement.isPro) {
+            if (isPro) {
                 ZenProTag(unlocked = true)
             } else {
                 Text(
@@ -510,7 +511,7 @@ private fun PlanCard(entitlement: Entitlement, offers: List<PlanOffer>, onClick:
             lineHeight = 28.rsp,
             color = colors.textPrimary
         )
-        if (entitlement.isPro) {
+        if (isPro) {
             Text(
                 text = entitlement.statusLine(offers),
                 fontFamily = Geist,
@@ -534,7 +535,7 @@ private fun PlanCard(entitlement: Entitlement, offers: List<PlanOffer>, onClick:
         HorizontalDivider(thickness = 1.dp, color = colors.borderSubtle, modifier = Modifier.padding(top = 4.rdp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = if (entitlement.isPro) "Manage" else "See what it adds",
+                text = if (isPro) "Manage" else "See what it adds",
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.rsp,

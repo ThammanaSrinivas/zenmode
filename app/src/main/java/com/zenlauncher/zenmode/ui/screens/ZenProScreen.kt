@@ -172,6 +172,9 @@ fun Entitlement.statusLine(offers: List<PlanOffer>): String {
 @Composable
 fun ZenProScreen(
     entitlement: Entitlement,
+    /** From [com.zenlauncher.zenmode.ProAccess]: also true for an invite-only server grant
+     * with no subscription behind it, which [entitlement] alone can't see. */
+    isPro: Boolean = entitlement.isPro,
     offers: List<PlanOffer>,
     isWorking: Boolean,
     errorMessage: String?,
@@ -191,7 +194,7 @@ fun ZenProScreen(
             .navigationBarsPadding()
     ) {
         ProTopBar(
-            title = if (entitlement.isPro) "Manage Pro" else "ZenMode Pro",
+            title = if (isPro) "Manage Pro" else "ZenMode Pro",
             onBackClick = onBackClick
         )
         Column(
@@ -202,10 +205,12 @@ fun ZenProScreen(
                 .padding(top = 4.rdp, bottom = 40.rdp),
             verticalArrangement = Arrangement.spacedBy(24.rdp)
         ) {
-            if (entitlement.isPro) {
-                ManagePro(entitlement, offers, isWorking, onCancel, onResume)
-            } else {
-                PlanPage(offers, isWorking, onPurchase)
+            when {
+                // A real subscription (trial/active/ending) has billing to manage.
+                entitlement.isPro -> ManagePro(entitlement, offers, isWorking, onCancel, onResume)
+                // Server-granted only: they're Pro, but there's no subscription behind it.
+                isPro -> GrantedPro(entitlement)
+                else -> PlanPage(offers, isWorking, onPurchase)
             }
             if (errorMessage != null) {
                 Text(
@@ -574,6 +579,35 @@ private fun ConfirmSheet(
             enabled = !isWorking
         )
         ZenButton(text = "Back", onClick = onDismiss, style = ZenButtonStyle.Ghost)
+    }
+}
+
+/** Invite-only server grant, no subscription behind it: nothing to cancel or renew. */
+@Composable
+private fun GrantedPro(entitlement: Entitlement) {
+    val colors = ZenTheme.colors
+    Column(
+        modifier = Modifier.fillMaxWidth().zenCard().padding(16.rdp),
+        verticalArrangement = Arrangement.spacedBy(6.rdp)
+    ) {
+        OsRule()
+        Spacer(Modifier.height(6.rdp))
+        ZenEyebrow("Pro supporter" + (entitlement.since?.let { " · since ${it.asZenMonth()}" } ?: ""))
+        Text(
+            text = "Early access",
+            fontFamily = Geist,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.rsp,
+            lineHeight = 28.rsp,
+            color = colors.textPrimary
+        )
+        Text(
+            text = "You're in on invite-only early access — nothing to manage or pay here.",
+            fontFamily = Geist,
+            fontSize = 14.rsp,
+            lineHeight = 20.rsp,
+            color = colors.textSecondary
+        )
     }
 }
 

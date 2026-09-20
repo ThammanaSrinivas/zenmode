@@ -33,7 +33,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Insights
-import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
@@ -245,7 +244,6 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
 private val ZenPermission.icon: ImageVector
     get() = when (this) {
         ZenPermission.USAGE_ACCESS -> Icons.Rounded.Insights
-        ZenPermission.DISPLAY_OVER_APPS -> Icons.Rounded.Layers
         ZenPermission.ACCESSIBILITY -> Icons.Rounded.VisibilityOff
         ZenPermission.NOTIFICATIONS -> Icons.Rounded.NotificationsActive
     }
