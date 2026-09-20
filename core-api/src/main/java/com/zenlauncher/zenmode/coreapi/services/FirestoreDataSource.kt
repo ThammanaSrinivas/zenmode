@@ -73,5 +73,13 @@ interface FirestoreDataSource {
 
     /** Atomic increment on reactions_<from>_<to>.<type>_sent. Rate limiting is enforced client-side, not here. */
     suspend fun sendCircleReaction(circleId: String, fromUid: String, toUid: String, type: ReactionType): Boolean
+
+    /**
+     * Finds a random user with neither a circle nor a buddy, active recently, and creates a
+     * new circle with both [myUid] and the match as real members atomically -- unlike
+     * [findRandomBuddy], both people are online right now, so there's no leader-alone-waiting
+     * step. Returns the new circle, or null if no one is available.
+     */
+    suspend fun findRandomCircleUser(myUid: String, myDisplayName: String?): Circle?
 }
 

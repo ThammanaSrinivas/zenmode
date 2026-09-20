@@ -17,6 +17,7 @@ data class CircleMember(
     val uid: String,
     val displayName: String?,
     val zenScore: Int,               // 0-100, see AppLogic.calculateZenScore
+    val screenTimeMinutes: Long = 0L, // mirrored server-side alongside zenScore, same trigger
     val lastUpdatedEpochMs: Long,    // score-sync timestamp; doubles as the activity signal for succession
     val role: CircleRole,
     val joinedAtEpochMs: Long

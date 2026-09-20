@@ -62,9 +62,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.BuddyConnector
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.FanMember
 import com.zenlauncher.zenmode.ui.components.MemberCardFan
 import com.zenlauncher.zenmode.ui.components.ZenModeOsWordmark
@@ -314,7 +313,10 @@ fun ZenCircleSharePreview(
     visible: Boolean,
     members: List<ZenCircleMember>,
     ranks: Map<Int, Int>,
-    userCode: String?,
+    // The fully-built share message -- BuddyConnector.inviteMessage()/circleInviteMessage(),
+    // whichever the caller's context needs. Resolved by the caller so this component never
+    // has to know or re-derive whether it's showing a Buddy or a Circle.
+    shareText: String?,
     onDismiss: () -> Unit
 ) {
     BackHandler(enabled = visible, onBack = onDismiss)
@@ -323,10 +325,7 @@ fun ZenCircleSharePreview(
         val scope = rememberCoroutineScope()
         val layer = rememberGraphicsLayer()
         var cardSize by remember { mutableStateOf(IntSize.Zero) }
-        val shareText = remember(userCode) {
-            userCode?.let { BuddyConnector.inviteMessage(it) }
-                ?: "Join my Zen Circle on ZenMode OS. #ZenTogether"
-        }
+        val shareText = shareText ?: "Join my Zen Circle on ZenMode OS. #ZenTogether"
 
         Column(
             modifier = Modifier

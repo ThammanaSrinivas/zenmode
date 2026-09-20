@@ -44,6 +44,7 @@ import com.zenlauncher.zenmode.ui.components.HomePage
 import com.zenlauncher.zenmode.ui.components.HomePageDots
 import com.zenlauncher.zenmode.ui.components.HomeReveal
 import com.zenlauncher.zenmode.ui.components.pageSwipe
+import androidx.compose.foundation.systemGestureExclusion
 import com.zenlauncher.zenmode.ui.components.rememberCountUp
 import com.zenlauncher.zenmode.ui.components.rememberReduceMotion
 import com.zenlauncher.zenmode.ui.components.HomeRevealCue
@@ -145,7 +146,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.zenlauncher.zenmode.AppSearchRanking
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
 import com.zenlauncher.zenmode.ui.components.shareImage
 import com.zenlauncher.zenmode.ui.components.taperedBorder
@@ -168,7 +169,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import com.zenlauncher.zenmode.coreapi.PromisePreferences
+import com.zenlauncher.zenmode.recap.RecapStore
 import android.util.Log
+
 
 // ── Constants ─────────────────────────────────────────────────────
 // Figma node 2001:1481 ("Frame 2147224192", the home screen's content frame) is
@@ -245,6 +249,7 @@ fun HomeScreen(
     onPhoneClick: () -> Unit,
     onLockClick: () -> Unit,
     onInviteBuddyClick: () -> Unit,
+    inviteButtonLabel: String = "Add Buddy",
     onSignInClick: () -> Unit,
     onBuddyCardClick: (() -> Unit)? = null,
     onAppClick: (AppInfo) -> Unit,
@@ -283,6 +288,12 @@ fun HomeScreen(
             // No dock: Home is the middle of three pages — swipe right for Zen Score, left
             // for Zen Gold. Long-press to lock. Settings lives behind every page's ☰.
             .pageSwipe(onSwipeLeft = onZenGoldClick, onSwipeRight = onZenScoreClick)
+            // Same reasoning as the Zen Score / Streaks icons below: on OEM ROMs with a
+            // widened back-gesture edge zone (e.g. MIUI, often configured asymmetrically
+            // per edge), a drag that starts near one screen edge can be intercepted by the
+            // system before detectHorizontalDragGestures ever sees it — one swipe direction
+            // silently does nothing while the other works. Exclude the whole page-swipe area.
+            .systemGestureExclusion()
             .combinedClickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
@@ -339,6 +350,7 @@ fun HomeScreen(
                 buddyLikes = buddyLikes,
                 onLikeClick = onLikeClick,
                 onInviteBuddyClick = onInviteBuddyClick,
+                inviteButtonLabel = inviteButtonLabel,
                 onSignInClick = onSignInClick,
                 onBuddyCardClick = onBuddyCardClick,
                 // My screen time lands first, then the bolt strikes, then my Zen Bro's /
@@ -406,6 +418,21 @@ fun HomeScreen(
         }
 
         // Streak overlay
+        // Compute milestone stats once per composition, re-derived when zenScore changes.
+        val context = LocalContext.current
+        val recapStore = remember { RecapStore(context) }
+        val promiseHours = remember { PromisePreferences.getDailyHours(context) }
+        val todayIsMindful = remember(zenScore) {
+            AppLogic.isMindfulDay(
+                screenTimeMinutes = todayMinutes,
+                promiseHours = promiseHours
+            )
+        }
+        val totalMindfulDays = remember(zenScore) { AppLogic.getTotalMindfulDays(recapStore, todayIsMindful) }
+        val longestStreak = remember(zenScore) { AppLogic.getLongestStreak(recapStore, todayIsMindful) }
+        val longestStreakDays = longestStreak?.days ?: 0
+        val longestStreakRange = longestStreak?.let { AppLogic.formatStreakRange(it) } ?: ""
+
         AnimatedVisibility(
             visible = showStreakOverlay,
             modifier = Modifier.systemBarsPadding(),
@@ -414,6 +441,9 @@ fun HomeScreen(
         ) {
             StreakOverlay(
                 onDismiss = { showStreakOverlay = false },
+                totalMindfulDays = totalMindfulDays,
+                longestStreakDays = longestStreakDays,
+                longestStreakRange = longestStreakRange,
                 currentStreakDays = streaks
             )
         }
@@ -460,7 +490,8 @@ private fun HomeHeader(
         IconMatchedLabel(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.rdp))
-                .clickable(onClickLabel = "Open Zen Score", onClick = onZenScoreClick),
+                .clickable(onClickLabel = "Open Zen Score", onClick = onZenScoreClick)
+                .systemGestureExclusion(),
             icon = {
                 Image(
                     painter = painterResource(R.drawable.ic_zen_mark_gradient),
@@ -498,7 +529,8 @@ private fun HomeHeader(
         IconMatchedLabel(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.rdp))
-                .clickable(onClickLabel = "Open streaks", onClick = onStreakClick),
+                .clickable(onClickLabel = "Open streaks", onClick = onStreakClick)
+                .systemGestureExclusion(),
             icon = {
                 BlazingFlame(
                     cue = reveal,
@@ -664,16 +696,21 @@ fun GoldInvestedRow(
                     horizontalArrangement = Arrangement.spacedBy(8.1.rdp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Hiding blurs the amount rather than masking it — the Figma
-                    // "Hide" variant is the same text under a 5.35px blur.
+                    // Hiding blurs the amount (Figma's "Hide" variant: the same text under a
+                    // 5.35px blur). Modifier.blur is a no-op below API 31 (no RenderEffect),
+                    // which would leave the real figure fully readable despite "hidden" —
+                    // fall back to masking the digits on those devices instead.
+                    val canBlurAmount = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                    val hideAmount = !amountVisible
                     Text(
-                        text = "\u20B9$gold",
+                        text = if (hideAmount && !canBlurAmount) "\u20B9\u2022\u2022\u2022\u2022\u2022\u2022" else "\u20B9$gold",
                         fontFamily = DepartureMono,
                         fontSize = 17.rsp,
                         letterSpacing = (-0.85).sp,
                         color = GoldAmount,
-                        modifier = if (amountVisible) Modifier
-                        else Modifier.blur(5.35.rdp, BlurredEdgeTreatment.Unbounded)
+                        modifier = if (hideAmount && canBlurAmount)
+                            Modifier.blur(5.35.rdp, BlurredEdgeTreatment.Unbounded)
+                        else Modifier
                     )
                     Box(
                         modifier = Modifier
@@ -1467,11 +1504,11 @@ private fun GoogleFallbackRow(query: String, onClick: () -> Unit, modifier: Modi
 @Composable
 private fun StreakOverlay(
     onDismiss: () -> Unit,
-    totalMindfulDays: Int = AppConstants.PLACEHOLDER_MILESTONE_DAYS,
+    totalMindfulDays: Int,
+    longestStreakDays: Int,
+    longestStreakRange: String,
     topPercentile: Int = AppConstants.PLACEHOLDER_MILESTONE_PERCENTILE,
-    zenScoreThreshold: Int = AppConstants.PLACEHOLDER_MILESTONE_SCORE_THRESHOLD,
-    longestStreakDays: Int = AppConstants.PLACEHOLDER_LONGEST_STREAK_DAYS,
-    longestStreakRange: String = AppConstants.PLACEHOLDER_LONGEST_STREAK_RANGE,
+    zenScoreThreshold: Int = AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD,
     /** The same live count as the flame in Home's header. */
     currentStreakDays: Int = 0
 ) {
