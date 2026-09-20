@@ -118,6 +118,7 @@ class MockFirestoreDataSource : FirestoreDataSource {
     override suspend fun removeCircleMember(circleId: String, leaderUid: String, targetUid: String): Boolean = true
     override suspend fun transferLeadership(circleId: String, currentLeaderUid: String, newLeaderUid: String): Boolean = true
     override suspend fun sendCircleReaction(circleId: String, fromUid: String, toUid: String, type: ReactionType): Boolean = true
+    override suspend fun findRandomCircleUser(myUid: String, myDisplayName: String?): Circle? = null
 }
 
 class MockAnalyticsTracker : AnalyticsTrackerContract {

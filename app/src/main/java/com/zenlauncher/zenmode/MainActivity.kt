@@ -55,10 +55,9 @@ import com.zenlauncher.zenmode.ui.components.zenOverlayBlur
 import com.zenlauncher.zenmode.ui.screens.HomeAppActionsOverlay
 import com.zenlauncher.zenmode.ui.screens.HomeAppsPickerOverlay
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
+import com.zenlauncher.zenmode.ui.screens.CircleCodeResult
 import com.zenlauncher.zenmode.ui.screens.ZenBroConnectScreen
 import com.zenlauncher.zenmode.ui.screens.ZenBroConnectedScreen
-import com.zenlauncher.zenmode.ui.screens.ZenCircleMember
-import com.zenlauncher.zenmode.ui.screens.ZenCircleScreen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -77,6 +76,17 @@ private sealed interface ZenBroStage {
     data class Connected(val buddyName: String) : ZenBroStage
     data class Circle(val buddyName: String) : ZenBroStage
 }
+
+/** A recognized zenmodeos.com App Link tap -- Buddy (/b/{code}) and Circle (/c/{circleId})
+ * are separate invite mechanisms with separate landings, see MainActivity.parseDeepLink. */
+private sealed interface DeepLink {
+    data object None : DeepLink
+    data class Buddy(val code: String) : DeepLink
+    data class Circle(val circleId: String) : DeepLink
+}
+
+/** What to auto-fire once a circle-mode Share/Use-a-code tap's createCircle() completes. */
+private enum class PendingCircleAction { SHARE, COPY }
 
 class MainActivity : AppCompatActivity() {
     private var isReceiverRegistered = false
@@ -99,6 +109,11 @@ class MainActivity : AppCompatActivity() {
     // Set from a zenmodeos.com/b/{code} App Link tap; consumed once the Connect screen
     // is actually on-screen (see the LaunchedEffect next to ZenBroStage.Connect below).
     private var pendingInviteCode by mutableStateOf<String?>(null)
+    // Share/Use a code in circle mode create or join a real circle directly, then navigate
+    // to the dashboard -- no separate setup/join screens. Set right before createCircle();
+    // consumed by the justEnteredCircle LaunchedEffect below to fire the actual share/copy
+    // once the circle exists.
+    private var pendingCircleAutoAction by mutableStateOf<PendingCircleAction?>(null)
     // Set when a connect succeeds; swaps My Zen Circle for the "You're Zen Bros now" screen.
     private var connectedBuddyName by mutableStateOf<String?>(null)
     // "Maybe later" on the connected screen, or the buddy card on home, opens the circle dashboard.
@@ -139,27 +154,56 @@ class MainActivity : AppCompatActivity() {
         showSearch = false
         longPressedApp = null
         showHomeAppsPicker = false
-        val openedFromInviteLink = handleDeepLink(intent)
-        // Both extras open "the buddy area" - which screen that resolves to is
-        // openBuddyFlow()'s call, not the sender's (Settings, an old push notification, etc.).
-        if (openedFromInviteLink ||
-            intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
-            intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)
-        ) {
-            openBuddyFlow()
+        handleIntentDeepLink(intent)
+    }
+
+    /**
+     * Parses a zenmodeos.com/{b,c}/{code} App Link tap. /b/ is the classic 1:1 Buddy invite,
+     * /c/ the real multi-member Zen Circle invite -- distinct paths, distinct landings.
+     */
+    private fun parseDeepLink(intent: Intent): DeepLink {
+        val data = intent.data ?: return DeepLink.None
+        if (data.host != "zenmodeos.com") return DeepLink.None
+        val code = data.lastPathSegment?.takeIf { it.isNotBlank() } ?: return DeepLink.None
+        return when {
+            data.path?.startsWith("/b/") == true -> DeepLink.Buddy(code)
+            data.path?.startsWith("/c/") == true -> DeepLink.Circle(code)
+            else -> DeepLink.None
         }
     }
 
     /**
-     * Parses a zenmodeos.com/b/{code} App Link tap into [pendingInviteCode]. Returns true if
-     * the intent was one of these links, so callers know to also call [openBuddyFlow].
+     * Routes a cold-start or onNewIntent [intent] to the right flow: a Buddy link opens the
+     * classic connect flow ([openBuddyFlow]). A Circle link auto-joins directly and heads
+     * straight to the dashboard -- no separate confirm screen (joining a group isn't gated
+     * by [BuddyFlowPreferences] the way "the buddy area" is). If the tapper already has a
+     * classic Buddy, the join comes back AlreadyInCircle and a LaunchedEffect on
+     * circleUiState.pendingBuddySwitchCircleId below tells them to disconnect it first --
+     * simpler than the dedicated switch-confirmation dialog this used to show, see the
+     * plan doc for the tradeoff. Falls back to the legacy boolean extras otherwise.
      */
-    private fun handleDeepLink(intent: Intent): Boolean {
-        val data = intent.data ?: return false
-        if (data.host != "zenmodeos.com" || data.path?.startsWith("/b/") != true) return false
-        val code = data.lastPathSegment?.takeIf { it.isNotBlank() } ?: return false
-        pendingInviteCode = code
-        return true
+    private fun handleIntentDeepLink(intent: Intent) {
+        when (val link = parseDeepLink(intent)) {
+            is DeepLink.Buddy -> {
+                pendingInviteCode = link.code
+                openBuddyFlow()
+            }
+            is DeepLink.Circle -> {
+                closeBuddyConnect()
+                circleViewModel.joinCircle(link.circleId, via = "invite_link")
+                showZenCircle = true
+                showBuddyConnect = true
+            }
+            DeepLink.None -> {
+                // Both extras open "the buddy area" - which screen that resolves to is
+                // openBuddyFlow()'s call, not the sender's (Settings, an old push notification).
+                if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
+                    intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)
+                ) {
+                    openBuddyFlow()
+                }
+            }
+        }
     }
 
     override fun onResume() {
@@ -205,21 +249,31 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 val activities = LauncherActivities.query(packageManager)
-                val homePackages = repository.getPinnedApps()
-                val homeRank = homePackages.withIndex().associate { (i, pkg) -> pkg to i }
+                val homeKeys = repository.getPinnedApps()
+                val homeRank = homeKeys.withIndex().associate { (i, k) -> k to i }
 
-                val allApps = activities.map { resolveInfo ->
-                    AppInfo(
-                        label = resolveInfo.loadLabel(packageManager),
-                        packageName = resolveInfo.activityInfo.packageName,
-                        icon = resolveInfo.loadIcon(packageManager),
-                        activityClassName = resolveInfo.activityInfo.name
-                    )
-                }.sortedBy { it.label.toString() }
+                // ZenMode declares CATEGORY_LAUNCHER (so it's selectable as default home)
+                // alongside CATEGORY_HOME, so it shows up in its own launcher query. Left in,
+                // it lists itself in the drawer and in search; tapping it re-delivers an
+                // intent to this already-running singleTask Activity via onNewIntent, which
+                // resets showSearch/etc — the search overlay just vanishes, looking like the
+                // app crashed. Same exclusion OnboardingViewModel.queryLaunchableApps applies.
+                val allApps = activities
+                    .filter { it.activityInfo.packageName != packageName }
+                    .map { resolveInfo ->
+                        AppInfo(
+                            label = resolveInfo.loadLabel(packageManager),
+                            packageName = resolveInfo.activityInfo.packageName,
+                            icon = resolveInfo.loadIcon(packageManager),
+                            activityClassName = resolveInfo.activityInfo.name,
+                            key = LauncherActivities.selectionKey(resolveInfo, activities)
+                        )
+                    }
+                    .sortedBy { it.label.toString() }
 
                 // The picked home apps lead, in the order chosen; everything else stays A–Z.
-                val (home, rest) = allApps.partition { it.packageName.toString() in homeRank }
-                home.sortedBy { homeRank.getValue(it.packageName.toString()) } + rest
+                val (home, rest) = allApps.partition { it.key in homeRank }
+                home.sortedBy { homeRank.getValue(it.key) } + rest
             }
             installedApps = result
         }
@@ -289,13 +343,7 @@ class MainActivity : AppCompatActivity() {
         homeAppCount = AppGridPreferences.getAppCount(this)
 
         // Handle cold-start intents
-        val openedFromInviteLink = handleDeepLink(intent)
-        if (openedFromInviteLink ||
-            intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
-            intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)
-        ) {
-            openBuddyFlow()
-        }
+        handleIntentDeepLink(intent)
 
         setContent {
             ZenTheme(darkTheme = ThemePreferences.isDarkMode(this@MainActivity)) {
@@ -387,8 +435,12 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                val weeklyMillis = remember { repository.getWeeklyScreenTimeMillis() }
-                val streakCount = remember { AppLogic.getStreakCount(weeklyMillis) }
+                val recapStore = remember { RecapStore(applicationContext) }
+                val todayIsMindful = remember(zenScore) {
+                    zenScore >= AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD * 10
+                }
+                val streakCount = remember(zenScore) { AppLogic.getStreakCount(recapStore, todayIsMindful) }
+
 
                 HomeScreen(
                     usage = usage,
@@ -432,6 +484,7 @@ class MainActivity : AppCompatActivity() {
                         ServiceLocator.analyticsTracker.trackBuddyShareStarted("manual")
                         openBuddyFlow()
                     },
+                    inviteButtonLabel = if (BuddyFlowPreferences.decision(this) == BuddyFlow.ZEN_CIRCLE) "Add Bro" else "Add Buddy",
                     onBuddyCardClick = if (hasBuddies) {
                         { openBuddyFlow() }
                     } else null,
@@ -498,7 +551,7 @@ class MainActivity : AppCompatActivity() {
                 HomeAppActionsOverlay(
                     app = longPressedApp,
                     position = installedApps.take(homeAppCount)
-                        .indexOfFirst { it.packageName == longPressedApp?.packageName } + 1,
+                        .indexOfFirst { it.key == longPressedApp?.key } + 1,
                     appCount = homeAppCount,
                     onChangeHomeApps = {
                         pickerReturnApp = longPressedApp
@@ -618,6 +671,46 @@ class MainActivity : AppCompatActivity() {
                             connectWithInviteCode(code)
                         }
                     }
+                    // Fires the actual share/copy action once a circle-mode Share-link/Use-a-code
+                    // tap's createCircle() finishes -- see onCreateCircle wiring below. Also the
+                    // generic "just landed on a real circle" consume point (deep-link auto-join
+                    // included), mirroring justLeftCircle's LaunchedEffect above.
+                    androidx.compose.runtime.LaunchedEffect(circleUiState.justEnteredCircle) {
+                        if (circleUiState.justEnteredCircle) {
+                            val circle = circleUiState.circle
+                            if (circle != null) {
+                                when (pendingCircleAutoAction) {
+                                    PendingCircleAction.SHARE -> buddyConnector.shareCircleInvite(circle.id)
+                                    PendingCircleAction.COPY -> buddyConnector.copyUserCode(circle.id, showToast = true)
+                                    null -> Unit
+                                }
+                            }
+                            pendingCircleAutoAction = null
+                            circleViewModel.consumeEnteredCircleEvent()
+                        }
+                    }
+                    // A join attempt (deep link or pasted code) hit AlreadyInCircle because the
+                    // tapper still has a classic Buddy. No dedicated switch-confirmation dialog
+                    // anymore (see handleIntentDeepLink) -- point them at Settings instead.
+                    androidx.compose.runtime.LaunchedEffect(circleUiState.pendingBuddySwitchCircleId) {
+                        if (circleUiState.pendingBuddySwitchCircleId != null) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "You have a Zen Bro -- disconnect them in Settings first, then try the invite again.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            circleViewModel.dismissBuddySwitchPrompt()
+                        }
+                    }
+                    // Generic surface for circleUiState.errorMessage -- covers paths that
+                    // navigate optimistically before knowing the outcome (e.g. random circle
+                    // connect), which would otherwise fail silently with no screen to show it on.
+                    androidx.compose.runtime.LaunchedEffect(circleUiState.errorMessage) {
+                        circleUiState.errorMessage?.let { msg ->
+                            Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                            circleViewModel.clearError()
+                        }
+                    }
                     AnimatedContent(
                         targetState = stage,
                         contentKey = { it::class },
@@ -629,75 +722,32 @@ class MainActivity : AppCompatActivity() {
                         when (current) {
                             is ZenBroStage.Circle -> {
                                 // Real circle takes over once the user has actually created/joined
-                                // one (circleUiState.circle != null) -- until then this stays the
-                                // classic-buddy reskin exactly as before. Melt reactions and
-                                // real leaveCircle() only make sense once a real circle exists;
-                                // there's nowhere in Firestore for them to go otherwise.
-                                val realCircle = circleUiState.circle
-                                val members = if (realCircle != null) {
-                                    realCircle.members.map { m ->
-                                        ZenCircleMember(
-                                            name = if (m.uid == userCode) "You" else (m.displayName?.takeIf { it.isNotBlank() } ?: "Member"),
-                                            isYou = m.uid == userCode,
-                                            screenTimeMinutes = if (m.uid == userCode) (usage?.screenTimeInMillis ?: 0L) / 60_000 else 0L,
-                                            zenScore = m.zenScore,
-                                            // Real circles don't track per-member streaks yet (not in
-                                            // the schema) -- only "you" gets the real local value.
-                                            streaks = if (m.uid == userCode) streakCount else 0,
-                                            changePercent = if (m.uid == userCode) yesterdayChangePercent else null,
-                                            uid = m.uid
-                                        )
-                                    }
-                                } else {
-                                    listOf(
-                                        ZenCircleMember(
-                                            name = "You",
-                                            isYou = true,
-                                            screenTimeMinutes = (usage?.screenTimeInMillis ?: 0L) / 60_000,
-                                            zenScore = zenScore,
-                                            streaks = streakCount,
-                                            changePercent = yesterdayChangePercent
-                                        ),
-                                        ZenCircleMember(
-                                            name = current.buddyName,
-                                            isYou = false,
-                                            screenTimeMinutes = buddyStats?.screenTimeMins ?: 0L,
-                                            zenScore = AppConstants.PLACEHOLDER_BUDDY_ZEN_SCORE,
-                                            streaks = AppConstants.PLACEHOLDER_BUDDY_STREAK
-                                        )
-                                    )
-                                }
-                                ZenCircleScreen(
-                                    members = members,
+                                // one (circleUiState.circle != null) -- until then, a circle-mode
+                                // user sees just "You" (waiting on Share/Use-a-code to finish
+                                // creating one) and a classic-buddy user sees the reskin, exactly
+                                // as before. Melt reactions and real leaveCircle() only make sense
+                                // once a real circle exists; there's nowhere in Firestore for them
+                                // to go otherwise.
+                                CircleStageScreen(
+                                    circle = circleUiState.circle,
+                                    isCircleMode = BuddyFlowPreferences.decision(this@MainActivity) == BuddyFlow.ZEN_CIRCLE,
+                                    buddyNameFallback = current.buddyName,
                                     userCode = userCode,
-                                    // Opened from home there's no connected screen to return to.
-                                    onBackClick = { if (connectedBuddyName != null) showZenCircle = false else closeBuddyConnect() },
-                                    onShareInviteLink = { userCode?.let { buddyConnector.shareBuddyInvite(it) } },
-                                    onCopyInviteCode = { userCode?.let { buddyConnector.copyUserCode(it, showToast = false) } },
-                                    onBackToHome = { closeBuddyConnect() },
-                                    onSendLove = { member ->
-                                        if (realCircle != null) {
-                                            circleViewModel.sendReaction(member.uid, com.zenlauncher.zenmode.coreapi.ReactionType.LOVE)
-                                        } else {
-                                            viewModel.sendLike()
-                                        }
-                                    },
-                                    onSendMelt = { member ->
-                                        if (realCircle != null) {
-                                            circleViewModel.sendReaction(member.uid, com.zenlauncher.zenmode.coreapi.ReactionType.MELT)
-                                        } else {
-                                            // Classic buddy pairs only sync hearts; the sad face needs a real Circle.
-                                            Toast.makeText(this@MainActivity, "Sad-face reactions arrive with Zen Circles", Toast.LENGTH_SHORT).show()
-                                        }
-                                    },
-                                    onWeeklyClick = {
-                                        Toast.makeText(this@MainActivity, "Weekly rankings are part of PRO", Toast.LENGTH_SHORT).show()
-                                    },
-                                    removingBuddy = removingBuddy || circleUiState.removing,
-                                    onRemoveBuddy = { removeBuddy() },
-                                    onLeaveCircle = {
-                                        if (realCircle != null) circleViewModel.leaveCircle() else removeBuddy()
-                                    }
+                                    usage = usage,
+                                    zenScore = zenScore,
+                                    streakCount = streakCount,
+                                    yesterdayChangePercent = yesterdayChangePercent,
+                                    buddyStats = buddyStats,
+                                    connectedToBuddyScreen = connectedBuddyName != null,
+                                    removingBuddy = removingBuddy,
+                                    circleRemoving = circleUiState.removing,
+                                    buddyConnector = buddyConnector,
+                                    circleViewModel = circleViewModel,
+                                    viewModel = viewModel,
+                                    context = this@MainActivity,
+                                    onBackToZenCircleFalse = { showZenCircle = false },
+                                    onCloseBuddyConnect = { closeBuddyConnect() },
+                                    onRemoveBuddy = { removeBuddy() }
                                 )
                             }
                             is ZenBroStage.Connected -> ZenBroConnectedScreen(
@@ -713,28 +763,56 @@ class MainActivity : AppCompatActivity() {
                                 onCopyInviteCode = { userCode?.let { buddyConnector.copyUserCode(it, showToast = false) } },
                                 onMaybeLater = { showZenCircle = true }
                             )
-                            ZenBroStage.Connect -> ZenBroConnectScreen(
-                                userCode = userCode,
-                                onBackClick = { closeBuddyConnect() },
-                                onShareLink = { userCode?.let { buddyConnector.shareBuddyInvite(it) } },
-                                onCopyCode = { userCode?.let { buddyConnector.copyUserCode(it, showToast = true) } },
-                                onAddBuddy = { targetUid ->
-                                    buddyConnector.addBuddy(targetUid).also { result ->
-                                        if (result is BuddyAddResult.Success) {
-                                            // Let "Connected with …" register before the celebration takes over.
-                                            connectSuccessJob = lifecycleScope.launch {
-                                                kotlinx.coroutines.delay(700)
-                                                connectedBuddyName = result.buddyName
+                            ZenBroStage.Connect -> {
+                                val isCircleMode = BuddyFlowPreferences.decision(this@MainActivity) == BuddyFlow.ZEN_CIRCLE
+                                ZenBroConnectScreen(
+                                    userCode = userCode,
+                                    circleMode = isCircleMode,
+                                    onBackClick = { closeBuddyConnect() },
+                                    onShareLink = {
+                                        startOrShareCircle(isCircleMode, PendingCircleAction.SHARE) {
+                                            userCode?.let { buddyConnector.shareBuddyInvite(it) }
+                                        }
+                                    },
+                                    onCopyCode = {
+                                        startOrShareCircle(isCircleMode, PendingCircleAction.COPY) {
+                                            userCode?.let { buddyConnector.copyUserCode(it, showToast = true) }
+                                        }
+                                    },
+                                    onAddBuddy = { targetUid ->
+                                        buddyConnector.addBuddy(targetUid).also { result ->
+                                            if (result is BuddyAddResult.Success) {
+                                                // Let "Connected with …" register before the celebration takes over.
+                                                connectSuccessJob = lifecycleScope.launch {
+                                                    kotlinx.coroutines.delay(700)
+                                                    connectedBuddyName = result.buddyName
+                                                }
+                                            }
+                                        }
+                                    },
+                                    onJoinCircleCode = { code ->
+                                        when (circleViewModel.joinCircleAwait(code, via = "code")) {
+                                            is com.zenlauncher.zenmode.coreapi.CircleJoinResult.Success -> {
+                                                showZenCircle = true
+                                                CircleCodeResult.Success
+                                            }
+                                            is com.zenlauncher.zenmode.coreapi.CircleJoinResult.CircleFull -> CircleCodeResult.CircleFull
+                                            is com.zenlauncher.zenmode.coreapi.CircleJoinResult.AlreadyInCircle -> CircleCodeResult.AlreadyInCircle
+                                            null -> CircleCodeResult.Error("Not signed in.")
+                                        }
+                                    },
+                                    onRandomConnect = {
+                                        if (isCircleMode) {
+                                            circleViewModel.findRandomCircle()
+                                            showZenCircle = true
+                                        } else {
+                                            lifecycleScope.launch {
+                                                buddyConnector.randomConnect()?.let { connectedBuddyName = it }
                                             }
                                         }
                                     }
-                                },
-                                onRandomConnect = {
-                                    lifecycleScope.launch {
-                                        buddyConnector.randomConnect()?.let { connectedBuddyName = it }
-                                    }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
@@ -778,6 +856,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * Share-link/Use-a-code tap in circle mode: shares the existing circle's link/code
+     * immediately, or creates one first and defers the actual share/copy to the
+     * justEnteredCircle LaunchedEffect once that finishes. [fallback] runs unchanged
+     * outside circle mode (the classic Buddy share/copy actions).
+     */
+    private fun startOrShareCircle(isCircleMode: Boolean, action: PendingCircleAction, fallback: () -> Unit) {
+        if (!isCircleMode) {
+            fallback()
+            return
+        }
+        val existing = circleViewModel.uiState.value?.circle
+        if (existing != null) {
+            when (action) {
+                PendingCircleAction.SHARE -> buddyConnector.shareCircleInvite(existing.id)
+                PendingCircleAction.COPY -> buddyConnector.copyUserCode(existing.id, showToast = true)
+            }
+        } else {
+            pendingCircleAutoAction = action
+            circleViewModel.createCircle("My Zen Circle")
+        }
+        showZenCircle = true
+    }
+
+    /**
      * Single entry point for "open the buddy area" - Settings, an old push-notification
      * deep link, the home invite button and the home buddy card all funnel through here so
      * they all respect the cached [BuddyFlowPreferences] decision instead of hardcoding a
@@ -786,7 +888,11 @@ class MainActivity : AppCompatActivity() {
     private fun openBuddyFlow() {
         when (BuddyFlowPreferences.decision(this)) {
             BuddyFlow.ZEN_CIRCLE -> {
-                if (repository.getBuddyUid() != null) openZenCircleFromHome() else showBuddyConnect = true
+                // A real circle has no classic buddy relationship to check -- getBuddyUid()
+                // alone missed circle-only users entirely, always bouncing them back to the
+                // Connect screen instead of their actual dashboard.
+                val hasSomethingToShow = repository.getBuddyUid() != null || !repository.getCachedCircleId().isNullOrEmpty()
+                if (hasSomethingToShow) openZenCircleFromHome() else showBuddyConnect = true
             }
             BuddyFlow.ZEN_BUDDY_CLASSIC -> showBuddyBattle = true
             null -> {

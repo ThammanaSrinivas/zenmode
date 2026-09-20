@@ -46,6 +46,21 @@ class BuddyConnector(
         activity.startActivity(Intent.createChooser(intent, "Share invite"))
     }
 
+    /** "Share a link" for a real Zen Circle -- separate from [shareBuddyInvite]: a different
+     * path (/c/ not /b/) and a different landing (join, not connect). */
+    fun shareCircleInvite(circleId: String) {
+        ServiceLocator.analyticsTracker.trackBuddyShareStarted("circle_link")
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Join my Zen Circle on ZenMode")
+            putExtra(
+                Intent.EXTRA_TEXT,
+                "Join my Zen Circle on ZenMode! ${AppConstants.CIRCLE_INVITE_BASE_URL}$circleId"
+            )
+        }
+        activity.startActivity(Intent.createChooser(intent, "Share invite"))
+    }
+
     suspend fun addBuddy(targetUid: String): BuddyAddResult {
         val currentUserId = ServiceLocator.authProvider.getCurrentUserId()
 

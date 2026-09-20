@@ -34,14 +34,13 @@ object AppConstants {
     const val PLACEHOLDER_BUDDY_ZEN_SCORE = 88
     const val PLACEHOLDER_BUDDY_STREAK = 5
 
-    // Streaks milestone overlay (v3 redesign, Figma node 2026:2137). "Total mindful
-    // days", the community percentile and the longest-streak stat all need real
-    // streak-history tracking that doesn't exist yet — placeholders until it does.
-    const val PLACEHOLDER_MILESTONE_DAYS = 120
+    // Streaks milestone overlay (v3 redesign, Figma node 2026:2137). Total mindful days and
+    // the longest streak are now real (AppLogic.getTotalMindfulDays/getLongestStreak, from
+    // RecapStore's real per-day history) — only the community percentile has no cross-user
+    // data source yet, so it stays a placeholder.
     const val PLACEHOLDER_MILESTONE_PERCENTILE = 10
-    const val PLACEHOLDER_MILESTONE_SCORE_THRESHOLD = 7
-    const val PLACEHOLDER_LONGEST_STREAK_DAYS = 43
-    const val PLACEHOLDER_LONGEST_STREAK_RANGE = "JUL 31–SEP 12"
+    /** Out of 10. A day's Zen Score clearing this counts as "mindful" for streaks/milestones. */
+    const val MINDFUL_DAY_ZEN_SCORE_THRESHOLD = 7
 
     // Zen Gold screen (Figma node 2026:1648) — the home screen's right-swipe page.
     // Promise-vs-screen-time tracking and the price forecast both need a real Gold
@@ -82,12 +81,6 @@ object AppConstants {
     const val KITE_PACKAGE_NAME = "com.zerodha.kite3"
     const val KITE_WEB_URL = "https://kite.zerodha.com/"
 
-    // Zen Score screen (Figma node 2026:2035) — reached by tapping the "Zen Score"
-    // widget in HomeHeader. Category breakdown and session log both need real
-    // per-app usage categorization that doesn't exist yet.
-    const val PLACEHOLDER_RECLAIMED_MINUTES = 1350
-    const val PLACEHOLDER_SESSION_LOG_TOTAL = "TODAY, 2,000"
-
     // External URLs
     const val GITHUB_URL = "https://github.com/ThammanaSrinivas/zenmode"
     const val SUPPORT_EMAIL = "helpdesk@zenmodeos.com"
@@ -96,6 +89,10 @@ object AppConstants {
     // Buddy invite links. Path must match the pathPrefix in AndroidManifest.xml's
     // App Links intent-filter and the /b/ route on the zenmodeos.com Firebase Hosting site.
     const val BUDDY_INVITE_BASE_URL = "https://zenmodeos.com/b/"
+    // Zen Circle invite links -- separate path from Buddy above, same App Links /
+    // Hosting pairing requirement, and a circle's Firestore document ID doubles as
+    // its invite code (no separate invite_code field, see the plan doc).
+    const val CIRCLE_INVITE_BASE_URL = "https://zenmodeos.com/c/"
     const val YT_BUDDY_INVITE_URL = "https://youtu.be/48M1x2ryhpI"   // TODO: replace with actual YT link
     const val YT_BUDDY_CONFUSED_URL = "https://youtu.be/48M1x2ryhpI" // TODO: replace later
     const val PRIVACY_POLICY_URL = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"

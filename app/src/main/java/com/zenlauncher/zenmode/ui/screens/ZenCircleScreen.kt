@@ -100,7 +100,6 @@ import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
-import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.components.BuddyStatsCard
 import com.zenlauncher.zenmode.ui.components.MyScreenTimeCard
@@ -156,6 +155,9 @@ private const val BackCardScale = 190.25f / 150.67f
 fun ZenCircleScreen(
     members: List<ZenCircleMember>,
     userCode: String?,
+    // "Remind With Share Link" while a real circle still has an invite pending (only you +
+    // a placeholder second member); the normal label once someone's actually joined.
+    primaryShareLabel: String = "Share & Invite to Zen Circle",
     onBackClick: () -> Unit,
     onShareInviteLink: () -> Unit,
     onCopyInviteCode: () -> Unit,
@@ -317,7 +319,7 @@ fun ZenCircleScreen(
                     ) {
                         ZenCirclePillButton(
                             // The card carries the invite link and code, so sharing it invites too.
-                            text = "Share & Invite to Zen Circle",
+                            text = primaryShareLabel,
                             onClick = { showShareCard = true },
                             container = colorResource(R.color.zen_700),
                             content = Color.White,

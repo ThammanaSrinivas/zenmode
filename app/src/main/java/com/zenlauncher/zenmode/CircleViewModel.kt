@@ -25,6 +25,12 @@ data class CircleUiState(
     /** Set when a join attempt hit AlreadyInCircle and the caller has a classic buddy --
      * the UI shows the switch-confirmation popup and calls confirmSwitchFromBuddyAndJoin. */
     val pendingBuddySwitchCircleId: String? = null,
+    /** One-shot: true right after a successful createCircle() / joinCircle() /
+     * confirmSwitchFromBuddyAndJoin(). Mirrors [justLeftCircle] -- the host must navigate to
+     * the circle dashboard rather than infer success from [circle] transitioning non-null,
+     * which is ambiguous (the create/join screens can be reopened while already in a circle).
+     * Consume via [CircleViewModel.consumeEnteredCircleEvent]. */
+    val justEnteredCircle: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -95,39 +101,57 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
                 _uiState.value!!.copy(
                     circle = circle,
                     loading = false,
+                    justEnteredCircle = circle != null,
                     errorMessage = if (circle == null) "Couldn't create circle" else null
                 )
             )
         }
     }
 
-    /** [via] is "invite_link" or "code", for analytics. */
-    fun joinCircle(circleId: String, via: String) {
-        val myUid = myUid() ?: return
-        val myHasBuddy = repository.hasCachedBuddy()
+    private suspend fun joinCircleInternal(circleId: String, via: String, myUid: String, myHasBuddy: Boolean): CircleJoinResult {
         _uiState.postValue(_uiState.value!!.copy(loading = true))
-        viewModelScope.launch {
-            val displayName = ServiceLocator.authProvider.getDisplayName()
-            val result = firestoreDataSource.joinCircle(circleId, myUid, displayName, confirmedSwitchFromBuddy = false)
-            when (result) {
-                is CircleJoinResult.Success -> {
-                    repository.saveCircleId(circleId)
-                    ServiceLocator.analyticsTracker.trackCircleJoined(via)
-                    loadCircle()
-                }
-                is CircleJoinResult.CircleFull -> {
-                    _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = "This circle is full"))
-                }
-                is CircleJoinResult.AlreadyInCircle -> {
-                    if (myHasBuddy) {
-                        // Let the UI show the switch-confirmation popup rather than a bare error.
-                        _uiState.postValue(_uiState.value!!.copy(loading = false, pendingBuddySwitchCircleId = circleId))
-                    } else {
-                        _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = "You're already in a circle"))
-                    }
+        val displayName = ServiceLocator.authProvider.getDisplayName()
+        val result = firestoreDataSource.joinCircle(circleId, myUid, displayName, confirmedSwitchFromBuddy = false)
+        when (result) {
+            is CircleJoinResult.Success -> {
+                repository.saveCircleId(circleId)
+                ServiceLocator.analyticsTracker.trackCircleJoined(via)
+                // Fetch and post directly rather than calling loadCircle() -- that posts its
+                // own loading/circle state from a second coroutine, which would race with
+                // (and could stomp) the justEnteredCircle=true below.
+                val circle = firestoreDataSource.getCircle(circleId)
+                if (circle != null) repository.cacheCircle(circle)
+                _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null))
+            }
+            is CircleJoinResult.CircleFull -> {
+                _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = "This circle is full"))
+            }
+            is CircleJoinResult.AlreadyInCircle -> {
+                if (myHasBuddy) {
+                    // Let the UI show the switch-confirmation popup rather than a bare error.
+                    _uiState.postValue(_uiState.value!!.copy(loading = false, pendingBuddySwitchCircleId = circleId))
+                } else {
+                    _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = "You're already in a circle"))
                 }
             }
         }
+        return result
+    }
+
+    /** [via] is "invite_link" or "code", for analytics. Fire-and-forget -- callers watch
+     * [uiState] for the outcome (e.g. the deep-link auto-join path). */
+    fun joinCircle(circleId: String, via: String) {
+        val myUid = myUid() ?: return
+        val myHasBuddy = repository.hasCachedBuddy()
+        viewModelScope.launch { joinCircleInternal(circleId, via, myUid, myHasBuddy) }
+    }
+
+    /** Suspend variant of [joinCircle] for callers that need the real result synchronously
+     * (UseCodeCard's inline status text) instead of watching [uiState]. Same side effects. */
+    suspend fun joinCircleAwait(circleId: String, via: String): CircleJoinResult? {
+        val myUid = myUid() ?: return null
+        val myHasBuddy = repository.hasCachedBuddy()
+        return joinCircleInternal(circleId, via, myUid, myHasBuddy)
     }
 
     /** Called after the user confirms the Buddy->Circle switch popup. */
@@ -147,7 +171,11 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
                     repository.saveCircleId(circleId)
                     ServiceLocator.analyticsTracker.trackBuddyToCircleSwitch()
                     ServiceLocator.analyticsTracker.trackCircleJoined("switch_from_buddy")
-                    loadCircle()
+                    // Same reasoning as joinCircle() above -- fetch and post directly instead
+                    // of calling loadCircle(), to avoid racing justEnteredCircle=true.
+                    val circle = firestoreDataSource.getCircle(circleId)
+                    if (circle != null) repository.cacheCircle(circle)
+                    _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null))
                 } else {
                     // Deliberately NOT the usual silent-safe-default here: disconnect already
                     // succeeded, so silence would leave the user thinking they joined when
@@ -194,6 +222,12 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
      * as AccountabilityViewModel.resetDisconnectResult(). */
     fun consumeLeftCircleEvent() {
         _uiState.postValue(_uiState.value!!.copy(justLeftCircle = false))
+    }
+
+    /** Call once the host has navigated to the circle dashboard in response to
+     * justEnteredCircle. */
+    fun consumeEnteredCircleEvent() {
+        _uiState.postValue(_uiState.value!!.copy(justEnteredCircle = false))
     }
 
     fun removeMember(targetUid: String) {
@@ -247,6 +281,34 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
 
     fun clearError() {
         _uiState.postValue(_uiState.value!!.copy(errorMessage = null))
+    }
+
+    /** Random circle connect -- mirrors BuddyConnector.randomConnect()'s cooldown, shared
+     * with it since it's the same kind of matchmaking action. Creates a real 2-person
+     * circle atomically (both people are online right now, unlike the invite-link flow). */
+    fun findRandomCircle() {
+        val myUid = myUid() ?: return
+        val lastTried = repository.getLastRandomConnectAttemptTime()
+        val remaining = AppConstants.RANDOM_CONNECT_COOLDOWN_MS - (System.currentTimeMillis() - lastTried)
+        if (remaining > 0) {
+            val secs = (remaining / 1000).coerceAtLeast(1)
+            _uiState.postValue(_uiState.value!!.copy(errorMessage = "No one was available last time. Try again in ${secs}s."))
+            return
+        }
+        _uiState.postValue(_uiState.value!!.copy(loading = true))
+        viewModelScope.launch {
+            val displayName = ServiceLocator.authProvider.getDisplayName()
+            val circle = firestoreDataSource.findRandomCircleUser(myUid, displayName)
+            if (circle == null) {
+                repository.saveLastRandomConnectAttemptTime(System.currentTimeMillis())
+                _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = "No one available right now. Try again in 30 seconds!"))
+            } else {
+                repository.saveCircleId(circle.id)
+                repository.cacheCircle(circle)
+                ServiceLocator.analyticsTracker.trackCircleJoined("random")
+                _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = true))
+            }
+        }
     }
 
     private fun formatWaitToast(waitMs: Long): String {

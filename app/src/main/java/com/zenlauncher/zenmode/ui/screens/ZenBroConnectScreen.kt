@@ -84,6 +84,14 @@ sealed class BuddyAddResult {
     data object SelfAdd : BuddyAddResult()
 }
 
+/** Result of pasting a code into [UseCodeCard] while [ZenBroConnectScreen.circleMode] is on. */
+sealed class CircleCodeResult {
+    data object Success : CircleCodeResult()
+    data object CircleFull : CircleCodeResult()
+    data object AlreadyInCircle : CircleCodeResult()
+    data class Error(val message: String) : CircleCodeResult()
+}
+
 // ── Zen Bro connect, screen 2 ─────────────────────────────────────
 // "My Zen Circle" — reached from the home screen's "Add Buddy" (Figma node 2026:2443).
 // Three ways to connect: share a link, trade codes, or random connect.
@@ -109,10 +117,14 @@ internal val PillHeight: Dp @Composable get() = 47.rdp
 @Composable
 fun ZenBroConnectScreen(
     userCode: String?,
+    // True once BuddyFlowPreferences has the user on Zen Circle -- Share/Use a code/Random
+    // connect all create or join a real circle instead of a classic 1:1 buddy pair.
+    circleMode: Boolean = false,
     onBackClick: () -> Unit,
     onShareLink: () -> Unit,
     onCopyCode: () -> Unit,
     onAddBuddy: suspend (String) -> BuddyAddResult,
+    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error("Not available") },
     onRandomConnect: () -> Unit
 ) {
     BackHandler(onBack = onBackClick)
@@ -163,9 +175,11 @@ fun ZenBroConnectScreen(
             Spacer(Modifier.height(20.rdp))
             ZenCircleConnectOptions(
                 userCode = userCode,
+                circleMode = circleMode,
                 onShareLink = onShareLink,
                 onCopyCode = onCopyCode,
                 onAddBuddy = onAddBuddy,
+                onJoinCircleCode = onJoinCircleCode,
                 onRandomConnect = onRandomConnect,
                 modifier = Modifier.padding(horizontal = 30.rdp)
             )
@@ -173,13 +187,16 @@ fun ZenBroConnectScreen(
     }
 }
 
-/** The three ways into a Zen Circle — share a link, trade codes, random connect. Also used by onboarding. */
+/** The three ways into a Zen Circle — share a link, trade codes, random connect. Also used by
+ * onboarding (always with [circleMode] false -- onboarding doesn't offer circle creation yet). */
 @Composable
 internal fun ZenCircleConnectOptions(
     userCode: String?,
+    circleMode: Boolean = false,
     onShareLink: () -> Unit,
     onCopyCode: () -> Unit,
     onAddBuddy: suspend (String) -> BuddyAddResult,
+    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error("Not available") },
     onRandomConnect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -188,7 +205,13 @@ internal fun ZenCircleConnectOptions(
         verticalArrangement = Arrangement.spacedBy(12.rdp)
     ) {
         ShareLinkCard(enabled = userCode != null, onShareLink = onShareLink)
-        UseCodeCard(userCode = userCode, onCopyCode = onCopyCode, onAddBuddy = onAddBuddy)
+        UseCodeCard(
+            userCode = userCode,
+            circleMode = circleMode,
+            onCopyCode = onCopyCode,
+            onAddBuddy = onAddBuddy,
+            onJoinCircleCode = onJoinCircleCode
+        )
         RandomConnectCard(onRandomConnect = onRandomConnect)
     }
 }
@@ -357,8 +380,10 @@ private fun ShareLinkCard(enabled: Boolean, onShareLink: () -> Unit) {
 @Composable
 private fun UseCodeCard(
     userCode: String?,
+    circleMode: Boolean = false,
     onCopyCode: () -> Unit,
-    onAddBuddy: suspend (String) -> BuddyAddResult
+    onAddBuddy: suspend (String) -> BuddyAddResult,
+    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error("Not available") }
 ) {
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -374,11 +399,20 @@ private fun UseCodeCard(
         scope.launch {
             isConnecting = true
             status = null
-            status = when (val result = onAddBuddy(buddyCode.trim())) {
-                is BuddyAddResult.Success -> "Connected with ${result.buddyName}!" to true
-                is BuddyAddResult.AlreadyBuddies -> "You're already connected with ${result.buddyName}." to false
-                is BuddyAddResult.SelfAdd -> "That's your own code — paste your Zen Bro's." to false
-                is BuddyAddResult.Error -> result.message to false
+            status = if (circleMode) {
+                when (val result = onJoinCircleCode(buddyCode.trim())) {
+                    is CircleCodeResult.Success -> null // navigates to the circle dashboard, nothing to show inline
+                    is CircleCodeResult.CircleFull -> "That circle is full." to false
+                    is CircleCodeResult.AlreadyInCircle -> "You're already in a circle." to false
+                    is CircleCodeResult.Error -> result.message to false
+                }
+            } else {
+                when (val result = onAddBuddy(buddyCode.trim())) {
+                    is BuddyAddResult.Success -> "Connected with ${result.buddyName}!" to true
+                    is BuddyAddResult.AlreadyBuddies -> "You're already connected with ${result.buddyName}." to false
+                    is BuddyAddResult.SelfAdd -> "That's your own code — paste your Zen Bro's." to false
+                    is BuddyAddResult.Error -> result.message to false
+                }
             }
             isConnecting = false
         }

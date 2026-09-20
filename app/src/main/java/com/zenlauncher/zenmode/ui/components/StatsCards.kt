@@ -46,7 +46,7 @@ import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -101,6 +101,9 @@ fun StatsCardsRow(
     buddyLikes: Long = 0L,
     onLikeClick: () -> Unit = {},
     onInviteBuddyClick: () -> Unit = {},
+    // "Add Buddy" for the classic 1:1 flow, "Add Bro" once BuddyFlowPreferences has
+    // the user on Zen Circle -- see BuddyInviteCard.
+    inviteButtonLabel: String = "Add Buddy",
     onSignInClick: () -> Unit = {},
     onBuddyCardClick: (() -> Unit)? = null,
     // Per-piece hooks so a host can animate the two cards and the bolt independently
@@ -156,6 +159,7 @@ fun StatsCardsRow(
             } else {
                 BuddyInviteCard(
                     onInviteBuddyClick = onInviteBuddyClick,
+                    buttonLabel = inviteButtonLabel,
                     modifier = Modifier.weight(1f).then(rightCardModifier)
                 )
             }
@@ -640,6 +644,7 @@ private fun DashedCard(
 @Composable
 fun BuddyInviteCard(
     onInviteBuddyClick: () -> Unit,
+    buttonLabel: String = "Add Buddy",
     modifier: Modifier = Modifier
 ) {
     val cardRadius = CardRadius
@@ -732,7 +737,7 @@ fun BuddyInviteCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Add Buddy",
+                    text = buttonLabel,
                     fontFamily = Geist,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.rsp,
