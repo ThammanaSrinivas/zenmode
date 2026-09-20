@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.content.ContextCompat
@@ -27,12 +26,6 @@ enum class ZenPermission(
         reason = "Powers your Zen Score and screen-time promise.",
         required = true
     ),
-    DISPLAY_OVER_APPS(
-        analyticsKey = "overlay",
-        title = "Display over other apps",
-        reason = "Shows a mindful pause before a doomscroll.",
-        required = true
-    ),
     ACCESSIBILITY(
         analyticsKey = "acc",
         title = "Reels & Shorts blocker",
@@ -48,7 +41,6 @@ enum class ZenPermission(
 
     fun isGranted(context: Context): Boolean = when (this) {
         USAGE_ACCESS -> UsageAccess.isGranted(context)
-        DISPLAY_OVER_APPS -> Settings.canDrawOverlays(context)
         ACCESSIBILITY -> ZenAccessibilityService.isEnabledInSettings(context)
         NOTIFICATIONS -> Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
@@ -58,10 +50,6 @@ enum class ZenPermission(
     /** Settings screen for grants that live there; null for [NOTIFICATIONS], a runtime prompt. */
     fun settingsIntent(context: Context): Intent? = when (this) {
         USAGE_ACCESS -> Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        DISPLAY_OVER_APPS -> Intent(
-            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${context.packageName}")
-        )
         ACCESSIBILITY -> Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
         NOTIFICATIONS -> null
     }
