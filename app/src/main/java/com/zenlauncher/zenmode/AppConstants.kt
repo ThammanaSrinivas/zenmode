@@ -90,8 +90,8 @@ object AppConstants {
 
     // External URLs
     const val GITHUB_URL = "https://github.com/ThammanaSrinivas/zenmode"
-    const val SUPPORT_EMAIL = "zenmode.help@gmail.com"
-    const val TELEGRAM_URL = "https://t.me/zenmodeos" // TODO: confirm the community handle before release
+    const val SUPPORT_EMAIL = "helpdesk@zenmodeos.com"
+    const val TELEGRAM_URL = "https://t.me/+Ka8sQAw_xwJhOGI1"
     const val PLAY_RATING = "4.6"                     // live Play listing, 2026-07-18 snapshot
     // Buddy invite links. Path must match the pathPrefix in AndroidManifest.xml's
     // App Links intent-filter and the /b/ route on the zenmodeos.com Firebase Hosting site.
