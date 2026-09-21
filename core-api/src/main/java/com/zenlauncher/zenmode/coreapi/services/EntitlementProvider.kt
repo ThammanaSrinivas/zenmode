@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.asStateFlow
  * 7 days of history — is free forever. Pro only adds range. Anything that isn't listed in
  * [ProFeature] must never be gated.
  *
- * Until Play Billing ships, both core-mock and core-private sell Pro through
- * [LocalEntitlementProvider], which keeps the subscription on the device and takes no payment.
+ * core-private sells Pro through real Google Play Billing (`PlayBillingEntitlementProvider`,
+ * core-private). core-mock (open-source builds) keeps selling it through
+ * [LocalEntitlementProvider], which keeps the subscription on the device and takes no payment --
+ * open-source builds have no Play Console tie or service account to verify a real purchase with.
  */
 interface EntitlementProvider {
     /**

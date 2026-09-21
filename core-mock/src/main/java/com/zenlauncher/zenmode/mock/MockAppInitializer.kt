@@ -47,6 +47,11 @@ class MockProEntitlementProvider : ProEntitlementProvider {
 
 class MockRemoteConfigProvider : RemoteConfigProvider {
     override val minVersionCode: StateFlow<Long> = MutableStateFlow(0L)
+    // Deliberately NOT the usual "mock defaults to feature-ON" convention: turning this on
+    // would try to route open-source builds through real Play Billing, which they structurally
+    // can't do (no Play Console tie, no service account) -- LocalEntitlementProvider (simulated,
+    // always available) is already core-mock's permanent answer for Pro, regardless of this flag.
+    override val playBillingEnabled: StateFlow<Boolean> = MutableStateFlow(false)
     override suspend fun initialize() {
         Log.i("MockRemoteConfig", "MOCK Remote Config initialized. Defaulting to 0L.")
     }
