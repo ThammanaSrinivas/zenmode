@@ -25,7 +25,7 @@ object AppConstants {
 
     // v3 home screen placeholders. Stand-ins until the scoring and rewards
     // backend exists — swap these for real values, not the UI around them.
-    const val PLACEHOLDER_GOLD_INVESTED = "2,350"
+    const val PLACEHOLDER_GOLD_INVESTED = "0"
     const val PLACEHOLDER_GOLD_CHANGE_PERCENT = 38
     // "Days invested" stat on the Gold share overlay — needs the same Gold Streak backend
     // as the rest of the Zen Gold screen (see PLACEHOLDER_PROMISE_HOURS below).

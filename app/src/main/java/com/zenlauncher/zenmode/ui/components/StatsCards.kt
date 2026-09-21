@@ -111,6 +111,9 @@ fun StatsCardsRow(
     inviteButtonLabel: String = "Add Buddy",
     onSignInClick: () -> Unit = {},
     onBuddyCardClick: (() -> Unit)? = null,
+    // Opens Settings, same destination as every ☰ in the app — the profile icon on
+    // Zen Score does the same thing, so tapping either surface is consistent.
+    onMyCardClick: (() -> Unit)? = null,
     // Per-piece hooks so a host can animate the two cards and the bolt independently
     // (e.g. the Zen Bro "connected" screen). Applied after layout sizing.
     leftCardModifier: Modifier = Modifier,
@@ -146,6 +149,7 @@ fun StatsCardsRow(
                     streaks = streaks,
                     isWinner = cardCrown && !kingOnBuddy,
                     buddyLikes = if (hasBuddies && showReactions) buddyLikes else 0L,
+                    onCardClick = onMyCardClick,
                     modifier = Modifier.weight(1f).then(leftCardModifier)
                 )
             } else {
@@ -440,6 +444,7 @@ fun MyScreenTimeCard(
     streaks: Int = 0,
     isWinner: Boolean = false,
     buddyLikes: Long = 0L,
+    onCardClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val totalMillis = usage?.screenTimeInMillis ?: 0L
@@ -447,7 +452,11 @@ fun MyScreenTimeCard(
     val moodState = if (isWeekly) AppLogic.getWeeklyMoodState(minutes)
                     else AppLogic.getMoodState(minutes)
 
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.then(
+            if (onCardClick != null) Modifier.clickable(onClickLabel = "Open settings", onClick = onCardClick) else Modifier
+        )
+    ) {
         MoodCard(
             faceRes = faceFor(moodState),
             faceDescription = "Mood face",

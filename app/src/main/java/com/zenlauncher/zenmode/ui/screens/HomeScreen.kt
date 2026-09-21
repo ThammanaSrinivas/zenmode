@@ -172,6 +172,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.recap.RecapStore
+import com.zenlauncher.zenmode.ui.components.openSettings
 import android.util.Log
 
 
@@ -266,6 +267,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
+    val context = LocalContext.current
     // Streaks and Gold have no page of their own, so their stat opens a shareable card
     // here (HomeShareOverlays.kt). Zen Score has a page — its tap opens that, and the
     // card lives behind the page's own "Share Zen Score".
@@ -355,6 +357,7 @@ fun HomeScreen(
                 myLikes = myLikes,
                 buddyLikes = buddyLikes,
                 onLikeClick = onLikeClick,
+                onMyCardClick = { openSettings(context) },
                 circleStackMembers = circleStackMembers,
                 onInviteBuddyClick = onInviteBuddyClick,
                 inviteButtonLabel = inviteButtonLabel,
@@ -426,7 +429,6 @@ fun HomeScreen(
 
         // Streak overlay
         // Compute milestone stats once per composition, re-derived when zenScore changes.
-        val context = LocalContext.current
         val recapStore = remember { RecapStore(context) }
         val promiseHours = remember { PromisePreferences.getDailyHours(context) }
         val todayIsMindful = remember(zenScore) {
@@ -1514,11 +1516,14 @@ private fun StreakOverlay(
     totalMindfulDays: Int,
     longestStreakDays: Int,
     longestStreakRange: String,
-    topPercentile: Int = AppConstants.PLACEHOLDER_MILESTONE_PERCENTILE,
     zenScoreThreshold: Int = AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD,
     /** The same live count as the flame in Home's header. */
     currentStreakDays: Int = 0
 ) {
+    // Community percentile has no real cross-user data source yet, so it's derived
+    // from the current streak itself rather than a flat placeholder: under 5 days
+    // there's nothing worth bragging about yet, so the line is hidden entirely.
+    val topPercentile = streakTopPercentile(currentStreakDays)
     val colors = ZenTheme.colors
 
     ShareSheet(
@@ -1544,16 +1549,18 @@ private fun StreakOverlay(
 
         Spacer(modifier = Modifier.height(15.rdp))
 
-        Text(
-            text = "You're in the top $topPercentile% of the Zen Bros",
-            fontFamily = Geist,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.rsp,
-            letterSpacing = (-0.16).sp,
-            color = colors.textBrand
-        )
+        if (topPercentile != null) {
+            Text(
+                text = "You're in the top $topPercentile% of the Zen Bros",
+                fontFamily = Geist,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.rsp,
+                letterSpacing = (-0.16).sp,
+                color = colors.textBrand
+            )
 
-        Spacer(modifier = Modifier.height(15.rdp))
+            Spacer(modifier = Modifier.height(15.rdp))
+        }
 
         // The shareable milestone card — "Save as image" / "Share my streaks"
         // crop exactly this, not the whole sheet.
@@ -1577,6 +1584,17 @@ private fun StreakOverlay(
             trail = "(${currentStreakRange(currentStreakDays)})"
         )
     }
+}
+
+/**
+ * Streak-based stand-in for the community percentile, until real cross-user streak
+ * data exists (see [AppConstants.PLACEHOLDER_MILESTONE_PERCENTILE]'s old flat value).
+ * Null hides the line — under 5 days there's nothing worth claiming yet.
+ */
+internal fun streakTopPercentile(currentStreakDays: Int): Int? = when {
+    currentStreakDays < 5 -> null
+    currentStreakDays <= 10 -> 50
+    else -> 10
 }
 
 /** "SEP 11–PRESENT": the streak counts today, so it began [days] − 1 days ago. */
