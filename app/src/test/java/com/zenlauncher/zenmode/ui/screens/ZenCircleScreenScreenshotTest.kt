@@ -20,6 +20,38 @@ class ZenCircleScreenScreenshotTest {
     @Test
     fun `zen circle - settings sheet open`() = snapshot(sheet = ZenCircleSheet.Settings)
 
+    @Test
+    fun `zen circle - reactions on your card only`() {
+        paparazzi.snapshot {
+            CompositionLocalProvider(LocalInspectionMode provides true) {
+                ZenTheme(darkTheme = false) {
+                    ZenCircleScreen(
+                        members = listOf(
+                            ZenCircleMember(
+                                "You", isYou = true, screenTimeMinutes = 59, zenScore = 93, streaks = 13,
+                                changePercent = 30, uid = "my-uid", loveReceivedToday = 4L, meltReceivedToday = 2L
+                            ),
+                            // Has a real uid too -- confirms the badge doesn't leak onto a
+                            // buddy's card just because reactions could target it.
+                            ZenCircleMember("SriniMas", isYou = false, screenTimeMinutes = 4 * 60 + 59, zenScore = 91, streaks = 5, uid = "srini-uid")
+                        ),
+                        shareCode = "k7Hq2Lm9XyZpQ4",
+                        onBackClick = {},
+                        onShareInviteLink = {},
+                        onCopyInviteCode = {},
+                        onBackToHome = {},
+                        onSendLove = {},
+                        onSendMelt = {},
+                        onWeeklyClick = {},
+                        removingBuddy = false,
+                        onRemoveBuddy = {},
+                        onLeaveCircle = {}
+                    )
+                }
+            }
+        }
+    }
+
     private fun snapshot(sheet: ZenCircleSheet?) {
         paparazzi.snapshot {
             // Paparazzi leaves inspection mode off; turn it on so the entrance motion renders settled.
@@ -30,7 +62,7 @@ class ZenCircleScreenScreenshotTest {
                             ZenCircleMember("You", isYou = true, screenTimeMinutes = 59, zenScore = 93, streaks = 13, changePercent = 30),
                             ZenCircleMember("SriniMas", isYou = false, screenTimeMinutes = 4 * 60 + 59, zenScore = 91, streaks = 5)
                         ),
-                        userCode = "k7Hq2Lm9XyZpQ4",
+                        shareCode = "k7Hq2Lm9XyZpQ4",
                         onBackClick = {},
                         onShareInviteLink = {},
                         onCopyInviteCode = {},
