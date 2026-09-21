@@ -45,9 +45,12 @@ class ZenScoreActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         HomePageSide.LEFT.applyOnCreate(this)
 
-        val repository = UsageRepository(applicationContext, ServiceLocator.analyticsManager)
-        val sessionLogRepository = SessionLogRepository(applicationContext, repository)
+        val repository = UsageRepository(this, ServiceLocator.analyticsManager)
+        val sessionLogRepository = SessionLogRepository(this, repository)
         val scores = ZenScoreStore(this, repository, sessionLogRepository)
+
+        ServiceLocator.analyticsTracker.trackDailyScreentimeViewed("home")
+
         val score = scores.refresh()
         val yesterday = scores.yesterday()
         val auth = ServiceLocator.authProvider

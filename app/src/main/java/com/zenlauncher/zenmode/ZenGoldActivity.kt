@@ -21,6 +21,8 @@ class ZenGoldActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         HomePageSide.RIGHT.applyOnCreate(this)
+        
+        ServiceLocator.analyticsTracker.trackGoldTabViewed("home_swipe_or_click")
 
         setContent {
             ZenTheme() {

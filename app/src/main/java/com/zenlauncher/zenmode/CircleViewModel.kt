@@ -124,11 +124,11 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         when (result) {
             is CircleJoinResult.Success -> {
                 repository.saveCircleId(circleId)
-                ServiceLocator.analyticsTracker.trackCircleJoined(via)
                 // Fetch and post directly rather than calling loadCircle() -- that posts its
                 // own loading/circle state from a second coroutine, which would race with
                 // (and could stomp) the justEnteredCircle=true below.
                 val circle = firestoreDataSource.getCircle(circleId)
+                ServiceLocator.analyticsTracker.trackZencircleJoinedV3(circleId, via, circle?.members?.size ?: 1)
                 if (circle != null) repository.cacheCircle(circle)
                 _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null))
             }
@@ -176,23 +176,25 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
                 }
                 val displayName = ServiceLocator.authProvider.getDisplayName()
                 val result = firestoreDataSource.joinCircle(circleId, myUid, displayName, confirmedSwitchFromBuddy = true)
-                if (result is CircleJoinResult.Success) {
-                    repository.saveCircleId(circleId)
-                    ServiceLocator.analyticsTracker.trackBuddyToCircleSwitch()
-                    ServiceLocator.analyticsTracker.trackCircleJoined("switch_from_buddy")
-                    // Same reasoning as joinCircle() above -- fetch and post directly instead
-                    // of calling loadCircle(), to avoid racing justEnteredCircle=true.
-                    val circle = firestoreDataSource.getCircle(circleId)
-                    if (circle != null) repository.cacheCircle(circle)
-                    _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null))
-                } else {
-                    // Deliberately NOT the usual silent-safe-default here: disconnect already
-                    // succeeded, so silence would leave the user thinking they joined when
-                    // they're actually in neither Buddy nor Circle. See plan doc's Risks section.
-                    _uiState.postValue(
-                        _uiState.value!!.copy(
-                            loading = false,
-                            errorMessage = "Disconnected your buddy, but couldn't join the circle -- please try the invite link again."
+                when (result) {
+                    is CircleJoinResult.Success -> {
+                        repository.saveCircleId(circleId)
+                        // Same reasoning as joinCircle() above -- fetch and post directly instead
+                        // of loadCircle() so we can set justEnteredCircle=true in one shot.
+                        val circle = firestoreDataSource.getCircle(circleId)
+                        ServiceLocator.analyticsTracker.trackZencircleJoinedV3(circleId, "buddy_switch", circle?.members?.size ?: 1)
+                        if (circle != null) repository.cacheCircle(circle)
+                        _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null, pendingBuddySwitchCircleId = null))
+                    }
+                    else -> {
+                        // Deliberately NOT the usual silent-safe-default here: disconnect already
+                        // succeeded, so silence would leave the user thinking they joined when
+                        // they're actually in neither Buddy nor Circle. See plan doc's Risks section.
+                        _uiState.postValue(
+                            _uiState.value!!.copy(
+                                loading = false,
+                                errorMessage = "Disconnected your buddy, but couldn't join the circle -- please try the invite link again."
+                            )
                         )
                     )
                 }

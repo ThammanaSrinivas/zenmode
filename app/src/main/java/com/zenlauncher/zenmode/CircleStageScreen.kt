@@ -61,20 +61,29 @@ fun CircleStageScreen(
         // Opened from home there's no connected screen to return to.
         onBackClick = { if (connectedToBuddyScreen) onBackToZenCircleFalse() else onCloseBuddyConnect() },
         onShareInviteLink = {
-            // A real circle shares its own /c/{circleId} join link, not the classic /b/ buddy
-            // link the reskin fallback uses. Still creating (isCircleMode, circle null):
-            // nothing to share yet -- MainActivity's justEnteredCircle effect fires this once ready.
             when {
-                circle != null -> buddyConnector.shareCircleInvite(circle.id)
+                circle != null -> {
+                    ServiceLocator.analyticsTracker.trackReferralShareInitiated(circle.id)
+                    buddyConnector.shareCircleInvite(circle.id)
+                }
                 isCircleMode -> Unit
-                else -> userCode?.let { buddyConnector.shareBuddyInvite(it) }
+                else -> userCode?.let { 
+                    ServiceLocator.analyticsTracker.trackReferralShareInitiated(it)
+                    buddyConnector.shareBuddyInvite(it) 
+                }
             }
         },
         onCopyInviteCode = {
             when {
-                circle != null -> buddyConnector.copyUserCode(circle.id, showToast = true)
+                circle != null -> {
+                    ServiceLocator.analyticsTracker.trackReferralLinkCopied(circle.id)
+                    buddyConnector.copyUserCode(circle.id, showToast = true)
+                }
                 isCircleMode -> Unit
-                else -> userCode?.let { buddyConnector.copyUserCode(it, showToast = false) }
+                else -> userCode?.let { 
+                    ServiceLocator.analyticsTracker.trackReferralLinkCopied(it)
+                    buddyConnector.copyUserCode(it, showToast = false) 
+                }
             }
         },
         onBackToHome = onCloseBuddyConnect,

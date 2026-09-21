@@ -177,6 +177,7 @@ class ZenAccessibilityService : AccessibilityService() {
 
         Log.i(TAG, "Blocking $pkg / ${surface.id}")
         performGlobalAction(GLOBAL_ACTION_BACK)
+        ServiceLocator.analyticsTracker.trackBlockedAppAttempt(pkg)
         Toast.makeText(this, "Blocked by ZenMode", Toast.LENGTH_SHORT).show()
         ContentBlockPrefs.recordStop(this)
 

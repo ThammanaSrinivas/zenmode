@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedContent
+import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,7 +55,10 @@ class InvestGoldActivity : AppCompatActivity() {
                         InvestGoldReviewScreen(
                             units = units,
                             onBackClick = { reviewing = false },
-                            onOpenKiteClick = { openKite() },
+                            onOpenKiteClick = { 
+                                ServiceLocator.analyticsTracker.trackGoldPurchaseCompleted(0, "INR", units, "kite")
+                                openKite() 
+                            },
                             onChangeQuantityClick = { reviewing = false }
                         )
                     } else {
@@ -62,7 +66,10 @@ class InvestGoldActivity : AppCompatActivity() {
                             units = units,
                             onUnitsChange = { units = GoldOrder.clampUnits(it) },
                             onBackClick = { finish() },
-                            onReviewInKiteClick = { reviewing = true }
+                            onReviewInKiteClick = { 
+                                ServiceLocator.analyticsTracker.trackGoldPurchaseInitiated(0, units)
+                                reviewing = true 
+                            }
                         )
                     }
                 }

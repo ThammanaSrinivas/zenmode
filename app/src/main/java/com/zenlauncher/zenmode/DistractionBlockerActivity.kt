@@ -62,8 +62,14 @@ class DistractionBlockerActivity : AppCompatActivity() {
                     onBackClick = { finish() },
                     onPauseClick = {
                         when {
-                            state.isPaused -> ContentBlockPrefs.resume(this)
-                            isPro -> ContentBlockPrefs.pause(this)
+                            state.isPaused -> {
+                                ContentBlockPrefs.resume(this)
+                                ServiceLocator.analyticsTracker.trackBlockerDisabled("pause_all")
+                            }
+                            isPro -> {
+                                ContentBlockPrefs.pause(this)
+                                ServiceLocator.analyticsTracker.trackBlockerEnabled("pause_all")
+                            }
                             else -> {
                                 proSheetSource = "distraction_blocker_pause"
                                 ServiceLocator.analyticsTracker.trackProUpsellViewed(proSheetSource)
@@ -74,10 +80,20 @@ class DistractionBlockerActivity : AppCompatActivity() {
                     },
                     onReelsToggle = { on ->
                         ContentBlockPrefs.setReelsQuieted(this, on)
+                        if (on) {
+                            ServiceLocator.analyticsTracker.trackBlockerEnabled("reels")
+                        } else {
+                            ServiceLocator.analyticsTracker.trackBlockerDisabled("reels")
+                        }
                         refreshPrefs()
                     },
                     onAppToggle = { pkg, on ->
                         ContentBlockPrefs.setAppQuieted(this, pkg, on)
+                        if (on) {
+                            ServiceLocator.analyticsTracker.trackBlockerEnabled("app_quiet")
+                        } else {
+                            ServiceLocator.analyticsTracker.trackBlockerDisabled("app_quiet")
+                        }
                         ServiceLocator.analyticsManager.trackEvent(
                             if (on) "app_quieted" else "app_unquieted",
                             mapOf("app" to pkg)
