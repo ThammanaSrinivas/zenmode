@@ -5,7 +5,9 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.Modifier
 import com.zenlauncher.zenmode.coreapi.PromisePreferences
+import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.ZenGoldScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 

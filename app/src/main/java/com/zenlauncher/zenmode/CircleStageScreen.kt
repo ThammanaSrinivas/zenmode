@@ -63,12 +63,12 @@ fun CircleStageScreen(
         onShareInviteLink = {
             when {
                 circle != null -> {
-                    ServiceLocator.analyticsTracker.trackReferralShareInitiated(circle.id)
+                    ServiceLocator.analyticsTracker.trackReferralShareInitiated("share_sheet", "circle_invite")
                     buddyConnector.shareCircleInvite(circle.id)
                 }
                 isCircleMode -> Unit
                 else -> userCode?.let { 
-                    ServiceLocator.analyticsTracker.trackReferralShareInitiated(it)
+                    ServiceLocator.analyticsTracker.trackReferralShareInitiated("share_sheet", "buddy_invite")
                     buddyConnector.shareBuddyInvite(it) 
                 }
             }
@@ -76,12 +76,12 @@ fun CircleStageScreen(
         onCopyInviteCode = {
             when {
                 circle != null -> {
-                    ServiceLocator.analyticsTracker.trackReferralLinkCopied(circle.id)
+                    ServiceLocator.analyticsTracker.trackReferralLinkShared("copy")
                     buddyConnector.copyUserCode(circle.id, showToast = true)
                 }
                 isCircleMode -> Unit
                 else -> userCode?.let { 
-                    ServiceLocator.analyticsTracker.trackReferralLinkCopied(it)
+                    ServiceLocator.analyticsTracker.trackReferralLinkShared("copy")
                     buddyConnector.copyUserCode(it, showToast = false) 
                 }
             }

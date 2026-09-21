@@ -34,8 +34,8 @@ android {
         applicationId = "com.zenlauncher.zenmode"
         minSdk = 28
         targetSdk = 36
-        versionCode = 12
-        versionName = "3.02"
+        versionCode = 13
+        versionName = "3.03"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         

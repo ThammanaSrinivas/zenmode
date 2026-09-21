@@ -128,7 +128,8 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
                 // own loading/circle state from a second coroutine, which would race with
                 // (and could stomp) the justEnteredCircle=true below.
                 val circle = firestoreDataSource.getCircle(circleId)
-                ServiceLocator.analyticsTracker.trackZencircleJoinedV3(circleId, via, circle?.members?.size ?: 1)
+                val circleType = if (circle != null && circle.members.size > 2) "group" else "pair"
+                ServiceLocator.analyticsTracker.trackZencircleJoinedV3(circle?.members?.size ?: 1, circleType)
                 if (circle != null) repository.cacheCircle(circle)
                 _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null))
             }
@@ -182,7 +183,8 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
                         // Same reasoning as joinCircle() above -- fetch and post directly instead
                         // of loadCircle() so we can set justEnteredCircle=true in one shot.
                         val circle = firestoreDataSource.getCircle(circleId)
-                        ServiceLocator.analyticsTracker.trackZencircleJoinedV3(circleId, "buddy_switch", circle?.members?.size ?: 1)
+                        val circleType = if (circle != null && circle.members.size > 2) "group" else "pair"
+                        ServiceLocator.analyticsTracker.trackZencircleJoinedV3(circle?.members?.size ?: 1, circleType)
                         if (circle != null) repository.cacheCircle(circle)
                         _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null, pendingBuddySwitchCircleId = null))
                     }
@@ -196,7 +198,7 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
                                 errorMessage = "Disconnected your buddy, but couldn't join the circle -- please try the invite link again."
                             )
                         )
-                    )
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.postValue(

@@ -49,8 +49,6 @@ class ZenScoreActivity : AppCompatActivity() {
         val sessionLogRepository = SessionLogRepository(this, repository)
         val scores = ZenScoreStore(this, repository, sessionLogRepository)
 
-        ServiceLocator.analyticsTracker.trackDailyScreentimeViewed("home")
-
         val score = scores.refresh()
         val yesterday = scores.yesterday()
         val auth = ServiceLocator.authProvider
@@ -58,8 +56,11 @@ class ZenScoreActivity : AppCompatActivity() {
         val sessions = sessionLogRepository.getTodaySessions()
         val categories = categoryBreakdown(sessionLogRepository)
         val sessionLog = sessions.map(::toLogEntry)
-        val sessionTotalLabel = "TODAY, ${formatMinutes(TimeUnit.MILLISECONDS.toMinutes(sessions.sumOf { it.durationMillis }))}"
+        val totalMins = TimeUnit.MILLISECONDS.toMinutes(sessions.sumOf { it.durationMillis })
+        val sessionTotalLabel = "TODAY, ${formatMinutes(totalMins)}"
         val reclaimedMinutes = reclaimedMinutesToday(repository)
+
+        ServiceLocator.analyticsTracker.trackDailyScreentimeViewed(totalMins, 0)
 
         setContent {
             ZenTheme {

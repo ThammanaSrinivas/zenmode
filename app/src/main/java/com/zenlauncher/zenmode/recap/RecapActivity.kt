@@ -64,7 +64,7 @@ class RecapActivity : ComponentActivity() {
             }
             RecapNotifier.cancel(applicationContext)
             ServiceLocator.analyticsTracker.trackRecapOpened(weekStart.toString(), loaded.outcome.analyticsKey, source)
-            ServiceLocator.analyticsTracker.trackWeeklyScreentimeViewed(source)
+            ServiceLocator.analyticsTracker.trackWeeklyScreentimeViewed(loaded.totalMinutes, 0)
             
             try {
                 val installTime = packageManager.getPackageInfo(packageName, 0).firstInstallTime

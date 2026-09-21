@@ -317,7 +317,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 } catch (e: Exception) {}
             }
-            val statsProcessedTime = repository.getLastStatsProcessedTime()
+            val lastProcessed = repository.getLastStatsProcessedTime()
             val interval = AppConstants.STATS_SYNC_INTERVAL_MINUTES * 60 * 1000L
 
             // StatSyncWorker ships in zenmode_core_private; core-mock builds don't have it.
