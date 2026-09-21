@@ -15,6 +15,7 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.coreapi.services.AuthProvider
 import com.zenlauncher.zenmode.coreapi.services.FirestoreDataSource
 import com.zenlauncher.zenmode.coreapi.services.AnalyticsTrackerContract
+import com.zenlauncher.zenmode.coreapi.services.LocalEntitlementProvider
 import com.zenlauncher.zenmode.coreapi.services.ProEntitlementProvider
 
 import com.zenlauncher.zenmode.coreapi.services.RemoteConfigProvider
@@ -31,12 +32,12 @@ class MockAppInitializer : AppInitializer {
         ServiceLocator.analyticsManager = MockAnalyticsManager()
         ServiceLocator.remoteConfigProvider = MockRemoteConfigProvider()
         ServiceLocator.proEntitlementProvider = MockProEntitlementProvider()
-        ServiceLocator.entitlementProvider = MockEntitlementProvider(application)
+        ServiceLocator.entitlementProvider = LocalEntitlementProvider(application)
     }
 }
 
 /**
- * No server grants in open-source builds: Pro comes from [MockEntitlementProvider]'s simulated
+ * No server grants in open-source builds: Pro comes from [LocalEntitlementProvider]'s simulated
  * purchase (free and instant), so Settings' plan card and every Pro gate agree.
  */
 class MockProEntitlementProvider : ProEntitlementProvider {

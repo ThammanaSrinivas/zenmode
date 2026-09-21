@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.coreapi.PromiseEditLock
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.components.ClashLineHeight
 import com.zenlauncher.zenmode.ui.components.FullLineBox
@@ -100,6 +101,8 @@ private const val GeistAscentRatio = 1.005f / GeistLineHeight
 @Composable
 fun MyPromiseScreen(
     dailyHours: Int,
+    editLock: PromiseEditLock,
+    isPro: Boolean,
     onDailyHoursChange: (Int) -> Unit,
     onBackClick: () -> Unit,
     onSeeAllHoldingsClick: () -> Unit
@@ -143,7 +146,12 @@ fun MyPromiseScreen(
                             .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(16.rdp)
                     ) {
-                        PromiseCard(dailyHours = dailyHours, onDailyHoursChange = onDailyHoursChange)
+                        PromiseCard(
+                            dailyHours = dailyHours,
+                            editLock = editLock,
+                            isPro = isPro,
+                            onDailyHoursChange = onDailyHoursChange
+                        )
                         PromiseRulesNote(dailyHours = dailyHours)
                     }
                 }
@@ -201,10 +209,20 @@ private fun IntroText() {
 
 // ── Promise card ──────────────────────────────────────────────────
 
+/**
+ * [editLock]/[isPro] default to "unlocked, free" for onboarding's reuse of this card to set
+ * the very first promise — there's no existing promise yet for an edit quota to apply to.
+ */
 @Composable
-internal fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
+internal fun PromiseCard(
+    dailyHours: Int,
+    editLock: PromiseEditLock = PromiseEditLock.NONE,
+    isPro: Boolean = false,
+    onDailyHoursChange: (Int) -> Unit
+) {
     // Set from the tap itself so both rolling numbers agree on direction.
     var rollUp by remember { mutableStateOf(true) }
+    val canEdit = editLock == PromiseEditLock.NONE
 
     Column(
         modifier = Modifier
@@ -226,6 +244,7 @@ internal fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
         WeeklyHoursStepper(
             dailyHours = dailyHours,
             rollUp = rollUp,
+            canEdit = canEdit,
             onStep = { delta ->
                 rollUp = delta > 0
                 onDailyHoursChange(dailyHours + delta)
@@ -243,7 +262,7 @@ internal fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
         Spacer(modifier = Modifier.height(12.rdp))
 
         Text(
-            text = "You can change your promise once a week. Your existing gold stays exactly where it is.",
+            text = promiseEditCopy(editLock, isPro),
             fontFamily = Geist,
             fontSize = 12.rsp,
             lineHeight = 18.72.rsp,
@@ -253,6 +272,24 @@ internal fun PromiseCard(dailyHours: Int, onDailyHoursChange: (Int) -> Unit) {
             modifier = Modifier.padding(start = 27.rdp, end = 28.rdp)
         )
     }
+}
+
+/** Footer line under the stepper: what the edit quota is, and why it's locked right now, if it is. */
+private fun promiseEditCopy(editLock: PromiseEditLock, isPro: Boolean): String = when (editLock) {
+    PromiseEditLock.SUNDAY_ONLY ->
+        "Promise edits open again on Sunday. Go Pro to edit any day, twice a week."
+    PromiseEditLock.WEEKLY_LIMIT_REACHED ->
+        if (isPro) {
+            "You've used both promise edits for this week. More open Monday."
+        } else {
+            "You've used this week's promise edit. More open Monday."
+        }
+    PromiseEditLock.NONE ->
+        if (isPro) {
+            "Pro edits the promise twice a week, any day. Your existing gold stays exactly where it is."
+        } else {
+            "You can change your promise once a week, on Sundays. Your existing gold stays exactly where it is."
+        }
 }
 
 @Composable
@@ -271,7 +308,7 @@ private fun CardLabel(text: String) {
 }
 
 @Composable
-private fun WeeklyHoursStepper(dailyHours: Int, rollUp: Boolean, onStep: (Int) -> Unit) {
+private fun WeeklyHoursStepper(dailyHours: Int, rollUp: Boolean, canEdit: Boolean, onStep: (Int) -> Unit) {
     val weeklyHours = dailyHours * AppConstants.PROMISE_DAYS_PER_WEEK
     V3ValueStepper(
         value = weeklyHours,
@@ -283,8 +320,8 @@ private fun WeeklyHoursStepper(dailyHours: Int, rollUp: Boolean, onStep: (Int) -
         valueDescription = "$weeklyHours hours per week",
         decreaseLabel = "Decrease weekly promise",
         increaseLabel = "Increase weekly promise",
-        canDecrease = dailyHours > AppConstants.PROMISE_MIN_DAILY_HOURS,
-        canIncrease = dailyHours < AppConstants.PROMISE_MAX_DAILY_HOURS,
+        canDecrease = canEdit && dailyHours > AppConstants.PROMISE_MIN_DAILY_HOURS,
+        canIncrease = canEdit && dailyHours < AppConstants.PROMISE_MAX_DAILY_HOURS,
         onStep = onStep
     )
 }

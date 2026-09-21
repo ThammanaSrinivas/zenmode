@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.ui.screens.ProEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
@@ -60,10 +61,25 @@ object ProAccess {
         }
 
     /**
-     * PRO is invite-only for now: "Upgrade" asks the team for early access by email, falling
-     * back to the Telegram group when there's no mail app.
+     * Where every "Upgrade" in the app goes: the Pro plan page when Pro can be bought, otherwise
+     * an early-access request. [source] names the surface for analytics only.
      */
-    fun requestAccess(context: Context) {
+    fun openUpgrade(context: Context, source: String) {
+        if (ServiceLocator.entitlementProvider.isAvailable) {
+            context.startActivity(ZenProActivity.intent(context, ProEntry.GATE, source))
+        } else {
+            requestAccess(context)
+        }
+    }
+
+    /** True when "Upgrade" leads to the plan page rather than an early-access request. */
+    val canPurchase: Boolean get() = ServiceLocator.entitlementProvider.isAvailable
+
+    /**
+     * Builds that can't sell Pro ask the team for early access by email, falling back to the
+     * Telegram group when there's no mail app.
+     */
+    private fun requestAccess(context: Context) {
         val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${AppConstants.SUPPORT_EMAIL}"))
             .putExtra(Intent.EXTRA_SUBJECT, "ZenMode PRO early access")
             .putExtra(Intent.EXTRA_TEXT, "Hi ZenMode team, I'd love early access to ZenMode PRO.")

@@ -45,6 +45,8 @@ class SettingsActivity : AppCompatActivity() {
     private var weeklyHours by mutableStateOf(List(7) { 0f })
     private var downloadingWeek by mutableStateOf<LocalDate?>(null)
     private var showProSheet by mutableStateOf(false)
+    /** The surface that opened the upsell sheet, for analytics on the plan page. */
+    private var proSheetSource = ""
 
     /** Android 9 has no MediaStore Downloads; the user picks where the PDF goes. */
     private var pendingPickerWeek: LocalDate? = null
@@ -109,6 +111,7 @@ class SettingsActivity : AppCompatActivity() {
                     profilePhotoUrl = profilePhotoUrl,
                     displayName = displayName,
                     isProAvailable = entitlements.isAvailable,
+                    isProSimulated = entitlements.isSimulated,
                     entitlement = entitlement,
                     isPro = isPro,
                     offers = offers,
@@ -159,7 +162,8 @@ class SettingsActivity : AppCompatActivity() {
                             onDownload = ::downloadReport,
                             onShare = ::shareReport,
                             onUnlockPro = {
-                                ServiceLocator.analyticsTracker.trackProUpsellViewed("settings_reports")
+                                proSheetSource = "settings_reports"
+                                ServiceLocator.analyticsTracker.trackProUpsellViewed(proSheetSource)
                                 showProSheet = true
                             }
                         )
@@ -169,11 +173,13 @@ class SettingsActivity : AppCompatActivity() {
                 if (showProSheet) {
                     ProUpsellSheet(
                         onDismiss = { showProSheet = false },
-                        onRequestAccess = {
+                        canPurchase = ProAccess.canPurchase,
+                        onUpgrade = {
                             showProSheet = false
-                            ProAccess.requestAccess(this@SettingsActivity)
+                            ProAccess.openUpgrade(this@SettingsActivity, proSheetSource)
                         },
-                        onEnableForTesting = if (ProAccess.canUseDebugOverride) {
+                        // Only where Pro can't be bought: otherwise test the real flow.
+                        onEnableForTesting = if (ProAccess.canUseDebugOverride && !ProAccess.canPurchase) {
                             {
                                 ProAccess.setDebugOverride(this@SettingsActivity, true)
                                 showProSheet = false

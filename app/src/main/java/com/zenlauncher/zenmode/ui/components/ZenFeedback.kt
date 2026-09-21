@@ -69,6 +69,8 @@ class ZenFeedback internal constructor(private val haptics: HapticFeedback?) {
     fun back() = fire(null, HapticFeedbackType.ContextClick)
     fun success() = fire(Sfx.SUCCESS, HapticFeedbackType.Confirm)
     fun proUnlocked() = fire(Sfx.PRO_UNLOCK, HapticFeedbackType.Confirm)
+    /** The Pro welcome clearing opening. Ambience only - [proUnlocked] already landed the beat. */
+    fun forest() = fire(Sfx.FOREST_DAWN, null)
     fun error() = fire(Sfx.ERROR, HapticFeedbackType.Reject)
     fun theme(dark: Boolean) = fire(if (dark) Sfx.THEME_DARK else Sfx.THEME_LIGHT, HapticFeedbackType.GestureThresholdActivate)
     /** The last beat of onboarding. */

@@ -38,6 +38,8 @@ import java.util.concurrent.TimeUnit
 class ZenScoreActivity : AppCompatActivity() {
 
     private var showProSheet by mutableStateOf(false)
+    /** The surface that opened the upsell sheet, for analytics on the plan page. */
+    private var proSheetSource = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,11 +80,13 @@ class ZenScoreActivity : AppCompatActivity() {
                 if (showProSheet) {
                     ProUpsellSheet(
                         onDismiss = { showProSheet = false },
-                        onRequestAccess = {
+                        canPurchase = ProAccess.canPurchase,
+                        onUpgrade = {
                             showProSheet = false
-                            ProAccess.requestAccess(this@ZenScoreActivity)
+                            ProAccess.openUpgrade(this@ZenScoreActivity, proSheetSource)
                         },
-                        onEnableForTesting = if (ProAccess.canUseDebugOverride) {
+                        // Only where Pro can't be bought: otherwise test the real flow.
+                        onEnableForTesting = if (ProAccess.canUseDebugOverride && !ProAccess.canPurchase) {
                             {
                                 ProAccess.setDebugOverride(this@ZenScoreActivity, true)
                                 showProSheet = false
@@ -132,6 +136,7 @@ class ZenScoreActivity : AppCompatActivity() {
 
     private fun openProSheet(source: String) {
         ServiceLocator.analyticsTracker.trackProUpsellViewed(source)
+        proSheetSource = source
         showProSheet = true
     }
 

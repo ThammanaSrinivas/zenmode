@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * 7 days of history — is free forever. Pro only adds range. Anything that isn't listed in
  * [ProFeature] must never be gated.
  *
- * Real billing (Play Billing) lives in core-private; core-mock simulates it locally.
+ * Until Play Billing ships, both core-mock and core-private sell Pro through
+ * [LocalEntitlementProvider], which keeps the subscription on the device and takes no payment.
  */
 interface EntitlementProvider {
     /**
@@ -21,7 +22,16 @@ interface EntitlementProvider {
      */
     val isAvailable: Boolean
 
+    /**
+     * True when no real store is behind this provider: purchases unlock Pro but never charge.
+     * The checkout must say so, so nobody believes they've paid.
+     */
+    val isSimulated: Boolean get() = false
+
     val entitlement: StateFlow<Entitlement>
+
+    /** Re-reads the subscription, picking up renewals, trial conversions and lapses. */
+    suspend fun refresh() {}
 
     /** Localized offers from the store. Never hardcode prices in UI — read them from here. */
     suspend fun offers(): List<PlanOffer>
@@ -45,7 +55,9 @@ enum class ProFeature {
     HOME_THEMES,
     DATA_EXPORT,
     RANDOM_CONNECT,
-    SUPPORTERS_LIST
+    SUPPORTERS_LIST,
+    /** Free edits the weekly promise once, Sundays only. Pro edits twice a week, any day. */
+    PROMISE_EDIT_FLEXIBILITY
 }
 
 enum class ProStatus {
@@ -87,7 +99,10 @@ data class PlanOffer(
     val formattedYearTotal: String,
     /** Store-formatted per-month equivalent, e.g. "₹58". */
     val formattedPerMonth: String,
-    val freeTrialDays: Int
+    val freeTrialDays: Int,
+    /** Store-formatted regular price, e.g. "₹999", shown struck through next to [formattedPrice]
+     * when this offer is running at an introductory/launch discount. Null when there isn't one. */
+    val originalPrice: String? = null
 )
 
 sealed interface PurchaseResult {
