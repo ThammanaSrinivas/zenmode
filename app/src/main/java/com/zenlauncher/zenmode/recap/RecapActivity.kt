@@ -64,6 +64,17 @@ class RecapActivity : ComponentActivity() {
             }
             RecapNotifier.cancel(applicationContext)
             ServiceLocator.analyticsTracker.trackRecapOpened(weekStart.toString(), loaded.outcome.analyticsKey, source)
+            
+            try {
+                val installTime = packageManager.getPackageInfo(packageName, 0).firstInstallTime
+                val daysSinceInstall = ((System.currentTimeMillis() - installTime) / (1000 * 60 * 60 * 24)).toInt()
+                if (daysSinceInstall in 6..8) {
+                    ServiceLocator.analyticsTracker.trackDay7MilestoneShown()
+                } else if (daysSinceInstall in 28..32) {
+                    ServiceLocator.analyticsTracker.trackDay30MilestoneShown()
+                }
+            } catch (e: Exception) {}
+            
             recap = loaded
         }
 
@@ -83,11 +94,13 @@ class RecapActivity : ComponentActivity() {
                     },
                     onInvest = {
                         ServiceLocator.analyticsTracker.trackRecapCtaClicked(week, outcome, "invest")
+                        trackMilestoneEngaged()
                         startActivity(Intent(this, InvestGoldActivity::class.java))
                         finish()
                     },
                     onRecommit = {
                         ServiceLocator.analyticsTracker.trackRecapCtaClicked(week, outcome, "recommit")
+                        trackMilestoneEngaged()
                         val suggested = (RecapStory.cards(current).last() as? RecapCard.Recommit)?.suggestedPromiseHours
                         startActivity(MyPromiseActivity.intent(this, suggested))
                         finish()
@@ -105,5 +118,17 @@ class RecapActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    private fun trackMilestoneEngaged() {
+        try {
+            val installTime = packageManager.getPackageInfo(packageName, 0).firstInstallTime
+            val daysSinceInstall = ((System.currentTimeMillis() - installTime) / (1000 * 60 * 60 * 24)).toInt()
+            if (daysSinceInstall in 6..8) {
+                ServiceLocator.analyticsTracker.trackDay7MilestoneEngaged()
+            } else if (daysSinceInstall in 28..32) {
+                ServiceLocator.analyticsTracker.trackDay30MilestoneEngaged(0L) // Passing 0 as we don't have cumulative time handy here
+            }
+        } catch (e: Exception) {}
     }
 }

@@ -147,6 +147,13 @@ class MainActivity : AppCompatActivity() {
     private var settleRevealJob: Job? = null
     private var revealAfterDelayedUnlock = false
 
+    companion object {
+        // Shared to avoid re-running the animation if the home screen restarts while
+        // the device is unlocked, since ACTION_USER_PRESENT is only broadcast once.
+        var lastScreenOffTime = 0L
+        var lastSessionStartTrackTime = 0L
+    }
+
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
             when (intent.action) {
@@ -294,8 +301,23 @@ class MainActivity : AppCompatActivity() {
 
         // Stats Sync Check
         if (::repository.isInitialized) {
-            val lastProcessed = repository.getLastStatsProcessedTime()
             val now = System.currentTimeMillis()
+            if (now - lastSessionStartTrackTime > 30 * 60_000L) {
+                lastSessionStartTrackTime = now
+                val sessionNum = repository.incrementSessionNumber()
+                ServiceLocator.analyticsTracker.trackSessionStart(sessionNum)
+            }
+            if (!repository.isDay1CheckinTracked()) {
+                try {
+                    val installTime = packageManager.getPackageInfo(packageName, 0).firstInstallTime
+                    val daysSinceInstall = ((now - installTime) / (1000 * 60 * 60 * 24)).toInt()
+                    if (daysSinceInstall >= 1) {
+                        ServiceLocator.analyticsTracker.trackDay1CheckinCompleted("home_opened")
+                        repository.setDay1CheckinTracked(true)
+                    }
+                } catch (e: Exception) {}
+            }
+            val statsProcessedTime = repository.getLastStatsProcessedTime()
             val interval = AppConstants.STATS_SYNC_INTERVAL_MINUTES * 60 * 1000L
 
             // StatSyncWorker ships in zenmode_core_private; core-mock builds don't have it.

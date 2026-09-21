@@ -110,7 +110,11 @@ class OnboardingViewModel(
         val state = _uiState.value
         if (state.step == OnboardingStep.WELCOME && !repository.isOnboardingStartedTracked()) {
             ServiceLocator.analyticsTracker.trackOnboardingStarted()
+            ServiceLocator.analyticsTracker.trackOnboardingStartedV3("organic")
             repository.setOnboardingStartedTracked(true)
+        }
+        if (state.step == OnboardingStep.PROMISE) {
+            ServiceLocator.analyticsTracker.trackOnboardingGoalSelected("${state.promiseHours}_hours")
         }
         if (state.index < state.steps.lastIndex) moveTo(state.index + 1)
     }
@@ -127,11 +131,14 @@ class OnboardingViewModel(
         _uiState.update { it.copy(index = index) }
         val step = _uiState.value.step
         repository.setOnboardingCurrentStep(step.name)
+        ServiceLocator.analyticsTracker.trackOnboardingStepViewed(step.name, index + 1)
         if (step == OnboardingStep.PERMISSIONS) {
             ServiceLocator.analyticsTracker.trackPermissionScreenViewed("checklist")
+            ServiceLocator.analyticsTracker.trackOnboardingPermissionRequested("checklist")
         }
         if (step == OnboardingStep.HOME_APPS) {
             ServiceLocator.analyticsTracker.trackPermissionScreenViewed("launcher_set_default")
+            ServiceLocator.analyticsTracker.trackOnboardingPermissionRequested("launcher_set_default")
         }
     }
 
@@ -144,6 +151,8 @@ class OnboardingViewModel(
         val granted = ZenPermission.grantedSet(context)
         (granted - before.granted).forEach { permission ->
             ServiceLocator.analyticsTracker.trackPermissionGranted(permission.analyticsKey)
+            ServiceLocator.analyticsTracker.trackOnboardingPermissionGrantedV3(permission.analyticsKey)
+            ServiceLocator.analyticsTracker.trackScreentimePermissionGranted(permission.analyticsKey)
             repository.recordPermissionGranted(permission.analyticsKey)
         }
         val signedIn = ServiceLocator.authProvider.isSignedIn()
@@ -297,10 +306,12 @@ class OnboardingViewModel(
         if (state.isDefaultLauncher) {
             repository.recordPermissionGranted("launcher_set_default")
             ServiceLocator.analyticsTracker.trackPermissionGranted("launcher_set_default")
+            ServiceLocator.analyticsTracker.trackOnboardingPermissionGrantedV3("launcher_set_default")
         }
         val startTime = repository.getOnboardingStartTime()
         val timeTakenSec = if (startTime > 0) ((System.currentTimeMillis() - startTime) / 1000).toInt() else 0
         ServiceLocator.analyticsTracker.trackSetupCompleted(timeTakenSec, repository.getGrantedPermissionsCount())
+        ServiceLocator.analyticsTracker.trackOnboardingCompleted(timeTakenSec.toLong())
         repository.clearOnboardingMetrics()
 
         repository.setOnboardingComplete(true)

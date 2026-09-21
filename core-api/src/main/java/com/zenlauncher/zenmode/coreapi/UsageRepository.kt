@@ -774,6 +774,20 @@ class UsageRepository(private val context: Context, private val analyticsManager
         prefs.edit().putString(KEY_RECENT_LIKE_TIMESTAMPS, current.joinToString(",")).apply()
     }
 
+    fun getSessionNumber(): Int = prefs.getInt("session_number", 0)
+
+    fun incrementSessionNumber(): Int {
+        val next = getSessionNumber() + 1
+        prefs.edit().putInt("session_number", next).apply()
+        return next
+    }
+
+    fun isDay1CheckinTracked(): Boolean = prefs.getBoolean("day1_checkin_tracked", false)
+    
+    fun setDay1CheckinTracked(tracked: Boolean) {
+        prefs.edit().putBoolean("day1_checkin_tracked", tracked).apply()
+    }
+
     companion object {
         /** Longest range any screen asks for (the Pro 30-day chart). */
         const val CACHE_RETENTION_DAYS = 30
