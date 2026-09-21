@@ -1,9 +1,8 @@
 package com.zenlauncher.zenmode.recap
 
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import com.zenlauncher.zenmode.PromisePreferences
+import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.coreapi.ForegroundSession
 import com.zenlauncher.zenmode.coreapi.UsageAccess
 import com.zenlauncher.zenmode.coreapi.UsageRepository
@@ -27,7 +26,7 @@ class RecapCollector(
         if (!UsageAccess.isGranted(context)) return 0
         val missing = (1..LOOKBACK_DAYS).map { today.minusDays(it.toLong()) }.filterNot(store::hasDay)
         if (missing.isEmpty()) return 0
-        val excluded = excludedPackages()
+        val excluded = repository.excludedPackages()
         val records = missing.mapNotNull { date -> record(date, excluded) }
         store.putDays(records)
         return records.size
@@ -57,16 +56,6 @@ class RecapCollector(
             lateNightMinutes = TimeUnit.MILLISECONDS.toMinutes(breakdown.lateNightMillis),
             pickups = repository.getPickupCount(start, end)
         )
-    }
-
-    /** ZenMode itself and any home screen or system UI — not "apps you used". */
-    private fun excludedPackages(): Set<String> {
-        val pm = context.packageManager
-        val homes = pm.queryIntentActivities(
-            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
-            PackageManager.MATCH_DEFAULT_ONLY
-        ).map { it.activityInfo.packageName }
-        return (homes + context.packageName + "com.android.systemui").toSet()
     }
 
     private fun labelOf(pkg: String): String = try {
