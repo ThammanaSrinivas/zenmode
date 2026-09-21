@@ -2,6 +2,8 @@ package com.zenlauncher.zenmode
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.zenlauncher.zenmode.coreapi.PromiseEditLock
+import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.kotlin.any

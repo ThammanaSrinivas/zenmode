@@ -50,7 +50,10 @@ class DelayedUnlockActivity : AppCompatActivity() {
             null
         }
 
-        val streakCount = AppLogic.getStreakCount(repository.getWeeklyScreenTimeMillis())
+        val zenScore = ZenScoreStore(this, repository).today()
+        val todayIsMindful = zenScore >= AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD * 10
+        val recapStore = com.zenlauncher.zenmode.recap.RecapStore(this)
+        val streakCount = AppLogic.getStreakCount(recapStore, todayIsMindful)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

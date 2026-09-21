@@ -1,7 +1,9 @@
 package com.zenlauncher.zenmode.coreapi
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -81,6 +83,20 @@ class UsageRepository(private val context: Context, private val analyticsManager
         return if (fromEvents > 0L) fromEvents else sumForegroundFromStats(usm, start, end)
     }
 
+    /**
+     * ZenMode itself, the device's home/launcher package(s), and system UI/chooser surfaces —
+     * these aren't "apps you used" and must never count toward screen time or the session log.
+     * `SessionLogRepository` and `RecapCollector` reuse this rather than keeping their own copy.
+     */
+    fun excludedPackages(): Set<String> {
+        val pm = context.packageManager
+        val homes = pm.queryIntentActivities(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
+            PackageManager.MATCH_DEFAULT_ONLY
+        ).map { it.activityInfo.packageName }
+        return (homes + context.packageName + SYSTEM_PACKAGES).toSet()
+    }
+
     private fun sumForegroundFromEvents(
         usm: android.app.usage.UsageStatsManager,
         start: Long,
@@ -103,6 +119,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
         start: Long,
         end: Long
     ): List<ForegroundSession> {
+        val excluded = excludedPackages()
         val events = usm.queryEvents(start, end)
         val event = android.app.usage.UsageEvents.Event()
 
@@ -114,6 +131,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
             val pkg = event.packageName ?: continue
+            if (pkg in excluded) continue
             when (event.eventType) {
                 // ACTIVITY_RESUMED (API 29+) and legacy MOVE_TO_FOREGROUND (==1)
                 android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED,
@@ -157,6 +175,39 @@ class UsageRepository(private val context: Context, private val analyticsManager
         return count
     }
 
+    /**
+     * Every "phone pickup" span in `[start, end)`: unlock (`KEYGUARD_HIDDEN`) to the next lock
+     * (`KEYGUARD_SHOWN`), or to `end` if still unlocked. Same event stream [getPickupCount]
+     * already trusts, just paired into spans instead of counted — the session-log building
+     * block, since it's a much more direct "user picked up / put down the phone" signal than
+     * inferring it from gaps between app-switch events.
+     */
+    fun getUnlockWindows(start: Long, end: Long): List<Pair<Long, Long>> {
+        if (!UsageAccess.isGranted(context)) return emptyList()
+        val usm = context.getSystemService(Context.USAGE_STATS_SERVICE)
+            as? android.app.usage.UsageStatsManager ?: return emptyList()
+        val events = usm.queryEvents(start, end)
+        val event = android.app.usage.UsageEvents.Event()
+        val windows = mutableListOf<Pair<Long, Long>>()
+        var unlockedAt: Long? = null
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            when (event.eventType) {
+                android.app.usage.UsageEvents.Event.KEYGUARD_HIDDEN -> {
+                    if (unlockedAt == null) unlockedAt = event.timeStamp
+                }
+                android.app.usage.UsageEvents.Event.KEYGUARD_SHOWN -> {
+                    val opened = unlockedAt
+                    if (opened != null && event.timeStamp > opened) windows += opened to event.timeStamp
+                    unlockedAt = null
+                }
+            }
+        }
+        val opened = unlockedAt
+        if (opened != null && end > opened) windows += opened to end
+        return windows
+    }
+
     /** Total screen time for `yyyy-MM-dd`, computed the same way as the home screen's. */
     fun getScreenTimeMillisForDate(dateString: String): Long = getScreenTimeForDay(dateString)
 
@@ -165,11 +216,13 @@ class UsageRepository(private val context: Context, private val analyticsManager
         start: Long,
         end: Long
     ): Long {
+        val excluded = excludedPackages()
         val stats = usm.queryUsageStats(
             android.app.usage.UsageStatsManager.INTERVAL_DAILY, start, end
         ) ?: return 0L
         var total = 0L
         for (s in stats) {
+            if (s.packageName in excluded) continue
             var t = s.totalTimeInForeground
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 // totalTimeVisible covers PiP / visible-but-not-resumed; take the larger,
@@ -594,6 +647,22 @@ class UsageRepository(private val context: Context, private val analyticsManager
             .apply()
     }
 
+    /**
+     * The zen_score last written to Firestore. Unlike screen time, the synced score also
+     * depends on the promise and today's session quality — comparing the computed score
+     * itself (rather than its inputs) is what catches a promise edit or a session-quality
+     * shift alone needing a resync.
+     */
+    fun getLastSyncedZenScore(): Int {
+        return prefs.getInt("last_synced_zen_score", -1)
+    }
+
+    fun saveLastSyncedZenScore(score: Int) {
+        prefs.edit()
+            .putInt("last_synced_zen_score", score)
+            .apply()
+    }
+
     fun getLastDailyTrackedDate(): String {
         return prefs.getString("last_daily_tracked_date", "") ?: ""
     }
@@ -708,6 +777,14 @@ class UsageRepository(private val context: Context, private val analyticsManager
     companion object {
         /** Longest range any screen asks for (the Pro 30-day chart). */
         const val CACHE_RETENTION_DAYS = 30
+
+        /**
+         * System UI/chooser surfaces that show up as foreground "apps" in UsageEvents but
+         * aren't something the user opened: `android` owns the legacy share/open-with
+         * ResolverActivity and the keyguard; `com.android.intentresolver` is the same chooser
+         * UI split into its own mainline module on Android 13+.
+         */
+        private val SYSTEM_PACKAGES = setOf("com.android.systemui", "android", "com.android.intentresolver")
 
         private const val KEY_RECENT_LIKE_TIMESTAMPS = "recent_like_timestamps"
         const val LIKE_WINDOW_MS: Long = 20L * 60_000L  // 20 minutes

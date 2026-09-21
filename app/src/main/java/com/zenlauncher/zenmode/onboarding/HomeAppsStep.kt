@@ -90,7 +90,7 @@ internal fun HomeAppsStep(
     onMaybeLater: () -> Unit
 ) {
     val limit = HomeAppSuggestions.HOME_APP_LIMIT
-    val byPackage = apps.orEmpty().associateBy { it.packageName }
+    val byKey = apps.orEmpty().associateBy { it.key }
 
     OnboardingPage(
         topBar = {
@@ -125,7 +125,7 @@ internal fun HomeAppsStep(
             Spacer(Modifier.height(12.rdp))
             OnboardingBody("These live on your home screen. Everything else is one search away.")
             Spacer(Modifier.height(20.rdp))
-            DockPreview(selected = selected.mapNotNull { byPackage[it] }, limit = limit)
+            DockPreview(selected = selected.mapNotNull { byKey[it] }, limit = limit)
             Spacer(Modifier.height(22.rdp))
             OnboardingEyebrow("All apps", color = ZenTheme.colors.textTertiary)
             Spacer(Modifier.height(10.rdp))
@@ -143,9 +143,9 @@ internal fun HomeAppsStep(
             items(apps, key = { it.key }) { app ->
                 AppTile(
                     app = app,
-                    isSelected = app.packageName in selected,
+                    isSelected = app.key in selected,
                     isFull = selected.size >= limit,
-                    onToggle = { onToggle(app.packageName) }
+                    onToggle = { onToggle(app.key) }
                 )
             }
         }

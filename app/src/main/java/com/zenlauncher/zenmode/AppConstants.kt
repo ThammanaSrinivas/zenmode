@@ -25,8 +25,11 @@ object AppConstants {
 
     // v3 home screen placeholders. Stand-ins until the scoring and rewards
     // backend exists — swap these for real values, not the UI around them.
-    const val PLACEHOLDER_GOLD_INVESTED = "2,350"
+    const val PLACEHOLDER_GOLD_INVESTED = "0"
     const val PLACEHOLDER_GOLD_CHANGE_PERCENT = 38
+    // "Days invested" stat on the Gold share overlay — needs the same Gold Streak backend
+    // as the rest of the Zen Gold screen (see PLACEHOLDER_PROMISE_HOURS below).
+    const val PLACEHOLDER_GOLD_DAYS_INVESTED = 120
 
     // BuddyStats has no real score/streak fields yet, so the buddy's side stays a
     // placeholder. Zen Scores are tenths (88 = 8.8), see ZenScore. Never wire these
@@ -34,14 +37,18 @@ object AppConstants {
     const val PLACEHOLDER_BUDDY_ZEN_SCORE = 88
     const val PLACEHOLDER_BUDDY_STREAK = 5
 
-    // Streaks milestone overlay (v3 redesign, Figma node 2026:2137). "Total mindful
-    // days", the community percentile and the longest-streak stat all need real
-    // streak-history tracking that doesn't exist yet — placeholders until it does.
-    const val PLACEHOLDER_MILESTONE_DAYS = 120
+    // Zen Score share overlay's "RECLAIMED · X MINS (THIS MONTH)" stat — a monthly rollup
+    // with no real data source yet (distinct from the daily session log on the Zen Score
+    // screen, which is real — see SessionLogRepository in core-api).
+    const val PLACEHOLDER_RECLAIMED_MINUTES = 1350
+
+    // Streaks milestone overlay (v3 redesign, Figma node 2026:2137). Total mindful days and
+    // the longest streak are now real (AppLogic.getTotalMindfulDays/getLongestStreak, from
+    // RecapStore's real per-day history) — only the community percentile has no cross-user
+    // data source yet, so it stays a placeholder.
     const val PLACEHOLDER_MILESTONE_PERCENTILE = 10
-    const val PLACEHOLDER_MILESTONE_SCORE_THRESHOLD = 7
-    const val PLACEHOLDER_LONGEST_STREAK_DAYS = 43
-    const val PLACEHOLDER_LONGEST_STREAK_RANGE = "JUL 31–SEP 12"
+    /** Out of 10. A day's Zen Score clearing this counts as "mindful" for streaks/milestones. */
+    const val MINDFUL_DAY_ZEN_SCORE_THRESHOLD = 7
 
     // Zen Gold screen (Figma node 2026:1648) — the home screen's right-swipe page.
     // Promise-vs-screen-time tracking and the price forecast both need a real Gold
@@ -82,12 +89,6 @@ object AppConstants {
     const val KITE_PACKAGE_NAME = "com.zerodha.kite3"
     const val KITE_WEB_URL = "https://kite.zerodha.com/"
 
-    // Zen Score screen (Figma node 2026:2035) — reached by tapping the "Zen Score"
-    // widget in HomeHeader. Category breakdown and session log both need real
-    // per-app usage categorization that doesn't exist yet.
-    const val PLACEHOLDER_RECLAIMED_MINUTES = 1350
-    const val PLACEHOLDER_SESSION_LOG_TOTAL = "TODAY, 2,000"
-
     // External URLs
     const val GITHUB_URL = "https://github.com/ThammanaSrinivas/zenmode"
     const val SUPPORT_EMAIL = "helpdesk@zenmodeos.com"
@@ -96,6 +97,10 @@ object AppConstants {
     // Buddy invite links. Path must match the pathPrefix in AndroidManifest.xml's
     // App Links intent-filter and the /b/ route on the zenmodeos.com Firebase Hosting site.
     const val BUDDY_INVITE_BASE_URL = "https://zenmodeos.com/b/"
+    // Zen Circle invite links -- separate path from Buddy above, same App Links /
+    // Hosting pairing requirement, and a circle's Firestore document ID doubles as
+    // its invite code (no separate invite_code field, see the plan doc).
+    const val CIRCLE_INVITE_BASE_URL = "https://zenmodeos.com/c/"
     const val YT_BUDDY_INVITE_URL = "https://youtu.be/48M1x2ryhpI"   // TODO: replace with actual YT link
     const val YT_BUDDY_CONFUSED_URL = "https://youtu.be/48M1x2ryhpI" // TODO: replace later
     const val PRIVACY_POLICY_URL = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"

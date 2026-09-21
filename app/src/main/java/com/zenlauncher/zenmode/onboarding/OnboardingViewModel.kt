@@ -13,7 +13,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.zenlauncher.zenmode.AppGridPreferences
 import com.zenlauncher.zenmode.LauncherActivities
-import com.zenlauncher.zenmode.PromisePreferences
+import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import kotlinx.coroutines.Dispatchers
@@ -200,8 +200,8 @@ class OnboardingViewModel(
 
     fun onBuddyConnected(name: String) = _uiState.update { it.copy(connectedBuddyName = name) }
 
-    fun toggleApp(packageName: String) {
-        _uiState.update { it.copy(selectedApps = HomeAppSuggestions.toggle(it.selectedApps, packageName)) }
+    fun toggleApp(key: String) {
+        _uiState.update { it.copy(selectedApps = HomeAppSuggestions.toggle(it.selectedApps, key)) }
         OnboardingDraft.setSelectedApps(context, _uiState.value.selectedApps)
     }
 
@@ -210,7 +210,7 @@ class OnboardingViewModel(
             val (apps, suggested) = withContext(Dispatchers.IO) { queryLaunchableApps() }
             _uiState.update { state ->
                 // v2 pins (max 4) keep their places up front; suggestions fill the rest.
-                val installed = apps.map { it.packageName }.toSet()
+                val installed = apps.map { it.key }.toSet()
                 val restored = OnboardingDraft.getSelectedApps(context)?.filter { it in installed }
                 val existingPins = repository.getPinnedApps().filter { it in installed }
                 state.copy(
@@ -226,7 +226,8 @@ class OnboardingViewModel(
     private fun queryLaunchableApps(): Pair<List<HomeAppOption>, List<String>> {
         val pm = context.packageManager
         val iconPx = (48 * context.resources.displayMetrics.density).toInt()
-        val apps = LauncherActivities.query(pm)
+        val activities = LauncherActivities.query(pm)
+        val apps = activities
             .asSequence()
             .filter { it.activityInfo.packageName != context.packageName }
             .map { info ->
@@ -234,7 +235,7 @@ class OnboardingViewModel(
                     packageName = info.activityInfo.packageName,
                     label = info.loadLabel(pm).toString(),
                     icon = info.loadIcon(pm).toBitmap(iconPx, iconPx).asImageBitmap(),
-                    key = LauncherActivities.key(info)
+                    key = LauncherActivities.selectionKey(info, activities)
                 )
             }
             .sortedBy { it.label.lowercase() }
@@ -244,7 +245,7 @@ class OnboardingViewModel(
             .filter { isDistracting(pm, it) }
             .toSet()
         val suggested = HomeAppSuggestions.suggest(
-            installed = apps.map { HomeAppSuggestions.Candidate(it.packageName, it.label) },
+            installed = apps.map { HomeAppSuggestions.Candidate(it.packageName, it.label, it.key) },
             distracting = distracting,
             usageMinutes = weeklyUsageMinutes()
         )

@@ -11,16 +11,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
+import com.zenlauncher.zenmode.coreapi.AppCategory
+import com.zenlauncher.zenmode.coreapi.PhoneSession
+import com.zenlauncher.zenmode.coreapi.SessionLogRepository
 import com.zenlauncher.zenmode.coreapi.UsageRepository
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.recap.ProUpsellSheet
 import com.zenlauncher.zenmode.recap.RecapReport
 import com.zenlauncher.zenmode.recap.RecapStore
+import com.zenlauncher.zenmode.recap.formatMinutes
+import com.zenlauncher.zenmode.ui.screens.ZenScoreCategory
 import com.zenlauncher.zenmode.ui.screens.ZenScoreScreen
+import com.zenlauncher.zenmode.ui.screens.ZenSessionLogEntry
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
 /**
  * The left-hand home page (Figma node 2026:2035): reached by swiping right on Home or tapping
@@ -37,10 +45,18 @@ class ZenScoreActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         HomePageSide.LEFT.applyOnCreate(this)
 
-        val scores = ZenScoreStore(this, UsageRepository(applicationContext, ServiceLocator.analyticsManager))
+        val repository = UsageRepository(applicationContext, ServiceLocator.analyticsManager)
+        val sessionLogRepository = SessionLogRepository(applicationContext, repository)
+        val scores = ZenScoreStore(this, repository, sessionLogRepository)
         val score = scores.refresh()
         val yesterday = scores.yesterday()
         val auth = ServiceLocator.authProvider
+
+        val sessions = sessionLogRepository.getTodaySessions()
+        val categories = categoryBreakdown(sessionLogRepository)
+        val sessionLog = sessions.map(::toLogEntry)
+        val sessionTotalLabel = "TODAY, ${formatMinutes(TimeUnit.MILLISECONDS.toMinutes(sessions.sumOf { it.durationMillis }))}"
+        val reclaimedMinutes = reclaimedMinutesToday(repository)
 
         setContent {
             ZenTheme {
@@ -48,6 +64,10 @@ class ZenScoreActivity : AppCompatActivity() {
                 ZenScoreScreen(
                     score = score,
                     yesterdayScore = yesterday,
+                    categories = categories,
+                    reclaimedMinutes = reclaimedMinutes,
+                    sessionTotalLabel = sessionTotalLabel,
+                    sessionLog = sessionLog,
                     userName = auth.getDisplayName(),
                     photoUrl = auth.getPhotoUrl(),
                     isPro = isPro,
@@ -81,6 +101,37 @@ class ZenScoreActivity : AppCompatActivity() {
     override fun finish() {
         super.finish()
         HomePageSide.LEFT.applyOnFinish(this)
+    }
+
+    /** The four category legend rows, in the app's existing label/colour convention. */
+    private fun categoryBreakdown(sessionLogRepository: SessionLogRepository): List<ZenScoreCategory> =
+        sessionLogRepository.getCategoryBreakdownPercent().map { (category, percent) ->
+            val (label, colorRes) = when (category) {
+                AppCategory.FOCUS -> "Productivity" to R.color.zen_900
+                AppCategory.ENTERTAINMENT -> "Entertainment" to R.color.score_status_red
+                AppCategory.COMMUNICATION -> "Messaging" to R.color.score_category_messaging
+                AppCategory.OTHER -> "Everything else" to R.color.zen_300
+            }
+            ZenScoreCategory(label, percent, colorRes)
+        }
+
+    private fun toLogEntry(session: PhoneSession) = ZenSessionLogEntry(
+        duration = formatSessionDuration(session.durationMillis),
+        appName = session.dominantLabel,
+        type = session.eventType
+    )
+
+    /** "HH:MM:SS", matching the session log's existing row format. */
+    private fun formatSessionDuration(millis: Long): String {
+        val totalSeconds = millis / 1000
+        return "%02d:%02d:%02d".format(totalSeconds / 3600, (totalSeconds % 3600) / 60, totalSeconds % 60)
+    }
+
+    /** Minutes won back today vs. yesterday's screen time at this same point, floored at 0. */
+    private fun reclaimedMinutesToday(repository: UsageRepository): Int {
+        val yesterdayMillis = repository.getYesterdayScreenTimeMillis()
+        val todayMillis = repository.getTodayUsage().screenTimeInMillis
+        return TimeUnit.MILLISECONDS.toMinutes((yesterdayMillis - todayMillis).coerceAtLeast(0)).toInt()
     }
 
     private fun openProSheet(source: String) {

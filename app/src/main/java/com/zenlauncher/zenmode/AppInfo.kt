@@ -11,5 +11,8 @@ data class AppInfo(
     // activities inside the same package (com.android.contacts). Deduping/launching
     // by packageName alone collapses them into one icon, so the exact launcher
     // activity is carried alongside the package name.
-    val activityClassName: String = ""
+    val activityClassName: String = "",
+    // Selection identity (see LauncherActivities.selectionKey): packageName unless this
+    // package ships more than one launcher activity, in which case package+activity.
+    val key: String = packageName.toString()
 )

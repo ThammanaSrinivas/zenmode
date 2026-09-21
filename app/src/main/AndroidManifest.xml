@@ -64,6 +64,17 @@
                     android:host="zenmodeos.com"
                     android:pathPrefix="/b/" />
             </intent-filter>
+            <!-- Zen Circle invite links (zenmodeos.com/c/{circleId}) — separate from Buddy
+                 above, same autoVerify handshake. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="zenmodeos.com"
+                    android:pathPrefix="/c/" />
+            </intent-filter>
         </activity>
 
         <service

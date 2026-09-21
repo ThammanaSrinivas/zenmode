@@ -29,7 +29,12 @@ object HomeAppSuggestions {
         "com.android.settings"
     )
 
-    data class Candidate(val packageName: String, val label: String)
+    /**
+     * [key] is the selection identity to pick (see LauncherActivities.selectionKey); it
+     * defaults to [packageName] for callers that don't need to disambiguate two launcher
+     * activities sharing a package (e.g. MIUI's Phone + Contacts).
+     */
+    data class Candidate(val packageName: String, val label: String, val key: String = packageName)
 
     fun suggest(
         installed: List<Candidate>,
@@ -41,21 +46,21 @@ object HomeAppSuggestions {
         val picked = LinkedHashSet<String>()
 
         for (prefix in ESSENTIAL_PREFIXES) {
-            calm.firstOrNull { it.packageName.startsWith(prefix) }?.let { picked += it.packageName }
+            calm.firstOrNull { it.packageName.startsWith(prefix) }?.let { picked += it.key }
         }
         calm.filter { (usageMinutes[it.packageName] ?: 0L) > 0L }
             .sortedByDescending { usageMinutes[it.packageName] }
-            .forEach { picked += it.packageName }
-        calm.sortedBy { it.label.lowercase() }.forEach { picked += it.packageName }
+            .forEach { picked += it.key }
+        calm.sortedBy { it.label.lowercase() }.forEach { picked += it.key }
 
         return picked.take(limit)
     }
 
     /** Tapping an app: remove it if picked, add it if there's room, otherwise ignore. */
-    fun toggle(selected: List<String>, packageName: String, limit: Int = HOME_APP_LIMIT): List<String> =
+    fun toggle(selected: List<String>, key: String, limit: Int = HOME_APP_LIMIT): List<String> =
         when {
-            packageName in selected -> selected - packageName
-            selected.size < limit -> selected + packageName
+            key in selected -> selected - key
+            selected.size < limit -> selected + key
             else -> selected
         }
 }

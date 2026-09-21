@@ -58,8 +58,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
-import com.zenlauncher.zenmode.PromiseEditLock
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.coreapi.PromiseEditLock
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.components.ClashLineHeight
 import com.zenlauncher.zenmode.ui.components.FullLineBox

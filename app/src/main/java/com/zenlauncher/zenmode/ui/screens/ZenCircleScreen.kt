@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.BuddyConnector
 import com.zenlauncher.zenmode.Sfx
 import com.zenlauncher.zenmode.ZenSound
 import androidx.activity.compose.BackHandler
@@ -102,10 +103,10 @@ import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
-import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.components.BuddyStatsCard
 import com.zenlauncher.zenmode.ui.components.MyScreenTimeCard
+import com.zenlauncher.zenmode.ui.components.ReactBadge
 import com.zenlauncher.zenmode.ui.components.taperedBorder
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
@@ -148,7 +149,11 @@ data class ZenCircleMember(
     /** Empty for the classic-buddy reskin (no real circle, nothing to react into yet);
      * a real Firebase Auth UID once backed by an actual Circle. Needed to target
      * reactions at a specific member -- see ReactionButton's onSendLove/onSendMelt. */
-    val uid: String = ""
+    val uid: String = "",
+    /** Only ever non-zero on the "you" member -- reactions received today are shown on your
+     * own card only, never on another member's card. See buildCircleStageMembers. */
+    val loveReceivedToday: Long = 0L,
+    val meltReceivedToday: Long = 0L
 )
 
 private const val FrontCardScale = 201.66f / 150.67f
@@ -157,7 +162,17 @@ private const val BackCardScale = 190.25f / 150.67f
 @Composable
 fun ZenCircleScreen(
     members: List<ZenCircleMember>,
-    userCode: String?,
+    // The code/link to display and share -- the real circle's ID once one exists, the
+    // classic Buddy code otherwise. Resolve this once at the call site (don't re-derive
+    // circle-vs-buddy state in here or in ZenCircleSheetHost/ZenCircleSharePreview below,
+    // which both just display whatever they're given).
+    shareCode: String?,
+    // True when shareCode is a real Circle ID (so the share card's message uses /c/ and
+    // Circle wording), false for the classic Buddy code (/b/). Same "resolve once" reasoning.
+    shareCodeIsCircle: Boolean = false,
+    // "Remind With Share Link" while a real circle still has an invite pending (only you +
+    // a placeholder second member); the normal label once someone's actually joined.
+    primaryShareLabel: String = "Share & Invite to Zen Circle",
     onBackClick: () -> Unit,
     onShareInviteLink: () -> Unit,
     onCopyInviteCode: () -> Unit,
@@ -241,7 +256,7 @@ fun ZenCircleScreen(
         MoodBackdrop()
 
         ZenCircleSheetHost(
-            userCode = userCode,
+            userCode = shareCode,
             onShareInviteLink = onShareInviteLink,
             onCopyInviteCode = onCopyInviteCode,
             settings = ZenCircleSettings(
@@ -320,7 +335,7 @@ fun ZenCircleScreen(
                     ) {
                         ZenCirclePillButton(
                             // The card carries the invite link and code, so sharing it invites too.
-                            text = "Share & Invite to Zen Circle",
+                            text = primaryShareLabel,
                             onClick = { showShareCard = true },
                             container = colorResource(R.color.zen_700),
                             content = Color.White,
@@ -345,7 +360,9 @@ fun ZenCircleScreen(
             visible = showShareCard,
             members = members,
             ranks = ranks,
-            userCode = userCode,
+            shareText = shareCode?.let {
+                if (shareCodeIsCircle) BuddyConnector.circleInviteMessage(it) else BuddyConnector.inviteMessage(it)
+            },
             onDismiss = { showShareCard = false }
         )
     }
@@ -650,12 +667,34 @@ private fun MemberCardStack(
 @Composable
 private fun MemberCard(member: ZenCircleMember) {
     if (member.isYou) {
-        MyScreenTimeCard(
-            usage = DailyUsage(screenTimeInMillis = member.screenTimeMinutes * 60_000),
-            yesterdayChangePercent = member.changePercent,
-            zenScore = member.zenScore,
-            streaks = member.streaks
-        )
+        // Reactions received today are shown on your own card only, never on another
+        // member's -- see ZenCircleMember's doc comment.
+        Box {
+            MyScreenTimeCard(
+                usage = DailyUsage(screenTimeInMillis = member.screenTimeMinutes * 60_000),
+                yesterdayChangePercent = member.changePercent,
+                zenScore = member.zenScore,
+                streaks = member.streaks,
+                // Reuses MyScreenTimeCard's existing top-end badge for love received --
+                // mirrors the 🤍 send button's top-right position below the stack.
+                buddyLikes = member.loveReceivedToday
+            )
+            // Sad-face reactions received, top-left -- mirrors the 😔 send button's
+            // top-left position. MyScreenTimeCard (shared with Home, which never shows
+            // reactions) has no second-badge slot of its own, so this is layered on here
+            // instead of growing that shared component's signature.
+            if (member.meltReceivedToday > 0) {
+                ReactBadge(
+                    count = member.meltReceivedToday,
+                    clickable = false,
+                    onClick = {},
+                    icon = { Text(text = "😔", fontSize = 16.rsp) },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = (-6).rdp, y = (-6).dp)
+                )
+            }
+        }
     } else {
         BuddyStatsCard(
             buddyStats = BuddyStats(screenTimeMins = member.screenTimeMinutes),

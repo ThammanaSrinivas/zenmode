@@ -44,6 +44,7 @@ import com.zenlauncher.zenmode.ui.components.HomePage
 import com.zenlauncher.zenmode.ui.components.HomePageDots
 import com.zenlauncher.zenmode.ui.components.HomeReveal
 import com.zenlauncher.zenmode.ui.components.pageSwipe
+import androidx.compose.foundation.systemGestureExclusion
 import com.zenlauncher.zenmode.ui.components.rememberCountUp
 import com.zenlauncher.zenmode.ui.components.rememberReduceMotion
 import com.zenlauncher.zenmode.ui.components.HomeRevealCue
@@ -136,6 +137,7 @@ import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.FileResult
 import com.zenlauncher.zenmode.FileSearchRepository
+import com.zenlauncher.zenmode.HomeStackMember
 import com.zenlauncher.zenmode.R
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.BlendMode
@@ -145,7 +147,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.zenlauncher.zenmode.AppSearchRanking
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
 import com.zenlauncher.zenmode.ui.components.shareImage
 import com.zenlauncher.zenmode.ui.components.taperedBorder
@@ -168,7 +170,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import com.zenlauncher.zenmode.coreapi.PromisePreferences
+import com.zenlauncher.zenmode.recap.RecapStore
+import com.zenlauncher.zenmode.ui.components.openSettings
 import android.util.Log
+
 
 // ── Constants ─────────────────────────────────────────────────────
 // Figma node 2001:1481 ("Frame 2147224192", the home screen's content frame) is
@@ -245,8 +251,14 @@ fun HomeScreen(
     onPhoneClick: () -> Unit,
     onLockClick: () -> Unit,
     onInviteBuddyClick: () -> Unit,
+    inviteButtonLabel: String = "Add Buddy",
     onSignInClick: () -> Unit,
     onBuddyCardClick: (() -> Unit)? = null,
+    // Real values for a Zen Circle-derived buddyStats (see HomeCircleStats.kt) -- null keeps
+    // today's classic-Buddy placeholder behavior below, since Buddy has no real score/streak.
+    buddyZenScoreOverride: Int? = null,
+    buddyStreaksOverride: Int? = null,
+    circleStackMembers: List<HomeStackMember> = emptyList(),
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
     apps: List<AppInfo>,
@@ -255,6 +267,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
+    val context = LocalContext.current
     // Streaks and Gold have no page of their own, so their stat opens a shareable card
     // here (HomeShareOverlays.kt). Zen Score has a page — its tap opens that, and the
     // card lives behind the page's own "Share Zen Score".
@@ -283,6 +296,12 @@ fun HomeScreen(
             // No dock: Home is the middle of three pages — swipe right for Zen Score, left
             // for Zen Gold. Long-press to lock. Settings lives behind every page's ☰.
             .pageSwipe(onSwipeLeft = onZenGoldClick, onSwipeRight = onZenScoreClick)
+            // Same reasoning as the Zen Score / Streaks icons below: on OEM ROMs with a
+            // widened back-gesture edge zone (e.g. MIUI, often configured asymmetrically
+            // per edge), a drag that starts near one screen edge can be intercepted by the
+            // system before detectHorizontalDragGestures ever sees it — one swipe direction
+            // silently does nothing while the other works. Exclude the whole page-swipe area.
+            .systemGestureExclusion()
             .combinedClickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
@@ -332,13 +351,16 @@ fun HomeScreen(
                 isSignedIn = isSignedIn,
                 zenScore = zenScore,
                 streaks = streaks,
-                buddyZenScore = AppConstants.PLACEHOLDER_BUDDY_ZEN_SCORE,
-                buddyStreaks = AppConstants.PLACEHOLDER_BUDDY_STREAK,
+                buddyZenScore = buddyZenScoreOverride ?: AppConstants.PLACEHOLDER_BUDDY_ZEN_SCORE,
+                buddyStreaks = buddyStreaksOverride ?: AppConstants.PLACEHOLDER_BUDDY_STREAK,
                 showReactions = false,
                 myLikes = myLikes,
                 buddyLikes = buddyLikes,
                 onLikeClick = onLikeClick,
+                onMyCardClick = { openSettings(context) },
+                circleStackMembers = circleStackMembers,
                 onInviteBuddyClick = onInviteBuddyClick,
+                inviteButtonLabel = inviteButtonLabel,
                 onSignInClick = onSignInClick,
                 onBuddyCardClick = onBuddyCardClick,
                 // My screen time lands first, then the bolt strikes, then my Zen Bro's /
@@ -406,6 +428,20 @@ fun HomeScreen(
         }
 
         // Streak overlay
+        // Compute milestone stats once per composition, re-derived when zenScore changes.
+        val recapStore = remember { RecapStore(context) }
+        val promiseHours = remember { PromisePreferences.getDailyHours(context) }
+        val todayIsMindful = remember(zenScore) {
+            AppLogic.isMindfulDay(
+                screenTimeMinutes = todayMinutes,
+                promiseHours = promiseHours
+            )
+        }
+        val totalMindfulDays = remember(zenScore) { AppLogic.getTotalMindfulDays(recapStore, todayIsMindful) }
+        val longestStreak = remember(zenScore) { AppLogic.getLongestStreak(recapStore, todayIsMindful) }
+        val longestStreakDays = longestStreak?.days ?: 0
+        val longestStreakRange = longestStreak?.let { AppLogic.formatStreakRange(it) } ?: ""
+
         AnimatedVisibility(
             visible = showStreakOverlay,
             modifier = Modifier.systemBarsPadding(),
@@ -414,6 +450,9 @@ fun HomeScreen(
         ) {
             StreakOverlay(
                 onDismiss = { showStreakOverlay = false },
+                totalMindfulDays = totalMindfulDays,
+                longestStreakDays = longestStreakDays,
+                longestStreakRange = longestStreakRange,
                 currentStreakDays = streaks
             )
         }
@@ -460,7 +499,8 @@ private fun HomeHeader(
         IconMatchedLabel(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.rdp))
-                .clickable(onClickLabel = "Open Zen Score", onClick = onZenScoreClick),
+                .clickable(onClickLabel = "Open Zen Score", onClick = onZenScoreClick)
+                .systemGestureExclusion(),
             icon = {
                 Image(
                     painter = painterResource(R.drawable.ic_zen_mark_gradient),
@@ -498,7 +538,8 @@ private fun HomeHeader(
         IconMatchedLabel(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.rdp))
-                .clickable(onClickLabel = "Open streaks", onClick = onStreakClick),
+                .clickable(onClickLabel = "Open streaks", onClick = onStreakClick)
+                .systemGestureExclusion(),
             icon = {
                 BlazingFlame(
                     cue = reveal,
@@ -664,16 +705,21 @@ fun GoldInvestedRow(
                     horizontalArrangement = Arrangement.spacedBy(8.1.rdp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Hiding blurs the amount rather than masking it — the Figma
-                    // "Hide" variant is the same text under a 5.35px blur.
+                    // Hiding blurs the amount (Figma's "Hide" variant: the same text under a
+                    // 5.35px blur). Modifier.blur is a no-op below API 31 (no RenderEffect),
+                    // which would leave the real figure fully readable despite "hidden" —
+                    // fall back to masking the digits on those devices instead.
+                    val canBlurAmount = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                    val hideAmount = !amountVisible
                     Text(
-                        text = "\u20B9$gold",
+                        text = if (hideAmount && !canBlurAmount) "\u20B9\u2022\u2022\u2022\u2022\u2022\u2022" else "\u20B9$gold",
                         fontFamily = DepartureMono,
                         fontSize = 17.rsp,
                         letterSpacing = (-0.85).sp,
                         color = GoldAmount,
-                        modifier = if (amountVisible) Modifier
-                        else Modifier.blur(5.35.rdp, BlurredEdgeTreatment.Unbounded)
+                        modifier = if (hideAmount && canBlurAmount)
+                            Modifier.blur(5.35.rdp, BlurredEdgeTreatment.Unbounded)
+                        else Modifier
                     )
                     Box(
                         modifier = Modifier
@@ -1467,14 +1513,17 @@ private fun GoogleFallbackRow(query: String, onClick: () -> Unit, modifier: Modi
 @Composable
 private fun StreakOverlay(
     onDismiss: () -> Unit,
-    totalMindfulDays: Int = AppConstants.PLACEHOLDER_MILESTONE_DAYS,
-    topPercentile: Int = AppConstants.PLACEHOLDER_MILESTONE_PERCENTILE,
-    zenScoreThreshold: Int = AppConstants.PLACEHOLDER_MILESTONE_SCORE_THRESHOLD,
-    longestStreakDays: Int = AppConstants.PLACEHOLDER_LONGEST_STREAK_DAYS,
-    longestStreakRange: String = AppConstants.PLACEHOLDER_LONGEST_STREAK_RANGE,
+    totalMindfulDays: Int,
+    longestStreakDays: Int,
+    longestStreakRange: String,
+    zenScoreThreshold: Int = AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD,
     /** The same live count as the flame in Home's header. */
     currentStreakDays: Int = 0
 ) {
+    // Community percentile has no real cross-user data source yet, so it's derived
+    // from the current streak itself rather than a flat placeholder: under 5 days
+    // there's nothing worth bragging about yet, so the line is hidden entirely.
+    val topPercentile = streakTopPercentile(currentStreakDays)
     val colors = ZenTheme.colors
 
     ShareSheet(
@@ -1500,16 +1549,18 @@ private fun StreakOverlay(
 
         Spacer(modifier = Modifier.height(15.rdp))
 
-        Text(
-            text = "You're in the top $topPercentile% of the Zen Bros",
-            fontFamily = Geist,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.rsp,
-            letterSpacing = (-0.16).sp,
-            color = colors.textBrand
-        )
+        if (topPercentile != null) {
+            Text(
+                text = "You're in the top $topPercentile% of the Zen Bros",
+                fontFamily = Geist,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.rsp,
+                letterSpacing = (-0.16).sp,
+                color = colors.textBrand
+            )
 
-        Spacer(modifier = Modifier.height(15.rdp))
+            Spacer(modifier = Modifier.height(15.rdp))
+        }
 
         // The shareable milestone card — "Save as image" / "Share my streaks"
         // crop exactly this, not the whole sheet.
@@ -1533,6 +1584,17 @@ private fun StreakOverlay(
             trail = "(${currentStreakRange(currentStreakDays)})"
         )
     }
+}
+
+/**
+ * Streak-based stand-in for the community percentile, until real cross-user streak
+ * data exists (see [AppConstants.PLACEHOLDER_MILESTONE_PERCENTILE]'s old flat value).
+ * Null hides the line — under 5 days there's nothing worth claiming yet.
+ */
+internal fun streakTopPercentile(currentStreakDays: Int): Int? = when {
+    currentStreakDays < 5 -> null
+    currentStreakDays <= 10 -> 50
+    else -> 10
 }
 
 /** "SEP 11–PRESENT": the streak counts today, so it began [days] − 1 days ago. */

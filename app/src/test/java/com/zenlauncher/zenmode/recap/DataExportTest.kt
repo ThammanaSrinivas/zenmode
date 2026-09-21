@@ -1,6 +1,6 @@
 package com.zenlauncher.zenmode.recap
 
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
