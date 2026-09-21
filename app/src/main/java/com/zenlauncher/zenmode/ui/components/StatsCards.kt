@@ -593,12 +593,10 @@ fun ReactBadge(
             if (icon != null) {
                 icon()
             } else {
-                Image(
-                    painter = painterResource(R.drawable.heart_react),
-                    contentDescription = "React",
-                    modifier = Modifier.size(size * 0.55f),
-                    contentScale = ContentScale.Fit
-                )
+                // White heart, matching the 🤍 send button on Zen Circle -- was the green
+                // heart_react.png emoji graphic, which read as an off-brand color choice next
+                // to that send button.
+                Text(text = "🤍", fontSize = 16.rsp)
             }
         }
 

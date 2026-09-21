@@ -48,7 +48,7 @@ fun buildCircleStageMembers(
             )
         }
         return if (real.size < 2) {
-            real + ZenCircleMember(name = "Invite pending", isYou = false, screenTimeMinutes = 0L, zenScore = 0, streaks = 0)
+            real + ZenCircleMember(name = "Invite pending", isYou = false, screenTimeMinutes = 0L, zenScore = 0, streaks = 0, isPending = true)
         } else real
     }
 

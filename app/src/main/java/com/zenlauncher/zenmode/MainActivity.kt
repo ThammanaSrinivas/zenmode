@@ -280,6 +280,14 @@ class MainActivity : AppCompatActivity() {
             viewModel.onResumeCheck()
             viewModel.refreshBuddyStatsFromCache()
         }
+        // Circle users have no periodic self-heal the way StatSyncWorker's onResume hook below
+        // gives classic buddies (it skips circle users entirely -- see its own comment) and no
+        // realtime listener either -- loadCircle() otherwise only runs once at ViewModel init
+        // and on a circle_react push, so a member joining/leaving never reaches an already-open
+        // app until this fires. Cheap: a single circle doc read, not the full StatSyncWorker.
+        if (::circleViewModel.isInitialized) {
+            circleViewModel.loadCircle()
+        }
         loadInstalledApps()
         homeAppCount = AppGridPreferences.getAppCount(this)
         openUnseenRecap()
