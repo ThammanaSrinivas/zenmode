@@ -121,6 +121,10 @@ class MockFirestoreDataSource : FirestoreDataSource {
     override suspend fun sendCircleReaction(circleId: String, fromUid: String, toUid: String, type: ReactionType): Boolean = true
     override suspend fun getTodayCircleReactions(circleId: String, myUid: String): Pair<Long, Long> = 0L to 0L
     override suspend fun findRandomCircleUser(myUid: String, myDisplayName: String?): Circle? = null
+    // Open-source builds never run out — mock defaults to the feature-ON value, same convention
+    // as MockRemoteConfigProvider.
+    override suspend fun hasRandomConnectQuota(myUid: String, limit: Int): Boolean = true
+    override suspend fun recordRandomConnectUsed(myUid: String) {}
 }
 
 class MockAnalyticsTracker : AnalyticsTrackerContract {
