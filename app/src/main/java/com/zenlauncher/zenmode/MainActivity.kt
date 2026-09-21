@@ -884,7 +884,7 @@ class MainActivity : AppCompatActivity() {
                                     },
                                     onRandomConnect = {
                                         if (isCircleMode) {
-                                            circleViewModel.findRandomCircle()
+                                            circleViewModel.findRandomCircle(ProAccess.isPro(this@MainActivity))
                                             showZenCircle = true
                                         } else {
                                             lifecycleScope.launch {

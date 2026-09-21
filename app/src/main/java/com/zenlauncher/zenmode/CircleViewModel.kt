@@ -9,6 +9,7 @@ import com.zenlauncher.zenmode.coreapi.Circle
 import com.zenlauncher.zenmode.coreapi.CircleJoinResult
 import com.zenlauncher.zenmode.coreapi.ReactionType
 import com.zenlauncher.zenmode.coreapi.UsageRepository
+import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import kotlinx.coroutines.launch
 
@@ -294,10 +295,13 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         _uiState.postValue(_uiState.value!!.copy(errorMessage = null))
     }
 
-    /** Random circle connect -- mirrors BuddyConnector.randomConnect()'s cooldown, shared
-     * with it since it's the same kind of matchmaking action. Creates a real 2-person
-     * circle atomically (both people are online right now, unlike the invite-link flow). */
-    fun findRandomCircle() {
+    /** Random circle connect -- mirrors BuddyConnector.randomConnect()'s cooldown and weekly
+     * quota (shared counter -- a random circle connect and a random buddy connect draw from
+     * the same weekly allowance), since it's the same kind of matchmaking action. Creates a
+     * real 2-person circle atomically (both people are online right now, unlike the
+     * invite-link flow). [isPro] comes from the caller (ProAccess.isPro(context)) -- this
+     * ViewModel has no Context to ask itself. */
+    fun findRandomCircle(isPro: Boolean) {
         val myUid = myUid() ?: return
         val lastTried = repository.getLastRandomConnectAttemptTime()
         val remaining = AppConstants.RANDOM_CONNECT_COOLDOWN_MS - (System.currentTimeMillis() - lastTried)
@@ -308,12 +312,23 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         }
         _uiState.postValue(_uiState.value!!.copy(loading = true))
         viewModelScope.launch {
+            val weeklyLimit = if (isPro) Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT else Entitlement.RANDOM_CONNECT_FREE_WEEKLY_LIMIT
+            if (!firestoreDataSource.hasRandomConnectQuota(myUid, weeklyLimit)) {
+                val message = if (isPro) {
+                    "You've used all $weeklyLimit random connects this week. More open up next week."
+                } else {
+                    "You've used all $weeklyLimit random connects this week. Upgrade to Pro for up to ${Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT}/week."
+                }
+                _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = message))
+                return@launch
+            }
             val displayName = ServiceLocator.authProvider.getDisplayName()
             val circle = firestoreDataSource.findRandomCircleUser(myUid, displayName)
             if (circle == null) {
                 repository.saveLastRandomConnectAttemptTime(System.currentTimeMillis())
                 _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = "No one available right now. Try again in 30 seconds!"))
             } else {
+                firestoreDataSource.recordRandomConnectUsed(myUid)
                 repository.saveCircleId(circle.id)
                 repository.cacheCircle(circle)
                 ServiceLocator.analyticsTracker.trackCircleJoined("random")
