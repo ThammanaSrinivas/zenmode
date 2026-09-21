@@ -31,6 +31,13 @@ data class CircleUiState(
      * which is ambiguous (the create/join screens can be reopened while already in a circle).
      * Consume via [CircleViewModel.consumeEnteredCircleEvent]. */
     val justEnteredCircle: Boolean = false,
+    /** Pair(loveReceivedToday, meltReceivedToday) -- reactions sent TO you today, from anyone
+     * in the circle. See FirestoreDataSource.getTodayCircleReactions. Refreshed by [loadCircle]
+     * (which already runs on every circle_react FCM push, same as MainViewModel's
+     * buddyReactedEvents -> fetchLikes wiring). There's no sender-side optimistic update here
+     * (unlike MainViewModel.sendLike()'s _myLikes bump) -- sending a reaction doesn't change
+     * what *you* received, only what the recipient sees on their own client. */
+    val reactions: Pair<Long, Long> = 0L to 0L,
     val errorMessage: String? = null
 )
 
@@ -82,7 +89,8 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
             } else {
                 repository.clearCachedCircle()
             }
-            _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false))
+            val reactions = circle?.let { firestoreDataSource.getTodayCircleReactions(it.id, myUid) } ?: (0L to 0L)
+            _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, reactions = reactions))
         }
     }
 
@@ -268,6 +276,9 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         }
         repository.recordReactionSent(toUid)
 
+        // No optimistic update here (unlike MainViewModel.sendLike()'s _myLikes bump) --
+        // sending a reaction doesn't change what *you* received, only what the recipient sees
+        // on their own client when their circle_react push arrives.
         viewModelScope.launch {
             val ok = firestoreDataSource.sendCircleReaction(circleId, myUid, toUid, type)
             if (ok) {

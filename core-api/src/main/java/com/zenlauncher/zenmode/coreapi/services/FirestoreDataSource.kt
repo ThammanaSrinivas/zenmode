@@ -75,6 +75,15 @@ interface FirestoreDataSource {
     suspend fun sendCircleReaction(circleId: String, fromUid: String, toUid: String, type: ReactionType): Boolean
 
     /**
+     * Today's reactions received BY [myUid], from anyone in the circle -- Pair(loveReceived,
+     * meltReceived). Only ever reads your own reactions_<myUid> entry (see
+     * fieldReactionsFor), never scans other members' data -- there's no "what you sent them"
+     * UI anymore, so there's nothing else to fetch. Pair(0, 0) if the daily_stats doc doesn't
+     * exist or on error.
+     */
+    suspend fun getTodayCircleReactions(circleId: String, myUid: String): Pair<Long, Long>
+
+    /**
      * Finds a random user with neither a circle nor a buddy, active recently, and creates a
      * new circle with both [myUid] and the match as real members atomically -- unlike
      * [findRandomBuddy], both people are online right now, so there's no leader-alone-waiting

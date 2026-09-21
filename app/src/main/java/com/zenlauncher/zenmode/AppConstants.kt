@@ -27,12 +27,20 @@ object AppConstants {
     // backend exists — swap these for real values, not the UI around them.
     const val PLACEHOLDER_GOLD_INVESTED = "2,350"
     const val PLACEHOLDER_GOLD_CHANGE_PERCENT = 38
+    // "Days invested" stat on the Gold share overlay — needs the same Gold Streak backend
+    // as the rest of the Zen Gold screen (see PLACEHOLDER_PROMISE_HOURS below).
+    const val PLACEHOLDER_GOLD_DAYS_INVESTED = 120
 
     // BuddyStats has no real score/streak fields yet, so the buddy's side stays a
     // placeholder. Zen Scores are tenths (88 = 8.8), see ZenScore. Never wire these
     // to the signed-in user's own numbers, which come from ZenScoreStore.
     const val PLACEHOLDER_BUDDY_ZEN_SCORE = 88
     const val PLACEHOLDER_BUDDY_STREAK = 5
+
+    // Zen Score share overlay's "RECLAIMED · X MINS (THIS MONTH)" stat — a monthly rollup
+    // with no real data source yet (distinct from the daily session log on the Zen Score
+    // screen, which is real — see SessionLogRepository in core-api).
+    const val PLACEHOLDER_RECLAIMED_MINUTES = 1350
 
     // Streaks milestone overlay (v3 redesign, Figma node 2026:2137). Total mindful days and
     // the longest streak are now real (AppLogic.getTotalMindfulDays/getLongestStreak, from

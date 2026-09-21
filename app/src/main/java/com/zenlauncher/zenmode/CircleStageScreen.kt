@@ -24,6 +24,7 @@ fun CircleStageScreen(
     streakCount: Int,
     yesterdayChangePercent: Int?,
     buddyStats: BuddyStats?,
+    reactions: Pair<Long, Long>,
     connectedToBuddyScreen: Boolean,
     removingBuddy: Boolean,
     circleRemoving: Boolean,
@@ -44,7 +45,8 @@ fun CircleStageScreen(
         zenScore = zenScore,
         streakCount = streakCount,
         yesterdayChangePercent = yesterdayChangePercent,
-        buddyStats = buddyStats
+        buddyStats = buddyStats,
+        reactions = reactions
     )
     // Resolved once, here, where circle-vs-buddy state is actually known -- everything below
     // (the Invite sheet, the share card) just displays/shares whatever this resolves to,

@@ -41,6 +41,8 @@ import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.SettingsActivity
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
+import androidx.compose.foundation.systemGestureExclusion as foundationSystemGestureExclusion
+
 
 // ── Shared v3 chrome ──────────────────────────────────────────────
 // Pieces every v3 page draws the same way: Figma's tapered top/bottom stroke, the ☰ that
@@ -201,3 +203,24 @@ fun Modifier.pageSwipe(onSwipeLeft: (() -> Unit)? = null, onSwipeRight: (() -> U
             action()
         }
     }
+
+/**
+ * Excludes the composable's layout bounds from the system gesture (back-swipe) zone.
+ * Required on OEM ROMs (e.g. MIUI) that widen the edge zone so aggressively that
+ * [pageSwipe] gestures starting near a screen edge are silently swallowed before
+ * Compose sees them. Delegates to Compose Foundation's [foundationSystemGestureExclusion] which
+ * maps to [android.view.View.setSystemGestureExclusionRects] (API 29+; no-op below).
+ */
+fun Modifier.systemGestureExclusion(): Modifier =
+    foundationSystemGestureExclusion { coords ->
+        androidx.compose.ui.geometry.Rect(
+            left = 0f,
+            top = 0f,
+            right = coords.size.width.toFloat(),
+            bottom = coords.size.height.toFloat()
+        )
+    }
+
+
+
+

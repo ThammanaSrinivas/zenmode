@@ -91,13 +91,18 @@ data class HomeAppPickerItem(
 /** Launcher-visible apps, A–Z. Same source as the home grid in MainActivity. */
 fun loadHomeAppPickerItems(context: Context): List<HomeAppPickerItem> {
     val pm = context.packageManager
-    return LauncherActivities.query(pm)
+    val activities = LauncherActivities.query(pm)
+    // ZenMode declares CATEGORY_LAUNCHER (needed so it can be set as default home)
+    // alongside CATEGORY_HOME, so it shows up in its own launcher query — exclude it,
+    // same as MainActivity.loadInstalledApps and OnboardingViewModel.queryLaunchableApps.
+    return activities
+        .filter { it.activityInfo.packageName != context.packageName }
         .map {
             HomeAppPickerItem(
                 label = it.loadLabel(pm).toString(),
                 packageName = it.activityInfo.packageName,
                 icon = it.loadIcon(pm),
-                key = LauncherActivities.key(it)
+                key = LauncherActivities.selectionKey(it, activities)
             )
         }
         .sortedBy { it.label.lowercase() }
@@ -138,7 +143,7 @@ fun HomeAppsPickerOverlay(
         val loaded = withContext(Dispatchers.IO) { loadHomeAppPickerItems(context) }
         apps = loaded
         // Drop anything uninstalled since it was chosen.
-        val installed = loaded.mapTo(HashSet()) { it.packageName }
+        val installed = loaded.mapTo(HashSet()) { it.key }
         val cleaned = selection.filter { it in installed }
         if (cleaned != selection) {
             selection = cleaned
@@ -152,10 +157,10 @@ fun HomeAppsPickerOverlay(
         onSelectionChange(next)
     }
 
-    fun toggle(pkg: String) {
+    fun toggle(key: String) {
         when {
-            pkg in selection -> update(selection - pkg)
-            selection.size < limit -> update(selection + pkg)
+            key in selection -> update(selection - key)
+            selection.size < limit -> update(selection + key)
             else -> {
                 view.performHapticFeedback(HapticFeedbackConstants.REJECT)
                 ZenSound.play(Sfx.ERROR)
@@ -164,7 +169,7 @@ fun HomeAppsPickerOverlay(
         }
     }
 
-    val appsByPackage = remember(apps) { apps.associateBy { it.packageName } }
+    val appsByKey = remember(apps) { apps.associateBy { it.key } }
     val visibleApps = remember(apps, query) {
         val q = query.trim()
         if (q.isEmpty()) apps else apps.filter { it.label.contains(q, ignoreCase = true) }
@@ -199,7 +204,7 @@ fun HomeAppsPickerOverlay(
         HomeSlotGrid(
             limit = limit,
             selection = selection,
-            appsByPackage = appsByPackage,
+            appsByKey = appsByKey,
             onRemove = { toggle(it) },
             onReorder = { update(it) },
             modifier = Modifier.padding(top = 18.rdp)
@@ -249,12 +254,12 @@ fun HomeAppsPickerOverlay(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(items = visibleApps, key = { it.key }) { app ->
-                    val position = selection.indexOf(app.packageName)
+                    val position = selection.indexOf(app.key)
                     PickerAppCell(
                         app = app,
                         position = if (position >= 0) position + 1 else null,
                         dimmed = position < 0 && selection.size >= limit,
-                        onClick = { toggle(app.packageName) }
+                        onClick = { toggle(app.key) }
                     )
                 }
             }
@@ -301,7 +306,7 @@ fun HomeAppsPickerOverlay(
 private fun HomeSlotGrid(
     limit: Int,
     selection: List<String>,
-    appsByPackage: Map<String, HomeAppPickerItem>,
+    appsByKey: Map<String, HomeAppPickerItem>,
     onRemove: (String) -> Unit,
     onReorder: (List<String>) -> Unit,
     modifier: Modifier = Modifier
@@ -360,7 +365,7 @@ private fun HomeSlotGrid(
                             return@repeat
                         }
                         val pkg = order.getOrNull(index)
-                        val app = pkg?.let { appsByPackage[it] }
+                        val app = pkg?.let { appsByKey[it] }
                         val isDragging = pkg != null && pkg == dragging
                         key(pkg ?: "empty-$index") {
                             HomeSlot(

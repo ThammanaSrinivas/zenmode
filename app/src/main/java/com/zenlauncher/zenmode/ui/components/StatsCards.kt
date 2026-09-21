@@ -45,10 +45,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.BuddyStats
+import com.zenlauncher.zenmode.HomeStackMember
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ZenScore
 import com.zenlauncher.zenmode.coreapi.DailyUsage
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
@@ -101,6 +102,9 @@ fun StatsCardsRow(
     myLikes: Long = 0L,
     buddyLikes: Long = 0L,
     onLikeClick: () -> Unit = {},
+    // 2+ other circle members to queue behind the front card -- see HomeBuddyCardStack.
+    // A single buddy/circle-mate (list size < 2) keeps the plain BuddyStatsCard below.
+    circleStackMembers: List<HomeStackMember> = emptyList(),
     onInviteBuddyClick: () -> Unit = {},
     // "Add Buddy" for the classic 1:1 flow, "Add Bro" once BuddyFlowPreferences has
     // the user on Zen Circle -- see BuddyInviteCard.
@@ -151,7 +155,13 @@ fun StatsCardsRow(
                 )
             }
 
-            if (hasBuddies && buddyStats != null) {
+            if (hasBuddies && circleStackMembers.size >= 2) {
+                HomeBuddyCardStack(
+                    members = circleStackMembers,
+                    onTap = { onBuddyCardClick?.invoke() },
+                    modifier = Modifier.weight(1f).then(rightCardModifier)
+                )
+            } else if (hasBuddies && buddyStats != null) {
                 BuddyStatsCard(
                     buddyStats = buddyStats,
                     onCardClick = onBuddyCardClick,
@@ -544,7 +554,10 @@ fun ReactBadge(
     count: Long,
     clickable: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Defaults to the heart (Buddy's only reaction type); Circle's melt badge overrides this
+    // with the 😔 glyph instead of growing a second hardcoded-icon variant of this composable.
+    icon: (@Composable () -> Unit)? = null
 ) {
     val colors = ZenTheme.colors
     val size = 36.rdp
@@ -568,12 +581,16 @@ fun ReactBadge(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(R.drawable.heart_react),
-                contentDescription = "React",
-                modifier = Modifier.size(size * 0.55f),
-                contentScale = ContentScale.Fit
-            )
+            if (icon != null) {
+                icon()
+            } else {
+                Image(
+                    painter = painterResource(R.drawable.heart_react),
+                    contentDescription = "React",
+                    modifier = Modifier.size(size * 0.55f),
+                    contentScale = ContentScale.Fit
+                )
+            }
         }
 
         if (count > 0) {

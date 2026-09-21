@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.ZenModeOsWordmark
 import com.zenlauncher.zenmode.ui.components.rememberBrandOsGradient
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
@@ -620,7 +620,7 @@ internal fun GoldInvestedOverlay(
     gold: String,
     changePercent: Int,
     onDismiss: () -> Unit,
-    daysInvested: Int = AppConstants.PLACEHOLDER_MILESTONE_DAYS,
+    daysInvested: Int = AppConstants.PLACEHOLDER_GOLD_DAYS_INVESTED,
     today: LocalDate = LocalDate.now()
 ) {
     val colors = ZenTheme.colors

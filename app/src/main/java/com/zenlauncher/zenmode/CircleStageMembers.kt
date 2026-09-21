@@ -22,7 +22,11 @@ fun buildCircleStageMembers(
     zenScore: Int,
     streakCount: Int,
     yesterdayChangePercent: Int?,
-    buddyStats: BuddyStats?
+    buddyStats: BuddyStats?,
+    // Pair(loveReceivedToday, meltReceivedToday) -- what YOU received today, from anyone. Only
+    // ever attached to the "you" member below; nobody else's card shows a reaction badge. See
+    // FirestoreDataSource.getTodayCircleReactions / CircleUiState.reactions.
+    reactions: Pair<Long, Long> = 0L to 0L
 ): List<ZenCircleMember> {
     if (realCircle != null) {
         val real = realCircle.members.map { m ->
@@ -38,7 +42,9 @@ fun buildCircleStageMembers(
                 // only "you" gets the real local value.
                 streaks = if (m.uid == userCode) streakCount else 0,
                 changePercent = if (m.uid == userCode) yesterdayChangePercent else null,
-                uid = m.uid
+                uid = m.uid,
+                loveReceivedToday = if (m.uid == userCode) reactions.first else 0L,
+                meltReceivedToday = if (m.uid == userCode) reactions.second else 0L
             )
         }
         return if (real.size < 2) {

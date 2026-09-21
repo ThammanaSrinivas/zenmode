@@ -56,9 +56,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.SessionEventType
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.HomePage
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.components.PinnedPageFooter
@@ -96,35 +96,14 @@ import com.zenlauncher.zenmode.ui.theme.rsp
 // pages: reached by swiping right on Home or tapping Home's Zen Score; swipe left (or back)
 // returns. The header greets the user; their avatar opens Settings, like every ☰ does.
 //
-// Category breakdown and session log both need real per-app usage
-// categorization that doesn't exist yet (see zenmode_core_private/docs/plans).
-// Wired as AppConstants.PLACEHOLDER_* for now, matching ZenGoldScreen.
+// Category breakdown and session log are real, from SessionLogRepository (core-api) via
+// ZenScoreActivity — see that file for how [categories]/[sessionLog] are built.
 
 private val ScreenMargin: Dp @Composable get() = 30.rdp
 
 data class ZenScoreCategory(val label: String, val percent: Int, val colorRes: Int)
 
-enum class SessionEventType { INTENTIONAL, ENTERTAINING, DISRUPTED }
-
 data class ZenSessionLogEntry(val duration: String, val appName: String, val type: SessionEventType)
-
-// Category breakdown percentages and the session log rows both need real per-app
-// usage categorization (see file header) — these are illustrative placeholders,
-// not derived from AppConstants since they're structured rather than scalar.
-private fun defaultCategories() = listOf(
-    ZenScoreCategory("Productivity", 45, R.color.zen_900),
-    ZenScoreCategory("Entertainment", 10, R.color.score_status_red),
-    ZenScoreCategory("Messaging", 30, R.color.score_category_messaging),
-    ZenScoreCategory("Everything else", 15, R.color.zen_300)
-)
-
-private fun defaultSessionLog() = listOf(
-    ZenSessionLogEntry("00:47:00", "Netflix", SessionEventType.ENTERTAINING),
-    ZenSessionLogEntry("00:32:00", "Notion", SessionEventType.INTENTIONAL),
-    ZenSessionLogEntry("00:14:00", "Twitter", SessionEventType.DISRUPTED),
-    ZenSessionLogEntry("00:28:00", "Netflix", SessionEventType.ENTERTAINING),
-    ZenSessionLogEntry("00:21:00", "Notion", SessionEventType.INTENTIONAL)
-)
 
 @Composable
 fun ZenScoreScreen(
@@ -132,10 +111,10 @@ fun ZenScoreScreen(
     score: Int,
     /** Yesterday's saved score in tenths, if there is one, for the insight line. */
     yesterdayScore: Int? = null,
-    categories: List<ZenScoreCategory> = remember { defaultCategories() },
-    reclaimedMinutes: Int = AppConstants.PLACEHOLDER_RECLAIMED_MINUTES,
-    sessionTotalLabel: String = AppConstants.PLACEHOLDER_SESSION_LOG_TOTAL,
-    sessionLog: List<ZenSessionLogEntry> = remember { defaultSessionLog() },
+    categories: List<ZenScoreCategory> = emptyList(),
+    reclaimedMinutes: Int = 0,
+    sessionTotalLabel: String = "",
+    sessionLog: List<ZenSessionLogEntry> = emptyList(),
     userName: String? = null,
     photoUrl: String? = null,
     isPro: Boolean = false,

@@ -508,14 +508,17 @@ class MainActivity : AppCompatActivity() {
                     zenScore >= AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD * 10
                 }
                 val streakCount = remember(zenScore) { AppLogic.getStreakCount(recapStore, todayIsMindful) }
-
+                val homeBuddyCard = rememberHomeBuddyCardState(circleUiState.circle, userCode, hasBuddies, buddyStats)
 
                 HomeScreen(
                     usage = usage,
                     streaks = streakCount,
                     yesterdayChangePercent = yesterdayChangePercent,
-                    hasBuddies = hasBuddies,
-                    buddyStats = buddyStats,
+                    hasBuddies = homeBuddyCard.show,
+                    buddyStats = homeBuddyCard.stats,
+                    buddyZenScoreOverride = homeBuddyCard.zenScoreOverride,
+                    buddyStreaksOverride = homeBuddyCard.streaksOverride,
+                    circleStackMembers = homeBuddyCard.stackMembers,
                     isSignedIn = isSignedIn,
                     showSearch = showSearch,
                     zenScore = zenScore,
@@ -553,7 +556,7 @@ class MainActivity : AppCompatActivity() {
                         openBuddyFlow()
                     },
                     inviteButtonLabel = if (BuddyFlowPreferences.decision(this) == BuddyFlow.ZEN_CIRCLE) "Add Bro" else "Add Buddy",
-                    onBuddyCardClick = if (hasBuddies) {
+                    onBuddyCardClick = if (homeBuddyCard.show) {
                         { openBuddyFlow() }
                     } else null,
                     onSignInClick = {
@@ -807,6 +810,7 @@ class MainActivity : AppCompatActivity() {
                                     streakCount = streakCount,
                                     yesterdayChangePercent = yesterdayChangePercent,
                                     buddyStats = buddyStats,
+                                    reactions = circleUiState.reactions,
                                     connectedToBuddyScreen = connectedBuddyName != null,
                                     removingBuddy = removingBuddy,
                                     circleRemoving = circleUiState.removing,

@@ -137,6 +137,7 @@ import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.FileResult
 import com.zenlauncher.zenmode.FileSearchRepository
+import com.zenlauncher.zenmode.HomeStackMember
 import com.zenlauncher.zenmode.R
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.BlendMode
@@ -146,7 +147,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.zenlauncher.zenmode.AppSearchRanking
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
 import com.zenlauncher.zenmode.ui.components.shareImage
 import com.zenlauncher.zenmode.ui.components.taperedBorder
@@ -169,7 +170,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import com.zenlauncher.zenmode.PromisePreferences
+import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.recap.RecapStore
 import android.util.Log
 
@@ -252,6 +253,11 @@ fun HomeScreen(
     inviteButtonLabel: String = "Add Buddy",
     onSignInClick: () -> Unit,
     onBuddyCardClick: (() -> Unit)? = null,
+    // Real values for a Zen Circle-derived buddyStats (see HomeCircleStats.kt) -- null keeps
+    // today's classic-Buddy placeholder behavior below, since Buddy has no real score/streak.
+    buddyZenScoreOverride: Int? = null,
+    buddyStreaksOverride: Int? = null,
+    circleStackMembers: List<HomeStackMember> = emptyList(),
     onAppClick: (AppInfo) -> Unit,
     onAppLongClick: (AppInfo) -> Unit = {},
     apps: List<AppInfo>,
@@ -343,12 +349,13 @@ fun HomeScreen(
                 isSignedIn = isSignedIn,
                 zenScore = zenScore,
                 streaks = streaks,
-                buddyZenScore = AppConstants.PLACEHOLDER_BUDDY_ZEN_SCORE,
-                buddyStreaks = AppConstants.PLACEHOLDER_BUDDY_STREAK,
+                buddyZenScore = buddyZenScoreOverride ?: AppConstants.PLACEHOLDER_BUDDY_ZEN_SCORE,
+                buddyStreaks = buddyStreaksOverride ?: AppConstants.PLACEHOLDER_BUDDY_STREAK,
                 showReactions = false,
                 myLikes = myLikes,
                 buddyLikes = buddyLikes,
                 onLikeClick = onLikeClick,
+                circleStackMembers = circleStackMembers,
                 onInviteBuddyClick = onInviteBuddyClick,
                 inviteButtonLabel = inviteButtonLabel,
                 onSignInClick = onSignInClick,

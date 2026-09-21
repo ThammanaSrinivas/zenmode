@@ -106,6 +106,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.ui.components.BuddyStatsCard
 import com.zenlauncher.zenmode.ui.components.MyScreenTimeCard
+import com.zenlauncher.zenmode.ui.components.ReactBadge
 import com.zenlauncher.zenmode.ui.components.taperedBorder
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
@@ -148,7 +149,11 @@ data class ZenCircleMember(
     /** Empty for the classic-buddy reskin (no real circle, nothing to react into yet);
      * a real Firebase Auth UID once backed by an actual Circle. Needed to target
      * reactions at a specific member -- see ReactionButton's onSendLove/onSendMelt. */
-    val uid: String = ""
+    val uid: String = "",
+    /** Only ever non-zero on the "you" member -- reactions received today are shown on your
+     * own card only, never on another member's card. See buildCircleStageMembers. */
+    val loveReceivedToday: Long = 0L,
+    val meltReceivedToday: Long = 0L
 )
 
 private const val FrontCardScale = 201.66f / 150.67f
@@ -662,12 +667,34 @@ private fun MemberCardStack(
 @Composable
 private fun MemberCard(member: ZenCircleMember) {
     if (member.isYou) {
-        MyScreenTimeCard(
-            usage = DailyUsage(screenTimeInMillis = member.screenTimeMinutes * 60_000),
-            yesterdayChangePercent = member.changePercent,
-            zenScore = member.zenScore,
-            streaks = member.streaks
-        )
+        // Reactions received today are shown on your own card only, never on another
+        // member's -- see ZenCircleMember's doc comment.
+        Box {
+            MyScreenTimeCard(
+                usage = DailyUsage(screenTimeInMillis = member.screenTimeMinutes * 60_000),
+                yesterdayChangePercent = member.changePercent,
+                zenScore = member.zenScore,
+                streaks = member.streaks,
+                // Reuses MyScreenTimeCard's existing top-end badge for love received --
+                // mirrors the 🤍 send button's top-right position below the stack.
+                buddyLikes = member.loveReceivedToday
+            )
+            // Sad-face reactions received, top-left -- mirrors the 😔 send button's
+            // top-left position. MyScreenTimeCard (shared with Home, which never shows
+            // reactions) has no second-badge slot of its own, so this is layered on here
+            // instead of growing that shared component's signature.
+            if (member.meltReceivedToday > 0) {
+                ReactBadge(
+                    count = member.meltReceivedToday,
+                    clickable = false,
+                    onClick = {},
+                    icon = { Text(text = "😔", fontSize = 16.rsp) },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = (-6).rdp, y = (-6).dp)
+                )
+            }
+        }
     } else {
         BuddyStatsCard(
             buddyStats = BuddyStats(screenTimeMins = member.screenTimeMinutes),

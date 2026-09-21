@@ -63,7 +63,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
-import com.zenlauncher.zenmode.ZenScore
+import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.FanMember
 import com.zenlauncher.zenmode.ui.components.MemberCardFan
 import com.zenlauncher.zenmode.ui.components.ZenModeOsWordmark
