@@ -61,6 +61,11 @@
 
     <!-- stone · neutrals -->
     <color name="stone_600">#5E6058</color>
+    <!-- AA-safe text stops (light mode only — stone_500/400 read fine as fills/icons but
+         fail WCAG AA (4.5:1) as real text on paper_base: 4.32:1 and 2.94:1 respectively).
+         See zenmode.figmatokens.json color.stone.560/520. -->
+    <color name="stone_560">#666861</color>
+    <color name="stone_520">#6A6C63</color>
     <color name="stone_500">#70726A</color>
     <color name="stone_400">#8C8E86</color>
     <color name="stone_300">#9E9E98</color>
