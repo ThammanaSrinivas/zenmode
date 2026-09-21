@@ -37,6 +37,8 @@ class DistractionBlockerActivity : AppCompatActivity() {
 
     private var state by mutableStateOf(BlockerState())
     private var showProSheet by mutableStateOf(false)
+    /** The surface that opened the upsell sheet, for analytics on the plan page. */
+    private var proSheetSource = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +65,8 @@ class DistractionBlockerActivity : AppCompatActivity() {
                             state.isPaused -> ContentBlockPrefs.resume(this)
                             isPro -> ContentBlockPrefs.pause(this)
                             else -> {
-                                ServiceLocator.analyticsTracker.trackProUpsellViewed("distraction_blocker_pause")
+                                proSheetSource = "distraction_blocker_pause"
+                                ServiceLocator.analyticsTracker.trackProUpsellViewed(proSheetSource)
                                 showProSheet = true
                             }
                         }
@@ -100,11 +103,13 @@ class DistractionBlockerActivity : AppCompatActivity() {
                 if (showProSheet) {
                     ProUpsellSheet(
                         onDismiss = { showProSheet = false },
-                        onRequestAccess = {
+                        canPurchase = ProAccess.canPurchase,
+                        onUpgrade = {
                             showProSheet = false
-                            ProAccess.requestAccess(this@DistractionBlockerActivity)
+                            ProAccess.openUpgrade(this@DistractionBlockerActivity, proSheetSource)
                         },
-                        onEnableForTesting = if (ProAccess.canUseDebugOverride) {
+                        // Only where Pro can't be bought: otherwise test the real flow.
+                        onEnableForTesting = if (ProAccess.canUseDebugOverride && !ProAccess.canPurchase) {
                             {
                                 ProAccess.setDebugOverride(this@DistractionBlockerActivity, true)
                                 showProSheet = false

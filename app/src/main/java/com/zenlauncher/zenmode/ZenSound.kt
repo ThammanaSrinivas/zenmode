@@ -29,7 +29,9 @@ enum class Sfx(@RawRes val res: Int, val volume: Float) {
     COIN(R.raw.sfx_coin, 0.55f),
     THEME_DARK(R.raw.sfx_theme_dark, 0.55f),
     THEME_LIGHT(R.raw.sfx_theme_light, 0.55f),
-    ENTER(R.raw.sfx_enter, 0.65f)
+    ENTER(R.raw.sfx_enter, 0.65f),
+    /** Ambience, not a cue: it plays under PRO_UNLOCK on the Pro welcome and nowhere else. */
+    FOREST_DAWN(R.raw.sfx_forest_dawn, 0.5f)
 }
 
 /**

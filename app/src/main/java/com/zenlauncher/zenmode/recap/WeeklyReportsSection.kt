@@ -289,14 +289,16 @@ fun ProBadge() {
 // ── PRO sheet ─────────────────────────────────────────────────────
 
 /**
- * What PRO includes. Purchasing isn't live yet, so the CTA requests early access;
- * debug builds also get a switch to turn PRO on locally for testing.
+ * What PRO includes. The CTA leads to the plan page, or requests early access in builds that
+ * can't sell Pro; debug builds also get a switch to turn PRO on locally for testing.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProUpsellSheet(
     onDismiss: () -> Unit,
-    onRequestAccess: () -> Unit,
+    /** True when [onUpgrade] opens the plan page; false when it can only request early access. */
+    canPurchase: Boolean,
+    onUpgrade: () -> Unit,
     onEnableForTesting: (() -> Unit)?
 ) {
     val colors = ZenTheme.colors
@@ -339,7 +341,7 @@ fun ProUpsellSheet(
             }
             Spacer(Modifier.height(26.rdp))
             Text(
-                text = "Request early access",
+                text = if (canPurchase) "See Pro plans" else "Request early access",
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 17.rsp,
@@ -349,12 +351,13 @@ fun ProUpsellSheet(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(percent = 50))
                     .background(colors.actionPrimary)
-                    .clickable(role = Role.Button, onClick = onRequestAccess)
+                    .clickable(role = Role.Button, onClick = onUpgrade)
                     .padding(vertical = 16.rdp)
             )
             Spacer(Modifier.height(8.rdp))
             Text(
-                text = "PRO is opening to early Zens first. We'll reply personally.",
+                text = if (canPurchase) "Prices and trials on the next page. Cancelling takes two taps."
+                else "PRO is opening to early Zens first. We'll reply personally.",
                 fontFamily = Geist,
                 fontSize = 12.rsp,
                 color = colors.textSecondary,

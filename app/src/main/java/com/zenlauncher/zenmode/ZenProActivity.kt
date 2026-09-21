@@ -20,6 +20,7 @@ import com.zenlauncher.zenmode.ui.screens.ProWelcome
 import androidx.activity.compose.BackHandler
 import com.zenlauncher.zenmode.ui.screens.ZenProScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.ui.theme.rememberDarkTheme
 import kotlinx.coroutines.launch
 
 /**
@@ -43,17 +44,28 @@ class ZenProActivity : AppCompatActivity() {
 
         val entry = intent.getStringExtra(EXTRA_ENTRY) ?: ProEntry.PLAN_CARD.analyticsName
         if (savedInstanceState == null) {
-            track("pro_page_viewed", mapOf("entry" to entry, "tier" to provider.entitlement.value.status.name.lowercase()))
+            val props = mutableMapOf<String, Any>("entry" to entry, "tier" to provider.entitlement.value.status.name.lowercase())
+            intent.getStringExtra(EXTRA_SOURCE)?.let { props["source"] = it }
+            track("pro_page_viewed", props)
         }
 
         setContent {
-            ZenTheme {
+            // The welcome is a dawn forest: the app dims into ink for it whatever the user's
+            // Appearance is, which ZenTheme crossfades, and which also hands the scene the
+            // right system bars and the ink tokens its text needs.
+            // Read unconditionally: `||` would short-circuit a composable call away and
+            // leave the slot table a different shape on the frame the welcome opens.
+            val ink = rememberDarkTheme()
+            ZenTheme(darkTheme = celebrating || ink) {
                 val entitlement by provider.entitlement.collectAsState()
-                LaunchedEffect(Unit) { offers = provider.offers() }
+                LaunchedEffect(Unit) {
+                    offers = runCatching { provider.offers() }.getOrDefault(emptyList())
+                    if (offers.isEmpty()) errorMessage = "Couldn't load plans. Check your connection and try again."
+                }
 
                 if (celebrating) {
                     BackHandler { finish() }
-                    ProWelcome(onContinue = { finish() })
+                    ProWelcome(onContinue = { finish() }, isSimulated = provider.isSimulated)
                     return@ZenTheme
                 }
                 ZenProScreen(
@@ -61,6 +73,7 @@ class ZenProActivity : AppCompatActivity() {
                     isPro = ProAccess.isProState(this@ZenProActivity),
                     offers = offers,
                     isWorking = isWorking,
+                    isSimulated = provider.isSimulated,
                     errorMessage = errorMessage,
                     onBackClick = { finish() },
                     onPurchase = { period -> purchase(period) },
@@ -71,37 +84,50 @@ class ZenProActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Renewals, trial conversions and lapses happen while the page is closed.
+        lifecycleScope.launch { ServiceLocator.entitlementProvider.refresh() }
+    }
+
     private fun purchase(period: BillingPeriod) {
+        if (isWorking) return
         val provider = ServiceLocator.entitlementProvider
         val trial = offers.firstOrNull { it.period == period }?.freeTrialDays?.let { it > 0 } == true
-        val props = mapOf("period" to period.name.lowercase(), "trial" to trial)
+        val props = mapOf("period" to period.name.lowercase(), "trial" to trial, "simulated" to provider.isSimulated)
         track("pro_purchase_started", props)
         isWorking = true
         errorMessage = null
         lifecycleScope.launch {
-            when (val result = provider.purchase(this@ZenProActivity, period)) {
+            val result = runCatching { provider.purchase(this@ZenProActivity, period) }
+                .getOrElse { PurchaseResult.Failed(GENERIC_ERROR) }
+            when (result) {
                 PurchaseResult.Success -> {
                     track("pro_purchase_completed", props)
                     // One thank-you screen, then straight back to where they came from.
                     celebrating = true
                 }
-                PurchaseResult.Cancelled -> Unit
-                is PurchaseResult.Failed -> errorMessage = result.message
+                PurchaseResult.Cancelled -> track("pro_purchase_cancelled", props)
+                is PurchaseResult.Failed -> {
+                    track("pro_purchase_failed", props)
+                    errorMessage = result.message
+                }
             }
             isWorking = false
         }
     }
 
     private fun runAction(event: String, action: suspend () -> Boolean) {
+        if (isWorking) return
         isWorking = true
         errorMessage = null
         lifecycleScope.launch {
-            val ok = action()
+            val ok = runCatching { action() }.getOrDefault(false)
             if (ok) {
                 val e = ServiceLocator.entitlementProvider.entitlement.value
                 track(event, mapOf("period" to (e.period?.name?.lowercase() ?: "none")))
             } else {
-                errorMessage = "That didn't go through. Nothing was changed. Try again in a moment."
+                errorMessage = GENERIC_ERROR
             }
             isWorking = false
         }
@@ -114,8 +140,13 @@ class ZenProActivity : AppCompatActivity() {
 
     companion object {
         private const val EXTRA_ENTRY = "entry"
+        private const val EXTRA_SOURCE = "source"
+        private const val GENERIC_ERROR = "That didn't go through. Nothing was changed. Try again in a moment."
 
-        fun intent(context: Context, entry: ProEntry): Intent =
-            Intent(context, ZenProActivity::class.java).putExtra(EXTRA_ENTRY, entry.analyticsName)
+        /** [source] names the surface behind a gate (e.g. "zen_score_report"), for analytics only. */
+        fun intent(context: Context, entry: ProEntry, source: String? = null): Intent =
+            Intent(context, ZenProActivity::class.java)
+                .putExtra(EXTRA_ENTRY, entry.analyticsName)
+                .putExtra(EXTRA_SOURCE, source)
     }
 }

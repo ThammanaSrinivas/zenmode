@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,14 +37,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
@@ -51,12 +60,10 @@ import com.zenlauncher.zenmode.coreapi.services.PlanOffer
 import com.zenlauncher.zenmode.coreapi.services.ProStatus
 import com.zenlauncher.zenmode.ui.components.GlyphKind
 import com.zenlauncher.zenmode.ui.components.ZenMotion
-import com.zenlauncher.zenmode.ui.components.ZenProTag
 import com.zenlauncher.zenmode.ui.components.rememberReduceMotion
 import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
 import com.zenlauncher.zenmode.ui.components.staggeredEntrance
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -69,10 +76,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -97,6 +102,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.roundToInt
 
 // ZenMode Pro — plan page, confirm sheet, manage and cancel.
 //
@@ -104,7 +110,9 @@ import java.util.Locale
 //  · price above every button, read from the store, never hardcoded
 //  · the free tier is listed in full before the price
 //  · cancelling takes the same two taps as starting; both cancel-dialog buttons weigh the same
-//  · nothing here ever references the Zen Score
+//  · the Zen Score itself is never a sales lever — only report cadence (daily vs weekly) differs
+//  · every conversion device below (badges, savings, the sticky footer) states a real, store-backed
+//    fact — nothing invented, no fake urgency, nothing that isn't also true on the manage/cancel page
 
 /** Where the Pro page was opened from. Analytics only — the page itself never changes by entry. */
 enum class ProEntry(val analyticsName: String) {
@@ -113,25 +121,54 @@ enum class ProEntry(val analyticsName: String) {
     MANAGE("manage")
 }
 
-private val FreeIncludes = listOf(
-    "The launcher",
-    "Intent before an app opens",
-    "Declared sessions",
-    "Zen Score",
-    "Daily Zen Report",
-    "One partner",
-    "7 days of history"
+/** Short, card-sized highlights — the at-a-glance read. The full row-by-row diff is [CompareRows]. */
+private val FreeHighlights = listOf(
+    "The launcher, free forever",
+    "Zen Score, daily average",
+    "Zen Circle (beta)",
+    "7 days of history",
+    "Centralised search"
 )
 
-private val ProAdds = listOf(
-    "Everything in free",
-    "Full history",
-    "Weekly and monthly reports",
-    "Up to three partners",
-    "Custom session lengths",
-    "Home-screen themes",
-    "Data export",
-    "Your name in the supporters list"
+private val ProHighlights = listOf(
+    "Everything in Free, plus",
+    "All-time history, downloadable",
+    "50 random connects a week, first priority",
+    "30-minute distraction-blocker pause",
+    "Data export + Telegram community"
+)
+
+private val ComingSoon = listOf(
+    "More export formats",
+    "Zen Circle enhancements",
+    "AI suggestions to optimise",
+    "New modes, and more"
+)
+
+/** A comparison cell: either a plain value both tiers state in their own words, or an include/exclude mark. */
+private data class CompareCell(val text: String? = null, val included: Boolean? = null)
+private data class CompareRow(val label: String, val free: CompareCell, val pro: CompareCell)
+
+private fun cell(text: String) = CompareCell(text = text)
+private val Yes = CompareCell(included = true)
+private val No = CompareCell(included = false)
+
+/** The full free-vs-pro diff, row for row. Keep in the same order the plans spec lists them. */
+private val CompareRows = listOf(
+    CompareRow("The launcher, with accountability", Yes, Yes),
+    CompareRow("Zen Score average", cell("Daily"), cell("Weekly")),
+    CompareRow("Zen Circle", cell("Beta, all members"), cell("Beta, all members")),
+    CompareRow("History", cell("7 days"), cell("All time")),
+    CompareRow("Session log", cell("Last 7 events"), cell("The day's events, downloadable")),
+    CompareRow("Centralised search", Yes, Yes),
+    CompareRow("Random connect", cell("Up to 5/week"), cell("Up to 50/week, first priority")),
+    CompareRow("Screen time average", cell("Weekly"), cell("Monthly")),
+    CompareRow("Edit my promise", cell("Once a week"), cell("Twice a week")),
+    CompareRow("Weekly report history", No, Yes),
+    CompareRow("Devices per account", cell("One"), cell("One")),
+    CompareRow("Distraction blocker pause", No, cell("30 minutes")),
+    CompareRow("Data export", No, Yes),
+    CompareRow("Telegram community", No, Yes)
 )
 
 fun List<PlanOffer>.offer(period: BillingPeriod): PlanOffer? = firstOrNull { it.period == period }
@@ -143,24 +180,48 @@ fun List<PlanOffer>.priceSummary(): String? {
     return "${annual.formattedPrice}/year, or ${monthly.formattedPrice}/month"
 }
 
+/** First numeric run in a store-formatted price string, e.g. "₹2,499" → 2499.0. Never hardcoded. */
+private fun String.storeNumber(): Double? =
+    Regex("[0-9]+(\\.[0-9]+)?").find(replace(",", ""))?.value?.toDoubleOrNull()
+
+/** How much cheaper this offer's current price is than its own regular price — a same-plan,
+ * store-backed discount, not a cross-plan comparison built to make the number look bigger. */
+private fun PlanOffer.discountPercent(): Int? {
+    val original = originalPrice?.storeNumber() ?: return null
+    val current = formattedPrice.storeNumber() ?: return null
+    if (original <= current) return null
+    return (((original - current) / original) * 100).roundToInt().takeIf { it > 0 }
+}
+
+/** What the subscribe button should say for this offer's actual trial length. */
+private fun PlanOffer.startLabel(): String = when {
+    freeTrialDays <= 0 -> "Subscribe"
+    freeTrialDays >= 28 -> "Start the free month"
+    else -> "Start your $freeTrialDays-day free trial"
+}
+
 private val DateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
 private val MonthFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)
 
 fun Long.asZenDate(): String = DateFormat.format(Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()))
 fun Long.asZenMonth(): String = MonthFormat.format(Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()))
 
-/** One line under the plan card / manage header, e.g. "Renews 17 Oct 2027". */
-fun Entitlement.statusLine(offers: List<PlanOffer>): String {
-    val price = period?.let { offers.offer(it) }
+/**
+ * One line under the plan card / manage header, e.g. "Renews 17 Oct 2027". With [isSimulated]
+ * no price is ever quoted as upcoming, since nothing will be charged.
+ */
+fun Entitlement.statusLine(offers: List<PlanOffer>, isSimulated: Boolean = false): String {
+    val price = period?.takeUnless { isSimulated }?.let { offers.offer(it) }
         ?.let { if (it.period == BillingPeriod.ANNUAL) "${it.formattedPrice}/year" else "${it.formattedPrice}/month" }
     return when (status) {
-        ProStatus.FREE -> ""
+        // Server-granted Pro has no subscription behind it.
+        ProStatus.FREE -> "Early access, nothing to manage."
         ProStatus.TRIAL -> buildString {
-            append("Free month ends ${trialEndsOn?.asZenDate() ?: "soon"}")
+            append("Free trial ends ${trialEndsOn?.asZenDate() ?: "soon"}")
             if (price != null) append(", then $price")
             append(".")
         }
-        ProStatus.ACTIVE -> buildString {
+        ProStatus.ACTIVE -> if (isSimulated) "Early access. Nothing is charged." else buildString {
             append("Renews ${renewsOn?.asZenDate() ?: "automatically"}")
             if (price != null) append(" · $price")
             append(".")
@@ -177,6 +238,8 @@ fun ZenProScreen(
     isPro: Boolean = entitlement.isPro,
     offers: List<PlanOffer>,
     isWorking: Boolean,
+    /** No store behind the provider: checkout unlocks Pro without charging, and says so. */
+    isSimulated: Boolean = false,
     errorMessage: String?,
     onBackClick: () -> Unit,
     onPurchase: (BillingPeriod) -> Unit,
@@ -186,40 +249,53 @@ fun ZenProScreen(
     val colors = ZenTheme.colors
     val feedback = rememberZenFeedback()
     LaunchedEffect(errorMessage) { if (errorMessage != null) feedback.error() }
+    // The plan page manages its own scroll + a pinned price/CTA footer, so the price and the
+    // button that spends money are never more than one screen-height apart from whatever a
+    // shopper is reading. Manage/granted pages are short and don't need that.
+    val onPlanPage = !entitlement.isPro && !isPro
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.bgPrimary)
             .statusBarsPadding()
-            .navigationBarsPadding()
+            .then(if (onPlanPage) Modifier else Modifier.navigationBarsPadding())
     ) {
         ProTopBar(
             title = if (isPro) "Manage Pro" else "ZenMode Pro",
             onBackClick = onBackClick
         )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Spacing.screenMargin)
-                .padding(top = 4.rdp, bottom = 40.rdp),
-            verticalArrangement = Arrangement.spacedBy(24.rdp)
-        ) {
-            when {
+        if (onPlanPage) {
+            PlanPage(
+                offers = offers,
+                isWorking = isWorking,
+                isSimulated = isSimulated,
+                errorMessage = errorMessage,
+                onPurchase = onPurchase,
+                modifier = Modifier.weight(1f)
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Spacing.screenMargin)
+                    .padding(top = 4.rdp, bottom = 40.rdp),
+                verticalArrangement = Arrangement.spacedBy(24.rdp)
+            ) {
                 // A real subscription (trial/active/ending) has billing to manage.
-                entitlement.isPro -> ManagePro(entitlement, offers, isWorking, onCancel, onResume)
+                if (entitlement.isPro) ManagePro(entitlement, offers, isWorking, isSimulated, onCancel, onResume)
                 // Server-granted only: they're Pro, but there's no subscription behind it.
-                isPro -> GrantedPro(entitlement)
-                else -> PlanPage(offers, isWorking, onPurchase)
-            }
-            if (errorMessage != null) {
-                Text(
-                    text = errorMessage,
-                    fontFamily = Geist,
-                    fontSize = 14.rsp,
-                    lineHeight = 20.rsp,
-                    color = colors.accentDeduct
-                )
+                else GrantedPro(entitlement)
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        fontFamily = Geist,
+                        fontSize = 14.rsp,
+                        lineHeight = 20.rsp,
+                        color = colors.accentDeduct
+                    )
+                }
             }
         }
     }
@@ -266,23 +342,116 @@ internal fun ProTopBar(title: String, onBackClick: () -> Unit) {
 private fun PlanPage(
     offers: List<PlanOffer>,
     isWorking: Boolean,
-    onPurchase: (BillingPeriod) -> Unit
+    isSimulated: Boolean,
+    errorMessage: String?,
+    onPurchase: (BillingPeriod) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val colors = ZenTheme.colors
     var picked by rememberSaveable { mutableStateOf(BillingPeriod.ANNUAL) }
     var confirming by remember { mutableStateOf(false) }
+    // The sheet stays up through the store round trip, showing its working state, and closes
+    // itself once that settles: success hands over to the welcome, a failure shows in the footer.
+    var submitted by remember { mutableStateOf(false) }
+    LaunchedEffect(isWorking) {
+        if (!isWorking && submitted) {
+            submitted = false
+            confirming = false
+        }
+    }
     val annual = offers.offer(BillingPeriod.ANNUAL)
     val monthly = offers.offer(BillingPeriod.MONTHLY)
     val chosen = offers.offer(picked)
-    val trial = (chosen?.freeTrialDays ?: 0) > 0
 
-    Column(
-        modifier = Modifier.staggeredEntrance(0),
-        verticalArrangement = Arrangement.spacedBy(12.rdp)
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Spacing.screenMargin)
+                .padding(top = 4.rdp, bottom = 16.rdp),
+            verticalArrangement = Arrangement.spacedBy(24.rdp)
+        ) {
+            HeroSection(Modifier.staggeredEntrance(0))
+            TierSummaryRow(annual, Modifier.staggeredEntrance(1))
+
+            Column(
+                modifier = Modifier.selectableGroup().staggeredEntrance(2),
+                verticalArrangement = Arrangement.spacedBy(8.rdp)
+            ) {
+                ZenEyebrow("Pick a plan")
+                if (annual != null) {
+                    PlanOption(
+                        title = "Annual",
+                        originalPrice = annual.originalPrice?.let { "$it/year" },
+                        price = "${annual.formattedPrice}/year",
+                        detail = "${annual.formattedPerMonth} a month, billed annually." +
+                            if (annual.freeTrialDays > 0) " First month free." else "",
+                        selected = picked == BillingPeriod.ANNUAL,
+                        badge = annual.discountPercent()?.let { "$it% off" },
+                        onSelect = { picked = BillingPeriod.ANNUAL }
+                    )
+                }
+                if (monthly != null) {
+                    PlanOption(
+                        title = "Monthly",
+                        price = "${monthly.formattedPrice}/month",
+                        detail = "≈ ${monthly.formattedYearTotal}/year — flexible billing, cancel anytime." +
+                            if (monthly.freeTrialDays > 0) " ${monthly.freeTrialDays}-day free trial." else "",
+                        selected = picked == BillingPeriod.MONTHLY,
+                        onSelect = { picked = BillingPeriod.MONTHLY }
+                    )
+                }
+                if (offers.isEmpty()) {
+                    Text(
+                        text = "Loading prices from Google Play…",
+                        fontFamily = Geist,
+                        fontSize = 14.rsp,
+                        color = ZenTheme.colors.textSecondary
+                    )
+                }
+            }
+
+            FeatureComparisonTable(Modifier.staggeredEntrance(3))
+            ComingSoonSection(Modifier.staggeredEntrance(4))
+            TrustSection(Modifier.staggeredEntrance(5))
+        }
+
+        // A plain sibling below the scroll area, not an overlay — the price and the button
+        // that spends money get their own space, never sharing a screen region with content
+        // that hasn't scrolled away yet.
+        PlanFooter(
+            chosen = chosen,
+            isWorking = isWorking,
+            isSimulated = isSimulated,
+            errorMessage = errorMessage,
+            onSubscribe = { confirming = true },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+
+    if (confirming && chosen != null) {
+        ConfirmSheet(
+            offer = chosen,
+            isWorking = isWorking,
+            isSimulated = isSimulated,
+            onConfirm = {
+                submitted = true
+                onPurchase(chosen.period)
+            },
+            // Mid-transaction the sheet can't be swiped away from under the result.
+            onDismiss = { if (!isWorking) confirming = false }
+        )
+    }
+}
+
+@Composable
+private fun HeroSection(modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.rdp)) {
         OsRule(Modifier.width(48.rdp))
         Text(
-            text = "Two of us built this. Pro is how it keeps going.",
+            text = "Welcome in. A generous free plan to find your Zen.",
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 28.rsp,
@@ -290,133 +459,84 @@ private fun PlanPage(
             color = colors.textPrimary
         )
         Text(
-            text = "Kamal designs it, Srinivas writes the code. Pro pays the server bill, so the app never has to sell your attention to anyone else. The whole loop is free, forever. Pro adds range.",
+            text = "Free, forever — no ads, ever. We hold your data to a stricter ethic than most apps bother with. Pro simply takes it one step further.",
             fontFamily = Geist,
             fontSize = 15.rsp,
             lineHeight = 22.rsp,
             color = colors.textSecondary
         )
     }
+}
 
+@Composable
+private fun TierSummaryRow(annual: PlanOffer?, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).staggeredEntrance(1),
+        modifier = modifier.fillMaxWidth().height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(10.rdp)
     ) {
         TierColumn(
             label = "Free",
             amount = annual?.formattedPrice?.let { zeroLike(it) } ?: "Free",
             caption = "Forever",
-            items = FreeIncludes,
+            items = FreeHighlights,
             highlighted = false,
+            icon = { TierGlyphBadge(pro = false, modifier = Modifier.padding(bottom = 6.rdp)) },
             modifier = Modifier.weight(1f).fillMaxHeight()
         )
         TierColumn(
             label = "Pro",
             amount = annual?.formattedPrice ?: "…",
+            originalAmount = annual?.originalPrice,
             caption = "Per year",
-            items = ProAdds,
+            items = ProHighlights,
             highlighted = true,
+            badge = if (annual?.originalPrice != null) "Launching price" else null,
+            icon = { TierGlyphBadge(pro = true, modifier = Modifier.padding(bottom = 6.rdp)) },
             modifier = Modifier.weight(1f).fillMaxHeight()
         )
     }
+}
 
-    Column(
-        modifier = Modifier.selectableGroup().staggeredEntrance(2),
-        verticalArrangement = Arrangement.spacedBy(8.rdp)
+/** A small leading mark on each tier card: an open ring for Free (the loop that stays free),
+ * a sparkle for Pro (the reward accent already used on badges elsewhere on this page). */
+@Composable
+private fun TierGlyphBadge(pro: Boolean, modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    val bg = if (pro) colors.rewardSurface else colors.surfaceTint
+    val fg = if (pro) colors.accentReward else colors.textBrand
+    Box(
+        modifier = modifier.size(30.rdp).clip(CircleShape).background(bg),
+        contentAlignment = Alignment.Center
     ) {
-        ZenEyebrow("Pick a plan")
-        if (annual != null) {
-            PlanOption(
-                title = "Annual",
-                price = "${annual.formattedPrice}/year",
-                detail = "${annual.formattedPerMonth} a month, billed once a year." +
-                    if (annual.freeTrialDays > 0) " First month free." else "",
-                selected = picked == BillingPeriod.ANNUAL,
-                onSelect = { picked = BillingPeriod.ANNUAL }
-            )
-        }
-        if (monthly != null) {
-            PlanOption(
-                title = "Monthly",
-                price = "${monthly.formattedPrice}/month",
-                detail = "${monthly.formattedYearTotal} over a year." +
-                    if (monthly.freeTrialDays == 0) " No trial." else "",
-                selected = picked == BillingPeriod.MONTHLY,
-                onSelect = { picked = BillingPeriod.MONTHLY }
-            )
-        }
-        if (offers.isEmpty()) {
-            Text(
-                text = "Loading prices from Google Play…",
-                fontFamily = Geist,
-                fontSize = 14.rsp,
-                color = colors.textSecondary
-            )
-        }
+        if (pro) SparkGlyph(fg, Modifier.size(15.rdp)) else RingGlyph(fg, Modifier.size(15.rdp))
     }
+}
 
-    Column(
-        modifier = Modifier.staggeredEntrance(3),
-        verticalArrangement = Arrangement.spacedBy(10.rdp)
-    ) {
-        if (chosen != null) {
-            // The line under the button re-states the price whenever the plan changes; it
-            // rolls rather than cuts so the eye catches that it changed.
-            AnimatedContent(
-                targetState = chosen.priceLine(),
-                transitionSpec = {
-                    (fadeIn(ZenMotion.arrive()) + slideInVertically(ZenMotion.arrive()) { it / 2 })
-                        .togetherWith(fadeOut(ZenMotion.leave()) + slideOutVertically(ZenMotion.leave()) { -it / 2 })
-                },
-                label = "priceLine"
-            ) { line -> PriceLine(line) }
-        }
-        ZenButton(
-            text = if (trial) "Start the free month" else "Subscribe",
-            onClick = { confirming = true },
-            enabled = chosen != null && !isWorking
-        )
-        Text(
-            text = "Cancelling takes the same two taps as starting.",
-            fontFamily = Geist,
-            fontSize = 13.rsp,
-            color = colors.textMuted,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
+/** An open ring — the whole loop, still free. */
+@Composable
+private fun RingGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        drawCircle(color = color, radius = size.minDimension / 2f, style = Stroke(width = size.minDimension * 0.16f))
     }
+}
 
-    Column(
-        modifier = Modifier.fillMaxWidth().staggeredEntrance(4),
-        verticalArrangement = Arrangement.spacedBy(8.rdp)
-    ) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
-        Spacer(Modifier.height(8.rdp))
-        ZenEyebrow("What Pro never does")
-        listOf(
-            "Your Zen Score is never a sales lever.",
-            "No upsell on a low day.",
-            "Nothing interrupts a declared session. Not even this.",
-            "Pro is paid for with money, not attention."
-        ).forEach { rule ->
-            Row {
-                Text("×", fontFamily = DepartureMono, fontSize = 14.rsp, color = colors.textMuted)
-                Spacer(Modifier.width(10.rdp))
-                Text(rule, fontFamily = Geist, fontSize = 14.rsp, lineHeight = 20.rsp, color = colors.textSecondary)
-            }
+/** A four-point sparkle — the reward mark, filled rather than stroked. */
+@Composable
+private fun SparkGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val cx = w / 2f
+        val cy = h / 2f
+        val path = Path().apply {
+            moveTo(cx, 0f)
+            quadraticTo(cx + w * 0.09f, cy - h * 0.09f, w, cy)
+            quadraticTo(cx + w * 0.09f, cy + h * 0.09f, cx, h)
+            quadraticTo(cx - w * 0.09f, cy + h * 0.09f, 0f, cy)
+            quadraticTo(cx - w * 0.09f, cy - h * 0.09f, cx, 0f)
+            close()
         }
-    }
-
-    if (confirming && chosen != null) {
-        ConfirmSheet(
-            offer = chosen,
-            isWorking = isWorking,
-            onConfirm = {
-                confirming = false
-                onPurchase(chosen.period)
-            },
-            onDismiss = { confirming = false }
-        )
+        drawPath(path, color = color)
     }
 }
 
@@ -426,11 +546,21 @@ private fun zeroLike(formatted: String): String {
     return "${prefix}0"
 }
 
-private fun PlanOffer.priceLine(): String = when {
-    period == BillingPeriod.ANNUAL && freeTrialDays > 0 ->
-        "$formattedPrice/year, free for the first month. You'll get a reminder before it charges."
-    period == BillingPeriod.ANNUAL -> "$formattedPrice/year, charged today."
-    else -> "$formattedPrice/month, charged today. $formattedYearTotal over a year."
+private fun PlanOffer.priceLine(): String {
+    val unit = if (period == BillingPeriod.ANNUAL) "year" else "month"
+    return when {
+        freeTrialDays >= 28 -> "$formattedPrice/$unit, free for the first month. You'll get a reminder before it charges."
+        freeTrialDays > 0 -> "$formattedPrice/$unit, free for $freeTrialDays days. You'll get a reminder before it charges."
+        period == BillingPeriod.ANNUAL -> "$formattedPrice/year, charged today."
+        else -> "$formattedPrice/month, charged today. $formattedYearTotal over a year."
+    }
+}
+
+/** "Annual · ₹699/year, 30-day trial" — the plan's facts with no claim about charging. */
+private fun PlanOffer.planLine(): String {
+    val unit = if (period == BillingPeriod.ANNUAL) "year" else "month"
+    val name = if (period == BillingPeriod.ANNUAL) "Annual" else "Monthly"
+    return "$name · $formattedPrice/$unit" + if (freeTrialDays > 0) ", $freeTrialDays-day trial" else ""
 }
 
 @Composable
@@ -446,6 +576,25 @@ private fun PriceLine(text: String) {
     )
 }
 
+/** Small reward-toned pill: "Save 22%", "Launching price" — always a real, store-derived claim. */
+@Composable
+private fun RewardBadge(text: String, modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    val shape = RoundedCornerShape(6.rdp)
+    Text(
+        text = text.uppercase(),
+        fontFamily = DepartureMono,
+        fontSize = 10.rsp,
+        letterSpacing = 0.5.sp,
+        color = colors.accentReward,
+        modifier = modifier
+            .clip(shape)
+            .background(colors.rewardSurface)
+            .border(1.dp, colors.rewardSurfaceLine, shape)
+            .padding(horizontal = 6.rdp, vertical = 2.rdp)
+    )
+}
+
 @Composable
 private fun TierColumn(
     label: String,
@@ -453,7 +602,10 @@ private fun TierColumn(
     caption: String,
     items: List<String>,
     highlighted: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    originalAmount: String? = null,
+    badge: String? = null,
+    icon: @Composable (() -> Unit)? = null
 ) {
     val colors = ZenTheme.colors
     val shape = RoundedCornerShape(20.rdp)
@@ -467,8 +619,24 @@ private fun TierColumn(
         verticalArrangement = Arrangement.spacedBy(6.rdp)
     ) {
         if (highlighted) OsRule(Modifier.padding(bottom = 4.rdp))
-        ZenEyebrow(label, color = if (highlighted) colors.textBrand else colors.textSecondary)
-        Text(amount, fontFamily = DepartureMono, fontSize = 24.rsp, lineHeight = 28.rsp, color = colors.textPrimary)
+        icon?.invoke()
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ZenEyebrow(label, color = if (highlighted) colors.textBrand else colors.textSecondary, modifier = Modifier.weight(1f))
+            if (badge != null) RewardBadge(badge)
+        }
+        Row(verticalAlignment = Alignment.Bottom) {
+            if (originalAmount != null) {
+                Text(
+                    originalAmount,
+                    fontFamily = DepartureMono,
+                    fontSize = 15.rsp,
+                    color = colors.textMuted,
+                    textDecoration = TextDecoration.LineThrough,
+                    modifier = Modifier.padding(end = 6.rdp, bottom = 3.rdp)
+                )
+            }
+            Text(amount, fontFamily = DepartureMono, fontSize = 24.rsp, lineHeight = 28.rsp, color = colors.textPrimary)
+        }
         Text(caption.uppercase(), style = ZenTypography.monoLabel, color = colors.textMuted)
         Spacer(Modifier.height(2.rdp))
         items.forEach { item ->
@@ -489,7 +657,9 @@ private fun PlanOption(
     price: String,
     detail: String,
     selected: Boolean,
-    onSelect: () -> Unit
+    onSelect: () -> Unit,
+    originalPrice: String? = null,
+    badge: String? = null
 ) {
     val colors = ZenTheme.colors
     val shape = RoundedCornerShape(16.rdp)
@@ -541,6 +711,20 @@ private fun PlanOption(
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(title, fontFamily = Geist, fontWeight = FontWeight.SemiBold, fontSize = 16.rsp, color = colors.textPrimary, modifier = Modifier.weight(1f))
+                if (badge != null) {
+                    RewardBadge(badge)
+                    Spacer(Modifier.width(6.rdp))
+                }
+                if (originalPrice != null) {
+                    Text(
+                        originalPrice,
+                        fontFamily = DepartureMono,
+                        fontSize = 12.rsp,
+                        color = colors.textMuted,
+                        textDecoration = TextDecoration.LineThrough,
+                        modifier = Modifier.padding(end = 4.rdp)
+                    )
+                }
                 Text(price, fontFamily = DepartureMono, fontSize = 14.rsp, color = colors.textPrimary)
             }
             Text(detail, fontFamily = Geist, fontSize = 13.rsp, lineHeight = 18.rsp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.rdp))
@@ -548,37 +732,293 @@ private fun PlanOption(
     }
 }
 
+/** The row-by-row diff. The Pro column carries a soft, continuous tint so the eye reads the
+ * whole right-hand side as "what you get," not fourteen separate rows. */
+@Composable
+private fun FeatureComparisonTable(modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    Column(
+        modifier = modifier.fillMaxWidth().zenCard(),
+        verticalArrangement = Arrangement.spacedBy(0.rdp)
+    ) {
+        ZenEyebrow("Compare every feature", modifier = Modifier.padding(start = 14.rdp, end = 14.rdp, top = 14.rdp, bottom = 10.rdp))
+        Row(Modifier.fillMaxWidth().padding(start = 14.rdp, end = 14.rdp, bottom = 8.rdp)) {
+            Spacer(Modifier.weight(1.3f))
+            Text(
+                text = "FREE",
+                style = ZenTypography.monoLabel,
+                color = colors.textSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "PRO",
+                style = ZenTypography.monoLabel,
+                color = colors.textBrand,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
+        CompareRows.forEachIndexed { index, row ->
+            CompareRowView(row)
+            if (index != CompareRows.lastIndex) {
+                Box(
+                    Modifier.fillMaxWidth().height(1.dp)
+                        .padding(start = 14.rdp)
+                        .background(colors.borderHairlineSoft)
+                )
+            }
+        }
+        Spacer(Modifier.height(6.rdp))
+    }
+}
+
+@Composable
+private fun CompareRowView(row: CompareRow, modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    Row(
+        modifier = modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = row.label,
+            fontFamily = Geist,
+            fontSize = 13.rsp,
+            lineHeight = 17.rsp,
+            color = colors.textSecondary,
+            modifier = Modifier.weight(1.3f).padding(top = 10.rdp, bottom = 10.rdp, start = 14.rdp, end = 6.rdp)
+        )
+        CompareCellView(row.free, tinted = false, modifier = Modifier.weight(1f).fillMaxHeight())
+        CompareCellView(row.pro, tinted = true, modifier = Modifier.weight(1f).fillMaxHeight())
+    }
+}
+
+@Composable
+private fun CompareCellView(cell: CompareCell, tinted: Boolean, modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    Box(
+        modifier = modifier
+            .then(if (tinted) Modifier.background(colors.surfaceTint.copy(alpha = 0.30f)) else Modifier)
+            .padding(vertical = 10.rdp, horizontal = 6.rdp),
+        contentAlignment = Alignment.Center
+    ) {
+        when (cell.included) {
+            true -> CheckBadge(tinted)
+            false -> DashBadge()
+            null -> Text(
+                text = cell.text.orEmpty(),
+                fontFamily = Geist,
+                fontWeight = if (tinted) FontWeight.Medium else FontWeight.Normal,
+                fontSize = 12.rsp,
+                lineHeight = 15.rsp,
+                textAlign = TextAlign.Center,
+                color = if (tinted) colors.textOnTint else colors.textSecondary
+            )
+        }
+    }
+}
+
+@Composable
+private fun CheckBadge(tinted: Boolean) {
+    val colors = ZenTheme.colors
+    Box(
+        modifier = Modifier.size(16.rdp).clip(CircleShape).background(if (tinted) colors.textBrand else colors.surfaceTint),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("✓", fontSize = 9.rsp, color = if (tinted) colors.textOnBrand else colors.textOnTint)
+    }
+}
+
+@Composable
+private fun DashBadge() {
+    val colors = ZenTheme.colors
+    Box(
+        modifier = Modifier.size(16.rdp).clip(CircleShape).border(1.dp, colors.borderOutline, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("–", fontSize = 10.rsp, color = colors.textMuted)
+    }
+}
+
+@Composable
+private fun ComingSoonSection(modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.rdp)) {
+        ZenEyebrow("Coming soon, for Pro")
+        ComingSoon.chunked(2).forEach { pair ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.rdp)) {
+                pair.forEach { item -> ComingSoonChip(item, Modifier.weight(1f)) }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+/** Dashed, not solid — visually marks these as the roadmap, not a shipped feature. */
+@Composable
+private fun ComingSoonChip(text: String, modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    val radius = 12.rdp
+    Box(
+        modifier = modifier
+            .drawBehind {
+                val stroke = Stroke(width = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(7f, 6f), 0f))
+                drawRoundRect(color = colors.borderOutline, style = stroke, cornerRadius = CornerRadius(radius.toPx()))
+            }
+            .padding(horizontal = 12.rdp, vertical = 10.rdp)
+    ) {
+        Text(text, fontFamily = Geist, fontSize = 12.rsp, lineHeight = 16.rsp, color = colors.textSecondary)
+    }
+}
+
+@Composable
+private fun TrustSection(modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.rdp)
+    ) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
+        Spacer(Modifier.height(8.rdp))
+        ZenEyebrow("What Pro never does")
+        listOf(
+            "Your Zen Score is never a sales lever.",
+            "No upsell on a low day.",
+            "Nothing interrupts a declared session. Not even this.",
+            "Pro is paid for with money, not attention."
+        ).forEach { rule ->
+            Row {
+                Text("×", fontFamily = DepartureMono, fontSize = 14.rsp, color = colors.textMuted)
+                Spacer(Modifier.width(10.rdp))
+                Text(rule, fontFamily = Geist, fontSize = 14.rsp, lineHeight = 20.rsp, color = colors.textSecondary)
+            }
+        }
+    }
+}
+
+/**
+ * Pinned above the nav bar, always showing the price of whatever plan is picked above and the
+ * one button that spends money — so neither is ever more than a glance away, however far the
+ * comparison table has been scrolled.
+ */
+@Composable
+private fun PlanFooter(
+    chosen: PlanOffer?,
+    isWorking: Boolean,
+    isSimulated: Boolean,
+    errorMessage: String?,
+    onSubscribe: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = ZenTheme.colors
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(colors.bgPrimary)
+            .drawBehind {
+                drawLine(
+                    color = colors.borderSubtle,
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+            .padding(horizontal = Spacing.screenMargin)
+            .padding(top = 14.rdp, bottom = 10.rdp)
+            .navigationBarsPadding(),
+        verticalArrangement = Arrangement.spacedBy(8.rdp)
+    ) {
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                fontFamily = Geist,
+                fontSize = 13.rsp,
+                lineHeight = 18.rsp,
+                color = colors.accentDeduct
+            )
+        }
+        if (chosen != null) {
+            // The line above the button re-states the price whenever the plan changes; it
+            // rolls rather than cuts so the eye catches that it changed.
+            AnimatedContent(
+                // Early access charges nothing, so it states the plan, not a billing schedule.
+                targetState = if (isSimulated) chosen.planLine() else chosen.priceLine(),
+                transitionSpec = {
+                    (fadeIn(ZenMotion.arrive()) + slideInVertically(ZenMotion.arrive()) { it / 2 })
+                        .togetherWith(fadeOut(ZenMotion.leave()) + slideOutVertically(ZenMotion.leave()) { -it / 2 })
+                },
+                label = "footerPriceLine"
+            ) { line -> PriceLine(line) }
+        }
+        ZenButton(
+            text = if (isSimulated) "Unlock Pro" else chosen?.startLabel() ?: "Subscribe",
+            onClick = onSubscribe,
+            enabled = chosen != null && !isWorking
+        )
+        Text(
+            text = if (isSimulated) "Early access: Pro unlocks on this device and nothing is charged."
+            else "Cancelling takes the same two taps as starting.",
+            fontFamily = Geist,
+            fontSize = 12.rsp,
+            color = colors.textMuted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
 @Composable
 private fun ConfirmSheet(
     offer: PlanOffer,
     isWorking: Boolean,
+    isSimulated: Boolean,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val trial = offer.period == BillingPeriod.ANNUAL && offer.freeTrialDays > 0
+    val trial = offer.freeTrialDays > 0
+    val trialPhrase = if (offer.freeTrialDays >= 28) "a month" else "${offer.freeTrialDays} days"
     val unit = if (offer.period == BillingPeriod.ANNUAL) "year" else "month"
     ZenSheet(onDismiss = onDismiss) {
-        ZenEyebrow("Confirm")
-        ZenSheetTitle(
-            if (trial) "Free for a month, then ${offer.formattedPrice}/$unit"
-            else "${offer.formattedPrice}/$unit, starting today"
-        )
-        Column {
-            ZenReceiptLine("Today", if (trial) zeroLike(offer.formattedPrice) else offer.formattedPrice)
-            ZenReceiptLine(if (trial) "After the free month" else "Next charge", offer.formattedPrice)
-            ZenReceiptLine("Then", if (offer.period == BillingPeriod.ANNUAL) "Once a year" else "Every month", showDivider = false)
+        ZenEyebrow(if (isSimulated) "Early access" else "Confirm")
+        if (isSimulated) {
+            // No store behind this build: say plainly that nothing is charged, so the receipt
+            // below can't be read as a bill.
+            ZenSheetTitle("Pro, free during early access")
+            Column {
+                ZenReceiptLine("Plan", "${offer.formattedPrice}/$unit")
+                if (trial) ZenReceiptLine("Free trial", trialPhrase.replaceFirstChar { it.uppercase() })
+                ZenReceiptLine("Charged", "Nothing", showDivider = false)
+            }
+            ZenSheetBody(
+                "Pro unlocks on this device right away. No payment details, no charge. " +
+                    "When paid plans open we'll ask first; nothing moves to a paid plan on its own."
+            )
+        } else {
+            ZenSheetTitle(
+                if (trial) "Free for $trialPhrase, then ${offer.formattedPrice}/$unit"
+                else "${offer.formattedPrice}/$unit, starting today"
+            )
+            Column {
+                ZenReceiptLine("Today", if (trial) zeroLike(offer.formattedPrice) else offer.formattedPrice)
+                ZenReceiptLine(if (trial) "After the trial" else "Next charge", offer.formattedPrice)
+                ZenReceiptLine("Then", if (offer.period == BillingPeriod.ANNUAL) "Once a year" else "Every month", showDivider = false)
+            }
+            ZenSheetBody(
+                (if (trial) "A notice arrives before the trial ends. No silent charge. " else "") +
+                    "Cancel any time: Settings → ZenMode Pro → Cancel. Two taps, the same two as this."
+            )
+            PriceLine(offer.priceLine())
         }
-        ZenSheetBody(
-            (if (trial) "A notice arrives three days before the free month ends. No silent charge. " else "") +
-                "Cancel any time: Settings → ZenMode Pro → Cancel. Two taps, the same two as this."
-        )
-        PriceLine(offer.priceLine())
         ZenButton(
-            text = if (trial) "Start the free month" else "Subscribe",
+            text = when {
+                isWorking -> if (isSimulated) "Unlocking Pro…" else "One moment…"
+                isSimulated -> "Unlock Pro"
+                else -> offer.startLabel()
+            },
             onClick = onConfirm,
             enabled = !isWorking
         )
-        ZenButton(text = "Back", onClick = onDismiss, style = ZenButtonStyle.Ghost)
+        ZenButton(text = "Back", onClick = onDismiss, style = ZenButtonStyle.Ghost, enabled = !isWorking)
     }
 }
 
@@ -616,6 +1056,7 @@ private fun ManagePro(
     entitlement: Entitlement,
     offers: List<PlanOffer>,
     isWorking: Boolean,
+    isSimulated: Boolean,
     onCancel: () -> Unit,
     onResume: () -> Unit
 ) {
@@ -647,26 +1088,39 @@ private fun ManagePro(
             ZenReceiptLine(
                 "Status",
                 when (entitlement.status) {
-                    ProStatus.TRIAL -> "Free month"
+                    ProStatus.TRIAL -> "Free trial"
                     ProStatus.ENDING -> "Ending"
                     else -> "Active"
                 }
             )
             when (entitlement.status) {
-                ProStatus.TRIAL -> ZenReceiptLine("First charge", entitlement.trialEndsOn?.asZenDate() ?: "-")
+                ProStatus.TRIAL -> ZenReceiptLine(
+                    if (isSimulated) "Trial ends" else "First charge",
+                    entitlement.trialEndsOn?.asZenDate() ?: "-"
+                )
                 ProStatus.ENDING -> ZenReceiptLine("Pro until", entitlement.endsOn?.asZenDate() ?: "-")
                 else -> ZenReceiptLine("Renews", entitlement.renewsOn?.asZenDate() ?: "-")
             }
             ZenReceiptLine(
                 "Then",
-                if (ending) "Back to free" else offer?.let { "${it.formattedPrice} a $unit" } ?: "-",
+                when {
+                    ending -> "Back to free"
+                    isSimulated -> "No charge, early access"
+                    else -> offer?.let { "${it.formattedPrice} a $unit" } ?: "-"
+                },
                 showDivider = false
             )
         }
     }
 
     Text(
-        text = "Thank you. This is the server bill. If we ever break one of our own sales rules, it goes in the changelog.",
+        text = if (isSimulated && ending) {
+            "You're on early access, so nothing was charged. Resume any time before Pro ends."
+        } else if (isSimulated) {
+            "You're on early access: nothing is charged. When paid plans open we'll ask first, and your Pro carries on until then."
+        } else {
+            "Thank you. This is the server bill. If we ever break one of our own sales rules, it goes in the changelog."
+        },
         fontFamily = Geist,
         fontSize = 15.rsp,
         lineHeight = 22.rsp,
@@ -674,9 +1128,14 @@ private fun ManagePro(
     )
 
     if (ending) {
-        ZenButton(text = "Resume Pro", onClick = onResume, enabled = !isWorking)
+        ZenButton(text = if (isWorking) "Resuming…" else "Resume Pro", onClick = onResume, enabled = !isWorking)
     } else {
-        ZenButton(text = "Cancel Pro", onClick = { confirmCancel = true }, style = ZenButtonStyle.Outline, enabled = !isWorking)
+        ZenButton(
+            text = if (isWorking) "Cancelling…" else "Cancel Pro",
+            onClick = { confirmCancel = true },
+            style = ZenButtonStyle.Outline,
+            enabled = !isWorking
+        )
     }
 
     if (confirmCancel) {
@@ -686,7 +1145,7 @@ private fun ManagePro(
             ZenSheetTitle("Cancel Pro?")
             ZenSheetBody(
                 "Pro runs until ${until ?: "the end of this period"}, then the app goes back to free. " +
-                    "The launcher, intent, sessions, Zen Score, your daily report and one partner all stay."
+                    "The launcher, intent, sessions, Zen Score, your daily report and Zen Circle all stay."
             )
             ZenSheetBody("History past 7 days stops showing. None of it is deleted.")
             // Same weight on purpose: no retention offer, no "are you sure" chain.
@@ -748,110 +1207,4 @@ internal fun OsRule(modifier: Modifier = Modifier) {
                 )
             }
     )
-}
-
-// ── "You're Pro" ───────────────────────────────────────────────────
-
-/**
- * The one flourish in the sales path, and it comes *after* the money: a quiet bloom of the OS
- * gradient, a chord, the list of what just opened up, then back to where they were.
- */
-@Composable
-fun ProWelcome(onContinue: () -> Unit) {
-    val colors = ZenTheme.colors
-    val feedback = rememberZenFeedback()
-    val inspection = LocalInspectionMode.current
-    val bloom = remember { Animatable(if (inspection) 1f else 0f) }
-    LaunchedEffect(Unit) {
-        feedback.proUnlocked()
-        bloom.animateTo(1f, tween(1_400, easing = ZenMotion.EaseOut))
-    }
-    val ember = colorResource(R.color.ember_500)
-    val amber = colorResource(R.color.amber_500)
-    val green = colorResource(R.color.zen_300)
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.bgPrimary)
-            .drawBehind {
-                // Three soft rings of the OS gradient open out from behind the title.
-                val c = Offset(size.width / 2f, size.height * 0.34f)
-                val b = bloom.value
-                listOf(ember to 0.9f, amber to 0.65f, green to 0.42f).forEachIndexed { i, (col, reach) ->
-                    val r = size.width * reach * (0.35f + 0.65f * b)
-                    drawCircle(
-                        Brush.radialGradient(listOf(col.copy(alpha = 0.22f * b), col.copy(alpha = 0f)), c, r),
-                        radius = r,
-                        center = c
-                    )
-                    drawCircle(
-                        color = col.copy(alpha = (0.35f - i * 0.08f) * (1f - b * 0.6f)),
-                        radius = r * 0.62f,
-                        center = c,
-                        style = Stroke(width = 1.5.dp.toPx())
-                    )
-                }
-            }
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = Spacing.screenMargin),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.weight(0.9f))
-            ZenProTag(unlocked = true, modifier = Modifier.staggeredEntrance(2, stepMillis = 120))
-            Spacer(Modifier.height(16.rdp))
-            Text(
-                text = "You're Pro. Thank you.",
-                fontFamily = ClashDisplay,
-                fontWeight = FontWeight.Medium,
-                fontSize = 32.rsp,
-                lineHeight = 36.rsp,
-                color = colors.textPrimary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.staggeredEntrance(3, stepMillis = 120).semantics { heading() }
-            )
-            Spacer(Modifier.height(10.rdp))
-            Text(
-                text = "You're keeping the servers on and the app ad-free. We're grateful.",
-                fontFamily = Geist,
-                fontSize = 15.rsp,
-                lineHeight = 22.rsp,
-                color = colors.textSecondary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.staggeredEntrance(4, stepMillis = 120)
-            )
-            Spacer(Modifier.height(28.rdp))
-            Column(
-                modifier = Modifier.fillMaxWidth().zenCard().padding(16.rdp),
-                verticalArrangement = Arrangement.spacedBy(10.rdp)
-            ) {
-                // Only what works today. Features still arriving land in the changelog, not here.
-                listOf("Full history", "Weekly and monthly reports", "Home-screen themes", "Data export")
-                    .forEachIndexed { i, item ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.staggeredEntrance(6 + i, stepMillis = 90)
-                    ) {
-                        Box(
-                            Modifier.size(18.rdp).clip(CircleShape).background(colors.surfaceTint),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("✓", fontSize = 10.rsp, color = colors.textOnTint)
-                        }
-                        Spacer(Modifier.width(10.rdp))
-                        Text(item, fontFamily = Geist, fontSize = 14.rsp, color = colors.textPrimary)
-                    }
-                }
-            }
-            Spacer(Modifier.weight(1f))
-            ZenButton(
-                text = "Back to ZenMode",
-                onClick = onContinue,
-                modifier = Modifier.padding(bottom = 16.rdp).staggeredEntrance(12, stepMillis = 90)
-            )
-        }
-    }
 }

@@ -105,6 +105,8 @@ fun SettingsScreen(
     profilePhotoUrl: String? = null,
     displayName: String? = null,
     isProAvailable: Boolean = false,
+    /** Pro is unlocked without charging (early access): no upcoming prices are quoted. */
+    isProSimulated: Boolean = false,
     entitlement: Entitlement = Entitlement.Free,
     /** From [com.zenlauncher.zenmode.ProAccess], the same answer every other screen gets. */
     isPro: Boolean = entitlement.isPro,
@@ -189,6 +191,7 @@ fun SettingsScreen(
                 if (isProAvailable) {
                     PlanCard(
                         entitlement = entitlement,
+                        isSimulated = isProSimulated,
                         isPro = isPro,
                         offers = offers,
                         onClick = { onOpenPro(if (isPro) ProEntry.MANAGE else ProEntry.PLAN_CARD) }
@@ -460,7 +463,13 @@ private fun SettingsTopBar(
 // ── Plan card ──────────────────────────────────────────────────────
 
 @Composable
-private fun PlanCard(entitlement: Entitlement, isPro: Boolean, offers: List<PlanOffer>, onClick: () -> Unit) {
+private fun PlanCard(
+    entitlement: Entitlement,
+    isSimulated: Boolean,
+    isPro: Boolean,
+    offers: List<PlanOffer>,
+    onClick: () -> Unit
+) {
     val colors = ZenTheme.colors
     Column(
         modifier = Modifier
@@ -503,7 +512,7 @@ private fun PlanCard(entitlement: Entitlement, isPro: Boolean, offers: List<Plan
         )
         if (isPro) {
             Text(
-                text = entitlement.statusLine(offers),
+                text = entitlement.statusLine(offers, isSimulated),
                 fontFamily = Geist,
                 fontSize = 14.rsp,
                 lineHeight = 20.rsp,
@@ -520,6 +529,14 @@ private fun PlanCard(entitlement: Entitlement, isPro: Boolean, offers: List<Plan
             // The price sits in the row, not behind the tap.
             offers.priceSummary()?.let { price ->
                 Text(text = price, fontFamily = DepartureMono, fontSize = 14.rsp, color = colors.textPrimary)
+            }
+            if (isSimulated) {
+                Text(
+                    text = "Free during early access. Nothing is charged.",
+                    fontFamily = Geist,
+                    fontSize = 13.rsp,
+                    color = colors.textBrand
+                )
             }
         }
         HorizontalDivider(thickness = 1.dp, color = colors.borderSubtle, modifier = Modifier.padding(top = 4.rdp))
@@ -733,6 +750,11 @@ private fun ProFeature.gateCopy(): Triple<String, String, String> = when (this) 
         "Supporters list",
         "The app is the same either way.",
         "Pro puts your name, if you want it there, in the list of people who keep it running."
+    )
+    ProFeature.PROMISE_EDIT_FLEXIBILITY -> Triple(
+        "Edit my promise",
+        "Free edits the promise once a week, on Sundays.",
+        "Pro edits twice a week, any day."
     )
 }
 

@@ -99,6 +99,48 @@ def glide(f0, f1, seconds, amp=0.3):
     return out
 
 
+def wind(seconds, amp=0.22, gusts=3):
+    """Air through leaves: brown-ish noise under a band that breathes in slow gusts, with a
+    thin layer of high rustle on top so it reads as a wood, not as a hiss."""
+    n = int(RATE * seconds)
+    out, low, band, band_prev, high = [], 0.0, 0.0, 0.0, 0.0
+    for i in range(n):
+        p = i / n
+        # Overlapping sines make gusts that swell and fall without ever landing on a beat.
+        gust = 0.55 + 0.45 * sum(math.sin(2 * math.pi * (g + 1) * 0.37 * p * gusts + g)
+                                 for g in range(3)) / 3
+        noise = random.uniform(-1, 1)
+        low += 0.08 * (noise - low)
+        band = 0.94 * (band + low - band_prev)
+        band_prev = low
+        high += 0.5 * (noise - high)
+        rustle = (noise - high) * 0.18 * max(0.0, gust - 0.6)
+        shape = math.sin(math.pi * min(1.0, p * 3.2)) if p < 0.3 else math.sin(math.pi * p) ** 0.35
+        out.append(amp * (band * 2.4 + rustle) * gust * shape)
+    return out
+
+
+def bird(base, seconds, amp=0.18, chirps=3, gap=0.085, rise=True):
+    """A call from the treeline: two or three short whistles, each a quick pitch sweep with a
+    touch of vibrato. Far enough away to be quiet and a little breathy."""
+    layers = []
+    for c in range(chirps):
+        length = seconds / (chirps + 1)
+        f0 = base * (1.0 + 0.06 * c)
+        f1 = f0 * (1.45 if rise else 0.68)
+        n = int(RATE * length)
+        samples, phase = [], 0.0
+        for i in range(n):
+            t = i / n
+            f = f0 * (f1 / f0) ** t * (1 + 0.012 * math.sin(2 * math.pi * 22 * i / RATE))
+            phase += 2 * math.pi * f / RATE
+            body = math.sin(phase) + 0.18 * math.sin(2 * phase)
+            shape = math.sin(math.pi * t) ** 1.3
+            samples.append(amp * body * shape)
+        layers.append((c * (length + gap), samples))
+    return mix(*layers)
+
+
 def mix(*layers):
     """Overlay (offset_seconds, samples) layers."""
     length = max(int(RATE * off) + len(s) for off, s in layers)
@@ -189,6 +231,19 @@ def main():
         (0.55, bell(note("E5"), 1.2, amp=0.25, decay=3.4)),
         (0.05, whoosh(1.1, rising=True, amp=0.12)),
     ), peak=0.55)
+
+    # Pro welcome: the clearing. Wind through a wood with two birds far off in it, over a low
+    # open fifth so it still belongs to the same key as everything else. The only ambience in
+    # the app, and it plays on exactly one screen - it sits *under* sfx_pro_unlock, which
+    # lands first and does the actual confirming.
+    write("sfx_forest_dawn", mix(
+        (0.00, wind(3.6, amp=0.26)),
+        (0.05, bell(note("C3"), 2.8, amp=0.22, decay=2.2, partials=((1, 1.0), (2.0, 0.12)))),
+        (0.05, bell(note("G3"), 2.8, amp=0.14, decay=2.2, partials=((1, 1.0), (2.0, 0.10)))),
+        (0.55, bird(note("A6"), 0.40, amp=0.16, chirps=3)),
+        (1.45, bird(note("E6"), 0.44, amp=0.10, chirps=2, rise=False)),
+        (2.40, bird(note("B6"), 0.30, amp=0.08, chirps=2)),
+    ), peak=0.5)
 
 
 if __name__ == "__main__":
