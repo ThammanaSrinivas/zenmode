@@ -105,6 +105,11 @@ object ThemePreferences {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit().clear().apply()
         modeFlow?.value = ThemeMode.SYSTEM
+        // Reapply to AppCompat too: otherwise a prior explicit Dark/Light choice stays forced on
+        // the process, so the next Activity's Configuration (and everything reading it via
+        // colorResource, e.g. the onboarding promise card) disagrees with ZenTheme's now-SYSTEM
+        // colors, which resolve straight from the real system setting instead.
+        applyStoredTheme(context)
         HomeThemePreferences.reload(context)
         ZenSound.reload(context)
     }
