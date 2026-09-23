@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,6 +10,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.graphics.graphicsLayer
+import com.zenlauncher.zenmode.ZenSound
+import com.zenlauncher.zenmode.Sfx
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -97,6 +106,7 @@ fun ZenGoldScreen(
     forecastPercent: Int = AppConstants.PLACEHOLDER_FORECAST_PERCENT,
     forecastMonthlyAmount: Int = AppConstants.PLACEHOLDER_FORECAST_MONTHLY_AMOUNT,
     investGoldUnlocked: Boolean = AppConstants.PLACEHOLDER_INVEST_GOLD_UNLOCKED,
+    isPro: Boolean = false,
     onBackClick: () -> Unit,
     /** Tapping the Zen Score dot jumps straight there, same destination Home's right swipe reaches. */
     onZenScoreClick: () -> Unit = {},
@@ -139,7 +149,8 @@ fun ZenGoldScreen(
                     daysUntilUnlock = daysUntilUnlock,
                     daysLeftThisWeek = daysLeftThisWeek,
                     unlocked = investGoldUnlocked,
-                    daysClearedUnder = daysClearedUnder
+                    daysClearedUnder = daysClearedUnder,
+                    isPro = isPro
                 )
 
                 ForecastCard(
@@ -253,7 +264,8 @@ private fun ScreenTimeCard(
     daysUntilUnlock: Int,
     daysLeftThisWeek: Int,
     unlocked: Boolean,
-    daysClearedUnder: Int
+    daysClearedUnder: Int,
+    isPro: Boolean
 ) {
     val colors = ZenTheme.colors
     val rule = colorResource(R.color.zen_700)
@@ -288,7 +300,7 @@ private fun ScreenTimeCard(
                     letterSpacing = (-0.16).sp,
                     color = colors.textPrimary
                 )
-                WeeklyMonthlyToggle()
+                WeeklyMonthlyToggle(isPro = isPro)
             }
 
             Spacer(modifier = Modifier.height(10.rdp))
@@ -455,7 +467,13 @@ private fun WeeklyPromiseLegendRow(color: Color, label: String) {
 }
 
 @Composable
-private fun WeeklyMonthlyToggle() {
+private fun WeeklyMonthlyToggle(isPro: Boolean) {
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    val wiggle = remember { androidx.compose.animation.core.Animatable(0f) }
+    var isMonthly by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(percent = 50))
@@ -466,25 +484,47 @@ private fun WeeklyMonthlyToggle() {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(percent = 50))
-                .background(Color.White)
-                .border(0.5.dp, colorResource(R.color.toggle_pill_border), RoundedCornerShape(percent = 50))
-                .padding(horizontal = 8.rdp, vertical = 3.rdp)
+                .background(if (!isMonthly) Color.White else Color.Transparent)
+                .then(if (!isMonthly) Modifier.border(0.5.dp, colorResource(R.color.toggle_pill_border), RoundedCornerShape(percent = 50)) else Modifier)
+                .clickable { isMonthly = false }
+                .padding(horizontal = 12.rdp, vertical = 4.rdp),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Weekly", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 9.rsp, color = Color.Black)
+            Text("Weekly", fontFamily = Geist, fontWeight = if (!isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
         }
-        Row(
-            modifier = Modifier.padding(horizontal = 8.rdp, vertical = 3.rdp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(percent = 50))
+                .background(if (isMonthly) Color.White else Color.Transparent)
+                .then(if (isMonthly) Modifier.border(0.5.dp, colorResource(R.color.toggle_pill_border), RoundedCornerShape(percent = 50)) else Modifier)
+                .clickable {
+                    if (isPro) {
+                        isMonthly = true
+                    } else {
+                        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                        ZenSound.play(Sfx.ERROR)
+                        scope.launch {
+                            for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, androidx.compose.animation.core.tween(55))
+                        }
+                        Toast.makeText(context, "You need to be Pro to access this.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .padding(horizontal = 14.rdp, vertical = 4.rdp),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Monthly", fontFamily = Geist, fontSize = 9.rsp, color = colorResource(R.color.toggle_inactive_text))
-            Spacer(modifier = Modifier.width(4.rdp))
+            Text("Monthly", fontFamily = Geist, fontWeight = if (isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
+            
             Box(
                 modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 10.rdp, y = (-2).rdp)
+                    .graphicsLayer { rotationZ = wiggle.value }
                     .clip(RoundedCornerShape(percent = 50))
                     .background(PromiseKeptGreen)
-                    .padding(horizontal = 4.rdp, vertical = 1.rdp)
+                    .padding(horizontal = 3.rdp, vertical = 1.rdp),
+                contentAlignment = Alignment.Center
             ) {
-                Text("PRO", fontFamily = Geist, fontSize = 5.6.rsp, color = Color.White)
+                Text("PRO", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
             }
         }
     }

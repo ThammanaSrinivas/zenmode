@@ -28,8 +28,10 @@ class ZenGoldActivity : AppCompatActivity() {
 
         setContent {
             ZenTheme() {
+                val isPro = ProAccess.isProState(this@ZenGoldActivity)
                 ZenGoldScreen(
                     promiseHours = promiseHours.intValue,
+                    isPro = isPro,
                     onBackClick = { finish() },
                     onZenScoreClick = {
                         finish()

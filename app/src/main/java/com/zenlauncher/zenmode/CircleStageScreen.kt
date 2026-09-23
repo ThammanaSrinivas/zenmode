@@ -53,10 +53,12 @@ fun CircleStageScreen(
     // (the Invite sheet, the share card) just displays/shares whatever this resolves to,
     // without re-deriving which mode the user is in.
     val shareCode = circle?.id ?: userCode
+    val isPro = ProAccess.isProState(context)
     ZenCircleScreen(
         members = members,
         shareCode = shareCode,
         shareCodeIsCircle = circle != null,
+        isPro = isPro,
         primaryShareLabel = if (circle != null && circle.members.size < 2) "Remind With Share Link" else "Share & Invite to Zen Circle",
         // Opened from home there's no connected screen to return to.
         onBackClick = { if (connectedToBuddyScreen) onBackToZenCircleFalse() else onCloseBuddyConnect() },

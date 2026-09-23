@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,8 +22,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.graphics.graphicsLayer
+import com.zenlauncher.zenmode.ZenSound
+import com.zenlauncher.zenmode.Sfx
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -174,7 +183,8 @@ fun ZenScoreScreen(
                     ZenScoreCard(
                         score = score,
                         insight = scoreInsight(score, yesterdayScore),
-                        categories = categories
+                        categories = categories,
+                        isPro = isPro
                     )
 
                     SessionLogCard(
@@ -360,7 +370,8 @@ private fun scoreInsight(score: Int, yesterday: Int?): String = when {
 private fun ZenScoreCard(
     score: Int,
     insight: String,
-    categories: List<ZenScoreCategory>
+    categories: List<ZenScoreCategory>,
+    isPro: Boolean
 ) {
     val colors = ZenTheme.colors
     val radius = 16.rdp
@@ -403,7 +414,7 @@ private fun ZenScoreCard(
                     color = ZenTheme.colors.textBrandStrong,
                     modifier = Modifier.weight(1f)
                 )
-                PeriodToggle()
+                PeriodToggle(isPro = isPro)
             }
 
             Spacer(modifier = Modifier.height(14.rdp))
@@ -485,8 +496,14 @@ private fun ZenScoreCardPattern(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun PeriodToggle() {
+private fun PeriodToggle(isPro: Boolean) {
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    val wiggle = remember { androidx.compose.animation.core.Animatable(0f) }
+    var isWeekly by remember { mutableStateOf(false) }
     val colors = ZenTheme.colors
+
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(percent = 50))
@@ -497,25 +514,47 @@ private fun PeriodToggle() {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(percent = 50))
-                .background(colors.surfaceElevated)
-                .border(0.5.dp, colorResource(R.color.toggle_pill_border), RoundedCornerShape(percent = 50))
-                .padding(horizontal = 8.rdp, vertical = 3.rdp)
+                .background(if (!isWeekly) colors.surfaceElevated else Color.Transparent)
+                .then(if (!isWeekly) Modifier.border(0.5.dp, colorResource(R.color.toggle_pill_border), RoundedCornerShape(percent = 50)) else Modifier)
+                .clickable { isWeekly = false }
+                .padding(horizontal = 12.rdp, vertical = 4.rdp),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Daily", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 9.rsp, color = colors.textPrimary)
+            Text("Daily", fontFamily = Geist, fontWeight = if (!isWeekly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isWeekly) colors.textPrimary else colorResource(R.color.toggle_inactive_text))
         }
-        Row(
-            modifier = Modifier.padding(horizontal = 8.rdp, vertical = 3.rdp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(percent = 50))
+                .background(if (isWeekly) colors.surfaceElevated else Color.Transparent)
+                .then(if (isWeekly) Modifier.border(0.5.dp, colorResource(R.color.toggle_pill_border), RoundedCornerShape(percent = 50)) else Modifier)
+                .clickable {
+                    if (isPro) {
+                        isWeekly = true
+                    } else {
+                        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                        ZenSound.play(Sfx.ERROR)
+                        scope.launch {
+                            for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, androidx.compose.animation.core.tween(55))
+                        }
+                        Toast.makeText(context, "You need to be Pro to access this.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .padding(horizontal = 14.rdp, vertical = 4.rdp),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Weekly", fontFamily = Geist, fontSize = 9.rsp, color = colorResource(R.color.toggle_inactive_text))
-            Spacer(modifier = Modifier.width(4.rdp))
+            Text("Weekly", fontFamily = Geist, fontWeight = if (isWeekly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isWeekly) colors.textPrimary else colorResource(R.color.toggle_inactive_text))
+            
             Box(
                 modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 10.rdp, y = (-2).rdp)
+                    .graphicsLayer { rotationZ = wiggle.value }
                     .clip(RoundedCornerShape(percent = 50))
                     .background(colorResource(R.color.gold_delta_text))
-                    .padding(horizontal = 4.rdp, vertical = 1.rdp)
+                    .padding(horizontal = 3.rdp, vertical = 1.rdp),
+                contentAlignment = Alignment.Center
             ) {
-                Text("PRO", fontFamily = Geist, fontSize = 5.6.rsp, color = Color.White)
+                Text("PRO", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
             }
         }
     }

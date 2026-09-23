@@ -186,7 +186,8 @@ fun ZenCircleScreen(
     removingBuddy: Boolean,
     onRemoveBuddy: () -> Unit,
     onLeaveCircle: () -> Unit,
-    initialSheet: ZenCircleSheet? = null
+    initialSheet: ZenCircleSheet? = null,
+    isPro: Boolean = false
 ) {
     require(members.isNotEmpty()) { "A Zen Circle always has at least you in it" }
     BackHandler(onBack = onBackClick)
@@ -299,7 +300,7 @@ fun ZenCircleScreen(
                     )
 
                     Spacer(Modifier.height(14.5.rdp * gapFit))
-                    DailyWeeklyToggle(onWeeklyClick = onWeeklyClick, modifier = Modifier.riseIn(delayMillis = 60))
+                    DailyWeeklyToggle(isPro = isPro, onWeeklyClick = onWeeklyClick, modifier = Modifier.riseIn(delayMillis = 60))
 
                     Spacer(Modifier.height(17.1.rdp * gapFit))
                     CircleSummaryCard(
@@ -374,10 +375,11 @@ fun ZenCircleScreen(
 // ── Toggle ────────────────────────────────────────────────────────
 
 @Composable
-private fun DailyWeeklyToggle(onWeeklyClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun DailyWeeklyToggle(isPro: Boolean, onWeeklyClick: () -> Unit, modifier: Modifier = Modifier) {
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val wiggle = remember { Animatable(0f) }
+    var isWeekly by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier
@@ -391,43 +393,50 @@ private fun DailyWeeklyToggle(onWeeklyClick: () -> Unit, modifier: Modifier = Mo
                 .width(134.23.rdp)
                 .height(33.56.rdp)
                 .clip(CircleShape)
-                .background(Color.White)
-                .border(0.9.dp, colorResource(R.color.toggle_pill_border), CircleShape)
+                .background(if (!isWeekly) Color.White else Color.Transparent)
+                .then(if (!isWeekly) Modifier.border(0.9.dp, colorResource(R.color.toggle_pill_border), CircleShape) else Modifier)
+                .clickable { isWeekly = false }
                 .semantics { contentDescription = "Daily ranking, selected" },
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Daily",
                 fontFamily = Geist,
-                fontWeight = FontWeight.Medium,
+                fontWeight = if (!isWeekly) FontWeight.Medium else FontWeight.Normal,
                 fontSize = 15.94.rsp,
                 letterSpacing = (-0.32).sp,
-                color = Color.Black
+                color = if (!isWeekly) Color.Black else colorResource(R.color.toggle_inactive_text)
             )
         }
-        // Weekly is a PRO view — tapping it wiggles the badge instead of switching.
+        
         Box(
             modifier = Modifier
                 .width(107.93.rdp)
                 .height(33.56.rdp)
                 .clip(CircleShape)
+                .background(if (isWeekly) Color.White else Color.Transparent)
+                .then(if (isWeekly) Modifier.border(0.9.dp, colorResource(R.color.toggle_pill_border), CircleShape) else Modifier)
                 .clickable(onClickLabel = "Weekly ranking (PRO)") {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    // Locked: a soft "not yet", never a buzzer.
-                    ZenSound.play(Sfx.ERROR)
-                    scope.launch {
-                        for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, tween(55))
+                    if (isPro) {
+                        isWeekly = true
+                    } else {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        ZenSound.play(Sfx.ERROR)
+                        scope.launch {
+                            for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, tween(55))
+                        }
+                        onWeeklyClick()
                     }
-                    onWeeklyClick()
                 },
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "Weekly",
                 fontFamily = Geist,
+                fontWeight = if (isWeekly) FontWeight.Medium else FontWeight.Normal,
                 fontSize = 15.94.rsp,
                 letterSpacing = (-0.32).sp,
-                color = colorResource(R.color.toggle_inactive_text)
+                color = if (isWeekly) Color.Black else colorResource(R.color.toggle_inactive_text)
             )
             Box(
                 modifier = Modifier
