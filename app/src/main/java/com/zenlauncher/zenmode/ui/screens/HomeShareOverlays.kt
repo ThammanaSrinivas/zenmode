@@ -482,7 +482,8 @@ internal fun ZenScoreOverlay(
         eyebrow = "ZEN SCORE",
         shareLabel = "Share my Zen Score",
         fileBaseName = "zenmode_zen_score",
-        shareText = "$formatted/${ZenScore.MAX_DISPLAY} on ZenMode OS today.",
+        shareText = "$formatted/${ZenScore.MAX_DISPLAY} on ZenMode OS today. What's yours? " +
+            AppConstants.PLAY_STORE_URL,
         chooserTitle = "Share Zen Score",
         onDismiss = onDismiss
     ) { cardModifier ->
@@ -642,7 +643,8 @@ internal fun GoldInvestedOverlay(
         eyebrow = "GOLD INVESTED",
         shareLabel = "Share my Zen Gold",
         fileBaseName = "zenmode_gold_invested",
-        shareText = "₹$gold of screen time turned into gold on ZenMode OS.",
+        shareText = "₹$gold of screen time turned into gold on ZenMode OS. Start turning yours into gold: " +
+            AppConstants.PLAY_STORE_URL,
         chooserTitle = "Share Zen Gold",
         onDismiss = onDismiss
     ) { cardModifier ->
@@ -709,8 +711,9 @@ private fun GoldInvestedShareCard(
     ) {
         ShareCardHero(
             unit = "IN GOLD",
-            caption = "Every hour under the promise buys a little gold. $daysInvested days of " +
-                "keeping it bought this much.",
+            // Matches the "That's ___" family every share-card caption opens with now
+            // (see ZenScoreShareCard's caption and MilestoneCard's below).
+            caption = "That's ₹$gold in gold — $daysInvested days of promises kept, one quiet hour at a time.",
             badge = {
                 Image(
                     painter = painterResource(R.drawable.ic_coin_gold),

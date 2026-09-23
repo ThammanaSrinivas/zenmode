@@ -15,6 +15,16 @@ object GoldOrder {
     fun weeklyCapPaise(unitPricePaise: Long): Long =
         AppConstants.INVEST_GOLD_MAX_UNITS_PER_WEEK * unitPricePaise
 
+    /**
+     * The Gold Invested change percent (Home + Zen Gold). There's no live price-tracking
+     * backend yet (see AppConstants' gold placeholders), so this can't compute a real
+     * gain/loss — but it can stay honest: ₹0 invested can't have gained anything, so the
+     * percent is 0 rather than a hardcoded figure that contradicts a zero balance. Once a
+     * real portfolio backend exists, replace this with the actual gain/loss over cost basis.
+     */
+    fun changePercentFor(investedRupees: String): Int =
+        if (investedRupees.toLongOrNull() == 0L) 0 else AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT
+
     /** "₹1,23,456.70" — Indian digit grouping (last three, then pairs), always two decimals. */
     fun formatInr(paise: Long): String {
         val sign = if (paise < 0) "-" else ""

@@ -553,7 +553,7 @@ class MainActivity : AppCompatActivity() {
                     showSearch = showSearch,
                     zenScore = zenScore,
                     goldInvested = AppConstants.PLACEHOLDER_GOLD_INVESTED,
-                    goldChangePercent = AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT,
+                    goldChangePercent = GoldOrder.changePercentFor(AppConstants.PLACEHOLDER_GOLD_INVESTED),
                     appCount = homeAppCount,
                     myLikes = myLikes,
                     buddyLikes = buddyLikes,

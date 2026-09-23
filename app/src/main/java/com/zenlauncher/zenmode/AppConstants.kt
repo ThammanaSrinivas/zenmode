@@ -26,6 +26,8 @@ object AppConstants {
     // v3 home screen placeholders. Stand-ins until the scoring and rewards
     // backend exists — swap these for real values, not the UI around them.
     const val PLACEHOLDER_GOLD_INVESTED = "0"
+    // Only shown when PLACEHOLDER_GOLD_INVESTED is non-zero — see GoldOrder.changePercentFor,
+    // which forces 0% for a ₹0 balance instead of this figure.
     const val PLACEHOLDER_GOLD_CHANGE_PERCENT = 38
     // "Days invested" stat on the Gold share overlay — needs the same Gold Streak backend
     // as the rest of the Zen Gold screen (see PLACEHOLDER_PROMISE_HOURS below).
@@ -65,7 +67,8 @@ object AppConstants {
         listOf(true, false, false, true, true, null, null)
     const val PLACEHOLDER_FORECAST_PERCENT = 20
     const val PLACEHOLDER_FORECAST_MONTHLY_AMOUNT = 200
-    const val PLACEHOLDER_FORECAST_TODAY_MONTH_INDEX = 2 // Sep, 0-based into the Jul-Dec axis
+    // The forecast card's 6-month axis and "today" marker are computed live from
+    // LocalDate.now() (ZenGoldScreen.kt's ForecastCard) — no placeholder needed there.
     const val PLACEHOLDER_INVEST_GOLD_UNLOCKED = false
 
     // My Promise screen (Figma node 2026:1793). The promise is chosen per week but
@@ -105,4 +108,9 @@ object AppConstants {
     const val YT_BUDDY_CONFUSED_URL = "https://youtu.be/48M1x2ryhpI" // TODO: replace later
     const val PRIVACY_POLICY_URL = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"
     const val TERMS_OF_SERVICE_URL = "https://zenmodeos.com/terms"
+    // Play Store listing. Same id="com.zenlauncher.zenmode" MainActivity/SettingsActivity
+    // build from `packageName` for the in-app "Rate us" flow; hardcoded here since this
+    // object has no Context. Doubles as the download CTA appended to every share-card's
+    // share text (Zen Score / Zen Gold / Streaks — see HomeShareOverlays.kt, HomeScreen.kt).
+    const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN"
 }

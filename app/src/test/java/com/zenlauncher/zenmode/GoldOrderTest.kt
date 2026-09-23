@@ -24,6 +24,12 @@ class GoldOrderTest {
     }
 
     @Test
+    fun `change percent is zero for a zero balance, placeholder otherwise`() {
+        assertEquals(0, GoldOrder.changePercentFor("0"))
+        assertEquals(AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT, GoldOrder.changePercentFor("500"))
+    }
+
+    @Test
     fun `formats rupees with Indian grouping and two decimals`() {
         assertEquals("₹0.05", GoldOrder.formatInr(5))
         assertEquals("₹123.82", GoldOrder.formatInr(12_382))

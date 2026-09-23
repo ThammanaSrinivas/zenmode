@@ -710,7 +710,7 @@ fun GoldInvestedRow(
                     )
                     Spacer(modifier = Modifier.width(6.rdp))
                     Image(
-                        painter = painterResource(R.drawable.ic_eye),
+                        painter = painterResource(if (amountVisible) R.drawable.ic_eye else R.drawable.ic_eye_off),
                         contentDescription = if (amountVisible) "Hide amount" else "Show amount",
                         modifier = Modifier
                             .width(13.rdp)
@@ -1593,7 +1593,8 @@ private fun StreakOverlay(
         eyebrow = "STREAKS",
         shareLabel = "Share my streaks",
         fileBaseName = "zenmode_milestone",
-        shareText = "$totalMindfulDays days of intentional time with ZenMode.",
+        shareText = "$totalMindfulDays days of intentional time with ZenMode OS. Start your streak: " +
+            AppConstants.PLAY_STORE_URL,
         chooserTitle = "Share Streak",
         onDismiss = onDismiss
     ) { cardModifier ->
@@ -1601,7 +1602,7 @@ private fun StreakOverlay(
 
         // Headline — spelled-out day count, matching the design's voice
         Text(
-            text = "${numberToWords(totalMindfulDays)} days of intentional time with mobile & promise kept safe.",
+            text = "${numberToWords(totalMindfulDays)} days of intentional time away from the noise — promise kept.",
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 20.rsp,
@@ -1678,7 +1679,7 @@ private fun MilestoneCard(
     ShareCardFrame(stamp = "$totalMindfulDays DAY MILESTONE", modifier = modifier) {
         ShareCardHero(
             unit = "DAYS",
-            caption = "That's ${approxMonths(totalMindfulDays)} of days that ended above Zen score $zenScoreThreshold.",
+            caption = "That's ${approxDurationPhrase(totalMindfulDays)} that ended above Zen score $zenScoreThreshold.",
             badge = {
                 Image(
                     painter = painterResource(R.drawable.ic_streak_fire),
@@ -1766,7 +1767,17 @@ private fun numberWordsRaw(n: Int): String {
 private fun numberToWords(n: Int): String =
     numberWordsRaw(n).replaceFirstChar { it.uppercase() }
 
-private fun approxMonths(days: Int): String {
-    val months = (days / 30).coerceAtLeast(1)
-    return "${numberWordsRaw(months)} month${if (months == 1) "" else "s"}"
+/**
+ * "1" -> "one day", "5" -> "five days", "120" -> "four months of days". Under a month,
+ * milestones read day-by-day; past that, the old approach floored everything to "at
+ * least one month" even for a 1-day streak ("one month of days that ended above Zen score
+ * 7" for someone on day one) — this scales the unit with the count instead.
+ */
+private fun approxDurationPhrase(days: Int): String {
+    if (days < 30) {
+        val word = numberWordsRaw(days.coerceAtLeast(1))
+        return "$word day${if (days == 1) "" else "s"}"
+    }
+    val months = days / 30
+    return "${numberWordsRaw(months)} month${if (months == 1) "" else "s"} of days"
 }

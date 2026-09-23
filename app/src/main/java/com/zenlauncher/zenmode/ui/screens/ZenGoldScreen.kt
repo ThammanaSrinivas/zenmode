@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.GoldOrder
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.HomePage
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
@@ -70,6 +71,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import java.time.LocalDate
+import java.util.Locale
 
 // ── ZM_OS v3: Zen Gold (Home left-swipe page) ───────────────────────
 // Figma nodes 2026:1648 / 2026:1435. The right-hand home page: reached by swiping left on
@@ -93,7 +95,7 @@ fun ZenGoldScreen(
     daysLeftThisWeek: Int = AppConstants.PLACEHOLDER_DAYS_LEFT_THIS_WEEK,
     daysClearedUnder: Int = AppConstants.PLACEHOLDER_DAYS_CLEARED_UNDER,
     goldInvested: String = AppConstants.PLACEHOLDER_GOLD_INVESTED,
-    goldChangePercent: Int = AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT,
+    goldChangePercent: Int = GoldOrder.changePercentFor(AppConstants.PLACEHOLDER_GOLD_INVESTED),
     forecastPercent: Int = AppConstants.PLACEHOLDER_FORECAST_PERCENT,
     forecastMonthlyAmount: Int = AppConstants.PLACEHOLDER_FORECAST_MONTHLY_AMOUNT,
     investGoldUnlocked: Boolean = AppConstants.PLACEHOLDER_INVEST_GOLD_UNLOCKED,
@@ -534,6 +536,15 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
     val zenGreen900 = colors.textBrandStrong
     val radius = 24.rdp
 
+    // Real, not placeholder: whatever day the user opens this on, "today" sits at the
+    // same column (see MonthsBeforeToday) with that many months of history behind it and
+    // the rest as outlook — so the axis and headline are always true for this user, this day.
+    val today = remember { LocalDate.now() }
+    val windowMonths = remember(today) {
+        (0 until ForecastWindowSize).map { i -> today.plusMonths((i - MonthsBeforeToday).toLong()).month }
+    }
+    val outlookMonthName = windowMonths.last().getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault())
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -571,7 +582,7 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
         Spacer(modifier = Modifier.height(12.rdp))
 
         Text(
-            text = "Expect your Gold rise by $forecastPercent% as the Christmas approach",
+            text = "Expect your Gold to rise by $forecastPercent% as $outlookMonthName approaches",
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 18.rsp,
@@ -593,7 +604,7 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
 
         Spacer(modifier = Modifier.height(10.rdp))
 
-        // Legend sits above the forecast half of the chart, over the Nov/Dec columns.
+        // Legend sits above the forecast half of the chart, over the last outlook columns.
         Column(
             modifier = Modifier
                 .align(Alignment.End)
@@ -616,9 +627,9 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
 
         // Same six equal columns the chart's grid lines are centred in.
         Row(modifier = Modifier.fillMaxWidth()) {
-            ForecastMonths.forEach { month ->
+            windowMonths.forEach { month ->
                 Text(
-                    text = month,
+                    text = month.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault()),
                     fontFamily = Geist,
                     fontSize = 10.3.rsp,
                     letterSpacing = (-0.21).sp,
@@ -631,17 +642,23 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
     }
 }
 
-private val ForecastMonths = listOf("Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+// The axis always spans 6 months, "today" sitting 2 columns in — 2 months of history behind
+// it, 3 months of outlook ahead. A layout decision, not user data, so it's a real constant
+// rather than a AppConstants.PLACEHOLDER_*: true for every user on every day they open this.
+private const val ForecastWindowSize = 6
+private const val MonthsBeforeToday = 2
 
 // Illustrative curve (0 = top of the chart, 1 = bottom) until a real gold-price forecast feed
-// exists: a shallow dip into "today", then the forecast easing up before a year-end climb.
+// exists: a shallow dip into "today", then the forecast easing up before a climb into the
+// outlook months. Shape is relative to the "today" column (index [MonthsBeforeToday]), not
+// tied to any specific calendar month, so it stays correct as the real window slides.
 private val ForecastCurve = listOf(0.34f, 0.55f, 0.68f, 0.60f, 0.53f, 0.12f)
 
 /**
  * The gold-price chart (nodes 2026:1501–1510): one grid line per month, centred in the same
  * columns as the month labels; a solid line for the months so far, and a broken (dashed) line
- * carrying on from the "today" marker to the end of the year — both running through the same
- * points, so they meet exactly at the marker.
+ * carrying on from the "today" marker to the end of the outlook window — both running through
+ * the same points, so they meet exactly at the marker.
  */
 @Composable
 private fun ForecastChart(modifier: Modifier = Modifier) {
@@ -652,7 +669,7 @@ private fun ForecastChart(modifier: Modifier = Modifier) {
     val dashedGreen = colorResource(R.color.gold_delta_text).copy(alpha = 0.5f)
     val dotColor = colorResource(R.color.amber_500)
     val lineWidth = 3.rdp
-    val today = AppConstants.PLACEHOLDER_FORECAST_TODAY_MONTH_INDEX.coerceIn(0, ForecastCurve.lastIndex)
+    val today = MonthsBeforeToday.coerceIn(0, ForecastCurve.lastIndex)
 
     Canvas(modifier = modifier) {
         val column = size.width / ForecastCurve.size
