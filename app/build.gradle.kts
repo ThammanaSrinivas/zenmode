@@ -23,7 +23,7 @@ val fileSearchEnabled =
 
 android {
     namespace = "com.zenlauncher.zenmode"
-    compileSdk = 35
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
@@ -33,9 +33,9 @@ android {
     defaultConfig {
         applicationId = "com.zenlauncher.zenmode"
         minSdk = 28
-        targetSdk = 35
-        versionCode = 9
-        versionName = "2.1"
+        targetSdk = 36
+        versionCode = 13
+        versionName = "3.03"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         

@@ -7,7 +7,7 @@ group = "com.zenlauncher.zenmode"
 
 android {
     namespace = "com.zenlauncher.zenmode.coreapi"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 28

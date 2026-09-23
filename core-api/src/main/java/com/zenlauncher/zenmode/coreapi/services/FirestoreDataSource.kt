@@ -86,5 +86,18 @@ interface FirestoreDataSource {
     /** Finds a random circle with an open slot and joins [myUid] to it atomically, mirroring [findRandomBuddy].
      *  Returns the joined circle, or null if none is available. */
     suspend fun findRandomCircleUser(myUid: String, myDisplayName: String?): Circle?
+
+    /**
+     * Whether [myUid] still has random-connect quota left this ISO week (buddy or circle
+     * share one counter — it's one "random connect" action either way). Doesn't consume
+     * anything; call [recordRandomConnectUsed] only once a random connect actually pairs
+     * someone, so a no-candidates-available attempt doesn't burn quota. [limit] is
+     * [Entitlement.RANDOM_CONNECT_FREE_WEEKLY_LIMIT] or [Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT]
+     * depending on the caller's Pro status — this layer just compares against whatever it's given.
+     */
+    suspend fun hasRandomConnectQuota(myUid: String, limit: Int): Boolean
+
+    /** Records one random-connect use against this ISO week's counter. Call only on a successful match. */
+    suspend fun recordRandomConnectUsed(myUid: String)
 }
 

@@ -47,6 +47,11 @@ class MockProEntitlementProvider : ProEntitlementProvider {
 
 class MockRemoteConfigProvider : RemoteConfigProvider {
     override val minVersionCode: StateFlow<Long> = MutableStateFlow(0L)
+    // Deliberately NOT the usual "mock defaults to feature-ON" convention: turning this on
+    // would try to route open-source builds through real Play Billing, which they structurally
+    // can't do (no Play Console tie, no service account) -- LocalEntitlementProvider (simulated,
+    // always available) is already core-mock's permanent answer for Pro, regardless of this flag.
+    override val playBillingEnabled: StateFlow<Boolean> = MutableStateFlow(false)
     override suspend fun initialize() {
         Log.i("MockRemoteConfig", "MOCK Remote Config initialized. Defaulting to 0L.")
     }
@@ -121,6 +126,10 @@ class MockFirestoreDataSource : FirestoreDataSource {
     override suspend fun sendCircleReaction(circleId: String, fromUid: String, toUid: String, type: ReactionType): Boolean = true
     override suspend fun getTodayCircleReactions(circleId: String, myUid: String): Pair<Long, Long> = 0L to 0L
     override suspend fun findRandomCircleUser(myUid: String, myDisplayName: String?): Circle? = null
+    // Open-source builds never run out — mock defaults to the feature-ON value, same convention
+    // as MockRemoteConfigProvider.
+    override suspend fun hasRandomConnectQuota(myUid: String, limit: Int): Boolean = true
+    override suspend fun recordRandomConnectUsed(myUid: String) {}
 }
 
 class MockAnalyticsTracker : AnalyticsTrackerContract {
@@ -149,6 +158,66 @@ class MockAnalyticsTracker : AnalyticsTrackerContract {
     override fun trackBuddyToCircleSwitch() {}
     override fun trackCircleLeadershipTransferred(reason: String) {}
     override fun trackCircleReactionSent(type: String) {}
+
+override fun trackScreentimePermissionGranted(permissionType: String) {}
+    override fun trackScreentimePermissionDenied(permissionType: String) {}
+    override fun trackDailyScreentimeRecorded(date: String, totalMinutes: Long, blockedMinutes: Long, unlockCount: Int, topApps: List<String>) {}
+    override fun trackDailyScreentimeViewed(totalMinutes: Long, vsYesterdayDelta: Int) {}
+    override fun trackWeeklyScreentimeRecorded(weekStartDate: String, totalMinutes: Long, avgDailyMinutes: Long, vsLastWeekDeltaPct: Int) {}
+    override fun trackWeeklyScreentimeViewed(totalMinutes: Long, vsLastWeekDelta: Int) {}
+    override fun trackLifetimeScreentimeUpdated(lifetimeTotalMinutes: Long, daysTracked: Long) {}
+    override fun trackLifetimeMilestoneReached(milestoneValue: Int) {}
+    override fun trackSessionStart(sessionNumber: Int) {}
+    override fun trackDay1CheckinCompleted(actionType: String) {}
+    override fun trackDay7MilestoneShown() {}
+    override fun trackDay7MilestoneEngaged() {}
+    override fun trackDay30MilestoneShown() {}
+    override fun trackDay30MilestoneEngaged(cumulativeTimeSaved: Long) {}
+    override fun trackReengagementPushSent(pushType: String, daysInactive: Long) {}
+    override fun trackReengagementPushOpened(pushType: String) {}
+    override fun trackGoldTabViewed(entryPoint: String) {}
+    override fun trackGoldEarned(goldAmount: Int, triggerReason: String) {}
+    override fun trackGoldPurchaseInitiated(amountLocalCurrency: Int, grams: Int) {}
+    override fun trackGoldPurchaseCompleted(amount: Int, currency: String, grams: Int, paymentMethod: String) {}
+    override fun trackGoldPurchaseFailed(reason: String) {}
+    override fun trackGoldPortfolioViewed(portfolioValue: Int) {}
+    override fun trackGoldRedeemed(amount: Int, redemptionType: String) {}
+    override fun trackZencircleViewed() {}
+    override fun trackZencircleJoinedV3(circleSize: Int, circleType: String) {}
+    override fun trackZencircleCreatedV3(circleType: String) {}
+    override fun trackZencircleInviteSent(channel: String) {}
+    override fun trackZencirclePostCreated(postType: String) {}
+    override fun trackZencircleReactionAdded(postType: String) {}
+    override fun trackZencircleLeaderboardViewed(rank: Int) {}
+    override fun trackZencircleChallengeJoined(challengeType: String, durationDays: Long) {}
+    override fun trackZencircleChallengeCompleted(challengeType: String) {}
+    override fun trackZencircleLeftV3(tenureDays: Long) {}
+    override fun trackReferralShareInitiated(channel: String, shareContext: String) {}
+    override fun trackReferralLinkShared(channel: String) {}
+    override fun trackReferralSignupCompleted(referredByUserId: String) {}
+    override fun trackReferralPointsEarned(amount: Int, reason: String) {}
+    override fun trackPointsRedeemed(rewardType: String, amount: Int) {}
+    override fun trackOnboardingStartedV3(acquisitionSource: String) {}
+    override fun trackOnboardingStepViewed(stepName: String, stepNumber: Int) {}
+    override fun trackOnboardingPermissionRequested(permissionType: String) {}
+    override fun trackOnboardingPermissionGrantedV3(permissionType: String) {}
+    override fun trackOnboardingPermissionDenied(permissionType: String) {}
+    override fun trackOnboardingGoalSelected(goalType: String) {}
+    override fun trackOnboardingCompleted(totalTimeSeconds: Long) {}
+    override fun trackOnboardingAbandoned(lastStep: String) {}
+    override fun trackHomeSearchOpened(entryPoint: String) {}
+    override fun trackHomeSearchQuerySubmitted(queryLength: Int, resultCount: Int) {}
+    override fun trackHomeSearchResultClicked(resultType: String, position: Int) {}
+    override fun trackHomeSearchNoResults() {}
+    override fun trackHomeSearchAbandoned() {}
+    override fun trackBlockerEnabled(blockerMode: String) {}
+    override fun trackBlockerDisabled(blockerMode: String) {}
+    override fun trackBlockerSessionStarted(mode: String, plannedDuration: Long, blockedApps: List<String>) {}
+    override fun trackBlockerSessionCompleted(actualDuration: Long) {}
+    override fun trackBlockerSessionInterrupted(elapsedDuration: Long, reason: String) {}
+    override fun trackBlockedAppAttempt(appName: String) {}
+    override fun trackBlockerBypassUsed(justification: String) {}
+    override fun trackBlockerStreakAchieved(streakDays: Long) {}
 }
 
 class MockAnalyticsManager : AnalyticsManager {

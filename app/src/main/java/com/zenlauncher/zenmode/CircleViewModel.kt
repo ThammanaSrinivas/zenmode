@@ -9,6 +9,7 @@ import com.zenlauncher.zenmode.coreapi.Circle
 import com.zenlauncher.zenmode.coreapi.CircleJoinResult
 import com.zenlauncher.zenmode.coreapi.ReactionType
 import com.zenlauncher.zenmode.coreapi.UsageRepository
+import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import kotlinx.coroutines.launch
 
@@ -123,11 +124,12 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         when (result) {
             is CircleJoinResult.Success -> {
                 repository.saveCircleId(circleId)
-                ServiceLocator.analyticsTracker.trackCircleJoined(via)
                 // Fetch and post directly rather than calling loadCircle() -- that posts its
                 // own loading/circle state from a second coroutine, which would race with
                 // (and could stomp) the justEnteredCircle=true below.
                 val circle = firestoreDataSource.getCircle(circleId)
+                val circleType = if (circle != null && circle.members.size > 2) "group" else "pair"
+                ServiceLocator.analyticsTracker.trackZencircleJoinedV3(circle?.members?.size ?: 1, circleType)
                 if (circle != null) repository.cacheCircle(circle)
                 _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null))
             }
@@ -175,25 +177,28 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
                 }
                 val displayName = ServiceLocator.authProvider.getDisplayName()
                 val result = firestoreDataSource.joinCircle(circleId, myUid, displayName, confirmedSwitchFromBuddy = true)
-                if (result is CircleJoinResult.Success) {
-                    repository.saveCircleId(circleId)
-                    ServiceLocator.analyticsTracker.trackBuddyToCircleSwitch()
-                    ServiceLocator.analyticsTracker.trackCircleJoined("switch_from_buddy")
-                    // Same reasoning as joinCircle() above -- fetch and post directly instead
-                    // of calling loadCircle(), to avoid racing justEnteredCircle=true.
-                    val circle = firestoreDataSource.getCircle(circleId)
-                    if (circle != null) repository.cacheCircle(circle)
-                    _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null))
-                } else {
-                    // Deliberately NOT the usual silent-safe-default here: disconnect already
-                    // succeeded, so silence would leave the user thinking they joined when
-                    // they're actually in neither Buddy nor Circle. See plan doc's Risks section.
-                    _uiState.postValue(
-                        _uiState.value!!.copy(
-                            loading = false,
-                            errorMessage = "Disconnected your buddy, but couldn't join the circle -- please try the invite link again."
+                when (result) {
+                    is CircleJoinResult.Success -> {
+                        repository.saveCircleId(circleId)
+                        // Same reasoning as joinCircle() above -- fetch and post directly instead
+                        // of loadCircle() so we can set justEnteredCircle=true in one shot.
+                        val circle = firestoreDataSource.getCircle(circleId)
+                        val circleType = if (circle != null && circle.members.size > 2) "group" else "pair"
+                        ServiceLocator.analyticsTracker.trackZencircleJoinedV3(circle?.members?.size ?: 1, circleType)
+                        if (circle != null) repository.cacheCircle(circle)
+                        _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = circle != null, pendingBuddySwitchCircleId = null))
+                    }
+                    else -> {
+                        // Deliberately NOT the usual silent-safe-default here: disconnect already
+                        // succeeded, so silence would leave the user thinking they joined when
+                        // they're actually in neither Buddy nor Circle. See plan doc's Risks section.
+                        _uiState.postValue(
+                            _uiState.value!!.copy(
+                                loading = false,
+                                errorMessage = "Disconnected your buddy, but couldn't join the circle -- please try the invite link again."
+                            )
                         )
-                    )
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.postValue(
@@ -294,10 +299,13 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         _uiState.postValue(_uiState.value!!.copy(errorMessage = null))
     }
 
-    /** Random circle connect -- mirrors BuddyConnector.randomConnect()'s cooldown, shared
-     * with it since it's the same kind of matchmaking action. Creates a real 2-person
-     * circle atomically (both people are online right now, unlike the invite-link flow). */
-    fun findRandomCircle() {
+    /** Random circle connect -- mirrors BuddyConnector.randomConnect()'s cooldown and weekly
+     * quota (shared counter -- a random circle connect and a random buddy connect draw from
+     * the same weekly allowance), since it's the same kind of matchmaking action. Creates a
+     * real 2-person circle atomically (both people are online right now, unlike the
+     * invite-link flow). [isPro] comes from the caller (ProAccess.isPro(context)) -- this
+     * ViewModel has no Context to ask itself. */
+    fun findRandomCircle(isPro: Boolean) {
         val myUid = myUid() ?: return
         val lastTried = repository.getLastRandomConnectAttemptTime()
         val remaining = AppConstants.RANDOM_CONNECT_COOLDOWN_MS - (System.currentTimeMillis() - lastTried)
@@ -308,12 +316,23 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         }
         _uiState.postValue(_uiState.value!!.copy(loading = true))
         viewModelScope.launch {
+            val weeklyLimit = if (isPro) Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT else Entitlement.RANDOM_CONNECT_FREE_WEEKLY_LIMIT
+            if (!firestoreDataSource.hasRandomConnectQuota(myUid, weeklyLimit)) {
+                val message = if (isPro) {
+                    "You've used all $weeklyLimit random connects this week. More open up next week."
+                } else {
+                    "You've used all $weeklyLimit random connects this week. Upgrade to Pro for up to ${Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT}/week."
+                }
+                _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = message))
+                return@launch
+            }
             val displayName = ServiceLocator.authProvider.getDisplayName()
             val circle = firestoreDataSource.findRandomCircleUser(myUid, displayName)
             if (circle == null) {
                 repository.saveLastRandomConnectAttemptTime(System.currentTimeMillis())
                 _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = "No one available right now. Try again in 30 seconds!"))
             } else {
+                firestoreDataSource.recordRandomConnectUsed(myUid)
                 repository.saveCircleId(circle.id)
                 repository.cacheCircle(circle)
                 ServiceLocator.analyticsTracker.trackCircleJoined("random")

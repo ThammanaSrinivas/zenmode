@@ -1148,12 +1148,17 @@ private fun ManagePro(
     }
 
     Text(
-        text = if (isSimulated && ending) {
-            "You're on early access, so nothing was charged. Resume any time before Pro ends."
-        } else if (isSimulated) {
-            "You're on early access: nothing is charged. When paid plans open we'll ask first, and your Pro carries on until then."
-        } else {
-            "Thank you. This is the server bill. If we ever break one of our own sales rules, it goes in the changelog."
+        text = when {
+            isSimulated && ending ->
+                "You're on early access, so nothing was charged. Resume any time before Pro ends."
+            isSimulated ->
+                "You're on early access: nothing is charged. When paid plans open we'll ask " +
+                    "first, and your Pro carries on until then."
+            // Real billing: Play, not this screen, is the source of truth for cancel/resume --
+            // no app can act on a subscription on the user's behalf, only Play's own UI can.
+            else ->
+                "Renewals, cancellations and refunds are all managed in the Play Store, not " +
+                    "here. Changes made there can take a few minutes to show up in ZenMode."
         },
         fontFamily = Geist,
         fontSize = 15.rsp,
@@ -1161,18 +1166,29 @@ private fun ManagePro(
         color = colors.textSecondary
     )
 
-    if (ending) {
-        ZenButton(text = if (isWorking) "Resuming…" else "Resume Pro", onClick = onResume, enabled = !isWorking)
+    if (isSimulated) {
+        if (ending) {
+            ZenButton(text = if (isWorking) "Resuming…" else "Resume Pro", onClick = onResume, enabled = !isWorking)
+        } else {
+            ZenButton(
+                text = if (isWorking) "Cancelling…" else "Cancel Pro",
+                onClick = { confirmCancel = true },
+                style = ZenButtonStyle.Outline,
+                enabled = !isWorking
+            )
+        }
     } else {
+        // One button either way: cancel and resume are the same Play Store screen, and we
+        // can't promise the tap did anything until Play's own RTDN reconciles state back to us.
         ZenButton(
-            text = if (isWorking) "Cancelling…" else "Cancel Pro",
-            onClick = { confirmCancel = true },
+            text = "Manage in Play Store",
+            onClick = if (ending) onResume else onCancel,
             style = ZenButtonStyle.Outline,
             enabled = !isWorking
         )
     }
 
-    if (confirmCancel) {
+    if (isSimulated && confirmCancel) {
         val until = (if (entitlement.status == ProStatus.TRIAL) entitlement.trialEndsOn else entitlement.renewsOn)
             ?.asZenDate()
         ZenSheet(onDismiss = { confirmCancel = false }) {

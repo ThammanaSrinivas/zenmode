@@ -247,6 +247,7 @@ class OnboardingActivity : ComponentActivity() {
     // ── Permissions ───────────────────────────────────────────────
 
     private fun requestPermission(permission: ZenPermission) {
+        ServiceLocator.analyticsTracker.trackOnboardingPermissionRequested(permission.name)
         when {
             permission == ZenPermission.NOTIFICATIONS && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -295,5 +296,12 @@ class OnboardingActivity : ComponentActivity() {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         )
         finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (!viewModel.uiState.value.finished && !isChangingConfigurations) {
+            ServiceLocator.analyticsTracker.trackOnboardingAbandoned(viewModel.uiState.value.step.name)
+        }
     }
 }

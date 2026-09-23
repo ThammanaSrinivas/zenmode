@@ -4,6 +4,11 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <!-- The app already ships its own values-night resources, so Android's automatic
+             Force Dark heuristic (API 29+) is redundant, and it re-inverts hardcoded
+             near-black colors like the stats-card CardInk text on each draw call, turning
+             them white on top of an already-correct dark theme. -->
+        <item name="android:forceDarkAllowed">false</item>
     </style>
 
     <style name="Theme.ZenMode" parent="Base.Theme.ZenMode" />

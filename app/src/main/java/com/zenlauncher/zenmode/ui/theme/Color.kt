@@ -59,7 +59,11 @@ data class ZenColors(
     val surfaceTintLine: Color,
     val textOnTint: Color,
     val textMuted: Color,
-    /** Between secondary and muted: captions and eyebrows that still need to read (stone_500 / stone_400). */
+    /**
+     * Between secondary and muted: captions and eyebrows that still need to read.
+     * Light: stone_560 / stone_520 (AA-safe stand-ins — stone_500/400 fail 4.5:1 on paper_base
+     * at 4.32:1 / 2.94:1). Dark: stone_400 / stone_250, both already AA-safe on ink_base.
+     */
     val textTertiary: Color,
     /** Text and icons sitting on a [textBrand] fill: white on paper, ink on the brighter ink-theme green. */
     val textOnBrand: Color,
@@ -227,8 +231,8 @@ val LightZenColors: ZenColors
         surfaceTint = colorResource(R.color.zen_050),
         surfaceTintLine = colorResource(R.color.zen_050_line),
         textOnTint = colorResource(R.color.zen_ink),
-        textMuted = colorResource(R.color.stone_400),
-        textTertiary = colorResource(R.color.stone_500),
+        textMuted = colorResource(R.color.stone_520),
+        textTertiary = colorResource(R.color.stone_560),
         textOnBrand = colorResource(R.color.paper_white),
         borderOutline = colorResource(R.color.paper_outline),
         borderHairlineSoft = colorResource(R.color.paper_hairline_soft),

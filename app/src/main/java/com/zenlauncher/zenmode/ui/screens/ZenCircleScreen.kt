@@ -153,7 +153,10 @@ data class ZenCircleMember(
     /** Only ever non-zero on the "you" member -- reactions received today are shown on your
      * own card only, never on another member's card. See buildCircleStageMembers. */
     val loveReceivedToday: Long = 0L,
-    val meltReceivedToday: Long = 0L
+    val meltReceivedToday: Long = 0L,
+    /** True only for the dummy "Invite pending" slot padded onto a real circle with an open
+     * seat -- there's no one there yet to react to. See buildCircleStageMembers. */
+    val isPending: Boolean = false
 )
 
 private const val FrontCardScale = 201.66f / 150.67f
@@ -633,7 +636,10 @@ private fun MemberCardStack(
             }
         }
 
-        val canReact = !selectedMember.isYou
+        // Not the pending-invite placeholder either -- nothing there yet to react to, same
+        // reasoning as onSendLove/onSendMelt's own blank-uid no-op guard in CircleStageScreen,
+        // but expressed visually here (greyed out) rather than a silent no-op tap.
+        val canReact = !selectedMember.isYou && !selectedMember.isPending
         // The sad face is the heart's twin — same button, same floating burst — so a
         // "rough day, hang in there" nudge feels as light to send as love.
         ReactionButton(

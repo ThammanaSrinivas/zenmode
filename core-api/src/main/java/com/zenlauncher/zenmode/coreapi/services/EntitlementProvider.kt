@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.asStateFlow
  * 7 days of history — is free forever. Pro only adds range. Anything that isn't listed in
  * [ProFeature] must never be gated.
  *
- * Until Play Billing ships, both core-mock and core-private sell Pro through
- * [LocalEntitlementProvider], which keeps the subscription on the device and takes no payment.
+ * core-private sells Pro through real Google Play Billing (`PlayBillingEntitlementProvider`,
+ * core-private). core-mock (open-source builds) keeps selling it through
+ * [LocalEntitlementProvider], which keeps the subscription on the device and takes no payment --
+ * open-source builds have no Play Console tie or service account to verify a real purchase with.
  */
 interface EntitlementProvider {
     /**
@@ -86,6 +88,9 @@ data class Entitlement(
         const val FREE_PARTNER_LIMIT = 1
         const val PRO_PARTNER_LIMIT = 3
         const val FREE_HISTORY_DAYS = 7
+        /** Random Connect weekly caps (buddy or circle) — see FirestoreDataSource.hasRandomConnectQuota. */
+        const val RANDOM_CONNECT_FREE_WEEKLY_LIMIT = 5
+        const val RANDOM_CONNECT_PRO_WEEKLY_LIMIT = 50
 
         val Free = Entitlement()
     }

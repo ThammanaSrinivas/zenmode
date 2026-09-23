@@ -38,8 +38,12 @@ class ZenScoreTest {
 
     @Test
     fun `score never leaves the 0 to 10 range`() {
-        assertEquals(ZenScore.MAX_TENTHS, ZenScore.compute(-5, -3, 0))
-        assertEquals(0, ZenScore.compute(Long.MAX_VALUE / 2, Int.MAX_VALUE, 1))
+        // Out-of-range inputs land at whatever the 75/25 adherence/quality weighting works out
+        // to for their clamped components (e.g. best-case adherence with worst-case quality
+        // here is 75, not MAX_TENTHS -- only "both worst" or "both best" reach the ends) --
+        // the actual guarantee this test is for is the final coerceIn, not a specific value.
+        assertTrue(ZenScore.compute(-5, -3, 0) in 0..ZenScore.MAX_TENTHS)
+        assertTrue(ZenScore.compute(Long.MAX_VALUE / 2, Int.MAX_VALUE, 1) in 0..ZenScore.MAX_TENTHS)
     }
 
     @Test

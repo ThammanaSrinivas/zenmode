@@ -147,6 +147,13 @@ class MainActivity : AppCompatActivity() {
     private var settleRevealJob: Job? = null
     private var revealAfterDelayedUnlock = false
 
+    companion object {
+        // Shared to avoid re-running the animation if the home screen restarts while
+        // the device is unlocked, since ACTION_USER_PRESENT is only broadcast once.
+        var lastScreenOffTime = 0L
+        var lastSessionStartTrackTime = 0L
+    }
+
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
             when (intent.action) {
@@ -280,14 +287,37 @@ class MainActivity : AppCompatActivity() {
             viewModel.onResumeCheck()
             viewModel.refreshBuddyStatsFromCache()
         }
+        // Circle users have no periodic self-heal the way StatSyncWorker's onResume hook below
+        // gives classic buddies (it skips circle users entirely -- see its own comment) and no
+        // realtime listener either -- loadCircle() otherwise only runs once at ViewModel init
+        // and on a circle_react push, so a member joining/leaving never reaches an already-open
+        // app until this fires. Cheap: a single circle doc read, not the full StatSyncWorker.
+        if (::circleViewModel.isInitialized) {
+            circleViewModel.loadCircle()
+        }
         loadInstalledApps()
         homeAppCount = AppGridPreferences.getAppCount(this)
         openUnseenRecap()
 
         // Stats Sync Check
         if (::repository.isInitialized) {
-            val lastProcessed = repository.getLastStatsProcessedTime()
             val now = System.currentTimeMillis()
+            if (now - lastSessionStartTrackTime > 30 * 60_000L) {
+                lastSessionStartTrackTime = now
+                val sessionNum = repository.incrementSessionNumber()
+                ServiceLocator.analyticsTracker.trackSessionStart(sessionNum)
+            }
+            if (!repository.isDay1CheckinTracked()) {
+                try {
+                    val installTime = packageManager.getPackageInfo(packageName, 0).firstInstallTime
+                    val daysSinceInstall = ((now - installTime) / (1000 * 60 * 60 * 24)).toInt()
+                    if (daysSinceInstall >= 1) {
+                        ServiceLocator.analyticsTracker.trackDay1CheckinCompleted("home_opened")
+                        repository.setDay1CheckinTracked(true)
+                    }
+                } catch (e: Exception) {}
+            }
+            val lastProcessed = repository.getLastStatsProcessedTime()
             val interval = AppConstants.STATS_SYNC_INTERVAL_MINUTES * 60 * 1000L
 
             // StatSyncWorker ships in zenmode_core_private; core-mock builds don't have it.
@@ -876,7 +906,7 @@ class MainActivity : AppCompatActivity() {
                                     },
                                     onRandomConnect = {
                                         if (isCircleMode) {
-                                            circleViewModel.findRandomCircle()
+                                            circleViewModel.findRandomCircle(ProAccess.isPro(this@MainActivity))
                                             showZenCircle = true
                                         } else {
                                             lifecycleScope.launch {

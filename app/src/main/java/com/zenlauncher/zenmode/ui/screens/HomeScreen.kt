@@ -94,6 +94,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -135,6 +137,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.launch
 import com.zenlauncher.zenmode.AppGridPreferences
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.FileResult
@@ -985,6 +988,18 @@ private fun SearchOverlay(
 ) {
     val context = LocalContext.current
     var query by remember { mutableStateOf("") }
+    
+    var hasClicked by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        ServiceLocator.analyticsTracker.trackHomeSearchOpened("search_pill")
+    }
+    
+    DisposableEffect(Unit) {
+        onDispose {
+            if (!hasClicked) ServiceLocator.analyticsTracker.trackHomeSearchAbandoned()
+        }
+    }
 
     val fileSearchEnabled = remember { FileSearchRepository.isEnabled() }
     var hasFilePermission by remember {
@@ -1133,12 +1148,18 @@ private fun SearchOverlay(
                         is SearchRow.Header -> SearchSectionHeader(row.label, itemModifier)
                         is SearchRow.App -> AppResultRow(
                             app = row.app,
-                            onClick = { onAppClick(row.app) },
+                            onClick = {
+                                hasClicked = true
+                                ServiceLocator.analyticsTracker.trackHomeSearchResultClicked("app", rows.indexOf(row))
+                                onAppClick(row.app)
+                            },
                             modifier = itemModifier
                         )
                         is SearchRow.File -> FileResultRow(
                             file = row.file,
                             onClick = {
+                                hasClicked = true
+                                ServiceLocator.analyticsTracker.trackHomeSearchResultClicked("file", rows.indexOf(row))
                                 onDismiss()
                                 FileSearchRepository.open(context, row.file)
                             },
@@ -1160,7 +1181,11 @@ private fun SearchOverlay(
                         )
                         is SearchRow.Google -> GoogleFallbackRow(
                             query = row.query,
-                            onClick = { onGoogleSearch(row.query) },
+                            onClick = {
+                                hasClicked = true
+                                ServiceLocator.analyticsTracker.trackHomeSearchResultClicked("google", rows.indexOf(row))
+                                onGoogleSearch(row.query)
+                            },
                             modifier = itemModifier
                         )
                         is SearchRow.Gap -> Spacer(itemModifier.height(SearchSectionGap - 8.rdp))
@@ -1176,8 +1201,21 @@ private fun SearchOverlay(
                 query = query,
                 onQueryChange = { query = it },
                 onSubmit = {
+                    val count = filteredApps.size + fileResults.size
+                    ServiceLocator.analyticsTracker.trackHomeSearchQuerySubmitted(query.length, count)
+                    if (count == 0) {
+                        ServiceLocator.analyticsTracker.trackHomeSearchNoResults()
+                    }
                     val top = filteredApps.firstOrNull()
-                    if (top != null) onAppClick(top) else if (query.isNotBlank()) onGoogleSearch(query)
+                    if (top != null) {
+                        hasClicked = true
+                        ServiceLocator.analyticsTracker.trackHomeSearchResultClicked("app", 0)
+                        onAppClick(top)
+                    } else if (query.isNotBlank()) {
+                        hasClicked = true
+                        ServiceLocator.analyticsTracker.trackHomeSearchResultClicked("google", 0)
+                        onGoogleSearch(query)
+                    }
                 }
             )
         }

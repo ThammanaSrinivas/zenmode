@@ -45,9 +45,10 @@ class ZenScoreActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         HomePageSide.LEFT.applyOnCreate(this)
 
-        val repository = UsageRepository(applicationContext, ServiceLocator.analyticsManager)
-        val sessionLogRepository = SessionLogRepository(applicationContext, repository)
+        val repository = UsageRepository(this, ServiceLocator.analyticsManager)
+        val sessionLogRepository = SessionLogRepository(this, repository)
         val scores = ZenScoreStore(this, repository, sessionLogRepository)
+
         val score = scores.refresh()
         val yesterday = scores.yesterday()
         val auth = ServiceLocator.authProvider
@@ -57,8 +58,11 @@ class ZenScoreActivity : AppCompatActivity() {
         // Newest first, so the latest session is visible without scrolling
         // (getTodaySessions() itself returns oldest-first).
         val sessionLog = sessions.asReversed().map(::toLogEntry)
-        val sessionTotalLabel = "TODAY, ${formatMinutes(TimeUnit.MILLISECONDS.toMinutes(sessions.sumOf { it.durationMillis }))}"
+        val totalMins = TimeUnit.MILLISECONDS.toMinutes(sessions.sumOf { it.durationMillis })
+        val sessionTotalLabel = "TODAY, ${formatMinutes(totalMins)}"
         val reclaimedMinutes = reclaimedMinutesToday(repository)
+
+        ServiceLocator.analyticsTracker.trackDailyScreentimeViewed(totalMins, 0)
 
         setContent {
             ZenTheme {

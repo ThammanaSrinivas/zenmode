@@ -8,6 +8,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.widget.Toast
 import com.zenlauncher.zenmode.coreapi.UsageRepository
+import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import kotlinx.coroutines.TimeoutCancellationException
@@ -121,6 +122,17 @@ class BuddyConnector(
             return null
         }
 
+        val isPro = ProAccess.isPro(activity)
+        val weeklyLimit = if (isPro) Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT else Entitlement.RANDOM_CONNECT_FREE_WEEKLY_LIMIT
+        if (!ServiceLocator.firestoreDataSource.hasRandomConnectQuota(currentUserId, weeklyLimit)) {
+            if (isPro) {
+                toast("You've used all $weeklyLimit random connects this week. More open up next week.", Toast.LENGTH_LONG)
+            } else {
+                toast("You've used all $weeklyLimit random connects this week. Upgrade to Pro for up to ${Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT}/week.", Toast.LENGTH_LONG)
+            }
+            return null
+        }
+
         return try {
             val buddyUid = ServiceLocator.firestoreDataSource.findRandomBuddy(currentUserId)
             if (buddyUid == null) {
@@ -128,6 +140,7 @@ class BuddyConnector(
                 toast("No buddies available right now. Try again in 30 seconds!", Toast.LENGTH_LONG)
                 null
             } else {
+                ServiceLocator.firestoreDataSource.recordRandomConnectUsed(currentUserId)
                 val buddy = ServiceLocator.firestoreDataSource.getUser(buddyUid)
                 repository.clearCachedBuddy()
                 repository.saveHasBuddy(true)
