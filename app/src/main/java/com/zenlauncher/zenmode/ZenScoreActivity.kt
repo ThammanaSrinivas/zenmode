@@ -54,7 +54,9 @@ class ZenScoreActivity : AppCompatActivity() {
 
         val sessions = sessionLogRepository.getTodaySessions()
         val categories = categoryBreakdown(sessionLogRepository)
-        val sessionLog = sessions.map(::toLogEntry)
+        // Newest first, so the latest session is visible without scrolling
+        // (getTodaySessions() itself returns oldest-first).
+        val sessionLog = sessions.asReversed().map(::toLogEntry)
         val sessionTotalLabel = "TODAY, ${formatMinutes(TimeUnit.MILLISECONDS.toMinutes(sessions.sumOf { it.durationMillis }))}"
         val reclaimedMinutes = reclaimedMinutesToday(repository)
 
@@ -72,6 +74,10 @@ class ZenScoreActivity : AppCompatActivity() {
                     photoUrl = auth.getPhotoUrl(),
                     isPro = isPro,
                     onBackClick = { finish() },
+                    onZenGoldClick = {
+                        finish()
+                        startActivity(Intent(this@ZenScoreActivity, ZenGoldActivity::class.java))
+                    },
                     onUpgradeProClick = { openProSheet("zen_score_header") },
                     onDownloadReportClick = {
                         if (isPro) downloadLatestReport() else openProSheet("zen_score_report")

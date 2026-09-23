@@ -3,6 +3,7 @@ package com.zenlauncher.zenmode.ui.components
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -117,9 +119,15 @@ fun SettingsMenuButton(modifier: Modifier = Modifier) {
 /** The three home pages, left to right. Swipe right from Home for Zen Score, left for Zen Gold. */
 enum class HomePage { ZEN_SCORE, HOME, ZEN_GOLD }
 
-/** Page-position dots shared by the three home pages. Purely visual — each page owns its swipe. */
+/** Page-position dots shared by the three home pages. Each page owns its swipe; tapping a dot
+ * for a page other than [current] jumps straight there via [onPageClick], same destination a
+ * swipe would reach. */
 @Composable
-fun HomePageDots(current: HomePage, modifier: Modifier = Modifier) {
+fun HomePageDots(
+    current: HomePage,
+    modifier: Modifier = Modifier,
+    onPageClick: ((HomePage) -> Unit)? = null
+) {
     val colors = ZenTheme.colors
     Row(
         modifier = modifier
@@ -131,15 +139,30 @@ fun HomePageDots(current: HomePage, modifier: Modifier = Modifier) {
     ) {
         HomePage.entries.forEach { page ->
             Box(
+                // A 24dp slot around the 7dp dot — a real tap target without the row growing
+                // wide enough to read as spaced-out rather than a tight page indicator.
                 modifier = Modifier
-                    .padding(horizontal = 4.rdp)
-                    .size(7.rdp)
-                    .clip(CircleShape)
-                    .background(
-                        if (page == current) colors.textBrand
-                        else colors.textPrimary.copy(alpha = 0.35f)
-                    )
-            )
+                    .size(24.rdp)
+                    .then(
+                        if (onPageClick != null && page != current) {
+                            Modifier.clip(CircleShape).clickable(
+                                onClickLabel = "Go to ${page.name.lowercase().replace('_', ' ')}",
+                                role = Role.Button
+                            ) { onPageClick(page) }
+                        } else Modifier
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(7.rdp)
+                        .clip(CircleShape)
+                        .background(
+                            if (page == current) colors.textBrand
+                            else colors.textPrimary.copy(alpha = 0.35f)
+                        )
+                )
+            }
         }
     }
 }
@@ -156,6 +179,7 @@ fun PinnedPageFooter(
     fadeTo: Color,
     onHeightChanged: (Dp) -> Unit,
     modifier: Modifier = Modifier,
+    onPageClick: ((HomePage) -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
     val density = LocalDensity.current
@@ -171,7 +195,7 @@ fun PinnedPageFooter(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         content()
-        HomePageDots(current = current, modifier = Modifier.padding(bottom = 6.rdp))
+        HomePageDots(current = current, onPageClick = onPageClick, modifier = Modifier.padding(bottom = 6.rdp))
     }
 }
 

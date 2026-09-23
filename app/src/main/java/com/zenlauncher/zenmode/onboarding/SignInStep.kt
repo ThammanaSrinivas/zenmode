@@ -93,22 +93,39 @@ internal fun SignInStep(
                 }
             )
             OnboardingTextButton(text = "Explore first, sign in later", onClick = onExplore)
-            Text(
-                text = buildAnnotatedString {
-                    append("By continuing you agree to our ")
-                    withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) { append("privacy policy") }
-                    append(".")
-                },
-                fontFamily = Geist,
-                fontSize = 12.rsp,
-                color = ZenTheme.colors.textTertiary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.pressScale(
-                    onClick = { uriHandler.openUri(AppConstants.PRIVACY_POLICY_URL) },
-                    onClickLabel = "Open privacy policy",
-                    pressedScale = 0.98f
+            Row(horizontalArrangement = Arrangement.Center) {
+                Text(
+                    text = buildAnnotatedString {
+                        append("By continuing you agree to our ")
+                        withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) { append("Terms") }
+                    },
+                    fontFamily = Geist,
+                    fontSize = 12.rsp,
+                    color = ZenTheme.colors.textTertiary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.pressScale(
+                        onClick = { uriHandler.openUri(AppConstants.TERMS_OF_SERVICE_URL) },
+                        onClickLabel = "Open terms of service",
+                        pressedScale = 0.98f
+                    )
                 )
-            )
+                Text(
+                    text = buildAnnotatedString {
+                        append(" and ")
+                        withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) { append("privacy policy") }
+                        append(".")
+                    },
+                    fontFamily = Geist,
+                    fontSize = 12.rsp,
+                    color = ZenTheme.colors.textTertiary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.pressScale(
+                        onClick = { uriHandler.openUri(AppConstants.PRIVACY_POLICY_URL) },
+                        onClickLabel = "Open privacy policy",
+                        pressedScale = 0.98f
+                    )
+                )
+            }
         }
     ) {
         Column(

@@ -98,6 +98,8 @@ fun ZenGoldScreen(
     forecastMonthlyAmount: Int = AppConstants.PLACEHOLDER_FORECAST_MONTHLY_AMOUNT,
     investGoldUnlocked: Boolean = AppConstants.PLACEHOLDER_INVEST_GOLD_UNLOCKED,
     onBackClick: () -> Unit,
+    /** Tapping the Zen Score dot jumps straight there, same destination Home's right swipe reaches. */
+    onZenScoreClick: () -> Unit = {},
     onViewAllClick: () -> Unit = {},
     onInvestGoldClick: () -> Unit = {},
     onEditPromiseClick: () -> Unit = {},
@@ -170,7 +172,14 @@ fun ZenGoldScreen(
             current = HomePage.ZEN_GOLD,
             fadeTo = moodWashColors(mood).last(),
             onHeightChanged = { footerHeight = it },
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onPageClick = { page ->
+                when (page) {
+                    HomePage.HOME -> onBackClick()
+                    HomePage.ZEN_SCORE -> onZenScoreClick()
+                    HomePage.ZEN_GOLD -> Unit
+                }
+            }
         ) {
             Column(
                 modifier = Modifier

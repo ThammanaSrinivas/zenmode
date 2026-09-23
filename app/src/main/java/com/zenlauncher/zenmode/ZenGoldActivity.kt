@@ -27,6 +27,10 @@ class ZenGoldActivity : AppCompatActivity() {
                 ZenGoldScreen(
                     promiseHours = promiseHours.intValue,
                     onBackClick = { finish() },
+                    onZenScoreClick = {
+                        finish()
+                        startActivity(Intent(this@ZenGoldActivity, ZenScoreActivity::class.java))
+                    },
                     // TEMP: force-unlocked so the Kite basket-redirect spike is reachable
                     // for testing — revert to the real PLACEHOLDER_INVEST_GOLD_UNLOCKED
                     // gate once a real weekly-promise backend drives it.

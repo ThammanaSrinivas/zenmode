@@ -83,12 +83,8 @@ interface FirestoreDataSource {
      */
     suspend fun getTodayCircleReactions(circleId: String, myUid: String): Pair<Long, Long>
 
-    /**
-     * Finds a random user with neither a circle nor a buddy, active recently, and creates a
-     * new circle with both [myUid] and the match as real members atomically -- unlike
-     * [findRandomBuddy], both people are online right now, so there's no leader-alone-waiting
-     * step. Returns the new circle, or null if no one is available.
-     */
+    /** Finds a random circle with an open slot and joins [myUid] to it atomically, mirroring [findRandomBuddy].
+     *  Returns the joined circle, or null if none is available. */
     suspend fun findRandomCircleUser(myUid: String, myDisplayName: String?): Circle?
 }
 

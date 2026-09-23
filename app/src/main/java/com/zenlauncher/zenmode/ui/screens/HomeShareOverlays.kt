@@ -88,6 +88,12 @@ import java.util.Locale
 //
 // SOURCE OF TRUTH: design tokens — the card is the one dark surface in the app, so
 // its colours come from colors.xml (never a bare Color(0x...) literal here).
+//
+// Overlay background (Figma node 252:3646, "streaks OVerlay"): Home stays visible behind
+// the sheet, blurred rather than blacked out — the caller blurs its own content with
+// [com.zenlauncher.zenmode.ui.components.zenOverlayBlur] (the same mechanism the app-actions
+// and apps-picker frosted overlays use), and the sheet itself is a translucent paper panel
+// over that blur, not an opaque card.
 
 internal val ShareCardBg: Color @Composable get() = colorResource(R.color.ink_base)
 internal val ShareCardMuted: Color @Composable get() = colorResource(R.color.milestone_muted)
@@ -97,6 +103,12 @@ internal val ShareCardTagline: Color @Composable get() = colorResource(R.color.m
 internal val ShareCardOutlineBg: Color @Composable get() = colorResource(R.color.milestone_outline_bg)
 internal val ShareCardOutlineBorder: Color @Composable get() = colorResource(R.color.zen_700)
 internal val ShareCardSolidBg: Color @Composable get() = colorResource(R.color.zen_700)
+
+/** Full-screen scrim over the blurred backdrop — same tone [ZenFrostedOverlay] scrims with. */
+internal val ShareSheetScrim: Color @Composable get() = ZenTheme.colors.bgPrimary.copy(alpha = 0.28f)
+
+/** The sheet panel itself: paper at Figma's ~71% so the blur underneath still reads through. */
+internal val ShareSheetPanelBg: Color @Composable get() = ZenTheme.colors.bgPrimary.copy(alpha = 0.71f)
 
 /** The sheet keeps Home's 30dp margin so it lines up with the header it opened from. */
 private val SheetMargin: Dp @Composable get() = 30.rdp
@@ -142,7 +154,7 @@ internal fun ShareSheet(
         modifier = Modifier
             .fillMaxSize()
             .offset(y = offsetY.coerceAtLeast(0f).dp)
-            .background(Color.Black.copy(alpha = 0.45f))
+            .background(ShareSheetScrim)
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
@@ -163,7 +175,7 @@ internal fun ShareSheet(
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .clip(RoundedCornerShape(topStart = 24.rdp, topEnd = 24.rdp))
-                .background(colors.bgSecondary.copy(alpha = 0.96f))
+                .background(ShareSheetPanelBg)
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }

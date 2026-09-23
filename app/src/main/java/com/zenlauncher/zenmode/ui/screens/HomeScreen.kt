@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.union
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
@@ -162,6 +164,7 @@ import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.components.StatsCardsRow
 import com.zenlauncher.zenmode.ui.components.WeightSpacer
+import com.zenlauncher.zenmode.ui.components.zenOverlayBlur
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.alpha
@@ -318,6 +321,10 @@ fun HomeScreen(
                 .fillMaxSize()
                 .systemBarsPadding()
                 .then(if (homeBlur > 0.dp) Modifier.blur(homeBlur) else Modifier)
+                // Streak / Gold share sheets sit over a blurred Home rather than a blacked-out
+                // one (Figma node 252:3646) — same mechanism the app-actions/apps-picker
+                // frosted overlays use.
+                .zenOverlayBlur(showStreakOverlay || showGoldOverlay)
         ) {
             Spacer(modifier = Modifier.height(TopToHeaderGap))
 
@@ -400,7 +407,16 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(SearchToDotsGap))
 
-            HomePageDots(current = HomePage.HOME)
+            HomePageDots(
+                current = HomePage.HOME,
+                onPageClick = { page ->
+                    when (page) {
+                        HomePage.ZEN_SCORE -> onZenScoreClick()
+                        HomePage.ZEN_GOLD -> onZenGoldClick()
+                        HomePage.HOME -> Unit
+                    }
+                }
+            )
 
             Spacer(modifier = Modifier.height(DotsToBottomGap))
         }
@@ -1047,17 +1063,26 @@ private fun SearchOverlay(
     // Pin the bar to the home pill: same bottom edge, so pressing search changes the
     // pill's look, never its position. Only a docked keyboard that would cover it
     // pushes it up. Until the pill has been measured, fall back to the nav bar gap.
+    //
+    // This used to re-derive the keyboard's height by hand (WindowInsets.ime.getBottom()
+    // read once per recomposition, maxOf'd against the anchored gap, applied as a plain
+    // .padding()). That doesn't track the system's own keyboard show/hide animation, so the
+    // bar snapped to wherever the raw ime inset happened to be mid-animation instead of
+    // riding it smoothly — on real keyboards (taller and slower to animate than this
+    // emulator's) that read as the bar jumping to the middle of the screen with a gap
+    // before the keyboard caught up. WindowInsets.union() + windowInsetsPadding() take
+    // whichever inset is taller and stay pixel-for-pixel in sync with that animation, which
+    // a hand-rolled recomputation can't.
     val density = LocalDensity.current
     var overlayBottomInWindow by remember { mutableStateOf<Float?>(null) }
-    val imeBottomPx = WindowInsets.ime.getBottom(density)
     val navBottomPx = WindowInsets.navigationBars.getBottom(density)
     val anchoredGapPx = if (anchorBounds != null && overlayBottomInWindow != null) {
         (overlayBottomInWindow!! - anchorBounds.bottom).coerceAtLeast(0f)
     } else {
         with(density) { navBottomPx + SearchBarGap.toPx() }
     }
-    val keyboardGapPx = if (imeBottomPx > 0) imeBottomPx + with(density) { 12.rdp.toPx() } else 0f
-    val barBottomGap = with(density) { maxOf(anchoredGapPx, keyboardGapPx).toDp() }
+    val restingInsets = WindowInsets(bottom = anchoredGapPx.roundToInt())
+    val barInsets = WindowInsets.ime.union(restingInsets)
 
     Box(
         modifier = Modifier
@@ -1083,7 +1108,7 @@ private fun SearchOverlay(
                 .fillMaxSize()
                 .offset { IntOffset(0, dragY.coerceAtLeast(0f).roundToInt()) }
                 .statusBarsPadding()
-                .padding(bottom = barBottomGap)
+                .windowInsetsPadding(barInsets)
         ) {
             // Reverse layout pins the list to the bar: short result sets hug the
             // bottom, long ones scroll up from it. Rows are emitted bottom-first.

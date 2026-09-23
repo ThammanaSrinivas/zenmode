@@ -56,6 +56,7 @@ import com.zenlauncher.zenmode.ZenSound
 import com.zenlauncher.zenmode.ui.components.ZenMotion
 import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
 import androidx.compose.runtime.collectAsState
+import com.zenlauncher.zenmode.coreapi.ZEN_CIRCLE_MAX_MEMBERS
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
@@ -284,24 +285,23 @@ fun SettingsScreen(
 
                 ZenSettingsGroup(
                     label = "Accountability",
-                    trailingLabel = if (isProAvailable) {
-                        "Partners · ${if (isPro) Entitlement.PRO_PARTNER_LIMIT else Entitlement.FREE_PARTNER_LIMIT} max"
-                    } else null
+                    trailingLabel = "Zen Circle · beta"
                 ) {
                     ZenSettingsRow(
                         title = "Accountability partner",
                         subtitle = "They see your score and its direction. Nothing else.",
                         onClick = onAccountabilityPartnerClick
                     )
-                    if (isProAvailable) {
-                        ZenRowDivider()
-                        ZenSettingsRow(
-                            title = "Add another partner",
-                            value = if (isPro) "Up to ${Entitlement.PRO_PARTNER_LIMIT}" else null,
-                            pro = proTag(),
-                            onClick = { openProFeature(ProFeature.EXTRA_PARTNERS) }
-                        )
-                    }
+                    ZenRowDivider()
+                    ZenSettingsRow(
+                        title = "Zen Circle members",
+                        // Everyone shares one cap during beta — see coreapi.ZEN_CIRCLE_MAX_MEMBERS.
+                        // The free/Pro split (Entitlement.FREE_PARTNER_LIMIT / PRO_PARTNER_LIMIT)
+                        // isn't live yet; this line is the honest, current state, not a sales pitch.
+                        subtitle = "Beta: everyone can add up to $ZEN_CIRCLE_MAX_MEMBERS for now. " +
+                            "It'll move to separate free and Pro limits soon.",
+                        onClick = onAccountabilityPartnerClick
+                    )
                 }
 
                 if (isProAvailable) {
@@ -640,6 +640,12 @@ private fun ScreenTimeCard(
     }
 }
 
+/** "3h", or "3.5h" when the midpoint tick lands on a half hour. */
+private fun axisHourLabel(hours: Float): String {
+    val whole = kotlin.math.round(hours).toInt()
+    return if (kotlin.math.abs(hours - whole) < 0.05f) "${whole}h" else "${"%.1f".format(hours)}h"
+}
+
 @Composable
 private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
     val colors = ZenTheme.colors
@@ -653,49 +659,67 @@ private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
         }
     }
 
-    Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(130.rdp)
-            .semantics {
-                contentDescription = "Screen time per day, ${hours.size} days. Today ${formatHours(hours.lastOrNull() ?: 0f)}."
+    Row(Modifier.fillMaxWidth()) {
+        // Y axis: hour scale for the three gridlines the chart draws below.
+        Column(
+            modifier = Modifier
+                .height(130.rdp)
+                .width(24.rdp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            val axisStyle = ZenTypography.monoLabel.copy(fontSize = 10.rsp, lineHeight = 11.rsp, letterSpacing = 0.rsp)
+            Text(axisHourLabel(max), style = axisStyle, color = colors.textMuted)
+            Text(axisHourLabel(max / 2f), style = axisStyle, color = colors.textMuted)
+            Text(axisHourLabel(0f), style = axisStyle, color = colors.textMuted)
+        }
+        Spacer(Modifier.width(6.rdp))
+        Column(Modifier.weight(1f)) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.rdp)
+                    .semantics {
+                        contentDescription = "Screen time per day, ${hours.size} days, up to ${axisHourLabel(max)}. Today ${formatHours(hours.lastOrNull() ?: 0f)}."
+                    }
+            ) {
+                val n = hours.size.coerceAtLeast(1)
+                val gap = if (n > 7) 3.dp.toPx() else 10.dp.toPx()
+                val barWidth = (size.width - gap * (n - 1)) / n
+                listOf(0f, 0.5f, 1f).forEach { f ->
+                    val y = size.height * (1 - f)
+                    drawLine(grid, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
+                }
+                hours.forEachIndexed { i, h ->
+                    val barHeight = (h / max).coerceIn(0f, 1f) * size.height
+                    val isToday = i == hours.lastIndex
+                    drawRoundRect(
+                        color = if (isToday) bar else bar.copy(alpha = 0.3f),
+                        topLeft = Offset(i * (barWidth + gap), size.height - barHeight),
+                        size = Size(barWidth, barHeight),
+                        cornerRadius = CornerRadius(if (n > 7) 2.dp.toPx() else 6.dp.toPx())
+                    )
+                }
             }
-    ) {
-        val n = hours.size.coerceAtLeast(1)
-        val gap = if (n > 7) 3.dp.toPx() else 10.dp.toPx()
-        val barWidth = (size.width - gap * (n - 1)) / n
-        listOf(0f, 0.5f, 1f).forEach { f ->
-            val y = size.height * (1 - f)
-            drawLine(grid, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
-        }
-        hours.forEachIndexed { i, h ->
-            val barHeight = (h / max).coerceIn(0f, 1f) * size.height
-            val isToday = i == hours.lastIndex
-            drawRoundRect(
-                color = if (isToday) bar else bar.copy(alpha = 0.3f),
-                topLeft = Offset(i * (barWidth + gap), size.height - barHeight),
-                size = Size(barWidth, barHeight),
-                cornerRadius = CornerRadius(if (n > 7) 2.dp.toPx() else 6.dp.toPx())
-            )
-        }
-    }
-    Spacer(Modifier.height(6.rdp))
-    if (labelDays) {
-        Row(Modifier.fillMaxWidth()) {
-            dayLabels.forEachIndexed { i, label ->
-                Text(
-                    text = label,
-                    style = ZenTypography.monoLabel,
-                    color = if (i == dayLabels.lastIndex) colors.textPrimary else colors.textMuted,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f)
-                )
+            Spacer(Modifier.height(6.rdp))
+            if (labelDays) {
+                Row(Modifier.fillMaxWidth()) {
+                    dayLabels.forEachIndexed { i, label ->
+                        Text(
+                            text = label,
+                            style = ZenTypography.monoLabel,
+                            color = if (i == dayLabels.lastIndex) colors.textPrimary else colors.textMuted,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            } else {
+                Row(Modifier.fillMaxWidth()) {
+                    Text("30 DAYS AGO", style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
+                    Text("TODAY", style = ZenTypography.monoLabel, color = colors.textPrimary)
+                }
             }
-        }
-    } else {
-        Row(Modifier.fillMaxWidth()) {
-            Text("30 DAYS AGO", style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
-            Text("TODAY", style = ZenTypography.monoLabel, color = colors.textPrimary)
         }
     }
 }

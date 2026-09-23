@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -73,6 +75,7 @@ import com.zenlauncher.zenmode.ui.components.openSettings
 import com.zenlauncher.zenmode.ui.components.pageSwipe
 import com.zenlauncher.zenmode.ui.components.pressScale
 import com.zenlauncher.zenmode.ui.components.taperedBorder
+import com.zenlauncher.zenmode.ui.components.zenOverlayBlur
 import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.CircleShape
@@ -120,6 +123,8 @@ fun ZenScoreScreen(
     isPro: Boolean = false,
     today: LocalDate = LocalDate.now(),
     onBackClick: () -> Unit,
+    /** Tapping the Zen Gold dot jumps straight there, same destination Home's left swipe reaches. */
+    onZenGoldClick: () -> Unit = {},
     onUpgradeProClick: () -> Unit = {},
     onDownloadReportClick: () -> Unit = {}
 ) {
@@ -135,64 +140,79 @@ fun ZenScoreScreen(
             // Home sits to the right of this page, so swiping left goes back to it.
             .pageSwipe(onSwipeLeft = onBackClick)
     ) {
-        MoodBackdrop(mood)
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
-        ) {
-            Spacer(modifier = Modifier.height(16.rdp))
-
-            GreetingHeader(
-                userName = userName,
-                photoUrl = photoUrl,
-                today = today,
-                isPro = isPro,
-                onUpgradeProClick = onUpgradeProClick
-            )
-
-            Spacer(modifier = Modifier.height(16.rdp))
+        // "Share Zen Score" opens over a blurred page rather than a blacked-out one
+        // (Figma node 252:3646, "streaks OVerlay") — same mechanism the app-actions /
+        // apps-picker frosted overlays use. The overlay itself sits outside this Box
+        // so it stays sharp.
+        Box(modifier = Modifier.fillMaxSize().zenOverlayBlur(showShareOverlay)) {
+            MoodBackdrop(mood)
 
             Column(
                 modifier = Modifier
-                    .padding(horizontal = ScreenMargin)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.rdp)
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .verticalScroll(rememberScrollState())
             ) {
-                ZenScoreCard(
-                    score = score,
-                    insight = scoreInsight(score, yesterdayScore),
-                    categories = categories
+                Spacer(modifier = Modifier.height(16.rdp))
+
+                GreetingHeader(
+                    userName = userName,
+                    photoUrl = photoUrl,
+                    today = today,
+                    isPro = isPro,
+                    onUpgradeProClick = onUpgradeProClick
                 )
 
-                SessionLogCard(
-                    reclaimedMinutes = reclaimedMinutes,
-                    sessionTotalLabel = sessionTotalLabel,
-                    sessionLog = sessionLog
-                )
+                Spacer(modifier = Modifier.height(16.rdp))
+
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = ScreenMargin)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(6.rdp)
+                ) {
+                    ZenScoreCard(
+                        score = score,
+                        insight = scoreInsight(score, yesterdayScore),
+                        categories = categories
+                    )
+
+                    SessionLogCard(
+                        reclaimedMinutes = reclaimedMinutes,
+                        sessionTotalLabel = sessionTotalLabel,
+                        sessionLog = sessionLog,
+                        isPro = isPro,
+                        onUpgradeProClick = onUpgradeProClick
+                    )
+                }
+
+                // Room for the sticky footer, so the session log can scroll clear of it.
+                Spacer(modifier = Modifier.height(footerHeight + 8.rdp))
             }
 
-            // Room for the sticky footer, so the session log can scroll clear of it.
-            Spacer(modifier = Modifier.height(footerHeight + 8.rdp))
-        }
-
-        // Download / Share stay on screen however far the page scrolls.
-        PinnedPageFooter(
-            current = HomePage.ZEN_SCORE,
-            fadeTo = moodWashColors(mood).last(),
-            onHeightChanged = { footerHeight = it },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = ScreenMargin)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.rdp)
+            // Download / Share stay on screen however far the page scrolls.
+            PinnedPageFooter(
+                current = HomePage.ZEN_SCORE,
+                fadeTo = moodWashColors(mood).last(),
+                onHeightChanged = { footerHeight = it },
+                modifier = Modifier.align(Alignment.BottomCenter),
+                onPageClick = { page ->
+                    when (page) {
+                        HomePage.HOME -> onBackClick()
+                        HomePage.ZEN_GOLD -> onZenGoldClick()
+                        HomePage.ZEN_SCORE -> Unit
+                    }
+                }
             ) {
-                DownloadReportButton(isPro = isPro, onClick = onDownloadReportClick)
-                ShareScoreButton(onClick = { showShareOverlay = true })
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = ScreenMargin)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.rdp)
+                ) {
+                    DownloadReportButton(isPro = isPro, onClick = onDownloadReportClick)
+                    ShareScoreButton(onClick = { showShareOverlay = true })
+                }
             }
         }
 
@@ -356,72 +376,111 @@ private fun ZenScoreCard(
         )
     )
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(radius))
             .background(colors.bgSecondary)
             .taperedBorder(colorResource(R.color.zen_700), radius, top = 1.rdp)
-            .padding(16.rdp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Today's Zen Score",
-                fontFamily = ClashDisplay,
-                fontWeight = FontWeight.Medium,
-                fontSize = 16.rsp,
-                letterSpacing = (-0.16).sp,
-                color = ZenTheme.colors.textBrandStrong,
-                modifier = Modifier.weight(1f)
-            )
-            PeriodToggle()
-        }
+        ZenScoreCardPattern(modifier = Modifier.matchParentSize())
 
-        Spacer(modifier = Modifier.height(12.rdp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.rdp, vertical = 18.rdp)
         ) {
-            Row(verticalAlignment = Alignment.Bottom) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = ZenScore.format(score),
-                    fontFamily = DepartureMono,
-                    fontSize = 31.5.rsp,
-                    letterSpacing = (-2.5).sp,
-                    style = TextStyle(brush = scoreGradient)
+                    text = "Today's Zen Score",
+                    fontFamily = ClashDisplay,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.rsp,
+                    letterSpacing = (-0.16).sp,
+                    color = ZenTheme.colors.textBrandStrong,
+                    modifier = Modifier.weight(1f)
                 )
-                Text(
-                    text = "/${ZenScore.MAX_DISPLAY}",
-                    fontFamily = DepartureMono,
-                    fontSize = 17.rsp,
-                    color = colors.textSecondary,
-                    modifier = Modifier.padding(bottom = 3.rdp)
-                )
+                PeriodToggle()
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(14.rdp))
 
-            ZenScoreDial(score = score, maxScore = ZenScore.MAX_TENTHS)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = ZenScore.format(score),
+                        fontFamily = DepartureMono,
+                        fontSize = 31.5.rsp,
+                        letterSpacing = (-2.5).sp,
+                        style = TextStyle(brush = scoreGradient)
+                    )
+                    Text(
+                        text = "/${ZenScore.MAX_DISPLAY}",
+                        fontFamily = DepartureMono,
+                        fontSize = 17.rsp,
+                        color = colors.textSecondary,
+                        modifier = Modifier.padding(bottom = 3.rdp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                ZenScoreDial(score = score, maxScore = ZenScore.MAX_TENTHS)
+            }
+
+            Spacer(modifier = Modifier.height(12.rdp))
+
+            Text(
+                text = insight,
+                fontFamily = Geist,
+                fontWeight = FontWeight.Normal,
+                fontSize = 11.rsp,
+                letterSpacing = (-0.11).sp,
+                color = colors.textSecondary
+            )
+
+            Spacer(modifier = Modifier.height(16.rdp))
+
+            CategoryLegendGrid(categories = categories)
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(10.rdp))
+/**
+ * Faint brand dot-grid plus a soft glow behind where the ring sits — gives the card some
+ * texture instead of a flat fill, without competing with the score number/ring for attention.
+ */
+@Composable
+private fun ZenScoreCardPattern(modifier: Modifier = Modifier) {
+    val dot = colorResource(R.color.zen_700).copy(alpha = 0.07f)
+    val glow = colorResource(R.color.zen_300).copy(alpha = 0.16f)
 
-        Text(
-            text = insight,
-            fontFamily = Geist,
-            fontWeight = FontWeight.Normal,
-            fontSize = 11.rsp,
-            letterSpacing = (-0.11).sp,
-            color = colors.textSecondary
+    Canvas(modifier = modifier) {
+        val glowCenter = Offset(size.width * 0.86f, size.height * 0.3f)
+        val glowRadius = size.minDimension * 0.7f
+        drawCircle(
+            brush = Brush.radialGradient(listOf(glow, Color.Transparent), center = glowCenter, radius = glowRadius),
+            radius = glowRadius,
+            center = glowCenter
         )
 
-        Spacer(modifier = Modifier.height(14.rdp))
-
-        CategoryLegendGrid(categories = categories)
+        val spacing = 14.dp.toPx()
+        val dotRadius = 1.dp.toPx()
+        var y = spacing / 2f
+        while (y < size.height) {
+            var x = spacing / 2f
+            while (x < size.width) {
+                drawCircle(color = dot, radius = dotRadius, center = Offset(x, y))
+                x += spacing
+            }
+            y += spacing
+        }
     }
 }
 
@@ -601,14 +660,25 @@ private fun ZenScoreDial(score: Int, maxScore: Int, modifier: Modifier = Modifie
 
 // ── Session log card ───────────────────────────────────────────────
 
+/** Rows visible before the free-tier cap kicks in and before the card needs to scroll. */
+private const val FREE_SESSION_LOG_LIMIT = 7
+private val SessionLogListHeight: Dp @Composable get() = 220.rdp
+
 @Composable
 private fun SessionLogCard(
     reclaimedMinutes: Int,
     sessionTotalLabel: String,
-    sessionLog: List<ZenSessionLogEntry>
+    sessionLog: List<ZenSessionLogEntry>,
+    isPro: Boolean,
+    onUpgradeProClick: () -> Unit
 ) {
     val colors = ZenTheme.colors
     val radius = 20.rdp
+    // Free tier only ever sees today's most recent 7 sessions (list is already newest-first);
+    // Pro sees everything. Either way the card itself has a fixed height -- it scrolls
+    // internally instead of growing with however many sessions the day produced.
+    val visibleLog = if (isPro) sessionLog else sessionLog.take(FREE_SESSION_LOG_LIMIT)
+    val hiddenCount = (sessionLog.size - FREE_SESSION_LOG_LIMIT).coerceAtLeast(0)
 
     Column(
         modifier = Modifier
@@ -673,9 +743,49 @@ private fun SessionLogCard(
                 )
             }
 
-            sessionLog.forEach { entry ->
-                SessionLogRow(entry)
+            // Fixed height so the card stops growing with however many sessions today has
+            // -- it scrolls internally instead (newest session first, so nothing extra to
+            // scroll past to see it).
+            LazyColumn(modifier = Modifier.height(SessionLogListHeight)) {
+                items(visibleLog) { entry -> SessionLogRow(entry) }
             }
+
+            if (!isPro && hiddenCount > 0) {
+                UpgradeForMoreSessionsRow(hiddenCount = hiddenCount, onClick = onUpgradeProClick)
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpgradeForMoreSessionsRow(hiddenCount: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(ZenTheme.colors.borderSubtle)
+            .pressScale(onClick = onClick, onClickLabel = "Upgrade to Pro to see all sessions")
+            .padding(horizontal = 10.rdp, vertical = 8.rdp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "+$hiddenCount more session${if (hiddenCount == 1) "" else "s"} today",
+            fontFamily = Geist,
+            fontWeight = FontWeight.Medium,
+            fontSize = 10.rsp,
+            color = ZenTheme.colors.textSecondary
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Upgrade to see all",
+                fontFamily = Geist,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 10.rsp,
+                letterSpacing = (-0.1).sp,
+                color = colorResource(R.color.zen_700)
+            )
+            Spacer(modifier = Modifier.width(6.rdp))
+            ProBadge()
         }
     }
 }
@@ -692,7 +802,7 @@ private fun SessionLogRow(entry: ZenSessionLogEntry) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.rdp, vertical = 5.rdp),
+            .padding(horizontal = 10.rdp, vertical = 2.rdp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -701,6 +811,7 @@ private fun SessionLogRow(entry: ZenSessionLogEntry) {
                 text = entry.duration,
                 fontFamily = DepartureMono,
                 fontSize = 10.rsp,
+                lineHeight = 10.rsp,
                 letterSpacing = 1.sp,
                 color = colors.textSecondary
             )
@@ -709,6 +820,7 @@ private fun SessionLogRow(entry: ZenSessionLogEntry) {
                 text = entry.appName.uppercase(),
                 fontFamily = DepartureMono,
                 fontSize = 10.rsp,
+                lineHeight = 10.rsp,
                 color = colors.textPrimary
             )
         }
@@ -716,6 +828,7 @@ private fun SessionLogRow(entry: ZenSessionLogEntry) {
             text = statusLabel,
             fontFamily = DepartureMono,
             fontSize = 9.rsp,
+            lineHeight = 9.rsp,
             color = statusColor
         )
     }

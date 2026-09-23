@@ -43,6 +43,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.semantics.Role
@@ -620,23 +622,31 @@ private fun TierColumn(
     ) {
         if (highlighted) OsRule(Modifier.padding(bottom = 4.rdp))
         icon?.invoke()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ZenEyebrow(label, color = if (highlighted) colors.textBrand else colors.textSecondary, modifier = Modifier.weight(1f))
-            if (badge != null) RewardBadge(badge)
+        ZenEyebrow(label, color = if (highlighted) colors.textBrand else colors.textSecondary)
+        // Badge sits on its own line rather than sharing the eyebrow's row: "Launching price"
+        // next to "PRO" doesn't fit a half-width card on narrow phones without wrapping mid-word.
+        if (badge != null) RewardBadge(badge, modifier = Modifier.padding(top = 2.rdp))
+        if (originalAmount != null) {
+            Text(
+                originalAmount,
+                fontFamily = DepartureMono,
+                fontSize = 13.rsp,
+                color = colors.textMuted,
+                textDecoration = TextDecoration.LineThrough,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.padding(top = if (badge != null) 4.rdp else 0.dp)
+            )
         }
-        Row(verticalAlignment = Alignment.Bottom) {
-            if (originalAmount != null) {
-                Text(
-                    originalAmount,
-                    fontFamily = DepartureMono,
-                    fontSize = 15.rsp,
-                    color = colors.textMuted,
-                    textDecoration = TextDecoration.LineThrough,
-                    modifier = Modifier.padding(end = 6.rdp, bottom = 3.rdp)
-                )
-            }
-            Text(amount, fontFamily = DepartureMono, fontSize = 24.rsp, lineHeight = 28.rsp, color = colors.textPrimary)
-        }
+        Text(
+            amount,
+            fontFamily = DepartureMono,
+            fontSize = 22.rsp,
+            lineHeight = 26.rsp,
+            color = colors.textPrimary,
+            maxLines = 1,
+            softWrap = false
+        )
         Text(caption.uppercase(), style = ZenTypography.monoLabel, color = colors.textMuted)
         Spacer(Modifier.height(2.rdp))
         items.forEach { item ->
@@ -819,6 +829,10 @@ private fun CompareCellView(cell: CompareCell, tinted: Boolean, modifier: Modifi
     }
 }
 
+/** Drawn, not a text glyph: a Unicode "✓" depends on whatever font the ambient text style
+ * inherits (this Box carries no fontFamily of its own) and, at 9sp inside a 16dp badge, was
+ * landing clipped or missing on real devices — see [SparkGlyph] / [RingGlyph] for the same
+ * drawn-not-typed approach used elsewhere on this page. */
 @Composable
 private fun CheckBadge(tinted: Boolean) {
     val colors = ZenTheme.colors
@@ -826,7 +840,23 @@ private fun CheckBadge(tinted: Boolean) {
         modifier = Modifier.size(16.rdp).clip(CircleShape).background(if (tinted) colors.textBrand else colors.surfaceTint),
         contentAlignment = Alignment.Center
     ) {
-        Text("✓", fontSize = 9.rsp, color = if (tinted) colors.textOnBrand else colors.textOnTint)
+        CheckGlyph(if (tinted) colors.textOnBrand else colors.textOnTint, Modifier.size(8.rdp))
+    }
+}
+
+@Composable
+private fun CheckGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val path = Path().apply {
+            moveTo(size.width * 0.02f, size.height * 0.55f)
+            lineTo(size.width * 0.38f, size.height * 0.92f)
+            lineTo(size.width * 0.98f, size.height * 0.12f)
+        }
+        drawPath(
+            path,
+            color = color,
+            style = Stroke(width = size.minDimension * 0.22f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        )
     }
 }
 
@@ -837,7 +867,11 @@ private fun DashBadge() {
         modifier = Modifier.size(16.rdp).clip(CircleShape).border(1.dp, colors.borderOutline, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Text("–", fontSize = 10.rsp, color = colors.textMuted)
+        Box(
+            Modifier
+                .size(width = 7.rdp, height = 1.6.rdp)
+                .background(colors.textMuted)
+        )
     }
 }
 
