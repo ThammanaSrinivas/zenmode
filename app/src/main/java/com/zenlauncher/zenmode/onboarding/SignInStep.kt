@@ -93,7 +93,8 @@ internal fun SignInStep(
                 }
             )
             OnboardingTextButton(text = "Explore first, sign in later", onClick = onExplore)
-            Row(horizontalArrangement = Arrangement.Center) {
+            @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.Center) {
                 Text(
                     text = buildAnnotatedString {
                         append("By continuing you agree to our ")
