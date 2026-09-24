@@ -210,14 +210,15 @@ flowchart LR
 <summary><b>🎨 Design language</b></summary>
 <br />
 
-| Token | Light | Dark |
-| :-- | :-- | :-- |
-| Brand primary | ![#00C700](https://placehold.co/14x14/00C700/00C700.png) `#00C700` Zen Base | ![#24FF24](https://placehold.co/14x14/24FF24/24FF24.png) `#24FF24` Zen Glow |
-| Action | ![#007700](https://placehold.co/14x14/007700/007700.png) `#007700` Zen Dark | ![#00C700](https://placehold.co/14x14/00C700/00C700.png) `#00C700` Zen Base |
-| Surface | ![#F5F5F5](https://placehold.co/14x14/F5F5F5/F5F5F5.png) `#F5F5F5` | ![#1A1A1A](https://placehold.co/14x14/1A1A1A/1A1A1A.png) `#1A1A1A` |
+| Role | Token |
+| :-- | :-- |
+| Working accent | `zen` green |
+| Reward (gold, streaks) | `amber`, one per screen |
+| Deduction | `ember` |
+| Bases | `paper` (light), `ink` (dark) |
 
-**Cabinet Grotesk** for words, and **Reddit Mono** for numbers so timers never shift the layout.<br />
-There's a 20dp rhythm everywhere, with 16dp cards, 8dp buttons and 4dp inputs. The full spec is in [`design_system.md`](design_system.md).
+**Clash Display** for headlines, **Geist** for readable text, and **Departure Mono** for every number so timers never shift the layout.<br />
+The grid is 4dp with 20dp screen margins, 16dp card padding, and a 48dp minimum touch target. Exact values live in [`colors.xml`](app/src/main/res/values/colors.xml).
 
 </details>
 
@@ -233,7 +234,7 @@ There's a 20dp rhythm everywhere, with 16dp cards, 8dp buttons and 4dp inputs. T
   <img src="https://img.shields.io/badge/Gradle%20KTS-0B0B0B?style=for-the-badge&logo=gradle&logoColor=24FF24" alt="Gradle Kotlin DSL" />
 </p>
 
-**Min SDK** 28 (Android 9) &nbsp;·&nbsp; **Target SDK** 35
+**Min SDK** 28 (Android 9) &nbsp;·&nbsp; **Target SDK** 36
 
 </details>
 
@@ -252,7 +253,7 @@ cd zenmode
 ```
 
 > [!NOTE]
-> **Fonts:** ZenMode uses **Cabinet Grotesk**. For the intended look, download the free font files from [Fontshare](https://www.fontshare.com/fonts/cabinet-grotesk) and put them in `app/src/main/assets/fonts/`.
+> **Fonts:** Clash Display, Geist and Departure Mono are vendored in `app/src/main/res/font/`, so no extra font setup is needed.
 
 If `settings.gradle.kts` doesn't find a sibling `zenmode_core_private` directory, all backend calls go to **`core-mock`**:
 
