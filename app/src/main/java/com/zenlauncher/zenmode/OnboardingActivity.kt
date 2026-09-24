@@ -49,6 +49,7 @@ import com.zenlauncher.zenmode.onboarding.WelcomeStep
 import com.zenlauncher.zenmode.onboarding.ZenPermission
 import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
+import com.zenlauncher.zenmode.ui.theme.LightOnly
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.launch
 
@@ -100,24 +101,32 @@ class OnboardingActivity : ComponentActivity() {
         observeSignIn()
 
         setContent {
-            ZenTheme {
-                val state by viewModel.uiState.collectAsState()
-                LaunchedEffect(state.finished) { if (state.finished) openHome() }
-                if (showAccessibilityDisclosure) {
-                    AccessibilityDisclosureScreen(
-                        onAccept = {
-                            showAccessibilityDisclosure = false
-                            openSettings(ZenPermission.ACCESSIBILITY)
-                        },
-                        onDecline = { showAccessibilityDisclosure = false }
-                    )
-                } else {
-                    BackHandler(enabled = state.index > 0 || state.signInOnly) {
-                        if (state.signInOnly) openHome() else viewModel.back()
-                    }
-                    OnboardingSteps(state)
-                }
+            // Onboarding is always paper, whatever the phone or a saved Appearance choice says:
+            // the first-run screens are designed light. LightOnly also swaps in light resources
+            // so colorResource skips values-night.
+            ZenTheme(darkTheme = false) {
+                LightOnly { OnboardingContent() }
             }
+        }
+    }
+
+    @Composable
+    private fun OnboardingContent() {
+        val state by viewModel.uiState.collectAsState()
+        LaunchedEffect(state.finished) { if (state.finished) openHome() }
+        if (showAccessibilityDisclosure) {
+            AccessibilityDisclosureScreen(
+                onAccept = {
+                    showAccessibilityDisclosure = false
+                    openSettings(ZenPermission.ACCESSIBILITY)
+                },
+                onDecline = { showAccessibilityDisclosure = false }
+            )
+        } else {
+            BackHandler(enabled = state.index > 0 || state.signInOnly) {
+                if (state.signInOnly) openHome() else viewModel.back()
+            }
+            OnboardingSteps(state)
         }
     }
 

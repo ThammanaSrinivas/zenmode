@@ -48,6 +48,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -464,7 +467,7 @@ private fun StatusTab(unlocked: Boolean, modifier: Modifier = Modifier) {
 
 @Composable
 private fun WeeklyPromiseLegend() {
-    Column(verticalArrangement = Arrangement.spacedBy(4.rdp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(3.rdp)) {
         WeeklyPromiseLegendRow(color = PromiseKeptGreen, label = "Promise within limits")
         WeeklyPromiseLegendRow(color = PromiseBrokenGray, label = "Promise Broken")
         WeeklyPromiseLegendRow(color = colorResource(R.color.stone_200), label = "Not decided yet")
@@ -487,8 +490,11 @@ private fun WeeklyPromiseLegendRow(color: Color, label: String) {
             text = label,
             fontFamily = Geist,
             fontSize = 7.5.rsp,
+            // Explicit line height: the inherited body style (~24sp) triples each row's height.
+            lineHeight = 9.rsp,
             letterSpacing = (-0.075).sp,
-            color = ZenTheme.colors.textPrimary
+            color = ZenTheme.colors.textPrimary,
+            maxLines = 1
         )
     }
 }
@@ -818,6 +824,17 @@ private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onView
     val unlockOutOf = AppConstants.PROMISE_DAYS_TO_UNLOCK
     val unlockAt = unlockOutOf - daysUntilUnlock
     val bodyColor = if (unlocked) colorResource(R.color.ink_soft) else colors.textPrimary
+    // Only "View T&C" is tappable -- a whole-paragraph clickable also fired on scroll swipes.
+    val termsLink = LinkAnnotation.Clickable(
+        tag = "terms",
+        styles = TextLinkStyles(
+            SpanStyle(
+                fontWeight = FontWeight.SemiBold,
+                color = PromiseKeptGreen,
+                textDecoration = TextDecoration.Underline
+            )
+        )
+    ) { onViewTermsClick() }
 
     BasicText(
         text = if (unlocked) {
@@ -826,17 +843,9 @@ private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onView
                     append("Gold pay is open.")
                 }
                 append(" You pick the quantity, we never pick it for you, and we take nothing from it. ")
-                pushStringAnnotation(tag = "terms", annotation = "terms")
-                withStyle(
-                    SpanStyle(
-                        fontWeight = FontWeight.SemiBold,
-                        color = PromiseKeptGreen,
-                        textDecoration = TextDecoration.Underline
-                    )
-                ) {
+                withLink(termsLink) {
                     append("View T&C")
                 }
-                pop()
             }
         } else {
             buildAnnotatedString {
@@ -846,17 +855,9 @@ private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onView
                     "Stay under $daysUntilUnlock more days and it opens then."
                 }
                 append("Invest gold opens at $unlockAt of $unlockOutOf days under your Promise. $staySentence ")
-                pushStringAnnotation(tag = "terms", annotation = "terms")
-                withStyle(
-                    SpanStyle(
-                        fontWeight = FontWeight.SemiBold,
-                        color = PromiseKeptGreen,
-                        textDecoration = TextDecoration.Underline
-                    )
-                ) {
+                withLink(termsLink) {
                     append("View T&C")
                 }
-                pop()
             }
         },
         style = TextStyle(
@@ -865,11 +866,6 @@ private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onView
             lineHeight = 19.rsp,
             letterSpacing = (-0.14).sp,
             color = bodyColor
-        ),
-        modifier = Modifier.clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() },
-            onClick = onViewTermsClick
         )
     )
 }

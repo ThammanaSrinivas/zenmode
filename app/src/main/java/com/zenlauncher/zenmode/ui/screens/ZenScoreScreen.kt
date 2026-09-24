@@ -22,6 +22,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.offset
@@ -699,9 +701,13 @@ private fun ZenScoreDial(score: Int, maxScore: Int, modifier: Modifier = Modifie
 
 // ── Session log card ───────────────────────────────────────────────
 
-/** Rows visible before the free-tier cap kicks in and before the card needs to scroll. */
+/** Rows the free tier sees; also how many rows fit before the Pro list starts scrolling. */
 private const val FREE_SESSION_LOG_LIMIT = 7
-private val SessionLogListHeight: Dp @Composable get() = 220.rdp
+private val SessionLogRowHeight: Dp @Composable get() = 22.rdp
+private val SessionLogListPadding: Dp @Composable get() = 6.rdp
+/** Exactly [FREE_SESSION_LOG_LIMIT] rows tall, so a full free list never leaves a gap below it. */
+private val SessionLogListMaxHeight: Dp @Composable
+    get() = SessionLogRowHeight * FREE_SESSION_LOG_LIMIT + SessionLogListPadding * 2
 
 @Composable
 private fun SessionLogCard(
@@ -714,8 +720,8 @@ private fun SessionLogCard(
     val colors = ZenTheme.colors
     val radius = 20.rdp
     // Free tier only ever sees today's most recent 7 sessions (list is already newest-first);
-    // Pro sees everything. Either way the card itself has a fixed height -- it scrolls
-    // internally instead of growing with however many sessions the day produced.
+    // Pro sees everything. The list hugs its rows up to 7 of them, then scrolls internally
+    // instead of growing with however many sessions the day produced.
     val visibleLog = if (isPro) sessionLog else sessionLog.take(FREE_SESSION_LOG_LIMIT)
     val hiddenCount = (sessionLog.size - FREE_SESSION_LOG_LIMIT).coerceAtLeast(0)
 
@@ -782,11 +788,18 @@ private fun SessionLogCard(
                 )
             }
 
-            // Fixed height so the card stops growing with however many sessions today has
-            // -- it scrolls internally instead (newest session first, so nothing extra to
-            // scroll past to see it).
-            LazyColumn(modifier = Modifier.height(SessionLogListHeight)) {
-                items(visibleLog) { entry -> SessionLogRow(entry) }
+            if (visibleLog.isEmpty()) {
+                SessionLogEmptyRow()
+            } else {
+                // Capped, not fixed: a short day doesn't leave dead space under the rows, and a
+                // long (Pro) day scrolls here rather than stretching the card. Newest first, so
+                // nothing to scroll past to see the latest session.
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = SessionLogListMaxHeight),
+                    contentPadding = PaddingValues(vertical = SessionLogListPadding)
+                ) {
+                    items(visibleLog) { entry -> SessionLogRow(entry) }
+                }
             }
 
             if (!isPro && hiddenCount > 0) {
@@ -830,6 +843,19 @@ private fun UpgradeForMoreSessionsRow(hiddenCount: Int, onClick: () -> Unit) {
 }
 
 @Composable
+private fun SessionLogEmptyRow() {
+    Text(
+        text = "No sessions yet today",
+        fontFamily = Geist,
+        fontSize = 11.rsp,
+        color = ZenTheme.colors.textSecondary,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.rdp, vertical = 14.rdp)
+    )
+}
+
+@Composable
 private fun SessionLogRow(entry: ZenSessionLogEntry) {
     val colors = ZenTheme.colors
     val (statusLabel, statusColor) = when (entry.type) {
@@ -841,33 +867,38 @@ private fun SessionLogRow(entry: ZenSessionLogEntry) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.rdp, vertical = 2.rdp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .height(SessionLogRowHeight)
+            .padding(horizontal = 10.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = entry.duration,
-                fontFamily = DepartureMono,
-                fontSize = 10.rsp,
-                lineHeight = 10.rsp,
-                letterSpacing = 1.sp,
-                color = colors.textSecondary
-            )
-            Spacer(modifier = Modifier.width(10.rdp))
-            Text(
-                text = entry.appName.uppercase(),
-                fontFamily = DepartureMono,
-                fontSize = 10.rsp,
-                lineHeight = 10.rsp,
-                color = colors.textPrimary
-            )
-        }
+        Text(
+            text = entry.duration,
+            fontFamily = DepartureMono,
+            fontSize = 10.rsp,
+            lineHeight = 10.rsp,
+            letterSpacing = 1.sp,
+            maxLines = 1,
+            color = colors.textSecondary
+        )
+        Spacer(modifier = Modifier.width(10.rdp))
+        // Takes the slack so a long app name ellipsizes instead of shoving the status off-card.
+        Text(
+            text = entry.appName.uppercase(),
+            fontFamily = DepartureMono,
+            fontSize = 10.rsp,
+            lineHeight = 10.rsp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = colors.textPrimary,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.rdp))
         Text(
             text = statusLabel,
             fontFamily = DepartureMono,
             fontSize = 9.rsp,
             lineHeight = 9.rsp,
+            maxLines = 1,
             color = statusColor
         )
     }

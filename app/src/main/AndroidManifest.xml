@@ -46,7 +46,12 @@
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
+            <!-- adjustResize: Compose lifts the home search bar itself via WindowInsets.ime.
+                 Left unspecified, many OEMs fall back to adjustPan and shift the whole window
+                 up as well, so the bar is lifted twice (a gap above the keyboard) and the
+                 results get pushed off the top of the screen. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />

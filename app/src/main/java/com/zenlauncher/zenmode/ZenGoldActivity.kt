@@ -1,6 +1,8 @@
 package com.zenlauncher.zenmode
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -59,6 +61,12 @@ class ZenGoldActivity : AppCompatActivity() {
                     },
                     onEditPromiseClick = {
                         startActivity(Intent(this@ZenGoldActivity, MyPromiseActivity::class.java))
+                    },
+                    onViewTermsClick = {
+                        try {
+                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.TERMS_OF_SERVICE_URL)))
+                        } catch (_: ActivityNotFoundException) {
+                        }
                     }
                 )
             }

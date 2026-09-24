@@ -110,6 +110,7 @@ class MainActivity : AppCompatActivity() {
     private var pickerReturnApp: AppInfo? = null
     internal var showBuddyConnect by mutableStateOf(false)
     private var showEnteringZenMode by mutableStateOf(false)
+    private var showHomeGuide by mutableStateOf(false)
     // Set from a zenmodeos.com/b/{code} App Link tap; consumed once the Connect screen
     // is actually on-screen (see the LaunchedEffect next to ZenBroStage.Connect below).
     internal var pendingInviteCode by mutableStateOf<String?>(null)
@@ -403,8 +404,9 @@ class MainActivity : AppCompatActivity() {
             return
         }
         showEnteringZenMode = repository.isEnteringCelebrationPending()
+        showHomeGuide = HomeGuidePreferences.isPending(this)
         // Don't stack the system prompt over the celebration; it asks once that ends.
-        if (!showEnteringZenMode) requestPostNotificationsIfNeeded()
+        if (!showEnteringZenMode && !showHomeGuide) requestPostNotificationsIfNeeded()
 
         // Disable back button since this is a launcher home screen
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -625,6 +627,8 @@ class MainActivity : AppCompatActivity() {
                     onAppLongClick = { longPressedApp = it },
                     modifier = Modifier.zenOverlayBlur(longPressedApp != null || showHomeAppsPicker),
                     reveal = homeRevealCue,
+                    showGuide = showHomeGuide && !showEnteringZenMode,
+                    onGuideFinished = { HomeGuidePreferences.setPending(this, false); showHomeGuide = false; requestPostNotificationsIfNeeded() },
                     apps = run {
                         val notifCounts = ZenNotificationListenerService.notificationCounts
                         installedApps.map { app ->
@@ -926,7 +930,7 @@ class MainActivity : AppCompatActivity() {
                     EnteringZenModeScreen(onFinished = {
                         repository.setEnteringCelebrationPending(false)
                         showEnteringZenMode = false
-                        requestPostNotificationsIfNeeded()
+                        if (!showHomeGuide) requestPostNotificationsIfNeeded()
                     })
                 }
             }

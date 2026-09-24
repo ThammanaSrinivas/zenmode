@@ -50,7 +50,7 @@ class InvestGoldActivity : AppCompatActivity() {
                     },
                     label = "investGoldStep"
                 ) { onReview ->
-                    // Menu and T&C stay unwired, same as Zen Gold's own menu / "View T&C".
+                    // Menu stays unwired, same as Zen Gold's own menu.
                     if (onReview) {
                         InvestGoldReviewScreen(
                             units = units,
@@ -69,11 +69,19 @@ class InvestGoldActivity : AppCompatActivity() {
                             onReviewInKiteClick = { 
                                 ServiceLocator.analyticsTracker.trackGoldPurchaseInitiated(0, units)
                                 reviewing = true 
-                            }
+                            },
+                            onViewTermsClick = { openTerms() }
                         )
                     }
                 }
             }
+        }
+    }
+
+    private fun openTerms() {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.TERMS_OF_SERVICE_URL)))
+        } catch (_: ActivityNotFoundException) {
         }
     }
 

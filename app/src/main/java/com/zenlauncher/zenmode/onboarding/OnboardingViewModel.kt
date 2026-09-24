@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.zenlauncher.zenmode.AppGridPreferences
+import com.zenlauncher.zenmode.HomeGuidePreferences
 import com.zenlauncher.zenmode.LauncherActivities
 import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.coreapi.UsageRepository
@@ -318,6 +319,7 @@ class OnboardingViewModel(
         repository.setOsOnboardingComplete(true)
         repository.clearOnboardingCurrentStep()
         repository.setEnteringCelebrationPending(true)
+        HomeGuidePreferences.setPending(context, true)
         OnboardingDraft.clear(context)
 
         _uiState.update { it.copy(finished = true) }
