@@ -23,7 +23,7 @@ class ZenBroConnectedScreenScreenshotTest {
     fun `zen bro connected - invite sheet open`() = snapshot(inviteSheetOpen = true)
 
     private fun snapshot(inviteSheetOpen: Boolean) {
-        paparazzi.snapshot {
+        paparazzi.golden {
             // Paparazzi leaves inspection mode off; turn it on so the entrance motion renders settled.
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 ZenTheme(darkTheme = false) {

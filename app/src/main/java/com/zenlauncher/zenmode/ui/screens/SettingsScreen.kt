@@ -87,6 +87,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTypography
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import java.time.LocalDate
+import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
 
@@ -652,8 +653,9 @@ private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
     val bar = colors.textBrand
     val grid = colors.borderHairlineSoft
     val max = maxOf(6f, kotlin.math.ceil(hours.maxOrNull() ?: 0f))
-    val dayLabels = remember(hours.size) {
-        val today = LocalDate.now()
+    val clock = LocalZenClock.current
+    val dayLabels = remember(hours.size, clock) {
+        val today = LocalDate.now(clock)
         (hours.size - 1 downTo 0).map {
             today.minusDays(it.toLong()).dayOfWeek.getDisplayName(JavaTextStyle.SHORT, Locale.ENGLISH).uppercase()
         }

@@ -22,7 +22,7 @@ class ZenCircleScreenScreenshotTest {
 
     @Test
     fun `zen circle - reactions on your card only`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 ZenTheme(darkTheme = false) {
                     ZenCircleScreen(
@@ -53,7 +53,7 @@ class ZenCircleScreenScreenshotTest {
     }
 
     private fun snapshot(sheet: ZenCircleSheet?) {
-        paparazzi.snapshot {
+        paparazzi.golden {
             // Paparazzi leaves inspection mode off; turn it on so the entrance motion renders settled.
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 ZenTheme(darkTheme = false) {

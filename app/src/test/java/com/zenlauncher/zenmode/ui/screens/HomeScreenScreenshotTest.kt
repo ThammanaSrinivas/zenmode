@@ -34,7 +34,7 @@ class HomeScreenScreenshotTest {
 
     @Test
     fun `home screen - happy mood, signed in with buddy`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             ZenTheme(darkTheme = false) {
                 HomeScreen(
                     usage = DailyUsage(screenTimeInMillis = 5 * 60 * 1000L),
@@ -70,7 +70,7 @@ class HomeScreenScreenshotTest {
 
     @Test
     fun `home screen - annoyed mood, signed out no buddy`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             ZenTheme(darkTheme = false) {
                 HomeScreen(
                     usage = DailyUsage(screenTimeInMillis = 240 * 60 * 1000L),
@@ -98,7 +98,7 @@ class HomeScreenScreenshotTest {
 
     @Test
     fun `home screen - zen circle stack, three members`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             // Paparazzi leaves inspection mode off, same as ZenCircleScreenScreenshotTest; turn
             // it on so the header/cards/grid reveal animations render settled instead of stuck
             // at their pre-entrance state (the two tests above already snapshot into that gap --

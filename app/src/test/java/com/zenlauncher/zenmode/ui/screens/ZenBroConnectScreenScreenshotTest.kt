@@ -15,7 +15,7 @@ class ZenBroConnectScreenScreenshotTest {
 
     @Test
     fun `zen bro connect - signed in`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             ZenTheme(darkTheme = false) {
                 ZenBroConnectScreen(
                     userCode = "k7Hq2Lm9XyZ",

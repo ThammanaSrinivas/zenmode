@@ -115,8 +115,10 @@ import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.Calendar
 import java.util.Locale
+import java.time.Duration
+import java.time.ZonedDateTime
+import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -563,16 +565,11 @@ internal fun MemberAvatars(members: List<ZenCircleMember>) {
 /** "HH:MM" until local midnight, when the daily ranking resets. Ticks every 30s. */
 @Composable
 internal fun rememberTimeUntilMidnight(): String {
+    val clock = LocalZenClock.current
     fun compute(): String {
-        val now = Calendar.getInstance()
-        val midnight = (now.clone() as Calendar).apply {
-            add(Calendar.DAY_OF_YEAR, 1)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val minutes = (midnight.timeInMillis - now.timeInMillis) / 60_000
+        val now = ZonedDateTime.now(clock)
+        val midnight = now.toLocalDate().plusDays(1).atStartOfDay(now.zone)
+        val minutes = Duration.between(now, midnight).toMinutes()
         return String.format(Locale.US, "%02d:%02d", minutes / 60, minutes % 60)
     }
     var text by remember { mutableStateOf(compute()) }
