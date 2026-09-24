@@ -53,23 +53,14 @@ object AppConstants {
     const val MINDFUL_DAY_ZEN_SCORE_THRESHOLD = 7
 
     // Zen Gold screen (Figma node 2026:1648) — the home screen's right-swipe page.
-    // Promise-vs-screen-time tracking and the price forecast both need a real Gold
-    // Streak backend (see zenmode_core_private/docs/plans) that doesn't exist yet.
+    // Promise-vs-screen-time tracking is real, on-device data now (see ZenGoldPromise.kt);
+    // only the gold price forecast still needs a real Gold Streak backend (see
+    // zenmode_core_private/docs/plans) that doesn't exist yet.
     const val PLACEHOLDER_PROMISE_HOURS = 4
-    const val PLACEHOLDER_DAILY_AVERAGE_MINUTES = 59
-    const val PLACEHOLDER_DAYS_UNTIL_UNLOCK = 3
-    const val PLACEHOLDER_DAYS_LEFT_THIS_WEEK = 4
-    // "Under Threshold & promise kept" state (Figma node 2026:1435) — days this
-    // week that landed under the promise once the streak has already cleared.
-    const val PLACEHOLDER_DAYS_CLEARED_UNDER = 6
-    // true = promise kept, false = broken, null = day hasn't happened yet
-    val PLACEHOLDER_WEEKLY_PROMISE_STATUS: List<Boolean?> =
-        listOf(true, false, false, true, true, null, null)
     const val PLACEHOLDER_FORECAST_PERCENT = 20
     const val PLACEHOLDER_FORECAST_MONTHLY_AMOUNT = 200
     // The forecast card's 6-month axis and "today" marker are computed live from
     // LocalDate.now() (ZenGoldScreen.kt's ForecastCard) — no placeholder needed there.
-    const val PLACEHOLDER_INVEST_GOLD_UNLOCKED = false
 
     // My Promise screen (Figma node 2026:1793). The promise is chosen per week but
     // judged per day, so it steps in whole hours-per-day (7 hrs/week per tap).

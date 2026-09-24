@@ -46,6 +46,7 @@ import com.zenlauncher.zenmode.ui.components.HomePage
 import com.zenlauncher.zenmode.ui.components.HomePageDots
 import com.zenlauncher.zenmode.ui.components.HomeReveal
 import com.zenlauncher.zenmode.ui.components.pageSwipe
+import com.zenlauncher.zenmode.ui.components.HomeGuideOverlay
 import androidx.compose.foundation.systemGestureExclusion
 import com.zenlauncher.zenmode.ui.components.rememberCountUp
 import com.zenlauncher.zenmode.ui.components.rememberReduceMotion
@@ -271,6 +272,9 @@ fun HomeScreen(
     apps: List<AppInfo>,
     // Plays Home's entrance when the phone is unlocked onto it (see HomeMotion.kt).
     reveal: HomeRevealCue = HomeRevealCue(),
+    // First-run guide (swipe right / swipe left / buddy) over everything else on Home.
+    showGuide: Boolean = false,
+    onGuideFinished: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
@@ -282,6 +286,9 @@ fun HomeScreen(
     var showGoldOverlay by remember { mutableStateOf(false) }
     // Where the home pill sits on screen; the search bar opens in exactly that spot.
     var searchPillBounds by remember { mutableStateOf<Rect?>(null) }
+    // The right-hand buddy card, spotlit by the first-run guide.
+    var buddyCardBounds by remember { mutableStateOf<Rect?>(null) }
+    var guideSpotlit by remember { mutableStateOf(false) }
 
     // Three variants, picked by today's screen time. The wash covers the whole screen,
     // pooling the mood colour in the middle and fading to cream at both edges.
@@ -328,7 +335,7 @@ fun HomeScreen(
                 // Streak / Gold share sheets sit over a blurred Home rather than a blacked-out
                 // one (Figma node 252:3646) — same mechanism the app-actions/apps-picker
                 // frosted overlays use.
-                .zenOverlayBlur(showStreakOverlay || showGoldOverlay)
+                .zenOverlayBlur(showStreakOverlay || showGoldOverlay || (showGuide && !guideSpotlit))
         ) {
             Spacer(modifier = Modifier.height(TopToHeaderGap))
 
@@ -377,7 +384,9 @@ fun HomeScreen(
                 // My screen time lands first, then the bolt strikes, then my Zen Bro's /
                 // Zen Circle's card — the comparison reads left to right.
                 leftCardModifier = Modifier.revealPop(reveal, HomeReveal.MY_CARD),
-                rightCardModifier = Modifier.revealPop(reveal, HomeReveal.BUDDY_CARD),
+                rightCardModifier = Modifier
+                    .revealPop(reveal, HomeReveal.BUDDY_CARD)
+                    .onGloballyPositioned { buddyCardBounds = it.boundsInWindow() },
                 boltModifier = Modifier.revealStrike(reveal, HomeReveal.BOLT),
                 crownCue = reveal,
                 modifier = Modifier.padding(horizontal = ScreenMargin)
@@ -488,6 +497,17 @@ fun HomeScreen(
                 gold = goldInvested,
                 changePercent = goldChangePercent,
                 onDismiss = { showGoldOverlay = false }
+            )
+        }
+
+        if (showGuide) {
+            HomeGuideOverlay(
+                buddyCardBounds = buddyCardBounds,
+                hasBuddies = hasBuddies,
+                buddyLabel = if (hasBuddies) "Open my circle" else inviteButtonLabel,
+                onBuddyAction = { if (hasBuddies) onBuddyCardClick?.invoke() else onInviteBuddyClick() },
+                onFinished = onGuideFinished,
+                onSpotlightChange = { guideSpotlit = it }
             )
         }
     }
