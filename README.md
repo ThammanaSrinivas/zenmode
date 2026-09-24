@@ -25,6 +25,7 @@
 Jump to: **[Features](#-what-you-get)** &nbsp;·&nbsp;
 **[How it feels](#-a-day-in-zenmode)** &nbsp;·&nbsp;
 **[Under the hood](#-under-the-hood)** &nbsp;·&nbsp;
+**[Brand](#-brand--design)** &nbsp;·&nbsp;
 **[Build it](#%EF%B8%8F-build-it-yourself)** &nbsp;·&nbsp;
 **[FAQ](#-faq)** &nbsp;·&nbsp;
 **[Support](#-say-hi)**
@@ -207,21 +208,6 @@ flowchart LR
 </details>
 
 <details>
-<summary><b>🎨 Design language</b></summary>
-<br />
-
-| Token | Light | Dark |
-| :-- | :-- | :-- |
-| Brand primary | ![](.github/assets/swatches/00C700.svg) `#00C700` Zen Base | ![](.github/assets/swatches/24FF24.svg) `#24FF24` Zen Glow |
-| Action | ![](.github/assets/swatches/007700.svg) `#007700` Zen Dark | ![](.github/assets/swatches/00C700.svg) `#00C700` Zen Base |
-| Surface | ![](.github/assets/swatches/F5F5F5.svg) `#F5F5F5` | ![](.github/assets/swatches/1A1A1A.svg) `#1A1A1A` |
-
-**Cabinet Grotesk** for words, and **Reddit Mono** for numbers so timers never shift the layout.<br />
-There's a 20dp rhythm everywhere, with 16dp cards, 8dp buttons and 4dp inputs. The full spec is in <a href="design_system.md" target="_blank" rel="noopener noreferrer"><code>design_system.md</code></a>.
-
-</details>
-
-<details>
 <summary><b>🧰 Tech stack</b></summary>
 <br />
 
@@ -239,6 +225,19 @@ There's a 20dp rhythm everywhere, with 16dp cards, 8dp buttons and 4dp inputs. T
 
 <p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
 
+## 🎨 Brand & design
+
+The official **ZenMode brand guide** covers the logo, colors, typography and how to use them. For anything design-related, start there.
+
+<p align="center">
+  <a href="https://zenmodeos.com/brand/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/ZenMode-Brand%20guide-007700?style=for-the-badge&labelColor=0B0B0B" alt="Open the ZenMode brand guide at zenmodeos.com/brand" /></a>
+</p>
+
+- **Typeface:** Clash Display, the ZenMode v3 brand typeface
+- **Logo, colors and usage rules:** <a href="https://zenmodeos.com/brand/" target="_blank" rel="noopener noreferrer">zenmodeos.com/brand</a>
+
+<p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
+
 ## 🛠️ Build it yourself
 
 You **don't** need private backend keys. The build notices you're a contributor and switches to the mock backend automatically.
@@ -250,9 +249,6 @@ cd zenmode
 
 # 2. Open the folder in Android Studio, let Gradle sync, then hit ▶ Run
 ```
-
-> [!NOTE]
-> **Fonts:** ZenMode uses **Cabinet Grotesk**. For the intended look, download the free font files from <a href="https://www.fontshare.com/fonts/cabinet-grotesk" target="_blank" rel="noopener noreferrer">Fontshare</a> and put them in `app/src/main/assets/fonts/`.
 
 If `settings.gradle.kts` doesn't find a sibling `zenmode_core_private` directory, all backend calls go to **`core-mock`**:
 
