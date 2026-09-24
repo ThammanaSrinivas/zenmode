@@ -170,7 +170,7 @@ fun ZenGoldScreen(
 
                 GoldUnlockDisclaimer(
                     daysUntilUnlock = (AppConstants.PROMISE_DAYS_TO_UNLOCK - weekly.unitsKept).coerceAtLeast(0),
-                    unlocked = weekly.unlocked,
+                    unlocked = weekly.goalMet,
                     onViewTermsClick = onViewTermsClick
                 )
             }
@@ -200,7 +200,7 @@ fun ZenGoldScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.rdp)
             ) {
-                InvestGoldButton(unlocked = weekly.unlocked, onClick = onInvestGoldClick)
+                InvestGoldButton(unlocked = weekly.goalMet, onClick = onInvestGoldClick)
                 EditPromiseButton(onClick = onEditPromiseClick)
             }
         }
@@ -265,6 +265,9 @@ private fun ScreenTimeCard(
 ) {
     var isMonthly by remember { mutableStateOf(false) }
     val state = if (isMonthly) monthly else weekly
+    // The badge and happy fill mean "gold pay is open", which only the weekly result decides —
+    // on either tab, so the card never reads UNLOCKED over a locked Invest Gold button.
+    val goldPayOpen = weekly.goalMet
 
     val colors = ZenTheme.colors
     val rule = colorResource(R.color.zen_700)
@@ -278,7 +281,7 @@ private fun ScreenTimeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(radius))
-            .background(if (state.unlocked) colors.statsCardFillHappy else colors.bgPrimary)
+            .background(if (goldPayOpen) colors.statsCardFillHappy else colors.bgPrimary)
             .taperedBorder(rule, radius, top = 3.rdp)
     ) {
         Column(
@@ -396,35 +399,43 @@ private fun ScreenTimeCard(
         }
 
         StatusTab(
-            unlocked = state.unlocked,
+            unlocked = goldPayOpen,
             modifier = Modifier.align(Alignment.BottomEnd)
         )
     }
 }
 
-/** The card's bottom line, tailored to the period and whether gold pay is open. */
+/** The card's bottom line, tailored to the period. Only WEEKLY talks about gold pay —
+ * Monthly is a streak and never gates it (see [ZenGoldPromiseState.goalMet]). */
 private fun promiseStatusMessage(state: ZenGoldPromiseState) = when (state.period) {
-    GoldPromisePeriod.WEEKLY -> if (state.unlocked) {
-        buildAnnotatedString {
-            append("You cleared the line with ${state.unitsKept} days under. ")
+    GoldPromisePeriod.WEEKLY -> when {
+        state.goalMet -> buildAnnotatedString {
+            append("You cleared the line with ${days(state.unitsKept)} under. ")
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
                 append("Gold pay stays open until Sunday midnight.")
             }
         }
-    } else {
-        val daysUntilUnlock = (AppConstants.PROMISE_DAYS_TO_UNLOCK - state.unitsKept).coerceAtLeast(0)
-        buildAnnotatedString {
+        state.goalOutOfReach -> buildAnnotatedString {
+            append("Gold pay can't open this week any more. ")
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("$daysUntilUnlock more days under ${state.promiseHours} hrs opens gold pay, ")
+                append("A fresh week starts Monday.")
             }
-            append("and you have ${state.unitsRemaining} days left this week to do it.")
+        }
+        else -> {
+            val daysUntilUnlock = (AppConstants.PROMISE_DAYS_TO_UNLOCK - state.unitsKept).coerceAtLeast(0)
+            buildAnnotatedString {
+                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
+                    append("${days(daysUntilUnlock)} more under ${state.promiseHours} hrs opens gold pay, ")
+                }
+                append("and you have ${days(state.unitsRemaining)} left this week to do it.")
+            }
         }
     }
     GoldPromisePeriod.MONTHLY -> when {
-        state.unlocked -> buildAnnotatedString {
+        state.goalMet -> buildAnnotatedString {
             append("Not a single week missed. ")
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Gold pay stays open through month end.")
+                append("Your monthly streak is intact.")
             }
         }
         state.unitsMissed > 0 -> buildAnnotatedString {
@@ -441,6 +452,8 @@ private fun promiseStatusMessage(state: ZenGoldPromiseState) = when (state.perio
         }
     }
 }
+
+private fun days(count: Int) = if (count == 1) "1 day" else "$count days"
 
 private val StatusTabHeight: Dp @Composable get() = 22.rdp
 

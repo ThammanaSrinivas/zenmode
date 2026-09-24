@@ -9,12 +9,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.lifecycleScope
 import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.recap.RecapCollector
 import com.zenlauncher.zenmode.recap.RecapStore
 import com.zenlauncher.zenmode.ui.screens.ZenGoldScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The home screen's left-swipe page (Figma node 2026:1648) — the right-hand of the three
@@ -37,7 +42,6 @@ class ZenGoldActivity : AppCompatActivity() {
 
         recapStore = RecapStore(this)
         usageRepository = UsageRepository(this, ServiceLocator.analyticsManager)
-        refreshPromiseState()
 
         setContent {
             ZenTheme() {
@@ -78,18 +82,27 @@ class ZenGoldActivity : AppCompatActivity() {
         HomePageSide.RIGHT.applyOnFinish(this)
     }
 
-    // Re-read on every resume, so an edit made in MyPromiseActivity — or usage that accrued
-    // while this screen was backgrounded — shows on return.
+    // Re-read on every resume (including the first, right after onCreate), so an edit made in
+    // MyPromiseActivity — or usage that accrued while this screen was backgrounded — shows on return.
     override fun onResume() {
         super.onResume()
         refreshPromiseState()
     }
 
     private fun refreshPromiseState() {
-        val promiseHours = PromisePreferences.getDailyHours(this)
-        val days = recapStore.days()
-        val todayMinutes = usageRepository.getTodayUsage().screenTimeInMillis / 60_000L
-        weekly = ZenGoldPromise.weekly(days, todayMinutes, promiseHours)
-        monthly = ZenGoldPromise.monthly(days, todayMinutes, promiseHours, recapStore::recap)
+        lifecycleScope.launch {
+            val (newWeekly, newMonthly) = withContext(Dispatchers.IO) {
+                // WeeklyRecapWorker only records finished days every few hours, so yesterday can
+                // still be missing just after midnight; record it now rather than show it undecided.
+                RecapCollector(applicationContext, usageRepository, recapStore).backfill()
+                val promiseHours = PromisePreferences.getDailyHours(applicationContext)
+                val days = recapStore.days()
+                val todayMinutes = usageRepository.getTodayUsage().screenTimeInMillis / 60_000L
+                ZenGoldPromise.weekly(days, todayMinutes, promiseHours) to
+                    ZenGoldPromise.monthly(days, todayMinutes, promiseHours, recapStore::recap)
+            }
+            weekly = newWeekly
+            monthly = newMonthly
+        }
     }
 }

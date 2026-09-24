@@ -9,7 +9,7 @@ enum class GoldPromisePeriod { WEEKLY, MONTHLY }
 
 /** One bar on the Zen Gold promise strip: a day (Weekly) or a week (Monthly).
  * [kept] is true/false once that unit is decided, null while it's still open —
- * a day that hasn't arrived yet, or (Monthly only) a week still in progress. */
+ * a day that hasn't ended yet, or (Monthly only) a week still in progress. */
 data class PromiseUnit(val label: String, val kept: Boolean?)
 
 data class ZenGoldPromiseState(
@@ -19,10 +19,18 @@ data class ZenGoldPromiseState(
     val units: List<PromiseUnit> = emptyList(),
     val unitsKept: Int = 0,
     val unitsMissed: Int = 0,
-    /** Units still open — future days this week, or weeks not yet decided this month. */
+    /** Units that can still be kept — today (unless already broken) and later days this week,
+     * or weeks not yet decided this month. A past unit with no record is never counted. */
     val unitsRemaining: Int = 0,
-    val unlocked: Boolean = false
-)
+    /** WEEKLY: gold pay is open (5 of 7 days kept). MONTHLY: every week decided so far was
+     * kept — a streak, never a gold pay gate; gold pay always reads the WEEKLY state. */
+    val goalMet: Boolean = false
+) {
+    /** The goal can no longer be met this period, however the open units go. */
+    val goalOutOfReach: Boolean
+        get() = period == GoldPromisePeriod.WEEKLY &&
+            unitsKept + unitsRemaining < AppConstants.PROMISE_DAYS_TO_UNLOCK
+}
 
 /**
  * Real Weekly/Monthly promise tracking for the Zen Gold "My Screen time" card, built from the
@@ -37,7 +45,11 @@ data class ZenGoldPromiseState(
  *
  * Gold pay's actual unlock gate is always the WEEKLY result (it's a Monday–Sunday cash-flow
  * cycle — see GoldUnlockDisclaimer's "Sunday midnight" copy) regardless of which tab the card
- * is showing; callers should read [weekly]'s `unlocked`/`unitsKept` for that, never [monthly]'s.
+ * is showing; callers should read [weekly]'s `goalMet`/`unitsKept` for that, never [monthly]'s.
+ *
+ * Today only counts as kept once it's over: usage only grows, so a today already past the
+ * promise is final (broken), but a today still under it can go over before midnight — so it
+ * stays open, and gold pay never unlocks on a day that could still be lost.
  */
 object ZenGoldPromise {
 
@@ -56,27 +68,19 @@ object ZenGoldPromise {
         today: LocalDate = LocalDate.now()
     ): ZenGoldPromiseState {
         val weekStart = weekStartOf(today)
+        val week = weekProgress(weekStart, today, todayMinutes, promiseHours, days)
+        val units = week.outcomes.mapIndexed { offset, kept -> PromiseUnit(DAY_LABELS[offset], kept) }
 
         var minutesSoFar = 0L
         var daysElapsed = 0
-        val units = (0 until WEEK_LENGTH).map { offset ->
+        for (offset in 0 until WEEK_LENGTH) {
             val date = weekStart.plusDays(offset.toLong())
-            val kept: Boolean? = when {
-                date.isAfter(today) -> null
-                date.isEqual(today) -> {
-                    daysElapsed++
-                    minutesSoFar += todayMinutes
-                    todayMinutes <= promiseHours * 60L
-                }
-                else -> days[date]?.also {
-                    daysElapsed++
-                    minutesSoFar += it.screenTimeMinutes
-                }?.keptPromise
-            }
-            PromiseUnit(DAY_LABELS[offset], kept)
+            val minutes = minutesOn(date, today, todayMinutes, days) ?: continue
+            minutesSoFar += minutes
+            daysElapsed++
         }
 
-        return buildState(GoldPromisePeriod.WEEKLY, promiseHours, units, minutesSoFar, daysElapsed)
+        return buildState(GoldPromisePeriod.WEEKLY, promiseHours, units, week.stillOpen, minutesSoFar, daysElapsed)
     }
 
     /**
@@ -108,24 +112,62 @@ object ZenGoldPromise {
             val kept = weekOutcome(weekStart, currentWeekStart, today, promiseHours, days, todayMinutes, recapFor)
             PromiseUnit("W-%02d".format(index + 1), kept)
         }
+        // Only the current week and later ones can still be decided; an older week left open
+        // (not fully on record) never will be.
+        val stillOpen = weekStarts.indices.count { i ->
+            units[i].kept == null && !weekStarts[i].isBefore(currentWeekStart)
+        }
 
         var minutesSoFar = 0L
         var daysElapsed = 0
         var cursor = monthStart
         while (!cursor.isAfter(today)) {
-            if (cursor.isEqual(today)) {
-                minutesSoFar += todayMinutes
+            minutesOn(cursor, today, todayMinutes, days)?.let {
+                minutesSoFar += it
                 daysElapsed++
-            } else {
-                days[cursor]?.let {
-                    minutesSoFar += it.screenTimeMinutes
-                    daysElapsed++
-                }
             }
             cursor = cursor.plusDays(1)
         }
 
-        return buildState(GoldPromisePeriod.MONTHLY, promiseHours, units, minutesSoFar, daysElapsed)
+        return buildState(GoldPromisePeriod.MONTHLY, promiseHours, units, stillOpen, minutesSoFar, daysElapsed)
+    }
+
+    /** One Monday–Sunday week, day by day, plus how many of its days can still be kept. */
+    private class WeekProgress(val outcomes: List<Boolean?>, val stillOpen: Int) {
+        val kept: Int get() = outcomes.count { it == true }
+    }
+
+    private fun weekProgress(
+        weekStart: LocalDate,
+        today: LocalDate,
+        todayMinutes: Long,
+        promiseHours: Int,
+        days: Map<LocalDate, DayRecord>
+    ): WeekProgress {
+        val dates = (0 until WEEK_LENGTH).map { weekStart.plusDays(it.toLong()) }
+        val outcomes = dates.map { date ->
+            when {
+                date.isAfter(today) -> null
+                // Over the promise is final; under it is still open until midnight.
+                date.isEqual(today) -> if (todayMinutes > promiseHours * 60L) false else null
+                // A past day with no record (before install, usage access off) is unproven.
+                else -> days[date]?.keptPromise
+            }
+        }
+        val stillOpen = dates.indices.count { !dates[it].isBefore(today) && outcomes[it] == null }
+        return WeekProgress(outcomes, stillOpen)
+    }
+
+    /** Minutes used on [date] so far, or null if it hasn't happened or isn't on record. */
+    private fun minutesOn(
+        date: LocalDate,
+        today: LocalDate,
+        todayMinutes: Long,
+        days: Map<LocalDate, DayRecord>
+    ): Long? = when {
+        date.isAfter(today) -> null
+        date.isEqual(today) -> todayMinutes
+        else -> days[date]?.screenTimeMinutes
     }
 
     private fun weekOutcome(
@@ -139,18 +181,10 @@ object ZenGoldPromise {
     ): Boolean? = when {
         weekStart.isAfter(currentWeekStart) -> null
         weekStart.isEqual(currentWeekStart) -> {
-            var kept = 0
-            var decided = 0
-            for (offset in 0 until WEEK_LENGTH) {
-                val date = weekStart.plusDays(offset.toLong())
-                if (date.isAfter(today)) continue
-                decided++
-                val dayKept = if (date.isEqual(today)) todayMinutes <= promiseHours * 60L else days[date]?.keptPromise
-                if (dayKept == true) kept++
-            }
+            val week = weekProgress(weekStart, today, todayMinutes, promiseHours, days)
             when {
-                kept >= AppConstants.PROMISE_DAYS_TO_UNLOCK -> true
-                kept + (WEEK_LENGTH - decided) < AppConstants.PROMISE_DAYS_TO_UNLOCK -> false
+                week.kept >= AppConstants.PROMISE_DAYS_TO_UNLOCK -> true
+                week.kept + week.stillOpen < AppConstants.PROMISE_DAYS_TO_UNLOCK -> false
                 else -> null
             }
         }
@@ -163,13 +197,13 @@ object ZenGoldPromise {
         period: GoldPromisePeriod,
         promiseHours: Int,
         units: List<PromiseUnit>,
+        unitsRemaining: Int,
         minutesSoFar: Long,
         daysElapsed: Int
     ): ZenGoldPromiseState {
         val kept = units.count { it.kept == true }
         val missed = units.count { it.kept == false }
-        val remaining = units.count { it.kept == null }
-        val unlocked = when (period) {
+        val goalMet = when (period) {
             GoldPromisePeriod.WEEKLY -> kept >= AppConstants.PROMISE_DAYS_TO_UNLOCK
             // No weekly-style partial threshold exists at month scale yet, so Monthly reads
             // as a clean streak: every week decided so far has to have been kept.
@@ -182,8 +216,8 @@ object ZenGoldPromise {
             units = units,
             unitsKept = kept,
             unitsMissed = missed,
-            unitsRemaining = remaining,
-            unlocked = unlocked
+            unitsRemaining = unitsRemaining,
+            goalMet = goalMet
         )
     }
 }
