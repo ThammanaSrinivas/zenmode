@@ -9,6 +9,8 @@ kover = "0.9.9"
 # confirmed working against Gradle 9.5.1 locally.
 paparazzi = "2.0.0-alpha05"
 firebaseCrashlytics = "3.0.8"
+# Crashlytics Gradle plugin 3 needs Google-Services >= 4.4.1 for the app ID (mapping upload).
+googleServices = "4.5.0"
 
 androidxActivity = "1.10.1"
 androidxAppcompat = "1.7.1"
@@ -71,3 +73,4 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

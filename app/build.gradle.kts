@@ -23,9 +23,12 @@ val fileSearchEnabled =
 
 // Private builds only (the crash SDK lives in core-private): Crashlytics needs its plugin on the
 // app module to stamp a build ID and upload R8 mappings. Open-source builds never apply it.
-// The apply line below is the one exception scripts/check-app-boundary.sh allows.
+// The Crashlytics apply line below is the one exception scripts/check-app-boundary.sh allows.
+// Crashlytics plugin 3 reads the app ID from the Google-Services task, so that plugin (and
+// app/google-services.json, gitignored) is required alongside it.
 val usePrivateCore = rootProject.file("../zenmode_core_private").exists()
 if (usePrivateCore) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
     apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
 }
 
