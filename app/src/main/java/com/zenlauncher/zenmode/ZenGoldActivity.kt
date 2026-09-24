@@ -4,10 +4,13 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.zenlauncher.zenmode.coreapi.PromisePreferences
+import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.recap.RecapStore
 import com.zenlauncher.zenmode.ui.screens.ZenGoldScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 
@@ -18,32 +21,37 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
  */
 class ZenGoldActivity : AppCompatActivity() {
 
-    private val promiseHours = mutableIntStateOf(AppConstants.PLACEHOLDER_PROMISE_HOURS)
+    private lateinit var recapStore: RecapStore
+    private lateinit var usageRepository: UsageRepository
+
+    private var weekly by mutableStateOf(ZenGoldPromiseState())
+    private var monthly by mutableStateOf(ZenGoldPromiseState(period = GoldPromisePeriod.MONTHLY))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         HomePageSide.RIGHT.applyOnCreate(this)
-        
+
         ServiceLocator.analyticsTracker.trackGoldTabViewed("home_swipe_or_click")
+
+        recapStore = RecapStore(this)
+        usageRepository = UsageRepository(this, ServiceLocator.analyticsManager)
+        refreshPromiseState()
 
         setContent {
             ZenTheme() {
                 val isPro = ProAccess.isProState(this@ZenGoldActivity)
                 ZenGoldScreen(
-                    promiseHours = promiseHours.intValue,
+                    weekly = weekly,
+                    monthly = monthly,
                     isPro = isPro,
                     onBackClick = { finish() },
                     onZenScoreClick = {
                         finish()
                         startActivity(Intent(this@ZenGoldActivity, ZenScoreActivity::class.java))
                     },
-                    // TEMP: force-unlocked so the Kite basket-redirect spike is reachable
-                    // for testing — revert to the real PLACEHOLDER_INVEST_GOLD_UNLOCKED
-                    // gate once a real weekly-promise backend drives it.
-                    investGoldUnlocked = true,
-                    // TEMP: Invest Gold opens InvestGoldActivity, whose own "Review in Kite"
-                    // does a direct native-app redirect (no prefill) while a Zerodha partner
-                    // approval for prefilled native deep links is pending — see the email in
+                    // Invest Gold opens InvestGoldActivity, whose own "Review in Kite" does a
+                    // direct native-app redirect (no prefill) while a Zerodha partner approval
+                    // for prefilled native deep links is pending — see the email in
                     // zenmode_docs/docs/features/gold-streak.md. KiteBasketActivity (WebView +
                     // prefilled basket order) stays in the codebase to swap back in once approved.
                     onInvestGoldClick = {
@@ -62,9 +70,18 @@ class ZenGoldActivity : AppCompatActivity() {
         HomePageSide.RIGHT.applyOnFinish(this)
     }
 
-    // Re-read on every resume so an edit made in MyPromiseActivity shows on return.
+    // Re-read on every resume, so an edit made in MyPromiseActivity — or usage that accrued
+    // while this screen was backgrounded — shows on return.
     override fun onResume() {
         super.onResume()
-        promiseHours.intValue = PromisePreferences.getDailyHours(this)
+        refreshPromiseState()
+    }
+
+    private fun refreshPromiseState() {
+        val promiseHours = PromisePreferences.getDailyHours(this)
+        val days = recapStore.days()
+        val todayMinutes = usageRepository.getTodayUsage().screenTimeInMillis / 60_000L
+        weekly = ZenGoldPromise.weekly(days, todayMinutes, promiseHours)
+        monthly = ZenGoldPromise.monthly(days, todayMinutes, promiseHours, recapStore::recap)
     }
 }
