@@ -22,10 +22,6 @@ DEFAULT_LIMIT=1000
 limit_for() {
   case "$(basename "$1")" in
     HomeScreen.kt) echo 1981 ;;
-    # Grandfathered at its pre-existing size (1226) for the same reason as
-    # HomeScreen.kt above -- must not grow further, but splitting it wasn't
-    # forced as an emergency just for tripping this check.
-    ZenProScreen.kt) echo 1226 ;;
     *) echo "$DEFAULT_LIMIT" ;;
   esac
 }

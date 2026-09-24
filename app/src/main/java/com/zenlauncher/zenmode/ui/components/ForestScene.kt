@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.colorResource
+import com.zenlauncher.zenmode.R
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -40,19 +42,40 @@ import kotlin.random.Random
 // rising into place. Everything after is ambient and never stops: canopy sway, mist drift,
 // fireflies. "Remove animations" freezes both at their settled frame.
 
-private object Forest {
-    val skyTop = Color(0xFF040D08)
-    val skyMid = Color(0xFF0A2413)
-    val skyGlow = Color(0xFF1F5C2B)
-    val sun = Color(0xFFFFC800)      // amber_500
-    val sunCore = Color(0xFFFFF3C4)
-    val ember = Color(0xFFFF6600)    // ember_500
-    val ridge = Color(0xFF12321A)
-    val ranks = listOf(Color(0xFF1B4B27), Color(0xFF0B2312), Color(0xFF030C06))
-    val mist = Color(0xFFBFE8C4)
-    val ground = Color(0xFF030D07)
-    val firefly = Color(0xFFC6FFB4)
-}
+/** The scene's fixed palette. Values are `forest_*` primitives in res/values/colors.xml; the sun
+ * and its ember halo reuse the brand's amber_500 / ember_500. */
+private class ForestPalette(
+    val skyTop: Color,
+    val skyMid: Color,
+    val skyGlow: Color,
+    val sun: Color,
+    val sunCore: Color,
+    val ember: Color,
+    val ridge: Color,
+    val ranks: List<Color>,
+    val mist: Color,
+    val ground: Color,
+    val firefly: Color
+)
+
+@Composable
+private fun forestPalette() = ForestPalette(
+    skyTop = colorResource(R.color.forest_sky_top),
+    skyMid = colorResource(R.color.forest_sky_mid),
+    skyGlow = colorResource(R.color.forest_sky_glow),
+    sun = colorResource(R.color.amber_500),
+    sunCore = colorResource(R.color.forest_sun_core),
+    ember = colorResource(R.color.ember_500),
+    ridge = colorResource(R.color.forest_ridge),
+    ranks = listOf(
+        colorResource(R.color.forest_rank_near),
+        colorResource(R.color.forest_rank_mid),
+        colorResource(R.color.forest_rank_far)
+    ),
+    mist = colorResource(R.color.forest_mist),
+    ground = colorResource(R.color.forest_ground),
+    firefly = colorResource(R.color.forest_firefly)
+)
 
 /** Horizon line, as a fraction of height. Everything else is placed off this one number. */
 private const val HORIZON = 0.63f
@@ -134,6 +157,7 @@ fun ForestScene(modifier: Modifier = Modifier) {
         label = "rise"
     )
 
+    val forest = forestPalette()
     val trees = remember { listOf(rank(11, 26), rank(29, 15), rank(47, 9)) }
     val lights = remember { motes(83, 30) }
 
@@ -141,41 +165,41 @@ fun ForestScene(modifier: Modifier = Modifier) {
         val r = reveal.value
         val wind = if (still) 0f else breeze.value
         val drift = if (still) 0.2f else rise.value
-        sky(r)
-        sun(r, wind)
-        rays(r, wind)
-        canopyShade(r)
-        ridge(r)
-        ranks(trees, r, wind)
-        mist(r, drift)
-        fireflies(lights, r, drift, wind)
+        sky(forest, r)
+        sun(forest, r, wind)
+        rays(forest, r, wind)
+        canopyShade(forest, r)
+        ridge(forest, r)
+        ranks(forest, trees, r, wind)
+        mist(forest, r, drift)
+        fireflies(forest, lights, r, drift, wind)
     }
 }
 
 // ── Layers ────────────────────────────────────────────────────────
 
 /** Night at the top, first light gathering on the horizon. The whole wash warms as it lands. */
-private fun DrawScope.sky(reveal: Float) {
+private fun DrawScope.sky(forest: ForestPalette, reveal: Float) {
     val warm = 0.35f + 0.65f * reveal
     drawRect(
         Brush.verticalGradient(
-            0f to Forest.skyTop,
-            0.45f to Forest.skyMid,
-            HORIZON to lerp(Forest.skyMid, Forest.skyGlow, warm),
-            1f to Forest.ground
+            0f to forest.skyTop,
+            0.45f to forest.skyMid,
+            HORIZON to lerp(forest.skyMid, forest.skyGlow, warm),
+            1f to forest.ground
         )
     )
 }
 
 /** The disc climbs out of the treeline as the screen arrives, then breathes on the breeze. */
-private fun DrawScope.sun(reveal: Float, wind: Float) {
+private fun DrawScope.sun(forest: ForestPalette, reveal: Float, wind: Float) {
     val breath = 1f + 0.03f * sin(wind * 0.7f)
     val centre = Offset(size.width * 0.5f, size.height * (HORIZON + 0.10f - 0.13f * reveal))
     val halo = size.width * 1.05f * breath * (0.55f + 0.45f * reveal)
     drawCircle(
         Brush.radialGradient(
-            0f to Forest.sun.copy(alpha = 0.30f * reveal),
-            0.35f to Forest.ember.copy(alpha = 0.16f * reveal),
+            0f to forest.sun.copy(alpha = 0.30f * reveal),
+            0.35f to forest.ember.copy(alpha = 0.16f * reveal),
             1f to Color.Transparent,
             center = centre,
             radius = halo
@@ -186,8 +210,8 @@ private fun DrawScope.sun(reveal: Float, wind: Float) {
     val disc = size.width * 0.13f * breath
     drawCircle(
         Brush.radialGradient(
-            0f to Forest.sunCore.copy(alpha = 0.92f * reveal),
-            0.55f to Forest.sun.copy(alpha = 0.55f * reveal),
+            0f to forest.sunCore.copy(alpha = 0.92f * reveal),
+            0.55f to forest.sun.copy(alpha = 0.55f * reveal),
             1f to Color.Transparent,
             center = centre,
             radius = disc * 2.2f
@@ -198,12 +222,12 @@ private fun DrawScope.sun(reveal: Float, wind: Float) {
 }
 
 /** Seven shafts fanning up out of the canopy, opening as the sun rises and swaying with it. */
-private fun DrawScope.rays(reveal: Float, wind: Float) {
+private fun DrawScope.rays(forest: ForestPalette, reveal: Float, wind: Float) {
     val centre = Offset(size.width * 0.5f, size.height * (HORIZON + 0.02f))
     val length = size.height * 0.72f
     val brush = Brush.radialGradient(
-        0f to Forest.sun.copy(alpha = 0.13f * reveal),
-        0.35f to Forest.sun.copy(alpha = 0.05f * reveal),
+        0f to forest.sun.copy(alpha = 0.13f * reveal),
+        0.35f to forest.sun.copy(alpha = 0.05f * reveal),
         1f to Color.Transparent,
         center = centre,
         radius = length
@@ -227,11 +251,11 @@ private fun DrawScope.rays(reveal: Float, wind: Float) {
  * Night settling back over the top of the frame. Without it the shafts stripe straight through
  * the headline; with it they gather at the treeline, which is where the dawn is anyway.
  */
-private fun DrawScope.canopyShade(reveal: Float) {
+private fun DrawScope.canopyShade(forest: ForestPalette, reveal: Float) {
     drawRect(
         Brush.verticalGradient(
-            0f to Forest.skyTop.copy(alpha = 0.78f),
-            0.30f to Forest.skyTop.copy(alpha = 0.52f),
+            0f to forest.skyTop.copy(alpha = 0.78f),
+            0.30f to forest.skyTop.copy(alpha = 0.52f),
             HORIZON - 0.08f to Color.Transparent,
             1f to Color.Transparent
         ),
@@ -240,7 +264,7 @@ private fun DrawScope.canopyShade(reveal: Float) {
 }
 
 /** The far hills: two soft humps that give the treeline something to stand in front of. */
-private fun DrawScope.ridge(reveal: Float) {
+private fun DrawScope.ridge(forest: ForestPalette, reveal: Float) {
     val base = size.height * (HORIZON + 0.015f)
     val lift = size.height * 0.05f * (1f - reveal)
     val path = Path().apply {
@@ -259,11 +283,11 @@ private fun DrawScope.ridge(reveal: Float) {
         lineTo(-size.width * 0.1f, size.height)
         close()
     }
-    drawPath(path, Forest.ridge.copy(alpha = 0.55f + 0.45f * reveal))
+    drawPath(path, forest.ridge.copy(alpha = 0.55f + 0.45f * reveal))
 }
 
 /** Three ranks, far to near: each darker, taller and later than the one behind it. */
-private fun DrawScope.ranks(trees: List<List<Conifer>>, reveal: Float, wind: Float) {
+private fun DrawScope.ranks(forest: ForestPalette, trees: List<List<Conifer>>, reveal: Float, wind: Float) {
     val specs = listOf(
         Triple(HORIZON + 0.055f, 0.135f, 0.030f),
         Triple(HORIZON + 0.175f, 0.225f, 0.052f),
@@ -287,7 +311,7 @@ private fun DrawScope.ranks(trees: List<List<Conifer>>, reveal: Float, wind: Flo
                 height = height * tree.height,
                 halfWidth = halfWidth * tree.halfWidth,
                 lean = lean,
-                color = Forest.ranks[i].copy(alpha = 0.35f + 0.65f * eased)
+                color = forest.ranks[i].copy(alpha = 0.35f + 0.65f * eased)
             )
         }
     }
@@ -325,7 +349,7 @@ private fun DrawScope.conifer(
 }
 
 /** Three bands of ground fog, squashed circles drifting against each other. */
-private fun DrawScope.mist(reveal: Float, drift: Float) {
+private fun DrawScope.mist(forest: ForestPalette, reveal: Float, drift: Float) {
     val bands = listOf(
         Triple(HORIZON + 0.10f, 0.9f, 1f),
         Triple(HORIZON + 0.22f, 1.2f, -1f),
@@ -340,7 +364,7 @@ private fun DrawScope.mist(reveal: Float, drift: Float) {
         withTransform({ scale(1f, 0.10f, pivot = centre) }) {
             drawCircle(
                 Brush.radialGradient(
-                    listOf(Forest.mist.copy(alpha = alpha), Color.Transparent),
+                    listOf(forest.mist.copy(alpha = alpha), Color.Transparent),
                     center = centre,
                     radius = radius
                 ),
@@ -352,7 +376,7 @@ private fun DrawScope.mist(reveal: Float, drift: Float) {
 }
 
 /** Fireflies: they rise, wrap, sway on the same breeze as the trees, and twinkle out of step. */
-private fun DrawScope.fireflies(lights: List<Mote>, reveal: Float, drift: Float, wind: Float) {
+private fun DrawScope.fireflies(forest: ForestPalette, lights: List<Mote>, reveal: Float, drift: Float, wind: Float) {
     lights.forEach { mote ->
         val y = ((mote.y - drift * mote.speed) % 1f + 1f) % 1f
         // They live in the lower two-thirds, where the trees are, and fade out as they climb.
@@ -363,7 +387,7 @@ private fun DrawScope.fireflies(lights: List<Mote>, reveal: Float, drift: Float,
         val twinkle = 0.30f + 0.70f * (0.5f + 0.5f * sin(wind * 2.3f + mote.phase * 3f))
         val fade = (1f - y).coerceIn(0f, 1f)
         val alpha = twinkle * fade * reveal
-        val colour = lerp(Forest.firefly, Forest.sun, mote.warmth)
+        val colour = lerp(forest.firefly, forest.sun, mote.warmth)
         val glow = mote.radius * 7f
         drawCircle(
             Brush.radialGradient(
@@ -379,5 +403,5 @@ private fun DrawScope.fireflies(lights: List<Mote>, reveal: Float, drift: Float,
 }
 
 /** Exposed for the one screen that hosts the scene, so its glass matches the ink underneath. */
-val ForestGlass: Color get() = Color(0xFF07160C)
-val ForestGlassLine: Color get() = Color(0xFF9FD7A8)
+val ForestGlass: Color @Composable get() = colorResource(R.color.forest_glass)
+val ForestGlassLine: Color @Composable get() = colorResource(R.color.forest_glass_line)
