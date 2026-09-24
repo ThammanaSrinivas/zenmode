@@ -172,19 +172,14 @@ Streaks grow, your Zen Score climbs, and a kept week unlocks Gold Pay.
 
 ZenMode uses a **modular composite build**. The open-source app and its contracts live in this repo. Proprietary backend integrations stay in a separate private module.
 
-```mermaid
-flowchart LR
-    APP["📱 app<br/><sub>UI · ViewModels · Services</sub>"] --> API["📜 core-api<br/><sub>Contracts & domain models</sub>"]
-    API -. "open-source build" .-> MOCK["🧪 core-mock<br/><sub>Fake auth · logged DB & analytics</sub>"]
-    API -. "production build" .-> PRIV["🔒 core-private<br/><sub>Firebase · PostHog</sub>"]
+<p align="center">
+  <img src=".github/assets/architecture.svg" width="100%" alt="ZenMode module architecture. The app module compiles against core-api. core-mock, the default open-source backend, and core-private, the maintainers-only Firebase and PostHog backend, both implement core-api." />
+</p>
 
-    style APP fill:#007700,stroke:#004D00,color:#fff
-    style API fill:#0B0B0B,stroke:#24FF24,color:#fff
-    style MOCK fill:#E8FFE8,stroke:#00C700,color:#0B0B0B
-    style PRIV fill:#1A1A1A,stroke:#525252,color:#A3A3A3
-```
+**How it's wired**
 
-**Diagram in text:** `app` depends on `core-api`. Open-source builds plug `core-mock` into `core-api`, and production builds plug in `core-private`.
+- **Build time:** `settings.gradle.kts` includes `core-private` when `../zenmode_core_private` exists. Otherwise it includes `core-mock`, which `app` pulls in as `runtimeOnly`.
+- **Run time:** `ZenModeApp` finds the backend's `AppInitializer` with `ServiceLoader`. That fills `ServiceLocator` with auth, database, analytics and remote config.
 
 | Module | What lives there |
 | :-- | :-- |
