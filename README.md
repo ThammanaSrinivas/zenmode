@@ -6,9 +6,9 @@
 
 <p><b>Quiet the noise, Together.</b> An Android launcher that makes intentional use easier.</p>
 
-<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN"><img src="https://img.shields.io/badge/Get%20it%20on-Google%20Play-007700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Get ZenMode OS on Google Play" /></a>
+<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Get%20it%20on-Google%20Play-007700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Get ZenMode OS on Google Play" /></a>
 &nbsp;
-<a href="https://zenmodeos.com/"><img src="https://img.shields.io/badge/Visit-zenmodeos.com-007700?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0B0B0B" alt="Visit zenmodeos.com" /></a>
+<a href="https://zenmodeos.com/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Visit-zenmodeos.com-007700?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0B0B0B" alt="Visit zenmodeos.com" /></a>
 &nbsp;
 <a href="mailto:helpdesk@zenmodeos.com"><img src="https://img.shields.io/badge/Talk%20to-us-007700?style=for-the-badge&logo=maildotru&logoColor=white&labelColor=0B0B0B" alt="Email helpdesk@zenmodeos.com" /></a>
 
@@ -161,7 +161,7 @@ Streaks grow, your Zen Score climbs, and a kept week unlocks Gold Pay.
 
 <img src="https://github.com/user-attachments/assets/de9a13cc-d8a0-472d-9e5c-1ca7e57d7b3f" alt="Group photo of the ZenMode team and friends" width="100%" />
 
-> In 2025, **[Kamal](https://github.com/Kamal007OLica)** and **[Srinivas](https://github.com/ThammanaSrinivas)** met at **India FOSS United 2025**.
+> In 2025, **<a href="https://github.com/Kamal007OLica" target="_blank" rel="noopener noreferrer">Kamal</a>** and **<a href="https://github.com/ThammanaSrinivas" target="_blank" rel="noopener noreferrer">Srinivas</a>** met at **India FOSS United 2025**.
 >
 > Today we're building **ZenMode**, a movement toward mindful technology that improves the lives of the next generation. It's free and open source, and we build it in public.
 
@@ -212,12 +212,12 @@ flowchart LR
 
 | Token | Light | Dark |
 | :-- | :-- | :-- |
-| Brand primary | ![](https://placehold.co/14x14/00C700/00C700.png) `#00C700` Zen Base | ![](https://placehold.co/14x14/24FF24/24FF24.png) `#24FF24` Zen Glow |
-| Action | ![](https://placehold.co/14x14/007700/007700.png) `#007700` Zen Dark | ![](https://placehold.co/14x14/00C700/00C700.png) `#00C700` Zen Base |
-| Surface | ![](https://placehold.co/14x14/F5F5F5/F5F5F5.png) `#F5F5F5` | ![](https://placehold.co/14x14/1A1A1A/1A1A1A.png) `#1A1A1A` |
+| Brand primary | ![](.github/assets/swatches/00C700.svg) `#00C700` Zen Base | ![](.github/assets/swatches/24FF24.svg) `#24FF24` Zen Glow |
+| Action | ![](.github/assets/swatches/007700.svg) `#007700` Zen Dark | ![](.github/assets/swatches/00C700.svg) `#00C700` Zen Base |
+| Surface | ![](.github/assets/swatches/F5F5F5.svg) `#F5F5F5` | ![](.github/assets/swatches/1A1A1A.svg) `#1A1A1A` |
 
 **Cabinet Grotesk** for words, and **Reddit Mono** for numbers so timers never shift the layout.<br />
-There's a 20dp rhythm everywhere, with 16dp cards, 8dp buttons and 4dp inputs. The full spec is in [`design_system.md`](design_system.md).
+There's a 20dp rhythm everywhere, with 16dp cards, 8dp buttons and 4dp inputs. The full spec is in <a href="design_system.md" target="_blank" rel="noopener noreferrer"><code>design_system.md</code></a>.
 
 </details>
 
@@ -252,7 +252,7 @@ cd zenmode
 ```
 
 > [!NOTE]
-> **Fonts:** ZenMode uses **Cabinet Grotesk**. For the intended look, download the free font files from [Fontshare](https://www.fontshare.com/fonts/cabinet-grotesk) and put them in `app/src/main/assets/fonts/`.
+> **Fonts:** ZenMode uses **Cabinet Grotesk**. For the intended look, download the free font files from <a href="https://www.fontshare.com/fonts/cabinet-grotesk" target="_blank" rel="noopener noreferrer">Fontshare</a> and put them in `app/src/main/assets/fonts/`.
 
 If `settings.gradle.kts` doesn't find a sibling `zenmode_core_private` directory, all backend calls go to **`core-mock`**:
 
@@ -270,7 +270,7 @@ We'd love your help making phones calmer for everyone.
 2. **Add backend needs in pairs.** Define the interface in `core-api` **and** add a mock in `core-mock`, so everyone else's build keeps working.
 3. **Run the checks first.** Make sure tests and lint pass before you open a Pull Request.
 
-<a href="https://github.com/ThammanaSrinivas/zenmode/graphs/contributors">
+<a href="https://github.com/ThammanaSrinivas/zenmode/graphs/contributors" target="_blank" rel="noopener noreferrer">
   <img src="https://contrib.rocks/image?repo=ThammanaSrinivas/zenmode" alt="Avatars of ZenMode contributors. Opens the contributors page on GitHub." />
 </a>
 
@@ -299,7 +299,7 @@ Yes, at any time. Change your default home app in Android settings, or uninstall
 <details>
 <summary><b>I found a bug or have an idea. Where do I go?</b></summary>
 <br />
-<a href="https://github.com/ThammanaSrinivas/zenmode/issues">Open an issue on GitHub</a>, or email <a href="mailto:helpdesk@zenmodeos.com">helpdesk@zenmodeos.com</a>.
+<a href="https://github.com/ThammanaSrinivas/zenmode/issues" target="_blank" rel="noopener noreferrer">Open an issue on GitHub</a>, or email <a href="mailto:helpdesk@zenmodeos.com">helpdesk@zenmodeos.com</a>.
 </details>
 
 <p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
@@ -321,7 +321,7 @@ Support, bugs and account help
 <td align="center" width="50%">
 <span aria-hidden="true">🌐</span><br />
 <b>Website</b><br />
-<a href="https://zenmodeos.com/"><b>zenmodeos.com</b></a><br />
+<a href="https://zenmodeos.com/" target="_blank" rel="noopener noreferrer"><b>zenmodeos.com</b></a><br />
 News, brand and everything ZenMode
 </td>
 </tr>
@@ -329,7 +329,7 @@ News, brand and everything ZenMode
 
 <br />
 
-<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN"><img src="https://img.shields.io/badge/Enter%20ZenMode-Google%20Play-007700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Enter ZenMode on Google Play" /></a>
+<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Enter%20ZenMode-Google%20Play-007700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Enter ZenMode on Google Play" /></a>
 
 <br /><br />
 
@@ -341,13 +341,17 @@ If ZenMode helps you, a ⭐ on this repo helps others find it.
 
 ## 📜 License
 
-ZenMode is licensed under the **GNU General Public License v3.0**. See [LICENSE](LICENSE) for details.
+ZenMode is licensed under the **GNU General Public License v3.0**. See <a href="LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a> for details.
 
 <br />
 
 <div align="center">
-  <img src=".github/assets/logo.png" alt="ZenMode OS logo" width="110" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.png" />
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-light.png" />
+    <img src=".github/assets/logo-light.png" alt="ZenMode OS logo" width="110" />
+  </picture>
   <br />
   <p><b>Quiet the noise, Together.</b><br />
-  <a href="https://zenmodeos.com/">zenmodeos.com</a> · Built with calm, care &amp; clarity in India 🇮🇳</p>
+  <a href="https://zenmodeos.com/" target="_blank" rel="noopener noreferrer">zenmodeos.com</a></p>
 </div>

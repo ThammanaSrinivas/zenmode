@@ -1,12 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="24" viewBox="0 0 1000 24">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="24" viewBox="0 0 1000 24" role="presentation">
+  <style>
+    .line { stop-color: #007700; }
+    .dot  { fill: #007700; }
+    .core { fill: #FFFFFF; }
+    @media (prefers-color-scheme: dark) {
+      .line { stop-color: #24FF24; }
+      .dot  { fill: #24FF24; }
+      .core { fill: #0D1117; }
+    }
+  </style>
   <defs>
     <linearGradient id="g" x1="0" x2="1">
-      <stop offset="0" stop-color="#00C700" stop-opacity="0"/>
-      <stop offset="0.5" stop-color="#24FF24"/>
-      <stop offset="1" stop-color="#00C700" stop-opacity="0"/>
+      <stop offset="0" class="line" stop-opacity="0"/>
+      <stop offset="0.5" class="line"/>
+      <stop offset="1" class="line" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <rect x="0" y="11" width="1000" height="2" rx="1" fill="url(#g)"/>
-  <circle cx="500" cy="12" r="5" fill="#00C700"/>
-  <circle cx="500" cy="12" r="2" fill="#FFFFFF"/>
+  <circle cx="500" cy="12" r="5" class="dot"/>
+  <circle cx="500" cy="12" r="2" class="core"/>
 </svg>
