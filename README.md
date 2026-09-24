@@ -8,8 +8,6 @@
 
 <a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN"><img src="https://img.shields.io/badge/Get%20it%20on-Google%20Play-00C700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Get it on Google Play" /></a>
 &nbsp;
-<a href="https://youtu.be/48M1x2ryhpI"><img src="https://img.shields.io/badge/Watch-the%20demo-00C700?style=for-the-badge&logo=youtube&logoColor=white&labelColor=0B0B0B" alt="Watch the demo" /></a>
-&nbsp;
 <a href="https://zenmodeos.com/"><img src="https://img.shields.io/badge/Visit-zenmodeos.com-00C700?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0B0B0B" alt="Visit zenmodeos.com" /></a>
 &nbsp;
 <a href="mailto:helpdesk@zenmodeos.com"><img src="https://img.shields.io/badge/Talk%20to-us-00C700?style=for-the-badge&logo=maildotru&logoColor=white&labelColor=0B0B0B" alt="Email helpdesk@zenmodeos.com" /></a>
@@ -26,7 +24,6 @@
 
 **[Features](#-what-you-get)** &nbsp;·&nbsp;
 **[How it feels](#-a-day-in-zenmode)** &nbsp;·&nbsp;
-**[Demo](#-see-it-in-motion)** &nbsp;·&nbsp;
 **[Under the hood](#-under-the-hood)** &nbsp;·&nbsp;
 **[Build it](#%EF%B8%8F-build-it-yourself)** &nbsp;·&nbsp;
 **[FAQ](#-faq)** &nbsp;·&nbsp;
@@ -159,17 +156,6 @@ Mindful unlocks, mindful scrolling, and a session log that tags each app session
 | Free and open source | — | ✅ GPLv3 |
 
 </details>
-
-<p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
-
-## 🎬 See it in motion
-
-<p align="center">
-  <a href="https://youtu.be/48M1x2ryhpI">
-    <img src="https://img.youtube.com/vi/48M1x2ryhpI/maxresdefault.jpg" alt="Watch the ZenMode demo on YouTube" width="100%" />
-  </a>
-  <sub>▶ &nbsp;Click to watch the full demo on YouTube</sub>
-</p>
 
 <p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
 
