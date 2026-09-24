@@ -173,7 +173,11 @@ Streaks grow, your Zen Score climbs, and a kept week unlocks Gold Pay.
 ZenMode uses a **modular composite build**. The open-source app and its contracts live in this repo. Proprietary backend integrations stay in a separate private module.
 
 <p align="center">
-  <img src=".github/assets/architecture.svg" width="100%" alt="ZenMode module architecture. The app module compiles against core-api. core-mock, the default open-source backend, and core-private, the maintainers-only Firebase and PostHog backend, both implement core-api." />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/architecture-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/architecture-light.svg" />
+    <img src=".github/assets/architecture-light.svg" width="100%" alt="ZenMode module architecture. The app module compiles against core-api. core-mock, the default open-source backend, and core-private, the maintainers-only Firebase and PostHog backend, both implement core-api." />
+  </picture>
 </p>
 
 **How it's wired**
@@ -228,7 +232,8 @@ The official **ZenMode brand guide** covers the logo, colors, typography and how
   <a href="https://zenmodeos.com/brand/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/ZenMode-Brand%20guide-007700?style=for-the-badge&labelColor=0B0B0B" alt="Open the ZenMode brand guide at zenmodeos.com/brand" /></a>
 </p>
 
-- **Typeface:** Clash Display, the ZenMode v3 brand typeface
+- **Typefaces:** Cabinet Grotesk for text and Reddit Mono for numbers. Both are bundled in `app/src/main/res/font/` and set in `ui/theme/Type.kt`.
+- **App design spec:** color tokens, typography and spacing are in <a href="design_system.md" target="_blank" rel="noopener noreferrer"><code>design_system.md</code></a>.
 - **Logo, colors and usage rules:** <a href="https://zenmodeos.com/brand/" target="_blank" rel="noopener noreferrer">zenmodeos.com/brand</a>
 
 <p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>

@@ -2,27 +2,23 @@
   <title id="t">ZenMode module architecture</title>
   <desc id="d">The app module compiles against core-api. core-mock and core-private both implement core-api. At build time settings.gradle.kts includes core-private when ../zenmode_core_private exists, otherwise core-mock. At run time ZenModeApp loads the chosen backend's AppInitializer with ServiceLoader, which fills ServiceLocator.</desc>
   <style>
-    :root { --fg:#1F2328; --muted:#57606A; --line:#57606A; --card:#FFFFFF; --stroke:#D0D7DE; --accent:#007700; --mock:#EAFBEA; --mockStroke:#007700; --note:#F6F8FA; --chipFg:#FFFFFF; }
-    @media (prefers-color-scheme: dark) {
-      :root { --fg:#E6EDF3; --muted:#9198A1; --line:#9198A1; --card:#161B22; --stroke:#3D444D; --accent:#24FF24; --mock:#0F2A12; --mockStroke:#24FF24; --note:#161B22; --chipFg:#0B0B0B; }
-    }
-    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; fill: var(--fg); }
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; fill: #1F2328; }
     .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; }
     .title { font-size: 21px; font-weight: 700; }
     .body  { font-size: 15px; }
-    .small { font-size: 14px; fill: var(--muted); }
-    .label { font-size: 14px; font-weight: 600; fill: var(--muted); }
-    .card  { fill: var(--card); stroke: var(--stroke); stroke-width: 1.5; }
+    .small { font-size: 14px; fill: #57606A; }
+    .label { font-size: 14px; font-weight: 600; fill: #57606A; }
+    .card  { fill: #FFFFFF; stroke: #D0D7DE; stroke-width: 1.5; }
     .app   { fill: #007700; stroke: #004D00; stroke-width: 1.5; }
     .app-text { fill: #FFFFFF; }
-    .api   { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
-    .mock  { fill: var(--mock); stroke: var(--mockStroke); stroke-width: 1.5; }
-    .priv  { fill: var(--card); stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 6 5; }
-    .edge  { fill: none; stroke: var(--line); stroke-width: 2; }
-    .head  { fill: var(--line); }
-    .chip  { fill: var(--accent); }
-    .chip-text { fill: var(--chipFg); font-size: 12px; font-weight: 700; letter-spacing: 0.8px; }
-    .note  { fill: var(--note); stroke: var(--stroke); stroke-width: 1.5; }
+    .api   { fill: #FFFFFF; stroke: #007700; stroke-width: 2; }
+    .mock  { fill: #EAFBEA; stroke: #007700; stroke-width: 1.5; }
+    .priv  { fill: #FFFFFF; stroke: #57606A; stroke-width: 1.5; stroke-dasharray: 6 5; }
+    .edge  { fill: none; stroke: #57606A; stroke-width: 2; }
+    .head  { fill: #57606A; }
+    .chip  { fill: #007700; }
+    .chip-text { fill: #FFFFFF; font-size: 12px; font-weight: 700; letter-spacing: 0.8px; }
+    .note  { fill: #F6F8FA; stroke: #D0D7DE; stroke-width: 1.5; }
   </style>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -46,7 +42,7 @@
   <rect x="370" y="90" width="250" height="250" rx="14" class="api"/>
   <text x="495" y="130" text-anchor="middle" class="title mono">core-api</text>
   <text x="495" y="156" text-anchor="middle" class="small">Contracts &amp; domain models</text>
-  <line x1="400" y1="172" x2="590" y2="172" style="stroke:var(--stroke);stroke-width:1"/>
+  <line x1="400" y1="172" x2="590" y2="172" style="stroke:#D0D7DE;stroke-width:1"/>
   <text x="495" y="198" text-anchor="middle" class="body mono">AuthProvider</text>
   <text x="495" y="222" text-anchor="middle" class="body mono">FirestoreDataSource</text>
   <text x="495" y="246" text-anchor="middle" class="body mono">AnalyticsManager</text>
@@ -70,7 +66,7 @@
 
   <!-- core-private -->
   <rect x="740" y="250" width="240" height="160" rx="14" class="priv"/>
-  <rect x="760" y="266" width="112" height="22" rx="11" style="fill:none;stroke:var(--line);stroke-width:1.5"/>
+  <rect x="760" y="266" width="112" height="22" rx="11" style="fill:none;stroke:#57606A;stroke-width:1.5"/>
   <text x="816" y="282" text-anchor="middle" class="label" style="font-size:12px;letter-spacing:0.8px">MAINTAINERS</text>
   <text x="760" y="318" class="title mono">core-private</text>
   <text x="760" y="344" class="body">Not in this repository</text>
