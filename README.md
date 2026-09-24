@@ -1,16 +1,16 @@
-<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN">
-  <img src=".github/assets/banner.webp" alt="ZenMode OS — Quiet the noise, Together. An Android launcher that makes intentional use easier." width="100%" />
-</a>
+<img src=".github/assets/banner.webp" alt="ZenMode OS banner: Quiet the noise, Together. An Android launcher that makes intentional use easier. Free and open source." width="100%" />
 
 <div align="center">
 
-<br />
+<h1>ZenMode OS</h1>
 
-<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN"><img src="https://img.shields.io/badge/Get%20it%20on-Google%20Play-00C700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Get it on Google Play" /></a>
+<p><b>Quiet the noise, Together.</b> An Android launcher that makes intentional use easier.</p>
+
+<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Get%20it%20on-Google%20Play-007700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Get ZenMode OS on Google Play" /></a>
 &nbsp;
-<a href="https://zenmodeos.com/"><img src="https://img.shields.io/badge/Visit-zenmodeos.com-00C700?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0B0B0B" alt="Visit zenmodeos.com" /></a>
+<a href="https://zenmodeos.com/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Visit-zenmodeos.com-007700?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0B0B0B" alt="Visit zenmodeos.com" /></a>
 &nbsp;
-<a href="mailto:helpdesk@zenmodeos.com"><img src="https://img.shields.io/badge/Talk%20to-us-00C700?style=for-the-badge&logo=maildotru&logoColor=white&labelColor=0B0B0B" alt="Email helpdesk@zenmodeos.com" /></a>
+<a href="mailto:helpdesk@zenmodeos.com"><img src="https://img.shields.io/badge/Talk%20to-us-007700?style=for-the-badge&logo=maildotru&logoColor=white&labelColor=0B0B0B" alt="Email helpdesk@zenmodeos.com" /></a>
 
 <br />
 
@@ -22,9 +22,10 @@
 
 <br /><br />
 
-**[Features](#-what-you-get)** &nbsp;·&nbsp;
+Jump to: **[Features](#-what-you-get)** &nbsp;·&nbsp;
 **[How it feels](#-a-day-in-zenmode)** &nbsp;·&nbsp;
 **[Under the hood](#-under-the-hood)** &nbsp;·&nbsp;
+**[Brand](#-brand--design)** &nbsp;·&nbsp;
 **[Build it](#%EF%B8%8F-build-it-yourself)** &nbsp;·&nbsp;
 **[FAQ](#-faq)** &nbsp;·&nbsp;
 **[Support](#-say-hi)**
@@ -33,15 +34,13 @@
 
 <br />
 
-<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN">
-  <img src=".github/assets/hero.png" alt="ZenMode OS home screen with Zen Score, streaks, gold invested and ZenCircle screen-time buddies. Create your ZenCircle with your friends now." width="100%" />
-</a>
+<img src=".github/assets/hero.png" alt="A phone running ZenMode OS. The home screen shows a Zen Score of 7 out of 10, a 13-day streak, 2,350 rupees of gold invested, and two ZenCircle cards comparing screen time: 0 hrs 59 mins and 2 hrs 43 mins. Beside it: Create your ZenCircle with your friends now." width="100%" />
 
 <br /><br />
 
 <div align="center">
 
-<h3>Your phone, minus the noise.</h3>
+<h2>Your phone, minus the noise.</h2>
 
 **ZenMode OS** is a free, open-source Android launcher. It turns your home screen into a calm space built around intent.<br />
 It doesn't lock you out of your phone. Instead it adds a small pause at the moments you tend to lose time,<br />
@@ -51,14 +50,14 @@ and it makes keeping your screen-time promise something you do **together with f
 
 <table>
 <tr>
-<td align="center" width="25%"><h3>🟢</h3><b>Zen Score</b><br /><sub>Your day, out of 10</sub></td>
-<td align="center" width="25%"><h3>🔥</h3><b>Streaks</b><br /><sub>Promises kept, day after day</sub></td>
-<td align="center" width="25%"><h3>👥</h3><b>ZenCircle</b><br /><sub>Accountability with friends</sub></td>
-<td align="center" width="25%"><h3>🪙</h3><b>Gold Pay</b><br /><sub>Time saved becomes gold</sub></td>
+<td align="center" width="25%"><span aria-hidden="true">🟢</span><br /><b>Zen Score</b><br />Your day, out of 10</td>
+<td align="center" width="25%"><span aria-hidden="true">🔥</span><br /><b>Streaks</b><br />Promises kept, day after day</td>
+<td align="center" width="25%"><span aria-hidden="true">👥</span><br /><b>ZenCircle</b><br />Accountability with friends</td>
+<td align="center" width="25%"><span aria-hidden="true">🪙</span><br /><b>Gold Pay</b><br />Time saved becomes gold</td>
 </tr>
 </table>
 
-<sub><i>Less scrolling. More living. &nbsp;·&nbsp; Less noise. More clarity.</i></sub>
+<p><i>Less scrolling. More living. Less noise. More clarity.</i></p>
 
 </div>
 
@@ -70,19 +69,19 @@ and it makes keeping your screen-time promise something you do **together with f
 <tr>
 <td width="33%" valign="top">
 
-#### 🟢 Zen Score
+### 🟢 Zen Score
 A score out of 10 that sits on your home screen, so you can see how intentional your day has been at a glance.
 
 </td>
 <td width="33%" valign="top">
 
-#### 🔥 Streaks that mean something
+### 🔥 Streaks that mean something
 Each day you finish above your Zen Score goal adds to your streak. Save a milestone as an image, or share it.
 
 </td>
 <td width="33%" valign="top">
 
-#### 👥 ZenCircle
+### 👥 ZenCircle
 Invite friends into your circle, see each other's screen time and compete on a daily leaderboard that resets every day.
 
 </td>
@@ -90,19 +89,19 @@ Invite friends into your circle, see each other's screen time and compete on a d
 <tr>
 <td width="33%" valign="top">
 
-#### 🛑 Distraction Blocker
+### 🛑 Distraction Blocker
 Turn off reels and shorts with one switch. You pick which apps stay and which go quiet, and it shows you the scrolls and hours you saved.
 
 </td>
 <td width="33%" valign="top">
 
-#### 🪙 Promise → Gold
+### 🪙 Promise to Gold
 Set a weekly screen-time promise. Keep it and Gold Pay unlocks, turning the time you saved into real gold held in your name.
 
 </td>
 <td width="33%" valign="top">
 
-#### 🧘 Mindful by design
+### 🧘 Mindful by design
 Mindful unlocks, mindful scrolling, and a session log that tags each app session as *intentional*, *entertaining* or *disrupted*.
 
 </td>
@@ -120,24 +119,24 @@ Mindful unlocks, mindful scrolling, and a session log that tags each app session
 <table>
 <tr>
 <td align="center" width="25%" valign="top">
-<h2>01</h2>
+<b>Step 1</b><br />
 <b>Make a promise</b><br />
-<sub>Pick a daily screen-time limit you can actually keep, like 4 hrs/day.</sub>
+Pick a daily screen-time limit you can actually keep, like 4 hrs/day.
 </td>
 <td align="center" width="25%" valign="top">
-<h2>02</h2>
+<b>Step 2</b><br />
 <b>Pause, don't panic</b><br />
-<sub>Opening a feed on autopilot? ZenMode adds a gentle moment of intent first.</sub>
+Opening a feed on autopilot? ZenMode adds a gentle moment of intent first.
 </td>
 <td align="center" width="25%" valign="top">
-<h2>03</h2>
+<b>Step 3</b><br />
 <b>Keep it together</b><br />
-<sub>Your ZenCircle sees the leaderboard, and friends keep friends honest.</sub>
+Your ZenCircle sees the leaderboard, and friends keep friends honest.
 </td>
 <td align="center" width="25%" valign="top">
-<h2>04</h2>
+<b>Step 4</b><br />
 <b>Get rewarded</b><br />
-<sub>Streaks grow, your Zen Score climbs, and a kept week unlocks Gold Pay.</sub>
+Streaks grow, your Zen Score climbs, and a kept week unlocks Gold Pay.
 </td>
 </tr>
 </table>
@@ -146,14 +145,14 @@ Mindful unlocks, mindful scrolling, and a session log that tags each app session
 <summary><b>📱 Regular launcher vs. ZenMode</b></summary>
 <br />
 
-| | Regular launcher | **ZenMode OS** |
+| Feature | Regular launcher | **ZenMode OS** |
 | :-- | :--: | :--: |
-| Opens any app instantly, on autopilot | ✅ | 🧘 Pauses first |
-| Shows how your day is going | ❌ | ✅ Zen Score |
-| Screen-time goals you share with friends | ❌ | ✅ ZenCircle |
-| Rewards for keeping your promise | ❌ | ✅ Streaks & Gold Pay |
-| Quiets reels and shorts | ❌ | ✅ Distraction Blocker |
-| Free and open source | — | ✅ GPLv3 |
+| Opens any app instantly, on autopilot | ✅ Yes | 🧘 Pauses first |
+| Shows how your day is going | ❌ No | ✅ Yes, Zen Score |
+| Screen-time goals you share with friends | ❌ No | ✅ Yes, ZenCircle |
+| Rewards for keeping your promise | ❌ No | ✅ Yes, Streaks & Gold Pay |
+| Quiets reels and shorts | ❌ No | ✅ Yes, Distraction Blocker |
+| Free and open source | Varies | ✅ Yes, GPLv3 |
 
 </details>
 
@@ -161,9 +160,9 @@ Mindful unlocks, mindful scrolling, and a session log that tags each app session
 
 ## 🌱 Our story
 
-<img src="https://github.com/user-attachments/assets/de9a13cc-d8a0-472d-9e5c-1ca7e57d7b3f" alt="The ZenMode team" width="100%" />
+<img src="https://github.com/user-attachments/assets/de9a13cc-d8a0-472d-9e5c-1ca7e57d7b3f" alt="Group photo of the ZenMode team and friends" width="100%" />
 
-> In 2025, **[Kamal](https://github.com/Kamal007OLica)** and **[Srinivas](https://github.com/ThammanaSrinivas)** met at **India FOSS United 2025**.
+> In 2025, **<a href="https://github.com/Kamal007OLica" target="_blank" rel="noopener noreferrer">Kamal</a>** and **<a href="https://github.com/ThammanaSrinivas" target="_blank" rel="noopener noreferrer">Srinivas</a>** met at **India FOSS United 2025**.
 >
 > Today we're building **ZenMode**, a movement toward mindful technology that improves the lives of the next generation. It's free and open source, and we build it in public.
 
@@ -173,17 +172,18 @@ Mindful unlocks, mindful scrolling, and a session log that tags each app session
 
 ZenMode uses a **modular composite build**. The open-source app and its contracts live in this repo. Proprietary backend integrations stay in a separate private module.
 
-```mermaid
-flowchart LR
-    APP["📱 app<br/><sub>UI · ViewModels · Services</sub>"] --> API["📜 core-api<br/><sub>Contracts & domain models</sub>"]
-    API -. "open-source build" .-> MOCK["🧪 core-mock<br/><sub>Fake auth · logged DB & analytics</sub>"]
-    API -. "production build" .-> PRIV["🔒 core-private<br/><sub>Firebase · PostHog</sub>"]
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/architecture-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/architecture-light.svg" />
+    <img src=".github/assets/architecture-light.svg" width="100%" alt="ZenMode module architecture. The app module compiles against core-api. core-mock, the default open-source backend, and core-private, the maintainers-only Firebase and PostHog backend, both implement core-api." />
+  </picture>
+</p>
 
-    style APP fill:#00C700,stroke:#007700,color:#fff
-    style API fill:#0B0B0B,stroke:#24FF24,color:#fff
-    style MOCK fill:#E8FFE8,stroke:#00C700,color:#0B0B0B
-    style PRIV fill:#1A1A1A,stroke:#525252,color:#A3A3A3
-```
+**How it's wired**
+
+- **Build time:** `settings.gradle.kts` includes `core-private` when `../zenmode_core_private` exists. Otherwise it includes `core-mock`, which `app` pulls in as `runtimeOnly`.
+- **Run time:** `ZenModeApp` finds the backend's `AppInitializer` with `ServiceLoader`. That fills `ServiceLocator` with auth, database, analytics and remote config.
 
 | Module | What lives there |
 | :-- | :-- |
@@ -207,21 +207,6 @@ flowchart LR
 </details>
 
 <details>
-<summary><b>🎨 Design language</b></summary>
-<br />
-
-| Token | Light | Dark |
-| :-- | :-- | :-- |
-| Brand primary | ![#00C700](https://placehold.co/14x14/00C700/00C700.png) `#00C700` Zen Base | ![#24FF24](https://placehold.co/14x14/24FF24/24FF24.png) `#24FF24` Zen Glow |
-| Action | ![#007700](https://placehold.co/14x14/007700/007700.png) `#007700` Zen Dark | ![#00C700](https://placehold.co/14x14/00C700/00C700.png) `#00C700` Zen Base |
-| Surface | ![#F5F5F5](https://placehold.co/14x14/F5F5F5/F5F5F5.png) `#F5F5F5` | ![#1A1A1A](https://placehold.co/14x14/1A1A1A/1A1A1A.png) `#1A1A1A` |
-
-**Cabinet Grotesk** for words, and **Reddit Mono** for numbers so timers never shift the layout.<br />
-There's a 20dp rhythm everywhere, with 16dp cards, 8dp buttons and 4dp inputs. The full spec is in [`design_system.md`](design_system.md).
-
-</details>
-
-<details>
 <summary><b>🧰 Tech stack</b></summary>
 <br />
 
@@ -239,6 +224,20 @@ There's a 20dp rhythm everywhere, with 16dp cards, 8dp buttons and 4dp inputs. T
 
 <p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
 
+## 🎨 Brand & design
+
+The official **ZenMode brand guide** covers the logo, colors, typography and how to use them. For anything design-related, start there.
+
+<p align="center">
+  <a href="https://zenmodeos.com/brand/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/ZenMode-Brand%20guide-007700?style=for-the-badge&labelColor=0B0B0B" alt="Open the ZenMode brand guide at zenmodeos.com/brand" /></a>
+</p>
+
+- **Typefaces:** Cabinet Grotesk for text and Reddit Mono for numbers. Both are bundled in `app/src/main/res/font/` and set in `ui/theme/Type.kt`.
+- **App design spec:** color tokens, typography and spacing are in <a href="design_system.md" target="_blank" rel="noopener noreferrer"><code>design_system.md</code></a>.
+- **Logo, colors and usage rules:** <a href="https://zenmodeos.com/brand/" target="_blank" rel="noopener noreferrer">zenmodeos.com/brand</a>
+
+<p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
+
 ## 🛠️ Build it yourself
 
 You **don't** need private backend keys. The build notices you're a contributor and switches to the mock backend automatically.
@@ -250,9 +249,6 @@ cd zenmode
 
 # 2. Open the folder in Android Studio, let Gradle sync, then hit ▶ Run
 ```
-
-> [!NOTE]
-> **Fonts:** ZenMode uses **Cabinet Grotesk**. For the intended look, download the free font files from [Fontshare](https://www.fontshare.com/fonts/cabinet-grotesk) and put them in `app/src/main/assets/fonts/`.
 
 If `settings.gradle.kts` doesn't find a sibling `zenmode_core_private` directory, all backend calls go to **`core-mock`**:
 
@@ -270,8 +266,8 @@ We'd love your help making phones calmer for everyone.
 2. **Add backend needs in pairs.** Define the interface in `core-api` **and** add a mock in `core-mock`, so everyone else's build keeps working.
 3. **Run the checks first.** Make sure tests and lint pass before you open a Pull Request.
 
-<a href="https://github.com/ThammanaSrinivas/zenmode/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ThammanaSrinivas/zenmode" alt="Contributors" />
+<a href="https://github.com/ThammanaSrinivas/zenmode/graphs/contributors" target="_blank" rel="noopener noreferrer">
+  <img src="https://contrib.rocks/image?repo=ThammanaSrinivas/zenmode" alt="Avatars of ZenMode contributors. Opens the contributors page on GitHub." />
 </a>
 
 <p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
@@ -299,7 +295,7 @@ Yes, at any time. Change your default home app in Android settings, or uninstall
 <details>
 <summary><b>I found a bug or have an idea. Where do I go?</b></summary>
 <br />
-Open an <a href="https://github.com/ThammanaSrinivas/zenmode/issues">issue</a>, or email <a href="mailto:helpdesk@zenmodeos.com">helpdesk@zenmodeos.com</a>.
+<a href="https://github.com/ThammanaSrinivas/zenmode/issues" target="_blank" rel="noopener noreferrer">Open an issue on GitHub</a>, or email <a href="mailto:helpdesk@zenmodeos.com">helpdesk@zenmodeos.com</a>.
 </details>
 
 <p align="center"><img src=".github/assets/divider.svg" width="100%" alt="" /></p>
@@ -313,23 +309,23 @@ Need help, have feedback, or just want to say hi? We read every message.
 <table>
 <tr>
 <td align="center" width="50%">
-<h3>🛟</h3>
+<span aria-hidden="true">🛟</span><br />
 <b>Helpdesk</b><br />
 <a href="mailto:helpdesk@zenmodeos.com"><b>helpdesk@zenmodeos.com</b></a><br />
-<sub>Support, bugs and account help</sub>
+Support, bugs and account help
 </td>
 <td align="center" width="50%">
-<h3>🌐</h3>
+<span aria-hidden="true">🌐</span><br />
 <b>Website</b><br />
-<a href="https://zenmodeos.com/"><b>zenmodeos.com</b></a><br />
-<sub>News, brand and everything ZenMode</sub>
+<a href="https://zenmodeos.com/" target="_blank" rel="noopener noreferrer"><b>zenmodeos.com</b></a><br />
+News, brand and everything ZenMode
 </td>
 </tr>
 </table>
 
 <br />
 
-<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN"><img src="https://img.shields.io/badge/Enter%20ZenMode-Google%20Play-00C700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Enter ZenMode on Google Play" /></a>
+<a href="https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Enter%20ZenMode-Google%20Play-007700?style=for-the-badge&logo=google-play&logoColor=white&labelColor=0B0B0B" alt="Enter ZenMode on Google Play" /></a>
 
 <br /><br />
 
@@ -341,14 +337,17 @@ If ZenMode helps you, a ⭐ on this repo helps others find it.
 
 ## 📜 License
 
-ZenMode is licensed under the **GNU General Public License v3.0**. See [LICENSE](LICENSE) for details.
+ZenMode is licensed under the **GNU General Public License v3.0**. See <a href="LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a> for details.
 
 <br />
 
 <div align="center">
-  <img src=".github/assets/logo.png" alt="ZenMode OS logo" width="110" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.png" />
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-light.png" />
+    <img src=".github/assets/logo-light.png" alt="ZenMode OS logo" width="110" />
+  </picture>
   <br />
-  <sub><b>Quiet the noise, Together.</b></sub>
-  <br />
-  <sub><a href="https://zenmodeos.com/">zenmodeos.com</a> &nbsp;·&nbsp; Built with calm, care &amp; clarity in India 🇮🇳</sub>
+  <p><b>Quiet the noise, Together.</b><br />
+  <a href="https://zenmodeos.com/" target="_blank" rel="noopener noreferrer">zenmodeos.com</a></p>
 </div>
