@@ -27,6 +27,12 @@ object ServiceLocator {
      */
     var entitlementProvider: EntitlementProvider = FreeEntitlementProvider
 
+    /**
+     * Not lateinit either: it's called from catch blocks (the accessibility service among them)
+     * that can run before initialization or in a backend with no crash reporting.
+     */
+    var crashReporter: CrashReporter = NoOpCrashReporter
+
     /** Emitted when FCM delivers a buddy-reaction push while app is running. */
     val buddyReactedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
 

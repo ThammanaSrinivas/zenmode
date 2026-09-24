@@ -15,6 +15,7 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.coreapi.services.AuthProvider
 import com.zenlauncher.zenmode.coreapi.services.FirestoreDataSource
 import com.zenlauncher.zenmode.coreapi.services.AnalyticsTrackerContract
+import com.zenlauncher.zenmode.coreapi.services.CrashReporter
 import com.zenlauncher.zenmode.coreapi.services.LocalEntitlementProvider
 import com.zenlauncher.zenmode.coreapi.services.ProEntitlementProvider
 
@@ -33,6 +34,7 @@ class MockAppInitializer : AppInitializer {
         ServiceLocator.remoteConfigProvider = MockRemoteConfigProvider()
         ServiceLocator.proEntitlementProvider = MockProEntitlementProvider()
         ServiceLocator.entitlementProvider = LocalEntitlementProvider(application)
+        ServiceLocator.crashReporter = MockCrashReporter()
     }
 }
 
@@ -218,6 +220,21 @@ override fun trackScreentimePermissionGranted(permissionType: String) {}
     override fun trackBlockedAppAttempt(appName: String) {}
     override fun trackBlockerBypassUsed(justification: String) {}
     override fun trackBlockerStreakAchieved(streakDays: Long) {}
+    override fun trackA11yPermissionGranted() {}
+    override fun trackA11yPermissionLost(
+        manufacturer: String,
+        model: String,
+        sdk: Int,
+        serviceRunning: Boolean,
+        hoursSinceGranted: Long
+    ) {}
+}
+
+/** No crash backend in open-source builds: non-fatals go to logcat. */
+class MockCrashReporter : CrashReporter {
+    override fun recordNonFatal(throwable: Throwable, keys: Map<String, String>) {
+        Log.w("MockCrashReporter", "Non-fatal $keys", throwable)
+    }
 }
 
 class MockAnalyticsManager : AnalyticsManager {

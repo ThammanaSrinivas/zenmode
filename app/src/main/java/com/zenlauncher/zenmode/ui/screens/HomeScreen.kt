@@ -107,6 +107,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import java.time.LocalDate
+import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import java.util.Locale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -1665,7 +1666,7 @@ private fun StreakOverlay(
 
         ShareStatLine(
             lead = "CURRENT \u00B7 ${"%02d".format(Locale.US, currentStreakDays)} DAYS",
-            trail = "(${currentStreakRange(currentStreakDays)})"
+            trail = "(${currentStreakRange(currentStreakDays, LocalDate.now(LocalZenClock.current))})"
         )
     }
 }

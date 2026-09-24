@@ -8,7 +8,7 @@
              Force Dark heuristic (API 29+) is redundant, and it re-inverts hardcoded
              near-black colors like the stats-card CardInk text on each draw call, turning
              them white on top of an already-correct dark theme. -->
-        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 
     <style name="Theme.ZenMode" parent="Base.Theme.ZenMode" />

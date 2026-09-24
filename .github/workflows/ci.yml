@@ -21,7 +21,7 @@ jobs:
       # at build-classpath-resolution time, confirmed via a failed CI run pinned
       # to 17. The app's own Kotlin/Java compileOptions still target 17.
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"

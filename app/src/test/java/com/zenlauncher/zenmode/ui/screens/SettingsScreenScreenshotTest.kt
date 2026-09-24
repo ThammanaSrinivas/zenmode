@@ -27,7 +27,7 @@ class SettingsScreenScreenshotTest {
 
     @Test
     fun `settings - free`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             ZenTheme(darkTheme = false) {
                 SettingsScreen(
                     weeklyHours = week,
@@ -47,7 +47,7 @@ class SettingsScreenScreenshotTest {
 
     @Test
     fun `settings - pro trial`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             ZenTheme(darkTheme = false) {
                 SettingsScreen(
                     weeklyHours = week,
@@ -73,7 +73,7 @@ class SettingsScreenScreenshotTest {
 
     @Test
     fun `settings - pro unavailable`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             ZenTheme(darkTheme = false) {
                 SettingsScreen(
                     weeklyHours = week,
@@ -89,7 +89,7 @@ class SettingsScreenScreenshotTest {
 
     @Test
     fun `pro page - free`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             ZenTheme(darkTheme = false) {
                 ZenProScreen(
                     entitlement = Entitlement.Free,

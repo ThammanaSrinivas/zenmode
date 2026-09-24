@@ -34,13 +34,13 @@ class InvestGoldScreenScreenshotTest {
 
     @Test
     fun `invest gold - review`() {
-        paparazzi.snapshot {
+        paparazzi.golden {
             Settled { InvestGoldReviewScreen(units = 8, onBackClick = {}, onOpenKiteClick = {}, onChangeQuantityClick = {}) }
         }
     }
 
     private fun snapshotInvestGold(units: Int) {
-        paparazzi.snapshot { Settled { InvestGoldScreen(units = units, onUnitsChange = {}, onBackClick = {}, onReviewInKiteClick = {}) } }
+        paparazzi.golden { Settled { InvestGoldScreen(units = units, onUnitsChange = {}, onBackClick = {}, onReviewInKiteClick = {}) } }
     }
 
     @Composable

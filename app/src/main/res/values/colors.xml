@@ -154,6 +154,23 @@
     <color name="score_category_messaging">#CCD000</color>
     <color name="score_status_red">#DA0000</color>
 
+    <!-- Pro welcome's dawn forest (ui/components/ForestScene.kt): a fixed, unthemed picture —
+         always first light. Sun and ember halo reuse amber_500/ember_500. forest_glass* is the
+         card glass ProWelcomeScreen lays over the scene so it matches the ink underneath. -->
+    <color name="forest_sky_top">#040D08</color>
+    <color name="forest_sky_mid">#0A2413</color>
+    <color name="forest_sky_glow">#1F5C2B</color>
+    <color name="forest_sun_core">#FFF3C4</color>
+    <color name="forest_ridge">#12321A</color>
+    <color name="forest_rank_near">#1B4B27</color>
+    <color name="forest_rank_mid">#0B2312</color>
+    <color name="forest_rank_far">#030C06</color>
+    <color name="forest_mist">#BFE8C4</color>
+    <color name="forest_ground">#030D07</color>
+    <color name="forest_firefly">#C6FFB4</color>
+    <color name="forest_glass">#07160C</color>
+    <color name="forest_glass_line">#9FD7A8</color>
+
     <!-- My Promise screen, opened from Zen Gold's "Edit my promise" (Figma node 2026:1793,
          ui/screens/MyPromiseScreen.kt). Brand greens reuse zen_700/zen_900/gold_delta_text. -->
     <color name="my_promise_bg">#F2F1EE</color>

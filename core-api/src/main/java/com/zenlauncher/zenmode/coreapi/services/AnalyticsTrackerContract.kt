@@ -96,4 +96,20 @@ fun trackScreentimePermissionGranted(permissionType: String)
     fun trackBlockedAppAttempt(appName: String)
     fun trackBlockerBypassUsed(justification: String)
     fun trackBlockerStreakAchieved(streakDays: Long)
+
+    // ── Accessibility-service health (blocker reliability) ──
+    /** First time the accessibility service is seen enabled since it was last lost (or ever). */
+    fun trackA11yPermissionGranted()
+    /**
+     * Was enabled, now missing from system settings -- usually an OEM battery manager
+     * force-stopping the app. [serviceRunning] true means the service is still bound, i.e. our
+     * enabled-check is wrong rather than the permission actually being gone.
+     */
+    fun trackA11yPermissionLost(
+        manufacturer: String,
+        model: String,
+        sdk: Int,
+        serviceRunning: Boolean,
+        hoursSinceGranted: Long
+    )
 }

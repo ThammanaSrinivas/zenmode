@@ -55,6 +55,10 @@ mkdir -p /tmp/__guardrail_fixture/app
 cp app/build.gradle.kts /tmp/__guardrail_fixture/app/build.gradle.kts
 echo '    implementation("com.google.firebase:firebase-firestore")' >> /tmp/__guardrail_fixture/app/build.gradle.kts
 expect_fail "check-app-boundary.sh (gradle dep)" ./scripts/check-app-boundary.sh /tmp/__guardrail_fixture/app/build.gradle.kts
+# The Crashlytics plugin-apply exception must not let a Crashlytics SDK dependency through.
+cp app/build.gradle.kts /tmp/__guardrail_fixture/app/build.gradle.kts
+echo '    implementation("com.google.firebase:firebase-crashlytics")' >> /tmp/__guardrail_fixture/app/build.gradle.kts
+expect_fail "check-app-boundary.sh (crashlytics dep)" ./scripts/check-app-boundary.sh /tmp/__guardrail_fixture/app/build.gradle.kts
 rm -rf /tmp/__guardrail_fixture
 
 expect_pass "check-app-boundary.sh (clean repo)" ./scripts/check-app-boundary.sh

@@ -21,6 +21,14 @@ if (localPropertiesFile.exists()) {
 val fileSearchEnabled =
     (project.findProperty("zenmode.fileSearch") as String?)?.toBoolean() ?: true
 
+// Private builds only (the crash SDK lives in core-private): Crashlytics needs its plugin on the
+// app module to stamp a build ID and upload R8 mappings. Open-source builds never apply it.
+// The apply line below is the one exception scripts/check-app-boundary.sh allows.
+val usePrivateCore = rootProject.file("../zenmode_core_private").exists()
+if (usePrivateCore) {
+    apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
+}
+
 android {
     namespace = "com.zenlauncher.zenmode"
     compileSdk = 36
@@ -107,7 +115,6 @@ android {
 dependencies {
     implementation("com.zenlauncher.zenmode:core-api")
     
-    val usePrivateCore = rootProject.file("../zenmode_core_private").exists()
     if (usePrivateCore) {
         // Intercepted and built locally via Composite Build (includeBuild in settings)
         runtimeOnly("com.zenlauncher.zenmode:core-private:1.0.0")

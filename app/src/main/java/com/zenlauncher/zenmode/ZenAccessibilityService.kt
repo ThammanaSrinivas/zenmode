@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
+import com.zenlauncher.zenmode.accessibility.A11yPermissionMonitor
 import com.zenlauncher.zenmode.accessibility.ContentBlockRules
 import com.zenlauncher.zenmode.accessibility.NodeQuery
 import com.zenlauncher.zenmode.accessibility.SurfaceRule
@@ -62,14 +63,11 @@ class ZenAccessibilityService : AccessibilityService() {
                 .edit().remove(KEY_LAST_CRASH).apply()
         }
 
-        fun isEnabledInSettings(context: Context): Boolean {
-            val enabledServices = Settings.Secure.getString(
-                context.contentResolver,
-                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-            ) ?: return false
-            val expectedComponent = "${context.packageName}/${context.packageName}.ZenAccessibilityService"
-            return enabledServices.split(':').any { it.equals(expectedComponent, ignoreCase = true) }
-        }
+        fun isEnabledInSettings(context: Context): Boolean = EnabledComponents.contains(
+            Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES),
+            context.packageName,
+            ZenAccessibilityService::class.java.name
+        )
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -94,6 +92,7 @@ class ZenAccessibilityService : AccessibilityService() {
         ContentBlockPrefs.prefs(this).registerOnSharedPreferenceChangeListener(prefsListener)
         blockPrefs = ContentBlockPrefs.snapshot(this)
         updateWatchedPackages()
+        runCatching { A11yPermissionMonitor.check(this) }
 
         getSharedPreferences(CRASH_PREFS, Context.MODE_PRIVATE)
             .getString(KEY_LAST_CRASH, null)?.let { last ->
@@ -114,6 +113,11 @@ class ZenAccessibilityService : AccessibilityService() {
         } catch (t: Throwable) {
             // Never let this propagate — a throw here gets the service disabled.
             Log.e(TAG, "onAccessibilityEvent crashed", t)
+            runCatching {
+                ServiceLocator.crashReporter.recordNonFatal(
+                    t, mapOf("component" to "a11y_service", "event_pkg" to event?.packageName.toString())
+                )
+            }
             runCatching {
                 val stamp = java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.US)
                     .format(java.util.Date())
