@@ -79,6 +79,8 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalUriHandler
+import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.ui.components.ZenButton
 import com.zenlauncher.zenmode.ui.components.ZenButtonStyle
 import com.zenlauncher.zenmode.ui.components.ZenEyebrow
@@ -377,9 +379,12 @@ private fun PlanPage(
                 }
             }
 
-            FeatureComparisonTable(Modifier.staggeredEntrance(3))
-            ComingSoonSection(Modifier.staggeredEntrance(4))
-            TrustSection(Modifier.staggeredEntrance(5))
+            // Promo codes are redeemed inside Google Play's checkout, so there's nothing to
+            // redeem against in early access (no store behind it).
+            if (!isSimulated) RedeemCodeCard(Modifier.staggeredEntrance(3))
+            FeatureComparisonTable(Modifier.staggeredEntrance(4))
+            ComingSoonSection(Modifier.staggeredEntrance(5))
+            TrustSection(Modifier.staggeredEntrance(6))
         }
 
         // A plain sibling below the scroll area, not an overlay — the price and the button
@@ -702,6 +707,41 @@ private fun PlanOption(
             }
             Text(detail, fontFamily = Geist, fontSize = 13.rsp, lineHeight = 18.rsp, color = colors.textSecondary, modifier = Modifier.padding(top = 2.rdp))
         }
+    }
+}
+
+/** "Got a code?" — opens the zenmodeos.com guide to redeeming a promo code at Play checkout. */
+@Composable
+private fun RedeemCodeCard(modifier: Modifier = Modifier) {
+    val colors = ZenTheme.colors
+    val uriHandler = LocalUriHandler.current
+    val shape = RoundedCornerShape(20.rdp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = Spacing.touchTarget)
+            .zenCard(shape)
+            .clickable(onClickLabel = "How to redeem a code", role = Role.Button) {
+                uriHandler.openUri(AppConstants.REDEEM_CODE_URL)
+            }
+            .padding(horizontal = 16.rdp, vertical = 14.rdp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(8.rdp).clip(CircleShape).background(colors.accentReward))
+        Spacer(Modifier.width(12.rdp))
+        Column(Modifier.weight(1f)) {
+            Text("Got a code for free months?", fontFamily = Geist, fontWeight = FontWeight.SemiBold, fontSize = 14.rsp, color = colors.textPrimary)
+            Text(
+                "Redeem it at Google Play checkout. Here's where to tap.",
+                fontFamily = Geist,
+                fontSize = 13.rsp,
+                lineHeight = 18.rsp,
+                color = colors.textSecondary,
+                modifier = Modifier.padding(top = 2.rdp)
+            )
+        }
+        Spacer(Modifier.width(10.rdp))
+        Text("HOW TO →", style = ZenTypography.monoLabel, color = colors.textBrand)
     }
 }
 

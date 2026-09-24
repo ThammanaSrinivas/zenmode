@@ -108,6 +108,9 @@ object AppConstants {
     const val YT_BUDDY_CONFUSED_URL = "https://youtu.be/48M1x2ryhpI" // TODO: replace later
     const val PRIVACY_POLICY_URL = "https://sites.google.com/view/zenmode-privacypolicy/zenmodeprivacy-policy"
     const val TERMS_OF_SERVICE_URL = "https://zenmodeos.com/terms"
+    // Step-by-step guide to redeeming a Pro promo code at Google Play checkout. Not under an
+    // App Links pathPrefix, so it always opens in the browser.
+    const val REDEEM_CODE_URL = "https://zenmodeos.com/redeem/"
     // Play Store listing. Same id="com.zenlauncher.zenmode" MainActivity/SettingsActivity
     // build from `packageName` for the in-app "Rate us" flow; hardcoded here since this
     // object has no Context. Doubles as the download CTA appended to every share-card's
