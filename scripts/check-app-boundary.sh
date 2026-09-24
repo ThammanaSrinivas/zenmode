@@ -15,9 +15,14 @@ set -uo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fail=0
 
+# The one allowed mention: applying the Crashlytics Gradle plugin (build tooling, not an SDK
+# dependency) - it has to sit on the app module, and app/build.gradle.kts only applies it when
+# core-private is present. Matched as the exact whole line so nothing else can ride along.
+ALLOWED_GRADLE_LINE='^[[:space:]]*apply\(plugin = libs\.plugins\.firebase\.crashlytics\.get\(\)\.pluginId\)[[:space:]]*$'
+
 check_gradle() {
   local f="$1"
-  if grep -niE "firebase|posthog" "$f" >/dev/null 2>&1; then
+  if grep -vE "$ALLOWED_GRADLE_LINE" "$f" 2>/dev/null | grep -niE "firebase|posthog" >/dev/null 2>&1; then
     echo "error: $f declares a Firebase/PostHog dependency directly - route it through core-api/ServiceLocator instead." >&2
     fail=1
   fi

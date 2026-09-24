@@ -8,6 +8,7 @@ kover = "0.9.9"
 # 2.0.0-alpha05 is the latest pre-release, same month as this Gradle version -
 # confirmed working against Gradle 9.5.1 locally.
 paparazzi = "2.0.0-alpha05"
+firebaseCrashlytics = "3.0.8"
 
 androidxActivity = "1.10.1"
 androidxAppcompat = "1.7.1"
@@ -69,3 +70,4 @@ jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = 
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }

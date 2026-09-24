@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.zenlauncher.zenmode.accessibility.A11yPermissionMonitor
 import com.zenlauncher.zenmode.ui.components.HomeRevealCue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -283,6 +284,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         resolveUnlockReveal()
+        A11yPermissionMonitor.check(this)
         if (::viewModel.isInitialized) {
             viewModel.onResumeCheck()
             viewModel.refreshBuddyStatsFromCache()

@@ -1,6 +1,5 @@
 package com.zenlauncher.zenmode
 
-import android.content.ComponentName
 import android.content.Context
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
@@ -17,14 +16,11 @@ class ZenNotificationListenerService : NotificationListenerService() {
 
         fun isRunning(): Boolean = instance != null
 
-        fun isEnabledInSettings(context: Context): Boolean {
-            val flat = Settings.Secure.getString(
-                context.contentResolver,
-                "enabled_notification_listeners"
-            ) ?: return false
-            val componentName = ComponentName(context, ZenNotificationListenerService::class.java)
-            return flat.contains(componentName.flattenToString())
-        }
+        fun isEnabledInSettings(context: Context): Boolean = EnabledComponents.contains(
+            Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners"),
+            context.packageName,
+            ZenNotificationListenerService::class.java.name
+        )
     }
 
     override fun onListenerConnected() {
