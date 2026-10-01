@@ -162,7 +162,7 @@ Streaks grow, your Zen Score climbs, and a kept week unlocks Gold Pay.
 
 <img src="https://github.com/user-attachments/assets/de9a13cc-d8a0-472d-9e5c-1ca7e57d7b3f" alt="Group photo of the ZenMode team and friends" width="100%" />
 
-> In 2025, **<a href="https://github.com/Kamal007OLica" target="_blank" rel="noopener noreferrer">Kamal</a>** and **<a href="https://github.com/ThammanaSrinivas" target="_blank" rel="noopener noreferrer">Srinivas</a>** met at **India FOSS United 2025**.
+> In 2025, **<a href="https://github.com/Kamal007OLica" target="_blank" rel="noopener noreferrer">Kamal</a>** and **<a href="https://thammanasrinivas.com" target="_blank" rel="noopener noreferrer">Srinivas</a>** met at **India FOSS United 2025**.
 >
 > Today we're building **ZenMode**, a movement toward mindful technology that improves the lives of the next generation. It's free and open source, and we build it in public.
 
