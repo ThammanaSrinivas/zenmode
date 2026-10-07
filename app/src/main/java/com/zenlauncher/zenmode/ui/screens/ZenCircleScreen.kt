@@ -259,105 +259,107 @@ fun ZenCircleScreen(
             .fillMaxSize()
             .pointerInput(Unit) { detectTapGestures() }
     ) {
-        MoodBackdrop()
+        Box(modifier = Modifier.fillMaxSize()) {
+            MoodBackdrop()
 
-        ZenCircleSheetHost(
-            userCode = shareCode,
-            onShareInviteLink = onShareInviteLink,
-            onCopyInviteCode = onCopyInviteCode,
-            settings = ZenCircleSettings(
-                buddyName = members.firstOrNull { !it.isYou }?.name ?: "your Zen Bro",
-                memberCount = members.size,
-                removing = removingBuddy,
-                onRemoveBuddy = onRemoveBuddy,
-                onLeaveCircle = onLeaveCircle
-            ),
-            initialSheet = initialSheet
-        ) { pageModifier, openSheet ->
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                // The Figma frame fits 898dp of content. The cards and band always keep their Figma
-                // size; the difference on other phones is absorbed by the name wheel's open middle
-                // and the gaps, so both buttons stay pinned near the bottom edge.
-                val bars = WindowInsets.systemBars.asPaddingValues()
-                val available = maxHeight - bars.calculateTopPadding() - bars.calculateBottomPadding()
-                val designHeight = 898.rdp
-                val deficit = (designHeight - available).coerceAtLeast(0.dp)
-                val wheelCut = deficit.coerceAtMost(30.rdp)
-                val gapFit = (1f - (deficit - wheelCut) / 112.75.rdp).coerceIn(0.55f, 1f)
-                val wheelHeight = 198.8.rdp - wheelCut + (available - designHeight).coerceAtLeast(0.dp)
+            ZenCircleSheetHost(
+                userCode = shareCode,
+                onShareInviteLink = onShareInviteLink,
+                onCopyInviteCode = onCopyInviteCode,
+                settings = ZenCircleSettings(
+                    buddyName = members.firstOrNull { !it.isYou }?.name ?: "your Zen Bro",
+                    memberCount = members.size,
+                    removing = removingBuddy,
+                    onRemoveBuddy = onRemoveBuddy,
+                    onLeaveCircle = onLeaveCircle
+                ),
+                initialSheet = initialSheet
+            ) { pageModifier, openSheet ->
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    // The Figma frame fits 898dp of content. The cards and band always keep their Figma
+                    // size; the difference on other phones is absorbed by the name wheel's open middle
+                    // and the gaps, so both buttons stay pinned near the bottom edge.
+                    val bars = WindowInsets.systemBars.asPaddingValues()
+                    val available = maxHeight - bars.calculateTopPadding() - bars.calculateBottomPadding()
+                    val designHeight = 898.rdp
+                    val deficit = (designHeight - available).coerceAtLeast(0.dp)
+                    val wheelCut = deficit.coerceAtMost(30.rdp)
+                    val gapFit = (1f - (deficit - wheelCut) / 112.75.rdp).coerceIn(0.55f, 1f)
+                    val wheelHeight = 198.8.rdp - wheelCut + (available - designHeight).coerceAtLeast(0.dp)
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .systemBarsPadding()
-                        .then(pageModifier)
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 12.rdp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(Modifier.height(33.35.rdp * gapFit))
-                    ZenCircleHeader(
-                        onBackClick = onBackClick,
-                        onMenuClick = { openSheet(ZenCircleSheet.Settings) }
-                    )
-
-                    Spacer(Modifier.height(14.5.rdp * gapFit))
-                    DailyWeeklyToggle(isPro = isPro, onWeeklyClick = onWeeklyClick, modifier = Modifier.riseIn(delayMillis = 60))
-
-                    Spacer(Modifier.height(17.1.rdp * gapFit))
-                    CircleSummaryCard(
-                        members = members,
-                        onInviteClick = { openSheet(ZenCircleSheet.Invite) },
-                        modifier = Modifier.riseIn(delayMillis = 120)
-                    )
-
-                    Spacer(Modifier.height(11.1.rdp * gapFit))
-                    MemberCardStack(
-                        members = members,
-                        position = { position.value },
-                        selected = selected,
-                        onSendLove = onSendLove,
-                        onSendMelt = onSendMelt,
-                        modifier = swipe
-                    )
-
-                    Spacer(Modifier.height(25.3.rdp * gapFit))
-                    RankingBand(members = members, ranks = ranks, selected = selected)
-
-                    NameWheel(
-                        members = members,
-                        position = { position.value },
-                        onPrevious = { step(-1) },
-                        onNext = { step(1) },
-                        height = wheelHeight,
-                        modifier = swipe
-                    )
-
-                    Spacer(Modifier.height(11.4.rdp * gapFit))
                     Column(
                         modifier = Modifier
-                            .padding(horizontal = 30.3.rdp)
-                            .riseIn(delayMillis = 420)
+                            .fillMaxSize()
+                            .systemBarsPadding()
+                            .then(pageModifier)
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 12.rdp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        ZenCirclePillButton(
-                            // The card carries the invite link and code, so sharing it invites too.
-                            text = primaryShareLabel,
-                            onClick = { showShareCard = true },
-                            container = colorResource(R.color.zen_700),
-                            content = Color.White,
-                            height = 47.5.rdp,
-                            fontSize = 17.76.rsp,
-                            letterSpacing = (-0.36).sp
+                        Spacer(Modifier.height(33.35.rdp * gapFit))
+                        ZenCircleHeader(
+                            onBackClick = onBackClick,
+                            onMenuClick = { openSheet(ZenCircleSheet.Settings) }
                         )
-                        ZenCirclePillButton(
-                            text = "Back to the Home",
-                            onClick = onBackToHome,
-                            container = Color.Transparent,
-                            content = ZenTheme.colors.textBrand,
-                            height = 47.5.rdp,
-                            fontSize = 17.76.rsp,
-                            letterSpacing = (-0.36).sp
+
+                        Spacer(Modifier.height(14.5.rdp * gapFit))
+                        DailyWeeklyToggle(isPro = isPro, onWeeklyClick = onWeeklyClick, modifier = Modifier.riseIn(delayMillis = 60))
+
+                        Spacer(Modifier.height(17.1.rdp * gapFit))
+                        CircleSummaryCard(
+                            members = members,
+                            onInviteClick = { openSheet(ZenCircleSheet.Invite) },
+                            modifier = Modifier.riseIn(delayMillis = 120)
                         )
+
+                        Spacer(Modifier.height(11.1.rdp * gapFit))
+                        MemberCardStack(
+                            members = members,
+                            position = { position.value },
+                            selected = selected,
+                            onSendLove = onSendLove,
+                            onSendMelt = onSendMelt,
+                            modifier = swipe
+                        )
+
+                        Spacer(Modifier.height(25.3.rdp * gapFit))
+                        RankingBand(members = members, ranks = ranks, selected = selected)
+
+                        NameWheel(
+                            members = members,
+                            position = { position.value },
+                            onPrevious = { step(-1) },
+                            onNext = { step(1) },
+                            height = wheelHeight,
+                            modifier = swipe
+                        )
+
+                        Spacer(Modifier.height(11.4.rdp * gapFit))
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 30.3.rdp)
+                                .riseIn(delayMillis = 420)
+                        ) {
+                            ZenCirclePillButton(
+                                // The card carries the invite link and code, so sharing it invites too.
+                                text = primaryShareLabel,
+                                onClick = { showShareCard = true },
+                                container = colorResource(R.color.zen_700),
+                                content = Color.White,
+                                height = 47.5.rdp,
+                                fontSize = 17.76.rsp,
+                                letterSpacing = (-0.36).sp
+                            )
+                            ZenCirclePillButton(
+                                text = "Back to the Home",
+                                onClick = onBackToHome,
+                                container = Color.Transparent,
+                                content = ZenTheme.colors.textBrand,
+                                height = 47.5.rdp,
+                                fontSize = 17.76.rsp,
+                                letterSpacing = (-0.36).sp
+                            )
+                        }
                     }
                 }
             }

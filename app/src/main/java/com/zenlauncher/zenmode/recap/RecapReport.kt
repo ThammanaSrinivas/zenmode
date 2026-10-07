@@ -276,7 +276,7 @@ object RecapReport {
             val small = text(geist, 8f, color(R.color.stone_500))
             c.drawText("Generated on this phone by ZenMode OS on $generated. Screen time comes from Android's usage data.",
                 margin, PAGE_H - 44f, small)
-            c.drawText("ZenMode never holds or receives your money. Investing happens in your own broker's app. Not investment advice.",
+            c.drawText("ZenMode OS never holds or receives your money. Investing happens in your own broker's app. Not investment advice.",
                 margin, PAGE_H - 30f, small)
         }
 

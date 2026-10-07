@@ -38,7 +38,7 @@ class ZenCircleScreenTest {
             ZenTheme(darkTheme = false) {
                 ZenCircleScreen(
                     members = listOf(you, asha),
-                    userCode = "USER1234567",
+                    shareCode = "USER1234567",
                     onBackClick = {},
                     onShareInviteLink = {},
                     onCopyInviteCode = {},

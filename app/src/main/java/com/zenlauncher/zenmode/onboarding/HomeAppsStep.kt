@@ -101,7 +101,7 @@ internal fun HomeAppsStep(
         },
         bottomBar = {
             OnboardingButton(
-                text = if (isDefaultLauncher) "Enter ZenMode" else "Set ZenMode as default",
+                text = if (isDefaultLauncher) "Enter ZenMode" else "Set ZenMode OS as default",
                 onClick = onSetDefault,
                 enabled = selected.isNotEmpty(),
                 style = OnboardingButtonStyle.Brand

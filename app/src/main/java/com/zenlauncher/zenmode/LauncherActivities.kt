@@ -1,8 +1,11 @@
 package com.zenlauncher.zenmode
 
+import android.app.Activity
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.widget.Toast
 
 /**
  * Every launcher entry point on the device, the one source for the home grid and the home-app
@@ -31,4 +34,35 @@ object LauncherActivities {
         val sharesPackage = all.count { it.activityInfo.packageName == pkg } > 1
         return if (sharesPackage) key(info) else pkg
     }
+}
+
+/**
+ * Opens the app a home tile stands for, or refuses it when the Distraction Blocker has it
+ * quieted. Lives here rather than inline in MainActivity's HomeScreen call so the launch
+ * rules sit with the rest of the launcher-intent handling.
+ *
+ * Launches the exact activity the icon represents rather than
+ * `packageManager.getLaunchIntentForPackage()`, which resolves a single "default" activity
+ * per package and so can't tell Phone from Contacts when an OEM ships both from the same
+ * package (e.g. MIUI's com.android.contacts).
+ */
+internal fun Activity.launchHomeApp(appInfo: AppInfo) {
+    val packageName = appInfo.packageName.toString()
+    if (ContentBlockPrefs.shouldQuietApp(this, packageName)) {
+        Toast.makeText(
+            this,
+            "${appInfo.label} is quieted. Let it back in Settings → Distraction Blocker.",
+            Toast.LENGTH_SHORT
+        ).show()
+        return
+    }
+    val launchIntent = if (appInfo.activityClassName.isNotEmpty()) {
+        Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            component = ComponentName(packageName, appInfo.activityClassName)
+        }
+    } else {
+        packageManager.getLaunchIntentForPackage(packageName)
+    }
+    launchIntent?.let(::startActivity)
 }

@@ -7,13 +7,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -167,34 +169,89 @@ fun HomePageDots(
     }
 }
 
+// ── Page footer metrics ───────────────────────────────────────────
+// SOURCE OF TRUTH for where a home page's main action sits. Home, Zen Score and Zen Gold are
+// one left-right swipe apart, so their primary actions have to land on the same line —
+// otherwise the button slides up and down as you page between them. The footer fixes that by
+// owning the slot heights rather than letting each page stack whatever it has: the primary
+// action is always [ZenPrimaryCtaHeight] tall and always the top row, and the quieter action
+// below it always occupies [ZenSecondaryCtaSlot] whether or not the page has one.
+
+/** Every page's main action is this tall, so they stack to the same line. */
+val ZenPrimaryCtaHeight: Dp @Composable get() = 52.rdp
+
+/** Reserved under the primary action, even on a page with no secondary — that reservation
+ *  is what keeps the primary action from sliding down on the pages that don't have one. */
+val ZenSecondaryCtaSlot: Dp @Composable get() = 42.rdp
+
+private val CtaGap: Dp @Composable get() = 4.rdp
+
 /**
- * The sticky foot of a scrolling home page: the page's main actions ([content]) and the
- * page dots, held at the bottom over a fade into [fadeTo] so they stay on screen however far
- * the page scrolls. Place it last in a Box, aligned to the bottom, and leave [onHeightChanged]'s
- * height free at the end of the scrolling content so nothing hides under it for good.
+ * The sticky foot of a home page: the page's [primary] action, a quieter [secondary] under it,
+ * and the page dots, held at the bottom over a fade into [fadeTo] so they stay on screen
+ * however far the page scrolls. Place it last in a Box, aligned to the bottom, and leave
+ * [onHeightChanged]'s height free at the end of the scrolling content so nothing hides under
+ * it for good.
+ *
+ * [primary] is measured at exactly [ZenPrimaryCtaHeight] and [secondary] inside a
+ * [ZenSecondaryCtaSlot]-tall box, so every page's footer is the same height to the pixel and
+ * nothing moves as you swipe between them.
  */
 @Composable
 fun PinnedPageFooter(
     current: HomePage,
-    fadeTo: Color,
+    /** The page colour the footer fades out of, so scrolling content disappears under it
+     *  rather than running into it. Null on a page that doesn't scroll (Home), where the
+     *  fade would just be a visible band across the backdrop. */
+    fadeTo: Color?,
     onHeightChanged: (Dp) -> Unit,
     modifier: Modifier = Modifier,
     onPageClick: ((HomePage) -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit = {}
+    horizontalMargin: Dp? = null,
+    primary: (@Composable () -> Unit)? = null,
+    secondary: (@Composable () -> Unit)? = null
 ) {
     val density = LocalDensity.current
+    val margin = horizontalMargin ?: 30.rdp
     Column(
         modifier = modifier
             .fillMaxWidth()
             .onSizeChanged { onHeightChanged(with(density) { it.height.toDp() }) }
-            .background(Brush.verticalGradient(0f to fadeTo.copy(alpha = 0f), 0.14f to fadeTo.copy(alpha = 0.85f), 0.28f to fadeTo, 1f to fadeTo))
+            .then(
+                if (fadeTo == null) Modifier
+                else Modifier.background(
+                    Brush.verticalGradient(
+                        0f to fadeTo.copy(alpha = 0f),
+                        0.14f to fadeTo.copy(alpha = 0.85f),
+                        0.28f to fadeTo,
+                        1f to fadeTo
+                    )
+                )
+            )
             // Swallow taps between the buttons so they don't fall through to the page.
             .pointerInput(Unit) { detectTapGestures() }
             .padding(top = 22.rdp)
             .navigationBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        content()
+        if (primary != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = margin)
+                    .height(ZenPrimaryCtaHeight),
+                contentAlignment = Alignment.Center
+            ) { primary() }
+        }
+        // Reserved whether or not there is a secondary — see [ZenSecondaryCtaSlot].
+        Spacer(Modifier.height(CtaGap))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = margin)
+                .height(ZenSecondaryCtaSlot),
+            contentAlignment = Alignment.Center
+        ) { secondary?.invoke() }
         HomePageDots(current = current, onPageClick = onPageClick, modifier = Modifier.padding(bottom = 6.rdp))
     }
 }
@@ -227,6 +284,81 @@ fun Modifier.pageSwipe(onSwipeLeft: (() -> Unit)? = null, onSwipeRight: (() -> U
             action()
         }
     }
+
+/**
+ * Vertical companion to [pageSwipe], for the Home "swipe up for search" gesture. Fires once per
+ * gesture as soon as the finger has travelled far enough upward, and ignores downward drags
+ * (the notification shade's pull-down is the system's, not ours).
+ *
+ * Kept separate from [pageSwipe] rather than folded into one all-direction detector: a combined
+ * [androidx.compose.foundation.gestures.detectDragGestures] claims vertical drags too, which
+ * would eat the scroll on the other pages that use [pageSwipe]. As two axis-specific detectors
+ * they don't collide — a drag only reaches this one by crossing Compose's *vertical* touch slop,
+ * and once [pageSwipe] consumes a change at its own threshold this detector cancels. Apply it
+ * only where nothing underneath scrolls vertically.
+ *
+ * A null [onSwipeUp] leaves the drag alone entirely.
+ */
+fun Modifier.swipeUp(onSwipeUp: (() -> Unit)?): Modifier =
+    if (onSwipeUp == null) this else pointerInput(Unit) {
+        val threshold = 72.dp.toPx()
+        var travelled = 0f
+        var fired = false
+        detectVerticalDragGestures(
+            onDragStart = {
+                travelled = 0f
+                fired = false
+            }
+        ) { change, dragAmount ->
+            if (fired) return@detectVerticalDragGestures
+            travelled += dragAmount
+            if (travelled > -threshold) return@detectVerticalDragGestures
+            fired = true
+            change.consume()
+            onSwipeUp()
+        }
+    }
+
+/** Which side of a page a margin tap landed on. */
+enum class PageMargin { LEFT, RIGHT }
+
+/**
+ * Home's tap gestures, in one detector so they can't fight over the same tap: a long press, an
+ * optional double tap, and an optional tap in either margin.
+ *
+ * [marginWidth] is the strip down each edge that counts as a margin — the page's own content
+ * margin, so a margin tap is by definition a tap beside the content rather than on it. Taps on
+ * anything with its own click handler (an app icon, a card) are consumed there and never arrive
+ * here.
+ *
+ * [onDoubleTap] is null when the gesture is off, which matters beyond doing nothing: with a
+ * double-tap handler registered, every single tap has to wait out the double-tap timeout before
+ * [onMarginTap] can fire, so leaving it null keeps margin taps instant.
+ */
+fun Modifier.pageTapGestures(
+    marginWidth: Dp,
+    onLongPress: (() -> Unit)? = null,
+    onDoubleTap: (() -> Unit)? = null,
+    onMarginTap: ((PageMargin) -> Unit)? = null
+    // Keyed on which handlers exist, never on their identity: these lambdas are rebuilt on
+    // every recomposition, and keying on them would restart the detector mid-gesture — a long
+    // press on Home would be cancelled by the clock ticking. Same reasoning as [pageSwipe].
+): Modifier = pointerInput(onLongPress != null, onDoubleTap != null, onMarginTap != null) {
+    val marginPx = marginWidth.toPx()
+    detectTapGestures(
+        onLongPress = onLongPress?.let { { _ -> it() } },
+        onDoubleTap = onDoubleTap?.let { { _ -> it() } },
+        onTap = onMarginTap?.let { tap ->
+            { offset ->
+                when {
+                    offset.x <= marginPx -> tap(PageMargin.LEFT)
+                    offset.x >= size.width - marginPx -> tap(PageMargin.RIGHT)
+                    else -> Unit
+                }
+            }
+        }
+    )
+}
 
 /**
  * Excludes the composable's layout bounds from the system gesture (back-swipe) zone.

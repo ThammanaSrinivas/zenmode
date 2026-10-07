@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -204,18 +205,14 @@ fun ZenScoreScreen(
                         HomePage.ZEN_GOLD -> onZenGoldClick()
                         HomePage.ZEN_SCORE -> Unit
                     }
-                }
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = ScreenMargin)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.rdp)
-                ) {
-                    DownloadReportButton(isPro = isPro, onClick = onDownloadReportClick)
-                    ShareScoreButton(onClick = { showShareOverlay = true })
-                }
-            }
+                },
+                horizontalMargin = ScreenMargin,
+                // Share is this page's main action, so it takes the primary slot — the same
+                // line Zen Gold's "Invest Gold" and Home's search bar land on. It used to sit
+                // under the report link, which put it a row lower than the other two pages.
+                primary = { ShareScoreButton(onClick = { showShareOverlay = true }) },
+                secondary = { DownloadReportButton(isPro = isPro, onClick = onDownloadReportClick) }
+            )
         }
 
         AnimatedVisibility(
@@ -700,7 +697,7 @@ private fun DownloadReportButton(isPro: Boolean, onClick: () -> Unit) {
         verticalAlignment = Alignment.Top,
         modifier = Modifier
             .fillMaxWidth()
-            .height(40.rdp)
+            .fillMaxHeight()
             .clip(RoundedCornerShape(50))
             .pressScale(onClick = onClick, onClickLabel = "Download report PDF", pressedScale = 0.96f)
             .padding(top = 8.rdp)
@@ -727,7 +724,7 @@ private fun ShareScoreButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .height(52.rdp)
+            .fillMaxHeight()
             .clip(RoundedCornerShape(50))
             .background(colorResource(R.color.zen_950))
             .pressScale(onClick = onClick, onClickLabel = "Share Zen Score", pressedScale = 0.97f)

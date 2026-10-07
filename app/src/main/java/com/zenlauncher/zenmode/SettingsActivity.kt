@@ -139,6 +139,8 @@ class SettingsActivity : AppCompatActivity() {
                         startActivity(intent)
                     },
                     onContributeClick = { openGitHub() },
+                    onFeatureRequestClick = { openFeatureBoard() },
+                    onBugReportFallback = { BugReport.openFallback(this@SettingsActivity) },
                     onRateClick = { openPlayStore() },
                     onShareClick = { shareZenMode() },
                     onOpenPro = { entry -> startActivity(ZenProActivity.intent(this, entry)) },
@@ -255,6 +257,16 @@ class SettingsActivity : AppCompatActivity() {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.GITHUB_URL)))
     }
 
+    /** Settings -> "Feature requests": the public product board on zenmodeos.com. */
+    private fun openFeatureBoard() {
+        ServiceLocator.analyticsManager.trackEvent("feature_board_opened", mapOf("source" to "settings"))
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.FEATURE_BOARD_URL)))
+        } catch (_: android.content.ActivityNotFoundException) {
+            Toast.makeText(this, "No browser to open the board with.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun openPlayStore() {
         try {
             startActivity(
@@ -276,13 +288,13 @@ class SettingsActivity : AppCompatActivity() {
     private fun shareZenMode() {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "ZenMode Launcher")
+            putExtra(Intent.EXTRA_SUBJECT, "ZenMode OS")
             putExtra(
                 Intent.EXTRA_TEXT,
-                "Check out ZenMode - a minimalist open-source android launcher! ${AppConstants.GITHUB_URL}"
+                "Check out ZenMode OS - a minimalist open-source android launcher! ${AppConstants.GITHUB_URL}"
             )
         }
-        startActivity(Intent.createChooser(intent, "Share ZenMode"))
+        startActivity(Intent.createChooser(intent, "Share ZenMode OS"))
     }
 
     private fun performLogout(repository: UsageRepository) {

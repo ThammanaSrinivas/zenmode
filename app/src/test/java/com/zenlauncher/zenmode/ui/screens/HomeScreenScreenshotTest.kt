@@ -51,6 +51,9 @@ class HomeScreenScreenshotTest {
                     buddyLikes = 1L,
                     onShowSearchChange = {},
                     onGoogleSearch = {},
+                    // The phone has the Google app, so the search bar carries its scan button.
+                    // The other two cases leave it null, covering the phone that doesn't.
+                    onLensClick = {},
                     onPhoneClick = {},
                     onLockClick = {},
                     onInviteBuddyClick = {},

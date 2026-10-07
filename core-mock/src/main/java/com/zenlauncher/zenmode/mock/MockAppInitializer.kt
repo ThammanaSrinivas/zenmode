@@ -177,6 +177,7 @@ override fun trackScreentimePermissionGranted(permissionType: String) {}
     override fun trackDay30MilestoneEngaged(cumulativeTimeSaved: Long) {}
     override fun trackReengagementPushSent(pushType: String, daysInactive: Long) {}
     override fun trackReengagementPushOpened(pushType: String) {}
+    override fun trackCheckInShown(kind: String, streakDays: Int, daysKeptThisWeek: Int) {}
     override fun trackGoldTabViewed(entryPoint: String) {}
     override fun trackGoldEarned(goldAmount: Int, triggerReason: String) {}
     override fun trackGoldPurchaseInitiated(amountLocalCurrency: Int, grams: Int) {}

@@ -32,7 +32,7 @@ fun ForceUpdateDialog(
         },
         text = {
             Text(
-                text = "A new version of ZenMode is required to continue. Please update to the latest version to enjoy new features and improvements.",
+                text = "A new version of ZenMode OS is required to continue. Please update to the latest version to enjoy new features and improvements.",
                 style = MaterialTheme.typography.bodyMedium
             )
         },

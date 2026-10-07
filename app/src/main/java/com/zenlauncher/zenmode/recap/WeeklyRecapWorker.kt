@@ -19,6 +19,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import java.time.DayOfWeek
@@ -109,6 +110,7 @@ internal object RecapNotifier {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_zen_mark_gradient)
             .setContentTitle("Your week in Zen is ready")
+            .setSubText(PRODUCT_NAME)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(tap)

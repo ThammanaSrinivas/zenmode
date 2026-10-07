@@ -176,7 +176,10 @@ private fun RowTitle(title: String, pro: ProTagState) {
             fontWeight = FontWeight.Medium,
             fontSize = 16.rsp,
             lineHeight = 22.rsp,
-            color = if (pro == ProTagState.Locked) colors.textSecondary else colors.textPrimary
+            color = if (pro == ProTagState.Locked) colors.textSecondary else colors.textPrimary,
+            // fill = false so a short title still hugs its tag, but a long one wraps instead of
+            // taking the whole row and squeezing the PRO tag down to one letter per line.
+            modifier = Modifier.weight(1f, fill = false)
         )
         if (pro != ProTagState.None) {
             Spacer(Modifier.width(8.rdp))
@@ -326,22 +329,33 @@ fun ZenSettingToggleItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String? = null
+    subtitle: String? = null,
+    pro: ProTagState = ProTagState.None,
+    /**
+     * Set for a [ProTagState.Locked] row: the whole row becomes a button to the Pro sheet
+     * instead of a switch, and the switch is drawn off and inert. Nothing half-works — a locked
+     * row that still flipped would promise a gesture that never fires.
+     */
+    onLocked: (() -> Unit)? = null
 ) {
+    val locked = pro == ProTagState.Locked && onLocked != null
     Row(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.rdp)
-            .zenToggleable(value = checked, onValueChange = onCheckedChange)
+            .then(
+                if (locked) Modifier.clickable(onClickLabel = text, role = Role.Button) { onLocked!!() }
+                else Modifier.zenToggleable(value = checked, onValueChange = onCheckedChange)
+            )
             .padding(horizontal = 16.rdp, vertical = 10.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            RowTitle(text, ProTagState.None)
+            RowTitle(text, pro)
             if (subtitle != null) RowSubtitle(subtitle)
         }
         Spacer(Modifier.width(12.rdp))
-        ZenSwitch(checked)
+        ZenSwitch(checked && !locked)
     }
 }
 

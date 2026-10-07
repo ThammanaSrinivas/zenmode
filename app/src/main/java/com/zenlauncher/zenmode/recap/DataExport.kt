@@ -72,11 +72,11 @@ object DataExport {
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/csv"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "My ZenMode data")
+            putExtra(Intent.EXTRA_SUBJECT, "My ZenMode OS data")
             clipData = ClipData.newRawUri(file.name, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(send, "Export your ZenMode data"))
+        context.startActivity(Intent.createChooser(send, "Export your ZenMode OS data"))
         return days.size
     }
 }

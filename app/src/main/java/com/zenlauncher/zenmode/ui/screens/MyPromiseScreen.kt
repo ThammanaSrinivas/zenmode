@@ -65,6 +65,7 @@ import com.zenlauncher.zenmode.ui.components.ClashLineHeight
 import com.zenlauncher.zenmode.ui.components.FullLineBox
 import com.zenlauncher.zenmode.ui.components.GeistLineHeight
 import com.zenlauncher.zenmode.ui.components.V3BrandGreen
+import com.zenlauncher.zenmode.ui.components.ZenModeOsWordmark
 import com.zenlauncher.zenmode.ui.components.rememberBrandOsGradient
 import com.zenlauncher.zenmode.ui.components.V3BulletDot
 import com.zenlauncher.zenmode.ui.components.V3CardDivider
@@ -433,39 +434,15 @@ private fun BrandStrip() {
                 .requiredSize(width = 413.007.rdp, height = 53.rdp)
         )
 
-        Row(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .clearAndSetSemantics { contentDescription = "ZenMode OS" },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(R.drawable.ic_zen_mark_gradient),
-                contentDescription = null,
-                modifier = Modifier.size(20.556.rdp)
-            )
-            Spacer(modifier = Modifier.width(3.28.rdp))
-            Text(
-                text = "ZenMode",
-                fontFamily = ClashDisplay,
-                fontWeight = FontWeight.Medium,
-                fontSize = 17.944.rsp,
-                lineHeight = (17.944 * ClashLineHeight).rsp,
-                letterSpacing = (-1.0766).sp,
-                color = colorResource(R.color.my_promise_logo_text),
-                maxLines = 1,
-                style = FullLineBox
-            )
-            Text(
-                text = "OS",
-                fontFamily = ClashDisplay,
-                fontWeight = FontWeight.Medium,
-                fontSize = 17.944.rsp,
-                lineHeight = (17.944 * ClashLineHeight).rsp,
-                maxLines = 1,
-                style = FullLineBox.copy(brush = rememberBrandOsGradient())
-            )
-        }
+        // The shared wordmark, so the brand's "OS"-in-gradient rule lives in one place.
+        ZenModeOsWordmark(
+            modifier = Modifier.align(Alignment.Center),
+            fontSize = 17.944.rsp,
+            markSize = 20.556.rdp,
+            markGap = 3.28.rdp,
+            zenModeColor = colorResource(R.color.my_promise_logo_text),
+            letterSpacing = (-1.0766).sp
+        )
     }
 }
 

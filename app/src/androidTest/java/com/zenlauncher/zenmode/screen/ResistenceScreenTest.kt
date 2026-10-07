@@ -100,6 +100,22 @@ class ResistenceScreenTest {
     }
 
     @Test
+    fun resistenceScreen_showsV3StreakBlock() {
+        // The v2 pill ("streaks: 3") is gone; the header now draws the same
+        // StreakStat block Home does — label over count, with the unit beside it.
+        setContent(streaks = 3)
+        composeTestRule.onNodeWithText("Streaks").assertIsDisplayed()
+        composeTestRule.onNodeWithText("3").assertIsDisplayed()
+        composeTestRule.onNodeWithText("days").assertIsDisplayed()
+    }
+
+    @Test
+    fun resistenceScreen_streakBlockUsesSingularDay_whenStreakIsOne() {
+        setContent(streaks = 1)
+        composeTestRule.onNodeWithText("day").assertIsDisplayed()
+    }
+
+    @Test
     fun resistenceScreen_showsMood() {
         setContent()
         composeTestRule.onNodeWithContentDescription("Mood").assertIsDisplayed()

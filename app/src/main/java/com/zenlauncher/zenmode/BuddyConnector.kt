@@ -26,7 +26,7 @@ class BuddyConnector(
 
     fun copyUserCode(code: String, showToast: Boolean) {
         val clipboard = activity.getSystemService(ClipboardManager::class.java)
-        clipboard.setPrimaryClip(ClipData.newPlainText("ZenMode Code", code))
+        clipboard.setPrimaryClip(ClipData.newPlainText("ZenMode OS Code", code))
         ServiceLocator.analyticsTracker.trackBuddyCodeCopied("manual")
         if (showToast) {
             Toast.makeText(activity, "Code copied!", Toast.LENGTH_SHORT).show()
@@ -41,7 +41,7 @@ class BuddyConnector(
         // with no app installed - the zenmodeos.com/b/ page there points to the Play Store instead.
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on ZenMode")
+            putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on ZenMode OS")
             putExtra(Intent.EXTRA_TEXT, inviteMessage(code))
         }
         activity.startActivity(Intent.createChooser(intent, "Share invite"))
@@ -53,7 +53,7 @@ class BuddyConnector(
         ServiceLocator.analyticsTracker.trackBuddyShareStarted("circle_link")
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Join my Zen Circle on ZenMode")
+            putExtra(Intent.EXTRA_SUBJECT, "Join my Zen Circle on ZenMode OS")
             putExtra(Intent.EXTRA_TEXT, circleInviteMessage(circleId))
         }
         activity.startActivity(Intent.createChooser(intent, "Share invite"))
@@ -171,10 +171,10 @@ class BuddyConnector(
     companion object {
         /** The invite text: the user's zenmodeos.com/b/ invite link. Shared by the link and the circle card. */
         fun inviteMessage(code: String): String =
-            "Be my Zen Bro on ZenMode! ${AppConstants.BUDDY_INVITE_BASE_URL}$code"
+            "Be my Zen Bro on ZenMode OS! ${AppConstants.BUDDY_INVITE_BASE_URL}$code"
 
         /** Same idea for a real Zen Circle -- separate path/message, see [shareCircleInvite]. */
         fun circleInviteMessage(circleId: String): String =
-            "Join my Zen Circle on ZenMode! ${AppConstants.CIRCLE_INVITE_BASE_URL}$circleId"
+            "Join my Zen Circle on ZenMode OS! ${AppConstants.CIRCLE_INVITE_BASE_URL}$circleId"
     }
 }

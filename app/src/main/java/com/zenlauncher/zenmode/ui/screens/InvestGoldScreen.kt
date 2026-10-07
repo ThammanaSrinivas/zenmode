@@ -665,7 +665,7 @@ private fun DematNote(dematMaskedId: String, onViewTermsClick: () -> Unit, modif
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = zen900)) {
                     append("$dematMaskedId.")
                 }
-                append(" ZenMode never holds, moves or advises on your money the order is placed by you in Kite. ")
+                append(" ZenMode OS never holds, moves or advises on your money the order is placed by you in Kite. ")
                 withLink(
                     LinkAnnotation.Clickable(
                         tag = "terms",

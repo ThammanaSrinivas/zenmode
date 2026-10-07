@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ZenMode OS launcher icon. Generated from the brand tile in
+  ../../../../../../zenmode-brain/docs/brand/ — the mark sits on 58.6% of the tile, inside
+  the adaptive icon's 61% safe zone, so the layers are the artwork at 1:1 with the
+  background extended to full bleed for the OEM mask to cut.
+
+  The foreground is the mark in flat white, so it doubles as the themed (monochrome) icon
+  on Android 13+ without a separate asset.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

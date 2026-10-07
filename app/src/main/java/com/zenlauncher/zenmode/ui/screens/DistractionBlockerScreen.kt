@@ -360,7 +360,7 @@ private fun AccessibilityBanner(onClick: () -> Unit) {
             .padding(14.rdp)
     ) {
         Text(
-            text = "Turn on ZenMode in Accessibility",
+            text = "Turn on ZenMode OS in Accessibility",
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.rsp,

@@ -97,6 +97,14 @@ fun trackScreentimePermissionGranted(permissionType: String)
     fun trackBlockerBypassUsed(justification: String)
     fun trackBlockerStreakAchieved(streakDays: Long)
 
+    // ── Daily check-in overlay (streak + promise nudges on Home) ──
+    /**
+     * A check-in card was raised on Home. [kind] is "celebration", "encouragement" or
+     * "last_hour"; [streakDays] and [daysKeptThisWeek] say what it was raised against, so a
+     * card's effect on the week it was shown in can be measured.
+     */
+    fun trackCheckInShown(kind: String, streakDays: Int, daysKeptThisWeek: Int)
+
     // ── Accessibility-service health (blocker reliability) ──
     /** First time the accessibility service is seen enabled since it was last lost (or ever). */
     fun trackA11yPermissionGranted()

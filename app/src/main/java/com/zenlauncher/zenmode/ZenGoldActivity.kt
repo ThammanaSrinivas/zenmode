@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
@@ -15,11 +16,14 @@ import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.recap.RecapCollector
 import com.zenlauncher.zenmode.recap.RecapStore
+import com.zenlauncher.zenmode.recap.weekStartOf
 import com.zenlauncher.zenmode.ui.screens.ZenGoldScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 /**
  * The home screen's left-swipe page (Figma node 2026:1648) — the right-hand of the three
@@ -33,6 +37,13 @@ class ZenGoldActivity : AppCompatActivity() {
 
     private var weekly by mutableStateOf(ZenGoldPromiseState())
     private var monthly by mutableStateOf(ZenGoldPromiseState(period = GoldPromisePeriod.MONTHLY))
+
+    // The Weekly tab's "look back" (Pro). 0 is the live week; -1 is last week, and so on.
+    // [displayedWeek] is recomputed for the chosen offset, while [weekly] stays on the live
+    // week so gold pay's gate never moves with the view.
+    private var weekOffset by mutableIntStateOf(0)
+    private var displayedWeek by mutableStateOf(ZenGoldPromiseState())
+    private var earliestWeekOffset by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +61,10 @@ class ZenGoldActivity : AppCompatActivity() {
                     weekly = weekly,
                     monthly = monthly,
                     isPro = isPro,
+                    displayedWeek = displayedWeek,
+                    weekOffset = weekOffset,
+                    earliestWeekOffset = earliestWeekOffset,
+                    onWeekOffsetChange = { offset -> showWeek(offset) },
                     onBackClick = { finish() },
                     onZenScoreClick = {
                         finish()
@@ -89,6 +104,32 @@ class ZenGoldActivity : AppCompatActivity() {
         refreshPromiseState()
     }
 
+    /**
+     * Pages the Weekly card to [offset] (0 = live week, negative = back). Clamped to the
+     * history actually on record, so the arrows can never walk off the end of RecapStore's
+     * retention window into a week of empty bars.
+     */
+    private fun showWeek(offset: Int) {
+        val target = offset.coerceIn(earliestWeekOffset, 0)
+        if (target == weekOffset) return
+        weekOffset = target
+        lifecycleScope.launch {
+            displayedWeek = withContext(Dispatchers.IO) { computeWeek(target) }
+        }
+    }
+
+    /** One week's state at [offset]; the live week needs today's usage, a past week doesn't. */
+    private fun computeWeek(offset: Int): ZenGoldPromiseState {
+        val promiseHours = PromisePreferences.getDailyHours(applicationContext)
+        val todayMinutes = usageRepository.getTodayUsage().screenTimeInMillis / 60_000L
+        return ZenGoldPromise.weekly(
+            days = recapStore.days(),
+            todayMinutes = todayMinutes,
+            promiseHours = promiseHours,
+            weekOffset = offset
+        )
+    }
+
     private fun refreshPromiseState() {
         lifecycleScope.launch {
             val (newWeekly, newMonthly) = withContext(Dispatchers.IO) {
@@ -103,6 +144,20 @@ class ZenGoldActivity : AppCompatActivity() {
             }
             weekly = newWeekly
             monthly = newMonthly
+
+            // Only weeks with a full seven days on record can be shown; anything shorter
+            // would draw undecided bars and read as a week the user never had.
+            val (earliest, displayed) = withContext(Dispatchers.IO) {
+                val oldest = recapStore.completedWeeks().minByOrNull { it.weekStart }?.weekStart
+                val earliest = oldest?.let {
+                    -(ChronoUnit.WEEKS.between(it, weekStartOf(LocalDate.now())).toInt())
+                } ?: 0
+                val clamped = weekOffset.coerceIn(earliest, 0)
+                earliest to if (clamped == 0) newWeekly else computeWeek(clamped)
+            }
+            earliestWeekOffset = earliest
+            weekOffset = weekOffset.coerceIn(earliest, 0)
+            displayedWeek = displayed
         }
     }
 }

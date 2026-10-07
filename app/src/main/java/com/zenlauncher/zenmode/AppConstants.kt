@@ -69,6 +69,18 @@ object AppConstants {
     const val PROMISE_DAYS_PER_WEEK = 7
     const val PROMISE_DAYS_TO_UNLOCK = 5
 
+    // Daily check-in overlay (see ZenCheckIn / ZenCheckInOverlay). Two moments a day, both
+    // drawn on Home: an evening card at a time the user picks in Settings, and a last-hour
+    // nudge while the promise can still be saved.
+    /**
+     * The last-hour nudge only applies to promises **longer** than this. On a 1- or 2-hour
+     * promise "an hour left" arrives almost as soon as the phone is picked up, so it would
+     * be noise rather than a warning worth acting on.
+     */
+    const val CHECK_IN_LAST_HOUR_MIN_PROMISE_HOURS = 2
+    /** How much promise counts as "the last hour". */
+    const val CHECK_IN_LAST_HOUR_WINDOW_MINUTES = 60L
+
     // Invest Gold screen (Figma node 2026:1250), opened from Zen Gold's "Invest Gold".
     // Whole units only, capped per week by ZenMode (not by the broker). The instrument,
     // live price and linked demat need the brokerage integration that doesn't exist yet.
@@ -102,6 +114,10 @@ object AppConstants {
     // Step-by-step guide to redeeming a Pro promo code at Google Play checkout. Not under an
     // App Links pathPrefix, so it always opens in the browser.
     const val REDEEM_CODE_URL = "https://zenmodeos.com/redeem/"
+    // Public product board: what's being built, what's being considered, and the form that
+    // adds to it. Settings -> "Feature requests" is the only link to it from the app, so the
+    // page and this constant are the pair to keep in step (hosting/public/board/index.html).
+    const val FEATURE_BOARD_URL = "https://zenmodeos.com/board/"
     // Play Store listing. Same id="com.zenlauncher.zenmode" MainActivity/SettingsActivity
     // build from `packageName` for the in-app "Rate us" flow; hardcoded here since this
     // object has no Context. Doubles as the download CTA appended to every share-card's

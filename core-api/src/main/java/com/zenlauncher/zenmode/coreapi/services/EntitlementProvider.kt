@@ -59,7 +59,12 @@ enum class ProFeature {
     RANDOM_CONNECT,
     SUPPORTERS_LIST,
     /** Free edits the weekly promise once, Sundays only. Pro edits twice a week, any day. */
-    PROMISE_EDIT_FLEXIBILITY
+    PROMISE_EDIT_FLEXIBILITY,
+    /**
+     * Home gestures beyond swipe-up-for-search, which stays free. See
+     * `com.zenlauncher.zenmode.HomeGesture` for which ones those are.
+     */
+    GESTURES
 }
 
 enum class ProStatus {

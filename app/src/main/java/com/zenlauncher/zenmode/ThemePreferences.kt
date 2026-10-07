@@ -97,9 +97,10 @@ object ThemePreferences {
     fun applyStoredTheme(context: Context) = mode(context).apply()
 
     /**
-     * Wipes the whole `zenmode_prefs` file on account delete. [HomeThemePreferences] and
-     * [ZenSound] cache their own keys from this same file, so they are re-read here too —
-     * otherwise a deleted account keeps its home theme and sound setting until the next launch.
+     * Wipes the whole `zenmode_prefs` file on account delete. [HomeThemePreferences],
+     * [ZenSound] and [GesturePreferences] cache their own keys from this same file, so they are
+     * re-read here too — otherwise a deleted account keeps its home theme, sound setting and
+     * home gestures until the next launch.
      */
     fun clear(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -112,5 +113,6 @@ object ThemePreferences {
         applyStoredTheme(context)
         HomeThemePreferences.reload(context)
         ZenSound.reload(context)
+        GesturePreferences.reload(context)
     }
 }

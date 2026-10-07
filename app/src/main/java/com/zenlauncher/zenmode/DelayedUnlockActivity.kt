@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zenlauncher.zenmode.coreapi.DailyUsage
+import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.ResistenceScreen
@@ -50,10 +51,16 @@ class DelayedUnlockActivity : AppCompatActivity() {
             null
         }
 
-        val zenScore = ZenScoreStore(this, repository).today()
-        val todayIsMindful = zenScore >= AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD * 10
+        // The same promise streak Home's flame shows (see PromiseStreak): a day over the
+        // line holds it, only a lost week resets it. Reading the mindful-day run here instead
+        // would show a different number for the same word on two screens.
         val recapStore = com.zenlauncher.zenmode.recap.RecapStore(this)
-        val streakCount = AppLogic.getStreakCount(recapStore, todayIsMindful)
+        val promiseHours = PromisePreferences.getDailyHours(this)
+        val todayPromiseMinutes = (usage?.screenTimeInMillis ?: 0L) / 60_000L
+        val streakCount = PromiseStreak.of(
+            days = recapStore.days(),
+            todayKept = todayPromiseMinutes <= promiseHours * 60L
+        ).days
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

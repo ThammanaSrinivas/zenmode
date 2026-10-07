@@ -229,7 +229,7 @@ fun ZenProScreen(
             .then(if (onPlanPage) Modifier else Modifier.navigationBarsPadding())
     ) {
         ProTopBar(
-            title = if (isPro) "Manage Pro" else "ZenMode Pro",
+            title = if (isPro) "Manage Pro" else "ZenMode OS Pro",
             onBackClick = onBackClick
         )
         if (onPlanPage) {
@@ -879,7 +879,7 @@ private fun ConfirmSheet(
             }
             ZenSheetBody(
                 (if (trial) "A notice arrives before the trial ends. No silent charge. " else "") +
-                    "Cancel any time: Settings → ZenMode Pro → Cancel. Two taps, the same two as this."
+                    "Cancel any time: Settings → ZenMode OS Pro → Cancel. Two taps, the same two as this."
             )
             PriceLine(offer.priceLine())
         }
