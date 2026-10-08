@@ -66,6 +66,7 @@ import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.util.Locale
 
 // ── My Screen Time card ───────────────────────────────────────────
 
@@ -135,8 +136,10 @@ internal fun PromiseScreenTimeCard(
             }
 
             // Which week this is, and (Pro) the way back through the ones before it. Monthly
-            // spans several weeks at once, so it has no single number to show.
-            if (!isMonthly) {
+            // spans several weeks at once, so it has no single number to show — and neither
+            // does a state that hasn't been worked out yet (the page's first frame, before
+            // history loads): no number at all beats a "WEEK 00" that flashes and changes.
+            if (!isMonthly && displayedWeek.weekNumber > 0) {
                 Spacer(modifier = Modifier.height(12.rdp))
                 WeekNavigator(
                     weekNumber = displayedWeek.weekNumber,
@@ -306,7 +309,7 @@ private fun WeekNavigator(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "WEEK %02d".format(weekNumber),
+                    text = String.format(Locale.US, "WEEK %02d", weekNumber),
                     fontFamily = DepartureMono,
                     fontSize = 11.rsp,
                     letterSpacing = 0.4.sp,

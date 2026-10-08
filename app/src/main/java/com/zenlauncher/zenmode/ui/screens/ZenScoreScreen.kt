@@ -66,6 +66,7 @@ import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.SessionEventType
 import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.HomePage
+import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.components.PinnedPageFooter
 import com.zenlauncher.zenmode.ui.components.moodWashColors
@@ -123,7 +124,7 @@ fun ZenScoreScreen(
     userName: String? = null,
     photoUrl: String? = null,
     isPro: Boolean = false,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate = LocalDate.now(LocalZenClock.current),
     onBackClick: () -> Unit,
     /** Tapping the Zen Gold dot jumps straight there, same destination Home's left swipe reaches. */
     onZenGoldClick: () -> Unit = {},

@@ -68,6 +68,7 @@ import com.zenlauncher.zenmode.PromiseUnit
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenGoldPromiseState
 import com.zenlauncher.zenmode.ui.components.HomePage
+import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.components.PinnedPageFooter
 import com.zenlauncher.zenmode.ui.components.PromiseBrokenGray
@@ -280,7 +281,10 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
     // Real, not placeholder: whatever day the user opens this on, "today" sits at the
     // same column (see MonthsBeforeToday) with that many months of history behind it and
     // the rest as outlook — so the axis and headline are always true for this user, this day.
-    val today = remember { LocalDate.now() }
+    // The app's clock, not the system's: screenshot goldens pin it, so the axis and headline
+    // don't roll over with the month the suite happens to run in.
+    val clock = LocalZenClock.current
+    val today = remember(clock) { LocalDate.now(clock) }
     val windowMonths = remember(today) {
         (0 until ForecastWindowSize).map { i -> today.plusMonths((i - MonthsBeforeToday).toLong()).month }
     }
@@ -312,7 +316,7 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
             )
             Spacer(modifier = Modifier.width(4.rdp))
             Text(
-                text = "(${LocalDate.now().year})",
+                text = "(${today.year})",
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 10.3.rsp,

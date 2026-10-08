@@ -30,8 +30,9 @@ includeBuild("core-api") {
 
 // `-PuseMockCore=true` takes the open-source path even when the private sibling is present,
 // so a contributor-shaped build can be run and tested on a machine that has core-private.
-// app/build.gradle.kts reads the same property and must agree with this choice.
-val forceMockCore = startParameter.projectProperties["useMockCore"]?.toBoolean() ?: false
+// app/build.gradle.kts reads the same property the same way (a Gradle property, so -P and
+// gradle.properties both count) and must agree with this choice.
+val forceMockCore = providers.gradleProperty("useMockCore").map { it.toBoolean() }.getOrElse(false)
 val privateCoreDir = file("../zenmode_core_private")
 if (privateCoreDir.exists() && !forceMockCore) {
     println("ZenMode: Found zenmode_core_private, including composite build.")
