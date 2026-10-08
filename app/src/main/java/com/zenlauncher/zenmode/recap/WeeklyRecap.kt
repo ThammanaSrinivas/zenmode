@@ -77,7 +77,15 @@ fun weekStartOf(date: LocalDate): LocalDate =
     date.minusDays((date.dayOfWeek.value - DayOfWeek.MONDAY.value).toLong())
 
 /** "Sep 8 – 14", or "Sep 29 – Oct 5" across a month boundary. */
-fun WeeklyRecap.rangeLabel(locale: Locale = Locale.getDefault()): String {
+fun WeeklyRecap.rangeLabel(locale: Locale = Locale.getDefault()): String =
+    weekRangeLabel(weekStart, locale)
+
+/**
+ * The same label for any Monday, with no recap in hand — the Zen Gold card's week navigator
+ * names weeks it has only a week-start for.
+ */
+fun weekRangeLabel(weekStart: LocalDate, locale: Locale = Locale.getDefault()): String {
+    val weekEnd = weekStart.plusDays(6)
     val monthDay = DateTimeFormatter.ofPattern("MMM d", locale)
     val end = if (weekEnd.month == weekStart.month) DateTimeFormatter.ofPattern("d", locale) else monthDay
     return "${weekStart.format(monthDay)} – ${weekEnd.format(end)}"

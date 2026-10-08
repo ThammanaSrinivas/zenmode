@@ -19,11 +19,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,23 +51,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import java.util.Locale
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.DailyUsage
+import com.zenlauncher.zenmode.ui.components.FitToWidth
+import com.zenlauncher.zenmode.ui.components.StreakStat
 import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
-import com.zenlauncher.zenmode.ui.theme.Silkscreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.percentageChangeColor
 import com.zenlauncher.zenmode.ui.theme.rsp
@@ -162,13 +170,16 @@ fun ResistenceScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 48.rdp),
+                // The status bar is 24dp on some ROMs and 54dp on a punch-hole phone; the
+                // old flat 48dp top pad either wasted a band of screen or ran under the clock.
+                .statusBarsPadding()
+                .padding(top = 12.rdp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // ── Header ──
             ResistenceHeader(streaks = streaks)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.rdp))
 
             // ── Central Image with Q1-Q4 (stepped highlight) ──
             // Phase order: 0=q2, 1=q3, 2=q4, 3=q1
@@ -300,6 +311,9 @@ fun ResistenceScreen(
             // ── Combined Stats Card ──
             Column(
                 modifier = Modifier
+                    // Margin first, so the block's natural width is measured against the space
+                    // it is actually allowed, not the full screen.
+                    .padding(horizontal = Spacing.screenMargin)
                     .wrapContentWidth()
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 12.rdp),
@@ -329,78 +343,82 @@ fun ResistenceScreen(
                 }
 
                 // ── Time Display ──
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    modifier = Modifier.offset(y = (-4).dp)
-                ) {
-                    val timeLineHeight = 42.rsp
-                    Text(
-                        text = String.format("%02d", hours),
-                        fontFamily = DepartureMono,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 56.rsp,
-                        color = colors.textPrimary,
-                        style = androidx.compose.ui.text.TextStyle(
-                            lineHeight = timeLineHeight,
-                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
-                                includeFontPadding = false
+                // One fixed-ratio readout from the Figma frame: at a 1.3x+ font scale on a
+                // 360dp phone it is wider than the screen, so it scales down as a block
+                // rather than wrapping "MINS" onto a second line.
+                FitToWidth(modifier = Modifier.offset(y = (-4).rdp)) {
+                    Row(
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        val timeLineHeight = 42.rsp
+                        Text(
+                            text = "%02d".format(Locale.US, hours),
+                            fontFamily = DepartureMono,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 56.rsp,
+                            color = colors.textPrimary,
+                            style = androidx.compose.ui.text.TextStyle(
+                                lineHeight = timeLineHeight,
+                                platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                    includeFontPadding = false
+                                )
                             )
                         )
-                    )
-                    Text(
-                        text = "HRS",
-                        fontFamily = DepartureMono,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 10.rsp,
-                        color = colors.textPrimary,
-                        modifier = Modifier
-                            .offset(y = (-8).rdp)
-                            .padding(end = 10.rdp),
-                        style = androidx.compose.ui.text.TextStyle(
-                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
-                                includeFontPadding = false
+                        Text(
+                            text = "HRS",
+                            fontFamily = DepartureMono,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 10.rsp,
+                            color = colors.textPrimary,
+                            modifier = Modifier
+                                .offset(y = (-8).rdp)
+                                .padding(end = 10.rdp),
+                            style = androidx.compose.ui.text.TextStyle(
+                                platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                    includeFontPadding = false
+                                )
                             )
                         )
-                    )
-                    Text(
-                        text = String.format("%02d", mins),
-                        fontFamily = DepartureMono,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 56.rsp,
-                        color = colors.textPrimary,
-                        style = androidx.compose.ui.text.TextStyle(
-                            lineHeight = timeLineHeight,
-                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
-                                includeFontPadding = false
+                        Text(
+                            text = "%02d".format(Locale.US, mins),
+                            fontFamily = DepartureMono,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 56.rsp,
+                            color = colors.textPrimary,
+                            style = androidx.compose.ui.text.TextStyle(
+                                lineHeight = timeLineHeight,
+                                platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                    includeFontPadding = false
+                                )
                             )
                         )
-                    )
-                    Text(
-                        text = "MINS",
-                        fontFamily = DepartureMono,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 10.rsp,
-                        color = colors.textPrimary,
-                        modifier = Modifier
-                            .offset(y = (-8).rdp),
-                        style = androidx.compose.ui.text.TextStyle(
-                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
-                                includeFontPadding = false
+                        Text(
+                            text = "MINS",
+                            fontFamily = DepartureMono,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 10.rsp,
+                            color = colors.textPrimary,
+                            modifier = Modifier
+                                .offset(y = (-8).rdp),
+                            style = androidx.compose.ui.text.TextStyle(
+                                platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                    includeFontPadding = false
+                                )
                             )
                         )
-                    )
-                    // Trend icon
-                    Image(
-                        painter = painterResource(trendRes),
-                        contentDescription = "Trend",
-                        modifier = Modifier
-                            .size(width = 60.rdp, height = 56.rdp)
-                            .padding(start = 2.dp)
-                            .offset(y = (-4).dp)
-                    )
+                        // Trend icon
+                        Image(
+                            painter = painterResource(trendRes),
+                            contentDescription = "Trend",
+                            modifier = Modifier
+                                .size(width = 60.rdp, height = 56.rdp)
+                                .padding(start = 2.rdp)
+                                .offset(y = (-4).rdp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.rdp))
 
                 // ── Mindfulness ──
                 Row(
@@ -411,9 +429,10 @@ fun ResistenceScreen(
                         fontFamily = Geist,
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.rsp,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        maxLines = 1
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(12.rdp))
                     ResistenceMindfulnessBar(
                         progress = mindfulnessProgress,
                         moodState = moodState,
@@ -422,7 +441,7 @@ fun ResistenceScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.rdp))
 
             // ── Advice Text ──
             Text(
@@ -435,7 +454,7 @@ fun ResistenceScreen(
                 modifier = Modifier.padding(horizontal = Spacing.screenMargin)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.rdp))
 
             // ── Countdown Timer ──
             CountdownCircle(
@@ -462,8 +481,6 @@ fun ResistenceScreen(
 
 @Composable
 private fun ResistenceHeader(streaks: Int) {
-    val colors = ZenTheme.colors
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -473,25 +490,13 @@ private fun ResistenceHeader(streaks: Int) {
     ) {
         Image(
             painter = painterResource(R.drawable.ic_zen_mark_gradient),
-            contentDescription = "ZenMode",
+            contentDescription = "ZenMode OS",
             modifier = Modifier.size(44.rdp)
         )
 
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(46.dp))
-                .background(colors.borderFocus)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = "streaks: $streaks",
-                fontFamily = Silkscreen,
-                fontWeight = FontWeight.Normal,
-                fontSize = 11.rsp,
-                letterSpacing = (-1.3).sp,
-                color = colors.bgPrimary
-            )
-        }
+        // The v3 Streaks block, shared with Home ([StreakStat]) so the two can't drift.
+        // Not tappable here: the resistance screen is a wait, not a place to navigate from.
+        StreakStat(streaks = streaks)
     }
 }
 
@@ -595,6 +600,9 @@ private fun CountdownCircle(
 
 // ── Bottom Dock ─────────────────────────────────────────────────────
 
+/** Android's minimum touch target; the dock's controls were drawn smaller than their art. */
+private val MinTouchTarget: Dp @Composable get() = 48.rdp
+
 @Composable
 private fun ResistenceBottomDock(
     skipsLeft: Int,
@@ -609,8 +617,10 @@ private fun ResistenceBottomDock(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            // Gesture-nav phones put the pill right where the dock sat.
+            .navigationBarsPadding()
             .padding(horizontal = Spacing.screenMargin)
-            .padding(top = 8.dp, bottom = 32.rdp),
+            .padding(top = 8.rdp, bottom = 16.rdp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -619,8 +629,11 @@ private fun ResistenceBottomDock(
             painter = painterResource(R.drawable.ic_settings),
             contentDescription = "Settings",
             modifier = Modifier
-                .size(32.rdp)
-                .clickable { onSettingsClick() },
+                // 32dp of art inside a 48dp target — the icons were below the minimum.
+                .size(MinTouchTarget)
+                .clip(CircleShape)
+                .clickable { onSettingsClick() }
+                .padding(8.rdp),
             colorFilter = ColorFilter.tint(colors.textBrand)
         )
 
@@ -647,7 +660,19 @@ private fun ResistenceBottomDock(
             fontSize = 12.rsp,
             color = if (canSkip) colors.textSecondary else colors.textSecondary.copy(alpha = 0.5f),
             textAlign = TextAlign.Center,
-            modifier = if (canSkip) Modifier.clickable { onSkipClick() } else Modifier
+            modifier = Modifier
+                // Weighted, so the longer "Only 3 skip & open left for Today" takes the slack
+                // instead of shoving the two icons off the edges of the dock.
+                .weight(1f)
+                .then(
+                    if (canSkip) Modifier
+                        .heightIn(min = MinTouchTarget)
+                        .clip(RoundedCornerShape(8.rdp))
+                        .clickable(onClickLabel = "Skip the wait", role = Role.Button) { onSkipClick() }
+                        .wrapContentHeight()
+                        .padding(horizontal = 8.rdp)
+                    else Modifier.padding(horizontal = 8.rdp)
+                )
         )
 
         // Phone
@@ -655,8 +680,10 @@ private fun ResistenceBottomDock(
             painter = painterResource(R.drawable.ic_phone),
             contentDescription = "Phone",
             modifier = Modifier
-                .size(32.rdp)
-                .clickable { onPhoneClick() },
+                .size(MinTouchTarget)
+                .clip(CircleShape)
+                .clickable { onPhoneClick() }
+                .padding(8.rdp),
             colorFilter = ColorFilter.tint(colors.textBrand)
         )
     }

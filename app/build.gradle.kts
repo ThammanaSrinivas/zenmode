@@ -26,7 +26,9 @@ val fileSearchEnabled =
 // The Crashlytics apply line below is the one exception scripts/check-app-boundary.sh allows.
 // Crashlytics plugin 3 reads the app ID from the Google-Services task, so that plugin (and
 // app/google-services.json, gitignored) is required alongside it.
-val usePrivateCore = rootProject.file("../zenmode_core_private").exists()
+// Kept in step with settings.gradle.kts, which decides the same thing for the composite build.
+val usePrivateCore = rootProject.file("../zenmode_core_private").exists() &&
+    !providers.gradleProperty("useMockCore").map { it.toBoolean() }.getOrElse(false)
 if (usePrivateCore) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
     apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)

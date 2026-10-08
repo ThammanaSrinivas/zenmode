@@ -538,15 +538,42 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val recapStore = remember { RecapStore(applicationContext) }
-                val todayIsMindful = remember(zenScore) {
-                    zenScore >= AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD * 10
-                }
-                val streakCount = remember(zenScore) { AppLogic.getStreakCount(recapStore, todayIsMindful) }
+
+                // Promise streak + today's check-in card (see ZenCheckInHost.kt).
+                val checkInState = rememberZenCheckIn(
+                    context = this,
+                    recapStore = recapStore,
+                    todayMinutes = ((usage?.screenTimeInMillis ?: 0L) / 60_000L),
+                    usageLoaded = usage != null,
+                    suppressed = showHomeGuide || showEnteringZenMode
+                )
+                val streakCount = checkInState.streak.days
                 val homeBuddyCard = rememberHomeBuddyCardState(circleUiState.circle, userCode, hasBuddies, buddyStats)
+
+                // Filtered here, once, so Home never has to know which gestures are Pro. Both
+                // halves are observed, so switching a gesture on in Settings or Pro arriving
+                // mid-session changes Home without a restart.
+                val enabledGestures by remember { GesturePreferences.state(this) }.collectAsState()
+                val isProNow = ProAccess.isProState(this)
+                val homeGestures = remember(enabledGestures, isProNow) {
+                    GesturePreferences.active(enabledGestures, isProNow)
+                }
 
                 HomeScreen(
                     usage = usage,
                     streaks = streakCount,
+                    streakStart = checkInState.streak.startDate,
+                    checkIn = checkInState.card,
+                    checkInWeekUnits = checkInState.weekUnits,
+                    onCheckInDismiss = checkInState.dismiss,
+                    onCheckInLockToday = {
+                        checkInState.dismiss()
+                        lockScreen()
+                    },
+                    onCheckInSeeWeekClick = {
+                        checkInState.dismiss()
+                        startActivity(Intent(this, ZenGoldActivity::class.java))
+                    },
                     yesterdayChangePercent = yesterdayChangePercent,
                     hasBuddies = homeBuddyCard.show,
                     buddyStats = homeBuddyCard.stats,
@@ -559,6 +586,7 @@ class MainActivity : AppCompatActivity() {
                     goldInvested = AppConstants.PLACEHOLDER_GOLD_INVESTED,
                     goldChangePercent = GoldOrder.changePercentFor(AppConstants.PLACEHOLDER_GOLD_INVESTED),
                     appCount = homeAppCount,
+                    gestures = homeGestures,
                     myLikes = myLikes,
                     buddyLikes = buddyLikes,
                     onLikeClick = { viewModel.sendLike() },
@@ -569,16 +597,8 @@ class MainActivity : AppCompatActivity() {
                     onZenScoreClick = {
                         startActivity(Intent(this, ZenScoreActivity::class.java))
                     },
-                    onGoogleSearch = { query ->
-                        val searchIntent = Intent(Intent.ACTION_WEB_SEARCH).apply {
-                            putExtra(android.app.SearchManager.QUERY, query)
-                        }
-                        if (searchIntent.resolveActivity(packageManager) != null) {
-                            startActivity(searchIntent)
-                        } else {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=${Uri.encode(query)}")))
-                        }
-                    },
+                    onGoogleSearch = { query -> WebSearch.run(this, query) },
+                    onLensClick = if (WebSearch.isLensAvailable(this)) ({ WebSearch.openLens(this) }) else null,
                     onPhoneClick = {
                         startActivity(Intent(Intent.ACTION_DIAL))
                     },
@@ -600,32 +620,7 @@ class MainActivity : AppCompatActivity() {
                         startActivity(intent)
                         finish()
                     },
-                    onAppClick = onAppClick@{ appInfo ->
-                        // Quieted in the Distraction Blocker: don't even start it.
-                        if (ContentBlockPrefs.shouldQuietApp(this, appInfo.packageName.toString())) {
-                            Toast.makeText(this, "${appInfo.label} is quieted. Let it back in Settings → Distraction Blocker.", Toast.LENGTH_SHORT).show()
-                            return@onAppClick
-                        }
-                        // Launch the exact activity the icon represents rather than
-                        // packageManager.getLaunchIntentForPackage(), which resolves a
-                        // single "default" activity per package and can't distinguish
-                        // Phone from Contacts when an OEM ships both from the same
-                        // package (e.g. MIUI's com.android.contacts).
-                        val launchIntent = if (appInfo.activityClassName.isNotEmpty()) {
-                            Intent(Intent.ACTION_MAIN).apply {
-                                addCategory(Intent.CATEGORY_LAUNCHER)
-                                component = android.content.ComponentName(
-                                    appInfo.packageName.toString(),
-                                    appInfo.activityClassName
-                                )
-                            }
-                        } else {
-                            packageManager.getLaunchIntentForPackage(appInfo.packageName.toString())
-                        }
-                        if (launchIntent != null) {
-                            startActivity(launchIntent)
-                        }
-                    },
+                    onAppClick = { appInfo -> launchHomeApp(appInfo) },
                     onAppLongClick = { longPressedApp = it },
                     modifier = Modifier.zenOverlayBlur(longPressedApp != null || showHomeAppsPicker),
                     reveal = homeRevealCue,
@@ -730,7 +725,7 @@ class MainActivity : AppCompatActivity() {
                         onBackClick = { showBuddyBattle = false },
                         onCopyCode = { code ->
                             val clipboard = getSystemService(android.content.ClipboardManager::class.java)
-                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("ZenMode Code", code))
+                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("ZenMode OS Code", code))
                             android.widget.Toast.makeText(this@MainActivity, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
                         },
                         onBackToHomeClick = { showBuddyBattle = false },

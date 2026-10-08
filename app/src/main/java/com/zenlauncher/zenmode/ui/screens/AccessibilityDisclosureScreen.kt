@@ -76,7 +76,7 @@ fun AccessibilityDisclosureScreen(
 
             // Section: Why
             Text(
-                text = "Why ZenMode needs Accessibility Service",
+                text = "Why ZenMode OS needs Accessibility Service",
                 color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = Geist,
@@ -86,7 +86,7 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "ZenMode uses Android's Accessibility Service API for two features:\n\n" +
+                text = "ZenMode OS uses Android's Accessibility Service API for two features:\n\n" +
                         "1. Lock screen: Android gives a launcher no other way to lock the screen, " +
                         "so this permission is required for the lock button to work.\n\n" +
                         "2. In-app content blocking (optional): when you turn on blocking for a " +

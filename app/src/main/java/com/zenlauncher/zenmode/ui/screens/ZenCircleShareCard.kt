@@ -304,6 +304,20 @@ private fun NameArc(names: List<String>, green: Color, modifier: Modifier = Modi
 }
 
 /**
+ * The backdrop behind the share preview: fully opaque ink, the app's one dark surface.
+ *
+ * Opaque, not a scrim. This used to be black at 0.78 over the un-dimmed page, and the Zen
+ * Circle screen's own "Share & Invite" / "Back to the Home" buttons read straight through it,
+ * landing right behind the preview's own two buttons. Translucency can't fix that on its own:
+ * even at 0.94 white-on-green type still ghosts through (see
+ * ZenCircleSharePreviewScreenshotTest), and blurring the page underneath only helps on API 31+
+ * where `Modifier.blur` does anything at all. A full-screen takeover has nothing to gain from
+ * showing a trace of what it covers, so it covers it.
+ */
+private val SharePreviewBackdrop: Color
+    @Composable get() = colorResource(R.color.ink_base)
+
+/**
  * Full-screen preview of [ZenCircleShareCard] with "Save as image" and "Share". The card
  * is drawn into a graphics layer at full size, so the saved image is sharp even when
  * the preview is scaled down to fit a short screen.
@@ -330,7 +344,7 @@ fun ZenCircleSharePreview(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.78f))
+                .background(SharePreviewBackdrop)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss)
                 .systemBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 16.dp),

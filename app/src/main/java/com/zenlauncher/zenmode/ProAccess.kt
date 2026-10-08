@@ -81,8 +81,8 @@ object ProAccess {
      */
     private fun requestAccess(context: Context) {
         val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${AppConstants.SUPPORT_EMAIL}"))
-            .putExtra(Intent.EXTRA_SUBJECT, "ZenMode PRO early access")
-            .putExtra(Intent.EXTRA_TEXT, "Hi ZenMode team, I'd love early access to ZenMode PRO.")
+            .putExtra(Intent.EXTRA_SUBJECT, "ZenMode OS PRO early access")
+            .putExtra(Intent.EXTRA_TEXT, "Hi ZenMode OS team, I'd love early access to ZenMode OS PRO.")
         try {
             context.startActivity(intent)
         } catch (_: ActivityNotFoundException) {

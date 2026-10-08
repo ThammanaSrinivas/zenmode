@@ -48,6 +48,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zenlauncher.zenmode.AppGridPreferences
+import com.zenlauncher.zenmode.GesturePreferences
+import com.zenlauncher.zenmode.HomeGesture
 import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
 import com.zenlauncher.zenmode.ResistancePreferences
 import com.zenlauncher.zenmode.HomeThemePreferences
@@ -75,6 +77,7 @@ import com.zenlauncher.zenmode.ui.components.ZenSegmented
 import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
 import com.zenlauncher.zenmode.ui.components.ZenSettingsGroup
 import com.zenlauncher.zenmode.ui.components.ZenSettingsRow
+import com.zenlauncher.zenmode.ui.components.BugReportSheet
 import com.zenlauncher.zenmode.ui.components.ZenSheet
 import com.zenlauncher.zenmode.ui.components.ZenSheetBody
 import com.zenlauncher.zenmode.ui.components.ZenSheetTitle
@@ -89,6 +92,12 @@ import com.zenlauncher.zenmode.ui.theme.rsp
 import java.time.LocalDate
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import java.time.format.TextStyle as JavaTextStyle
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.graphics.Color
+import com.zenlauncher.zenmode.ZenCheckInPreferences
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 // ZenMode OS v3 settings.
@@ -99,7 +108,6 @@ import java.util.Locale
 // Pro surfaces (plan card, PRO tags, gates) only render when [isProAvailable] — a backend
 // that can't sell Pro shows the plain free app with nothing locked.
 
-private enum class ScreenTimeRange { WEEK, MONTH }
 
 @Composable
 fun SettingsScreen(
@@ -125,6 +133,10 @@ fun SettingsScreen(
     onContributeClick: () -> Unit,
     onRateClick: () -> Unit,
     onShareClick: () -> Unit,
+    /** Opens the public product board (zenmodeos.com/board) in the browser. */
+    onFeatureRequestClick: () -> Unit = {},
+    /** No mail app on the phone: the host falls back to the Telegram group. */
+    onBugReportFallback: () -> Unit = {},
     onOpenPro: (ProEntry) -> Unit = {},
     onProGateShown: (ProFeature) -> Unit = {},
     /** Pro: writes the CSV export and opens the share sheet. */
@@ -145,7 +157,14 @@ fun SettingsScreen(
     var gate by remember { mutableStateOf<ProFeature?>(null) }
     var soon by remember { mutableStateOf<ProFeature?>(null) }
     var themePicker by remember { mutableStateOf(false) }
+    var bugReport by remember { mutableStateOf(false) }
+    var checkInTimePicker by remember { mutableStateOf(false) }
+    var isCheckInEnabled by remember { mutableStateOf(ZenCheckInPreferences.isEnabled(context)) }
+    var checkInTime by remember { mutableStateOf(ZenCheckInPreferences.getEveningTime(context)) }
     val homeTheme by remember { HomeThemePreferences.state(context) }.collectAsState()
+    // Everything switched on, Pro rows included — the rows show their own stored state even
+    // while locked, so cancelling Pro doesn't look like the setting was thrown away.
+    val enabledGestures by remember { GesturePreferences.state(context) }.collectAsState()
 
     @Suppress("NAME_SHADOWING")
     val isPro = isProAvailable && isPro
@@ -200,7 +219,7 @@ fun SettingsScreen(
                     )
                 }
 
-                ScreenTimeCard(
+                SettingsScreenTimeCard(
                     weeklyHours = weeklyHours,
                     showMonthOption = isProAvailable,
                     isPro = isPro,
@@ -230,6 +249,28 @@ fun SettingsScreen(
                     )
                 }
 
+                ZenSettingsGroup(label = "Daily check-in") {
+                    ZenSettingToggleItem(
+                        text = "Evening check-in",
+                        subtitle = "A card on home each evening: confetti when you're under " +
+                            "your promise, and where the week stands when you're not.",
+                        checked = isCheckInEnabled,
+                        onCheckedChange = { enabled ->
+                            isCheckInEnabled = enabled
+                            ZenCheckInPreferences.setEnabled(context, enabled)
+                        }
+                    )
+                    if (isCheckInEnabled) {
+                        ZenRowDivider()
+                        ZenSettingsRow(
+                            title = "Check-in time",
+                            subtitle = "When the evening card appears.",
+                            value = checkInTime.format(CheckInTimeFormat),
+                            onClick = { checkInTimePicker = true }
+                        )
+                    }
+                }
+
                 ZenSettingsGroup(label = "Home screen") {
                     ZenSettingsRow(
                         title = "Choose home apps",
@@ -257,6 +298,44 @@ fun SettingsScreen(
                             onClick = { openProFeature(ProFeature.HOME_THEMES) }
                         )
                     }
+                }
+
+                ZenSettingsGroup(label = "Gestures") {
+                    GestureToggle(
+                        gesture = HomeGesture.SWIPE_UP_SEARCH,
+                        title = "Swipe up to search",
+                        subtitle = "Opens search from anywhere on home, and takes the search bar " +
+                            "off the screen — the swipe is the way in.",
+                        enabled = enabledGestures,
+                        isPro = isPro,
+                        isProAvailable = isProAvailable,
+                        proTag = proTag(),
+                        onLocked = { openProFeature(ProFeature.GESTURES) }
+                    )
+                    ZenRowDivider()
+                    GestureToggle(
+                        gesture = HomeGesture.MARGIN_TAP_PAGES,
+                        title = "Tap the margins",
+                        subtitle = "Tap the left or right edge of home for Zen Score or Zen Gold, " +
+                            "the same way the swipes go.",
+                        enabled = enabledGestures,
+                        isPro = isPro,
+                        isProAvailable = isProAvailable,
+                        proTag = proTag(),
+                        onLocked = { openProFeature(ProFeature.GESTURES) }
+                    )
+                    ZenRowDivider()
+                    GestureToggle(
+                        gesture = HomeGesture.DOUBLE_TAP_LOCK,
+                        title = "Double-tap to lock",
+                        subtitle = "Double-tap an empty part of home. A long press still locks " +
+                            "either way.",
+                        enabled = enabledGestures,
+                        isPro = isPro,
+                        isProAvailable = isProAvailable,
+                        proTag = proTag(),
+                        onLocked = { openProFeature(ProFeature.GESTURES) }
+                    )
                 }
 
                 ZenSettingsGroup(label = "Look & sound") {
@@ -309,7 +388,7 @@ fun SettingsScreen(
                     ZenSettingsGroup(label = "Your data") {
                         ZenSettingsRow(
                             title = "Export data",
-                            subtitle = "A CSV of every day ZenMode remembers.",
+                            subtitle = "A CSV of every day ZenMode OS remembers.",
                             pro = proTag(),
                             onClick = { openProFeature(ProFeature.DATA_EXPORT) }
                         )
@@ -318,10 +397,25 @@ fun SettingsScreen(
 
                 PhoneSettingsGroup()
 
-                ZenSettingsGroup(label = "ZenMode") {
+                ZenSettingsGroup(label = "Help us build it") {
+                    ZenSettingsRow(
+                        title = "Report a bug",
+                        subtitle = "Tell us what happened. A screenshot helps.",
+                        onClick = { bugReport = true }
+                    )
+                    ZenRowDivider()
+                    ZenSettingsRow(
+                        title = "Feature requests",
+                        subtitle = "The board of what's being built, and what you'd like next.",
+                        trailing = RowTrailing.External,
+                        onClick = onFeatureRequestClick
+                    )
+                }
+
+                ZenSettingsGroup(label = "ZenMode OS") {
                     ZenSettingsRow(title = "Rate on Play Store", trailing = RowTrailing.External, onClick = onRateClick)
                     ZenRowDivider()
-                    ZenSettingsRow(title = "Share ZenMode", trailing = RowTrailing.External, onClick = onShareClick)
+                    ZenSettingsRow(title = "Share ZenMode OS", trailing = RowTrailing.External, onClick = onShareClick)
                     ZenRowDivider()
                     ZenSettingsRow(
                         title = "Contribute on GitHub",
@@ -333,6 +427,29 @@ fun SettingsScreen(
 
                 SettingsFooter()
             }
+        }
+
+        if (checkInTimePicker) {
+            CheckInTimeSheet(
+                current = checkInTime,
+                onPick = { picked ->
+                    checkInTime = picked
+                    ZenCheckInPreferences.setEveningTime(context, picked)
+                    checkInTimePicker = false
+                },
+                onDismiss = { checkInTimePicker = false }
+            )
+        }
+
+        if (bugReport) {
+            BugReportSheet(
+                onDismiss = { bugReport = false },
+                onSent = { bugReport = false },
+                onNoMailApp = {
+                    bugReport = false
+                    onBugReportFallback()
+                }
+            )
         }
 
         if (showAccountSheet) {
@@ -504,7 +621,7 @@ private fun PlanCard(
             }
         }
         Text(
-            text = "ZenMode Pro",
+            text = "ZenMode OS Pro",
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 20.rsp,
@@ -558,180 +675,27 @@ private fun PlanCard(
 // ── Screen time ────────────────────────────────────────────────────
 
 @Composable
-private fun ScreenTimeCard(
-    weeklyHours: List<Float>,
-    showMonthOption: Boolean,
+private fun GestureToggle(
+    gesture: HomeGesture,
+    title: String,
+    subtitle: String,
+    enabled: Set<HomeGesture>,
     isPro: Boolean,
-    loadMonthlyHours: suspend () -> List<Float>,
-    onMonthLocked: () -> Unit
+    isProAvailable: Boolean,
+    proTag: ProTagState,
+    onLocked: () -> Unit
 ) {
-    val colors = ZenTheme.colors
-    var range by rememberSaveable { mutableStateOf(ScreenTimeRange.WEEK) }
-    var monthlyHours by remember { mutableStateOf<List<Float>?>(null) }
-    val showingMonth = range == ScreenTimeRange.MONTH && isPro
-
-    LaunchedEffect(showingMonth) {
-        if (showingMonth && monthlyHours == null) monthlyHours = loadMonthlyHours()
-    }
-    // A cancelled subscription drops back to the week without leaving a locked range selected.
-    LaunchedEffect(isPro) { if (!isPro) range = ScreenTimeRange.WEEK }
-
-    val data = if (showingMonth) monthlyHours.orEmpty() else weeklyHours
-    val total = data.sum()
-    val average = if (data.isEmpty()) 0f else total / data.size
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .zenCard()
-            .padding(16.rdp)
-    ) {
-        Row(verticalAlignment = Alignment.Top) {
-            Column(Modifier.weight(1f)) {
-                ZenEyebrow(if (showingMonth) "Last 30 days" else "This week")
-                Text(
-                    text = formatHours(total),
-                    fontFamily = DepartureMono,
-                    fontSize = 34.rsp,
-                    lineHeight = 40.rsp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.padding(top = 4.rdp)
-                )
-                Text(
-                    text = "${formatHours(average)} a day on average",
-                    fontFamily = Geist,
-                    fontSize = 13.rsp,
-                    color = colors.textSecondary
-                )
-            }
-            if (showMonthOption) {
-                ZenSegmented(
-                    options = listOf(
-                        SegmentOption(ScreenTimeRange.WEEK, "7D"),
-                        SegmentOption(ScreenTimeRange.MONTH, "30D", locked = !isPro)
-                    ),
-                    selected = if (showingMonth) ScreenTimeRange.MONTH else ScreenTimeRange.WEEK,
-                    onSelect = { option ->
-                        if (option.locked) {
-                            onMonthLocked()
-                        } else {
-                            range = option.value
-                        }
-                    }
-                )
-            }
-        }
-
-        Spacer(Modifier.height(16.rdp))
-        if (showingMonth && monthlyHours == null) {
-            Box(Modifier.fillMaxWidth().height(150.rdp), contentAlignment = Alignment.Center) {
-                Text("Counting the month…", fontFamily = Geist, fontSize = 13.rsp, color = colors.textSecondary)
-            }
-        } else {
-            ScreenTimeBars(data, labelDays = !showingMonth)
-        }
-        Text(
-            text = "Counted on this phone. Your partner sees your Zen Score, never these hours.",
-            fontFamily = Geist,
-            fontSize = 13.rsp,
-            lineHeight = 18.rsp,
-            color = colors.textSecondary,
-            modifier = Modifier.padding(top = 10.rdp)
-        )
-    }
+    val context = LocalContext.current
+    val gated = gesture.isPro && isProAvailable
+    ZenSettingToggleItem(
+        text = title,
+        subtitle = subtitle,
+        checked = gesture in enabled,
+        pro = if (gated) proTag else ProTagState.None,
+        onLocked = if (gated && !isPro) onLocked else null,
+        onCheckedChange = { on -> GesturePreferences.setEnabled(context, gesture, on) }
+    )
 }
-
-/** "3h", or "3.5h" when the midpoint tick lands on a half hour. */
-private fun axisHourLabel(hours: Float): String {
-    val whole = kotlin.math.round(hours).toInt()
-    return if (kotlin.math.abs(hours - whole) < 0.05f) "${whole}h" else "${"%.1f".format(hours)}h"
-}
-
-@Composable
-private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
-    val colors = ZenTheme.colors
-    val bar = colors.textBrand
-    val grid = colors.borderHairlineSoft
-    val max = maxOf(6f, kotlin.math.ceil(hours.maxOrNull() ?: 0f))
-    val clock = LocalZenClock.current
-    val dayLabels = remember(hours.size, clock) {
-        val today = LocalDate.now(clock)
-        (hours.size - 1 downTo 0).map {
-            today.minusDays(it.toLong()).dayOfWeek.getDisplayName(JavaTextStyle.SHORT, Locale.ENGLISH).uppercase()
-        }
-    }
-
-    Row(Modifier.fillMaxWidth()) {
-        // Y axis: hour scale for the three gridlines the chart draws below.
-        Column(
-            modifier = Modifier
-                .height(130.rdp)
-                .width(24.rdp),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            val axisStyle = ZenTypography.monoLabel.copy(fontSize = 10.rsp, lineHeight = 11.rsp, letterSpacing = 0.rsp)
-            Text(axisHourLabel(max), style = axisStyle, color = colors.textMuted)
-            Text(axisHourLabel(max / 2f), style = axisStyle, color = colors.textMuted)
-            Text(axisHourLabel(0f), style = axisStyle, color = colors.textMuted)
-        }
-        Spacer(Modifier.width(6.rdp))
-        Column(Modifier.weight(1f)) {
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.rdp)
-                    .semantics {
-                        contentDescription = "Screen time per day, ${hours.size} days, up to ${axisHourLabel(max)}. Today ${formatHours(hours.lastOrNull() ?: 0f)}."
-                    }
-            ) {
-                val n = hours.size.coerceAtLeast(1)
-                val gap = if (n > 7) 3.dp.toPx() else 10.dp.toPx()
-                val barWidth = (size.width - gap * (n - 1)) / n
-                listOf(0f, 0.5f, 1f).forEach { f ->
-                    val y = size.height * (1 - f)
-                    drawLine(grid, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
-                }
-                hours.forEachIndexed { i, h ->
-                    val barHeight = (h / max).coerceIn(0f, 1f) * size.height
-                    val isToday = i == hours.lastIndex
-                    drawRoundRect(
-                        color = if (isToday) bar else bar.copy(alpha = 0.3f),
-                        topLeft = Offset(i * (barWidth + gap), size.height - barHeight),
-                        size = Size(barWidth, barHeight),
-                        cornerRadius = CornerRadius(if (n > 7) 2.dp.toPx() else 6.dp.toPx())
-                    )
-                }
-            }
-            Spacer(Modifier.height(6.rdp))
-            if (labelDays) {
-                Row(Modifier.fillMaxWidth()) {
-                    dayLabels.forEachIndexed { i, label ->
-                        Text(
-                            text = label,
-                            style = ZenTypography.monoLabel,
-                            color = if (i == dayLabels.lastIndex) colors.textPrimary else colors.textMuted,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            } else {
-                Row(Modifier.fillMaxWidth()) {
-                    Text("30 DAYS AGO", style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
-                    Text("TODAY", style = ZenTypography.monoLabel, color = colors.textPrimary)
-                }
-            }
-        }
-    }
-}
-
-private fun formatHours(hours: Float): String {
-    val minutes = (hours * 60).toInt()
-    return "${minutes / 60}h ${(minutes % 60).toString().padStart(2, '0')}m"
-}
-
-// ── Footer ─────────────────────────────────────────────────────────
 
 // ── Sheets ─────────────────────────────────────────────────────────
 
@@ -770,7 +734,7 @@ private fun ProFeature.gateCopy(): Triple<String, String, String> = when (this) 
     ProFeature.RANDOM_CONNECT -> Triple(
         "Random Connect",
         "Free keeps the partner you already have.",
-        "Pro pairs you with one other ZenMode user. No feed, no profile."
+        "Pro pairs you with one other ZenMode OS user. No feed, no profile."
     )
     ProFeature.SUPPORTERS_LIST -> Triple(
         "Supporters list",
@@ -781,6 +745,11 @@ private fun ProFeature.gateCopy(): Triple<String, String, String> = when (this) 
         "Edit my promise",
         "Free edits the promise once a week, on Sundays.",
         "Pro edits twice a week, any day."
+    )
+    ProFeature.GESTURES -> Triple(
+        "Home gestures",
+        "Swipe up for search is free, and so is the long press that locks your phone.",
+        "Pro adds the rest: tap either margin to move between pages, and double-tap to lock."
     )
 }
 

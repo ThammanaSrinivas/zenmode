@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performTextInput
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.BuddyStats
+import com.zenlauncher.zenmode.HomeGesture
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.testing.TestData
 import com.zenlauncher.zenmode.ui.screens.HomeScreen
@@ -21,6 +22,9 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -54,6 +58,7 @@ class HomeScreenTest {
         onInviteBuddyClick: () -> Unit = {},
         onSignInClick: () -> Unit = {},
         onAppClick: (AppInfo) -> Unit = {},
+        gestures: Set<HomeGesture> = emptySet(),
         apps: List<AppInfo> = TestData.createAppList(3)
     ) {
         composeTestRule.setContent {
@@ -78,6 +83,7 @@ class HomeScreenTest {
                     onInviteBuddyClick = onInviteBuddyClick,
                     onSignInClick = onSignInClick,
                     onAppClick = onAppClick,
+                    gestures = gestures,
                     apps = apps
                 )
             }
@@ -188,5 +194,107 @@ class HomeScreenTest {
         // 2 hours usage should show "02" somewhere
         setContent(usage = TestData.twoHoursUsage)
         composeTestRule.onNodeWithText("02", substring = true).assertIsDisplayed()
+    }
+
+    // ── Gestures (GesturePreferences / HomeGesture) ────────────────
+    // Every one is off by default, so the tests above describe Home as it ships. These
+    // describe Home once a gesture is switched on in Settings. The margin that the tap
+    // gestures use is the same bare wash the long-press test aims at.
+
+    @Test
+    fun homeScreen_swipeUp_opensSearch_whenGestureOn() {
+        var opened: Boolean? = null
+        setContent(
+            gestures = setOf(HomeGesture.SWIPE_UP_SEARCH),
+            onShowSearchChange = { opened = it }
+        )
+        composeTestRule.onRoot().performTouchInput { swipeUp() }
+        assertEquals(true, opened)
+    }
+
+    @Test
+    fun homeScreen_swipeUp_doesNothing_whenGestureOff() {
+        var opened: Boolean? = null
+        setContent(onShowSearchChange = { opened = it })
+        composeTestRule.onRoot().performTouchInput { swipeUp() }
+        assertEquals(null, opened)
+    }
+
+    @Test
+    fun homeScreen_swipeUpGesture_replacesSearchBar() {
+        // The gesture is the way in, so the pill it replaces comes off the screen.
+        setContent(gestures = setOf(HomeGesture.SWIPE_UP_SEARCH))
+        composeTestRule.onNodeWithText("Search apps, files & everything", substring = true)
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun homeScreen_horizontalSwipe_stillTurnsPages_withSwipeUpOn() {
+        // The two detectors share Home; a page swipe must not be eaten by the vertical one.
+        var gold = 0
+        setContent(gestures = setOf(HomeGesture.SWIPE_UP_SEARCH), onZenGoldClick = { gold++ })
+        composeTestRule.onRoot().performTouchInput { swipeLeft() }
+        assertEquals(1, gold)
+    }
+
+    @Test
+    fun homeScreen_marginTaps_openThePageThatWay() {
+        var score = 0
+        var gold = 0
+        setContent(
+            gestures = setOf(HomeGesture.MARGIN_TAP_PAGES),
+            onZenScoreClick = { score++ },
+            onZenGoldClick = { gold++ }
+        )
+        composeTestRule.onRoot().performTouchInput { click(Offset(4f, centerY)) }
+        composeTestRule.onRoot().performTouchInput { click(Offset(width - 4f, centerY)) }
+        assertEquals("left margin opens the page on the left", 1, score)
+        assertEquals("right margin opens the page on the right", 1, gold)
+    }
+
+    @Test
+    fun homeScreen_marginTaps_ignoreTheMiddle() {
+        var turned = 0
+        setContent(
+            gestures = setOf(HomeGesture.MARGIN_TAP_PAGES),
+            onZenScoreClick = { turned++ },
+            onZenGoldClick = { turned++ }
+        )
+        // Between the app rows: inside the content, well clear of either margin.
+        composeTestRule.onRoot().performTouchInput { click(Offset(centerX, centerY)) }
+        assertEquals(0, turned)
+    }
+
+    @Test
+    fun homeScreen_marginTap_doesNothing_whenGestureOff() {
+        var turned = 0
+        setContent(onZenScoreClick = { turned++ }, onZenGoldClick = { turned++ })
+        composeTestRule.onRoot().performTouchInput { click(Offset(4f, centerY)) }
+        assertEquals(0, turned)
+    }
+
+    @Test
+    fun homeScreen_doubleTap_locks_whenGestureOn() {
+        var locked = 0
+        setContent(gestures = setOf(HomeGesture.DOUBLE_TAP_LOCK), onLockClick = { locked++ })
+        composeTestRule.onRoot().performTouchInput { doubleClick(Offset(4f, centerY)) }
+        assertEquals(1, locked)
+    }
+
+    @Test
+    fun homeScreen_doubleTap_doesNothing_whenGestureOff() {
+        var locked = 0
+        setContent(onLockClick = { locked++ })
+        composeTestRule.onRoot().performTouchInput { doubleClick(Offset(4f, centerY)) }
+        assertEquals(0, locked)
+    }
+
+    @Test
+    fun homeScreen_longPress_stillLocks_withDoubleTapOn() {
+        // Double-tap is a second way in, not a replacement.
+        var locked = false
+        setContent(gestures = setOf(HomeGesture.DOUBLE_TAP_LOCK), onLockClick = { locked = true })
+        composeTestRule.onRoot().performTouchInput { longClick(Offset(4f, centerY)) }
+        assertTrue(locked)
     }
 }

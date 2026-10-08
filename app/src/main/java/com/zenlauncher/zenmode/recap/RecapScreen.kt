@@ -643,7 +643,7 @@ private fun LockedInvestPill(daysToUnlock: Int, content: Color) {
 @Composable
 private fun Disclaimer(content: Color) {
     Text(
-        text = "ZenMode never holds or receives your money. You invest in your own broker's app, " +
+        text = "ZenMode OS never holds or receives your money. You invest in your own broker's app, " +
             "at your discretion. This is not investment advice, and gold prices can go down as well as up.",
         fontFamily = Geist,
         fontSize = 11.rsp,

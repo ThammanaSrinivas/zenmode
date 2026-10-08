@@ -139,7 +139,7 @@ internal fun ManagePro(
             // no app can act on a subscription on the user's behalf, only Play's own UI can.
             else ->
                 "Renewals, cancellations and refunds are all managed in the Play Store, not " +
-                    "here. Changes made there can take a few minutes to show up in ZenMode."
+                    "here. Changes made there can take a few minutes to show up in ZenMode OS."
         },
         fontFamily = Geist,
         fontSize = 15.rsp,

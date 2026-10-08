@@ -60,7 +60,7 @@ class AccountabilityActivity : AppCompatActivity() {
                     onBackClick = { finish() },
                     onCopyCode = { code ->
                         val clipboard = getSystemService(ClipboardManager::class.java)
-                        clipboard.setPrimaryClip(ClipData.newPlainText("ZenMode Code", code))
+                        clipboard.setPrimaryClip(ClipData.newPlainText("ZenMode OS Code", code))
                         Toast.makeText(this@AccountabilityActivity, "Code copied!", Toast.LENGTH_SHORT).show()
                     },
                     onBackToHomeClick = { finish() },

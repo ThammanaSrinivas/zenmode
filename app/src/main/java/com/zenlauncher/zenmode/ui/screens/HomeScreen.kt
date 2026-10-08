@@ -39,13 +39,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.em
 import com.zenlauncher.zenmode.ui.components.runningGradientStroke
-import com.zenlauncher.zenmode.ui.components.BlazingFlame
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.components.MoodSource
 import com.zenlauncher.zenmode.ui.components.HomePage
-import com.zenlauncher.zenmode.ui.components.HomePageDots
+import com.zenlauncher.zenmode.ui.components.PinnedPageFooter
+import com.zenlauncher.zenmode.ui.components.ZenPrimaryCtaHeight
+import com.zenlauncher.zenmode.ui.components.StreakStat
+import com.zenlauncher.zenmode.ui.components.ZenIconMatchedLabel
+import com.zenlauncher.zenmode.ui.components.ZenStatLabel
+import com.zenlauncher.zenmode.ui.components.ZenStatLineGap
+import com.zenlauncher.zenmode.ui.components.ZenStatTextStyle
+import com.zenlauncher.zenmode.ui.components.ZenStatUnitSize
+import com.zenlauncher.zenmode.ui.components.ZenStatValueSize
 import com.zenlauncher.zenmode.ui.components.HomeReveal
 import com.zenlauncher.zenmode.ui.components.pageSwipe
+import com.zenlauncher.zenmode.ui.components.pageTapGestures
+import com.zenlauncher.zenmode.ui.components.swipeUp
+import com.zenlauncher.zenmode.ui.components.PageMargin
 import com.zenlauncher.zenmode.ui.components.HomeGuideOverlay
 import androidx.compose.foundation.systemGestureExclusion
 import com.zenlauncher.zenmode.ui.components.rememberCountUp
@@ -56,9 +66,6 @@ import com.zenlauncher.zenmode.ui.components.revealRise
 import com.zenlauncher.zenmode.ui.components.revealSpin
 import com.zenlauncher.zenmode.ui.components.revealStrike
 import com.zenlauncher.zenmode.ui.components.taperedBorder
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.unit.Constraints
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import androidx.compose.animation.core.tween
@@ -77,6 +84,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.height
@@ -106,6 +115,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.zenlauncher.zenmode.PromiseUnit
+import com.zenlauncher.zenmode.ZenCheckInCard
 import java.time.LocalDate
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import java.util.Locale
@@ -134,10 +145,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.launch
 import com.zenlauncher.zenmode.AppGridPreferences
+import com.zenlauncher.zenmode.GesturePreferences
+import com.zenlauncher.zenmode.HomeGesture
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.AppInfo
@@ -202,7 +214,6 @@ private val AppTileRadius: Dp @Composable get() = 17.rdp
 // screen margin genuinely differs from the rest of the (still-v2) app. Revisit
 // once other screens migrate to v3 and this can collapse into the shared token.
 private val ScreenMargin: Dp @Composable get() = 30.rdp
-private val SearchPillHeight: Dp @Composable get() = 48.rdp
 
 private val TopToHeaderGap: Dp @Composable get() = 32.rdp
 private val HeaderToGoldGap: Dp @Composable get() = 40.rdp
@@ -210,9 +221,6 @@ private val GoldToCardsGap: Dp @Composable get() = 46.rdp
 private val CardsToAppsGap: Dp @Composable get() = 40.rdp
 private val AppRowGap: Dp @Composable get() = 45.rdp
 private val AppsToSearchGap: Dp @Composable get() = 40.rdp
-private val SearchToDotsGap: Dp @Composable get() = 25.rdp
-private val DotsToBottomGap: Dp @Composable get() = 20.rdp
-private val HeaderIconTextGap: Dp @Composable get() = 6.rdp
 
 // Figma node 2001:1504 — header text colours and gradients. Values live in colors.xml
 // (SOURCE OF TRUTH: design tokens) — never inline a Color(0x...) literal here.
@@ -249,6 +257,12 @@ fun HomeScreen(
     goldInvested: String,
     goldChangePercent: Int,
     appCount: Int = AppGridPreferences.DEFAULT_APP_COUNT,
+    /**
+     * The home gestures in force, already filtered for Pro by [GesturePreferences.active].
+     * [HomeGesture.SWIPE_UP_SEARCH] also takes the search pill off the screen: the gesture
+     * replaces it rather than sitting alongside it.
+     */
+    gestures: Set<HomeGesture> = emptySet(),
     myLikes: Long = 0L,
     buddyLikes: Long = 0L,
     onLikeClick: () -> Unit = {},
@@ -256,6 +270,9 @@ fun HomeScreen(
     onZenGoldClick: () -> Unit = {},
     onZenScoreClick: () -> Unit = {},
     onGoogleSearch: (String) -> Unit,
+    /** The scan button inside the search bar: hands off to Google Lens. Null on a phone with
+     *  nothing to scan with, which hides the button rather than offering a dead end. */
+    onLensClick: (() -> Unit)? = null,
     onPhoneClick: () -> Unit,
     onLockClick: () -> Unit,
     onInviteBuddyClick: () -> Unit,
@@ -275,6 +292,19 @@ fun HomeScreen(
     // First-run guide (swipe right / swipe left / buddy) over everything else on Home.
     showGuide: Boolean = false,
     onGuideFinished: () -> Unit = {},
+    /**
+     * The Monday [streaks] started counting from, for the milestone card's date range. Kept
+     * days inside a promise streak aren't contiguous (a day over the line holds the streak
+     * rather than ending it -- see PromiseStreak), so the range can't be inferred from the
+     * count alone.
+     */
+    streakStart: LocalDate? = null,
+    /** Today's check-in card, or null when neither moment is due. See [ZenCheckIn]. */
+    checkIn: ZenCheckInCard? = null,
+    checkInWeekUnits: List<PromiseUnit> = emptyList(),
+    onCheckInDismiss: () -> Unit = {},
+    onCheckInSeeWeekClick: () -> Unit = {},
+    onCheckInLockToday: () -> Unit = onCheckInDismiss,
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
@@ -286,6 +316,8 @@ fun HomeScreen(
     var showGoldOverlay by remember { mutableStateOf(false) }
     // Where the home pill sits on screen; the search bar opens in exactly that spot.
     var searchPillBounds by remember { mutableStateOf<Rect?>(null) }
+    // Measured by the pinned footer, reserved at the end of the column above it.
+    var footerHeight by remember { mutableStateOf(0.dp) }
     // The right-hand buddy card, spotlit by the first-run guide.
     var buddyCardBounds by remember { mutableStateOf<Rect?>(null) }
     var guideSpotlit by remember { mutableStateOf(false) }
@@ -310,17 +342,38 @@ fun HomeScreen(
             // No dock: Home is the middle of three pages — swipe right for Zen Score, left
             // for Zen Gold. Long-press to lock. Settings lives behind every page's ☰.
             .pageSwipe(onSwipeLeft = onZenGoldClick, onSwipeRight = onZenScoreClick)
+            // Swipe up for search, when that gesture is on. Nothing on Home scrolls
+            // vertically, so this can't steal a scroll (see [swipeUp]).
+            .swipeUp(
+                // No "already open?" guard needed: the search overlay covers Home and takes
+                // every pointer itself while it's up.
+                if (HomeGesture.SWIPE_UP_SEARCH in gestures) {
+                    { onShowSearchChange(true) }
+                } else null
+            )
             // Same reasoning as the Zen Score / Streaks icons below: on OEM ROMs with a
             // widened back-gesture edge zone (e.g. MIUI, often configured asymmetrically
             // per edge), a drag that starts near one screen edge can be intercepted by the
             // system before detectHorizontalDragGestures ever sees it — one swipe direction
             // silently does nothing while the other works. Exclude the whole page-swipe area.
             .systemGestureExclusion()
-            .combinedClickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = {},
-                onLongClick = onLockClick
+            // Long-press has always locked the phone; double-tap is the opt-in second way in.
+            // Both go through one detector with the margin taps so a single tap can't be
+            // claimed twice. No indication: Home has no pressed state to show.
+            .pageTapGestures(
+                marginWidth = ScreenMargin,
+                onLongPress = onLockClick,
+                onDoubleTap = if (HomeGesture.DOUBLE_TAP_LOCK in gestures) onLockClick else null,
+                onMarginTap = if (HomeGesture.MARGIN_TAP_PAGES in gestures) {
+                    { margin ->
+                        // Same destinations the swipes reach, so the margins read as
+                        // "the page that way": left margin is the page on the left.
+                        when (margin) {
+                            PageMargin.LEFT -> onZenScoreClick()
+                            PageMargin.RIGHT -> onZenGoldClick()
+                        }
+                    }
+                } else null
             )
     ) {
         MoodBackdrop(mood)
@@ -330,12 +383,13 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding()
+                // Status bar only: the pinned footer below carries the navigation-bar inset.
+                .statusBarsPadding()
                 .then(if (homeBlur > 0.dp) Modifier.blur(homeBlur) else Modifier)
                 // Streak / Gold share sheets sit over a blurred Home rather than a blacked-out
                 // one (Figma node 252:3646) — same mechanism the app-actions/apps-picker
                 // frosted overlays use.
-                .zenOverlayBlur(showStreakOverlay || showGoldOverlay || (showGuide && !guideSpotlit))
+                .zenOverlayBlur(showStreakOverlay || showGoldOverlay || checkIn != null || (showGuide && !guideSpotlit))
         ) {
             Spacer(modifier = Modifier.height(TopToHeaderGap))
 
@@ -412,27 +466,40 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.weight(1f).heightIn(min = AppsToSearchGap))
 
-            // zone 5 · search + page dots
-            SearchPill(
-                onClick = { onShowSearchChange(true) },
-                modifier = Modifier.onGloballyPositioned { searchPillBounds = it.boundsInWindow() }
-            )
-
-            Spacer(modifier = Modifier.height(SearchToDotsGap))
-
-            HomePageDots(
-                current = HomePage.HOME,
-                onPageClick = { page ->
-                    when (page) {
-                        HomePage.ZEN_SCORE -> onZenScoreClick()
-                        HomePage.ZEN_GOLD -> onZenGoldClick()
-                        HomePage.HOME -> Unit
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(DotsToBottomGap))
+            // zone 5 lives in the pinned footer below, outside this column, so the search bar
+            // lands on exactly the line Zen Score's and Zen Gold's main actions do.
+            Spacer(modifier = Modifier.height(footerHeight))
         }
+
+        // zone 5 · search + page dots. Shared with Zen Score and Zen Gold ([PinnedPageFooter]),
+        // which is what keeps the three pages' main actions and dots from moving as you swipe
+        // between them. With the swipe-up gesture on, the pill goes and the slot stays empty —
+        // the dots hold their place rather than sliding down.
+        PinnedPageFooter(
+            current = HomePage.HOME,
+            // Nothing scrolls under Home's footer, so no fade — it would read as a band.
+            fadeTo = null,
+            onHeightChanged = { footerHeight = it },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .then(if (homeBlur > 0.dp) Modifier.blur(homeBlur) else Modifier)
+                .zenOverlayBlur(showStreakOverlay || showGoldOverlay || checkIn != null || (showGuide && !guideSpotlit)),
+            horizontalMargin = ScreenMargin,
+            onPageClick = { page ->
+                when (page) {
+                    HomePage.ZEN_SCORE -> onZenScoreClick()
+                    HomePage.ZEN_GOLD -> onZenGoldClick()
+                    HomePage.HOME -> Unit
+                }
+            },
+            primary = if (HomeGesture.SWIPE_UP_SEARCH in gestures) null else ({
+                SearchPill(
+                    onClick = { onShowSearchChange(true) },
+                    onLensClick = onLensClick,
+                    modifier = Modifier.onGloballyPositioned { searchPillBounds = it.boundsInWindow() }
+                )
+            })
+        )
 
         // Search overlay — the scrim fades over the blurring home screen while the bar
         // ignites its stroke in place over the home pill (see ZenSearchBar)
@@ -443,7 +510,10 @@ fun HomeScreen(
         ) {
             SearchOverlay(
                 apps = apps,
+                // No pill to grow out of when the gesture replaced it: SearchOverlay then falls
+                // back to resting on the nav bar gap, which is where the pill was anyway.
                 anchorBounds = searchPillBounds,
+                entryPoint = if (HomeGesture.SWIPE_UP_SEARCH in gestures) "swipe_up" else "search_pill",
                 onAppClick = { app ->
                     onShowSearchChange(false)
                     onAppClick(app)
@@ -482,7 +552,8 @@ fun HomeScreen(
                 totalMindfulDays = totalMindfulDays,
                 longestStreakDays = longestStreakDays,
                 longestStreakRange = longestStreakRange,
-                currentStreakDays = streaks
+                currentStreakDays = streaks,
+                currentStreakStart = streakStart
             )
         }
 
@@ -498,6 +569,29 @@ fun HomeScreen(
                 changePercent = goldChangePercent,
                 onDismiss = { showGoldOverlay = false }
             )
+        }
+
+        // Above the share sheets, below the first-run guide: a new user meets the guide
+        // first, and the check-in is still waiting on their next visit to Home.
+        // Latched, so the card keeps its content through the exit fade instead of blanking
+        // the instant `checkIn` goes null.
+        var lastCheckIn by remember { mutableStateOf<ZenCheckInCard?>(null) }
+        if (checkIn != null) lastCheckIn = checkIn
+
+        AnimatedVisibility(
+            visible = checkIn != null,
+            enter = fadeIn(tween(220)),
+            exit = fadeOut(tween(180))
+        ) {
+            lastCheckIn?.let { shown ->
+                ZenCheckInOverlay(
+                    card = shown,
+                    weekUnits = checkInWeekUnits,
+                    onDismiss = onCheckInDismiss,
+                    onSeeMyWeekClick = onCheckInSeeWeekClick,
+                    onLockToday = onCheckInLockToday
+                )
+            }
         }
 
         if (showGuide) {
@@ -525,7 +619,6 @@ private fun HomeHeader(
 ) {
     val colors = ZenTheme.colors
     val shownScore = rememberCountUp(zenScore, reveal, HomeReveal.SCORE)
-    val shownStreak = rememberCountUp(streaks, reveal, HomeReveal.STREAK, durationMillis = 600)
 
     Row(
         modifier = Modifier
@@ -536,7 +629,7 @@ private fun HomeHeader(
     ) {
         // Zen Score — gradient mark from Figma node 2001:1504, exactly as tall as the
         // "Zen Score / 07/10" block beside it. Opens Zen Score (also a swipe right away).
-        IconMatchedLabel(
+        ZenIconMatchedLabel(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.rdp))
                 .clickable(onClickLabel = "Open Zen Score", onClick = onZenScoreClick)
@@ -550,122 +643,32 @@ private fun HomeHeader(
             }
         ) {
             Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
-                HeaderLabel("Zen Score")
-                Spacer(modifier = Modifier.height(HeaderLineGap))
+                ZenStatLabel("Zen Score")
+                Spacer(modifier = Modifier.height(ZenStatLineGap))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = ZenScore.format(shownScore),
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = HeaderValueSize,
-                        lineHeight = HeaderValueSize,
-                        style = HeaderTextStyle.copy(brush = ZenScoreGradient)
+                        fontSize = ZenStatValueSize,
+                        lineHeight = ZenStatValueSize,
+                        style = ZenStatTextStyle.copy(brush = ZenScoreGradient)
                     )
                     Text(
                         text = "/${ZenScore.MAX_DISPLAY}",
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.Medium,
-                        fontSize = HeaderUnitSize,
-                        lineHeight = HeaderUnitSize,
+                        fontSize = ZenStatUnitSize,
+                        lineHeight = ZenStatUnitSize,
                         color = colors.textSecondary,
-                        style = HeaderTextStyle
+                        style = ZenStatTextStyle
                     )
                 }
             }
         }
 
-        // Streaks — the flame burns as tall as the "13 days / Streaks" block beside it.
-        IconMatchedLabel(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.rdp))
-                .clickable(onClickLabel = "Open streaks", onClick = onStreakClick)
-                .systemGestureExclusion(),
-            icon = {
-                BlazingFlame(
-                    cue = reveal,
-                    lit = streaks > 0,
-                    contentDescription = null
-                )
-            }
-        ) {
-            Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
-                HeaderLabel("Streaks")
-                Spacer(modifier = Modifier.height(HeaderLineGap))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    // Solid ink, not the brand gradient: the gradient's yellow-green washed out
-                    // on the green home wash. textPrimary flips dark/light with the theme.
-                    Text(
-                        text = shownStreak.toString(),
-                        fontFamily = ClashDisplay,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = HeaderValueSize,
-                        lineHeight = HeaderValueSize,
-                        color = colors.textPrimary,
-                        style = HeaderTextStyle
-                    )
-                    Spacer(modifier = Modifier.width(3.rdp))
-                    Text(
-                        text = if (streaks == 1) "day" else "days",
-                        fontFamily = ClashDisplay,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = HeaderUnitSize,
-                        lineHeight = HeaderUnitSize,
-                        color = colors.textSecondary,
-                        style = HeaderTextStyle
-                    )
-                }
-            }
-        }
-    }
-}
-
-/** The small caption above each header number, shared so both blocks line up exactly. */
-@Composable
-private fun HeaderLabel(text: String) {
-    Text(
-        text = text,
-        fontFamily = ClashDisplay,
-        fontWeight = FontWeight.Medium,
-        fontSize = HeaderLabelSize,
-        lineHeight = HeaderLabelSize,
-        color = ZenTheme.colors.textPrimary,
-        style = HeaderTextStyle
-    )
-}
-
-// Zen Score and Streaks share one type scale (label over value) so their blocks, and the
-// icons sized to them, come out the same height and sit on the same lines.
-private val HeaderLabelSize: TextUnit @Composable get() = 12.rsp
-private val HeaderValueSize: TextUnit @Composable get() = 18.rsp
-private val HeaderUnitSize: TextUnit @Composable get() = 12.rsp
-private val HeaderLineGap: Dp @Composable get() = 3.rdp
-
-/** Tight line boxes, so a two-line block's height is its type and nothing else. */
-private val HeaderTextStyle = TextStyle(
-    platformStyle = PlatformTextStyle(includeFontPadding = false),
-    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both)
-)
-
-/**
- * [icon] beside [label], with the icon sized to a square exactly as tall as the label block —
- * so the mark always matches its two lines of text, whatever the font scale.
- */
-@Composable
-private fun IconMatchedLabel(
-    modifier: Modifier = Modifier,
-    icon: @Composable () -> Unit,
-    label: @Composable () -> Unit
-) {
-    val gap = HeaderIconTextGap
-    Layout(contents = listOf(icon, label), modifier = modifier) { (iconMeasurables, labelMeasurables), constraints ->
-        val gapPx = gap.roundToPx()
-        val labelPlaceable = labelMeasurables.first().measure(constraints.copy(minWidth = 0, minHeight = 0))
-        val side = labelPlaceable.height
-        val iconPlaceable = iconMeasurables.first().measure(Constraints.fixed(side, side))
-        layout(side + gapPx + labelPlaceable.width, side) {
-            iconPlaceable.place(0, 0)
-            labelPlaceable.place(side + gapPx, 0)
-        }
+        // Streaks — the shared v3 block, the same one the resistance screen shows.
+        StreakStat(streaks = streaks, reveal = reveal, onClick = onStreakClick)
     }
 }
 
@@ -913,18 +916,23 @@ private fun AppIconItem(
 // ── Search Pill ───────────────────────────────────────────────────
 
 @Composable
-private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun SearchPill(
+    onClick: () -> Unit,
+    onLensClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
+) {
     val colors = ZenTheme.colors
 
     Row(
         modifier = modifier
+            // Height and side margins come from the footer's primary slot, so the pill lands
+            // on the same line as Zen Score's and Zen Gold's main actions.
             .fillMaxWidth()
-            .padding(horizontal = ScreenMargin)
-            .height(SearchPillHeight)
+            .fillMaxHeight()
             .clip(RoundedCornerShape(percent = 50))
             .border(3.rdp, colors.textBrand.copy(alpha = 0.45f), RoundedCornerShape(percent = 50))
-            .clickable { onClick() }
-            .padding(horizontal = 20.rdp),
+            .clickable(onClickLabel = "Search", role = Role.Button) { onClick() }
+            .padding(start = 20.rdp, end = if (onLensClick != null) 6.rdp else 20.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
@@ -939,10 +947,34 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
             fontFamily = Geist,
             fontWeight = FontWeight.Normal,
             fontSize = 14.rsp,
-            color = colors.textSecondary
+            color = colors.textSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
         )
+        // Point-and-search, in its own tap target inside the pill so it never steals the
+        // tap meant for the text field.
+        if (onLensClick != null) {
+            Box(
+                modifier = Modifier
+                    .size(SearchLensTarget)
+                    .clip(CircleShape)
+                    .clickable(onClickLabel = "Scan with Google Lens", role = Role.Button, onClick = onLensClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_lens_scan),
+                    contentDescription = "Scan a QR code or image with Google Lens",
+                    modifier = Modifier.size(20.rdp),
+                    colorFilter = ColorFilter.tint(colors.textSecondary)
+                )
+            }
+        }
     }
 }
+
+/** The Lens button's tap target inside the pill — Android's minimum, in a 52dp bar. */
+private val SearchLensTarget: Dp @Composable get() = 44.rdp
 
 // ── Search Overlay ────────────────────────────────────────────────
 // Figma node 2026:1207 — "centralised search / active state". The home screen stays
@@ -951,8 +983,9 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
 // on-device files. Sources are unchanged from before (installed apps, MediaStore
 // files behind FILE_SEARCH_ENABLED, Google handed off to the system).
 
-// Matches the home pill (not Figma's 46) so the pressed state lands exactly on top of it.
-private val SearchBarHeight: Dp @Composable get() = SearchPillHeight
+// The home pill now fills the footer's primary slot, so the overlay bar takes its height
+// from the same token — the pressed state still lands exactly on top of the pill.
+private val SearchBarHeight: Dp @Composable get() = ZenPrimaryCtaHeight
 // Same weight as the resting pill's border, so pressing it doesn't thicken the outline.
 private val SearchStrokeWidth: Dp @Composable get() = 3.rdp
 private val SearchGlyphSize: Dp @Composable get() = 19.2.rdp
@@ -1003,6 +1036,7 @@ private sealed interface SearchRow {
 private fun SearchOverlay(
     apps: List<AppInfo>,
     anchorBounds: Rect?,
+    entryPoint: String,
     onAppClick: (AppInfo) -> Unit,
     onGoogleSearch: (String) -> Unit,
     onDismiss: () -> Unit
@@ -1013,7 +1047,7 @@ private fun SearchOverlay(
     var hasClicked by remember { mutableStateOf(false) }
     
     LaunchedEffect(Unit) {
-        ServiceLocator.analyticsTracker.trackHomeSearchOpened("search_pill")
+        ServiceLocator.analyticsTracker.trackHomeSearchOpened(entryPoint)
     }
     
     DisposableEffect(Unit) {
@@ -1602,7 +1636,9 @@ private fun StreakOverlay(
     longestStreakRange: String,
     zenScoreThreshold: Int = AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD,
     /** The same live count as the flame in Home's header. */
-    currentStreakDays: Int = 0
+    currentStreakDays: Int = 0,
+    /** Where that run began; null falls back to counting back from today. */
+    currentStreakStart: LocalDate? = null
 ) {
     // Community percentile has no real cross-user data source yet, so it's derived
     // from the current streak itself rather than a flat placeholder: under 5 days
@@ -1666,7 +1702,7 @@ private fun StreakOverlay(
 
         ShareStatLine(
             lead = "CURRENT \u00B7 ${"%02d".format(Locale.US, currentStreakDays)} DAYS",
-            trail = "(${currentStreakRange(currentStreakDays, LocalDate.now(LocalZenClock.current))})"
+            trail = "(${currentStreakRange(currentStreakDays, LocalDate.now(LocalZenClock.current), currentStreakStart)})"
         )
     }
 }
@@ -1682,11 +1718,20 @@ internal fun streakTopPercentile(currentStreakDays: Int): Int? = when {
     else -> 10
 }
 
-/** "SEP 11–PRESENT": the streak counts today, so it began [days] − 1 days ago. */
-internal fun currentStreakRange(days: Int, today: LocalDate = LocalDate.now()): String {
+/**
+ * "SEP 11–PRESENT". [start] is the real first day of the run when the caller knows it: a
+ * promise streak's kept days aren't contiguous (one day over holds the streak rather than
+ * ending it -- see PromiseStreak), so counting back [days] from today would date it wrong.
+ * Without one, it falls back to that count-back.
+ */
+internal fun currentStreakRange(
+    days: Int,
+    today: LocalDate = LocalDate.now(),
+    start: LocalDate? = null
+): String {
     if (days <= 0) return "STARTS TODAY"
-    val start = today.minusDays((days - 1).toLong())
-    return "${StreakDateFormat.format(start).uppercase(Locale.US)}–PRESENT"
+    val from = start ?: today.minusDays((days - 1).toLong())
+    return "${StreakDateFormat.format(from).uppercase(Locale.US)}–PRESENT"
 }
 
 private val StreakDateFormat = java.time.format.DateTimeFormatter.ofPattern("MMM d", Locale.US)

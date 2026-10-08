@@ -110,15 +110,15 @@ internal fun PhoneSettingsGroup() {
     ZenSettingsGroup(label = "Phone") {
         ZenSettingsRow(
             title = "Default home app",
-            subtitle = "ZenMode only works as your home screen.",
-            value = if (state.isDefaultHome) "ZenMode" else "Not set",
+            subtitle = "ZenMode OS only works as your home screen.",
+            value = if (state.isDefaultHome) "ZenMode OS" else "Not set",
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_HOME_SETTINGS)) }
         )
         ZenRowDivider()
         ZenSettingsRow(
             title = "Usage access",
-            subtitle = "Lets ZenMode read your screen time. It never leaves the phone.",
+            subtitle = "Lets ZenMode OS read your screen time. It never leaves the phone.",
             value = if (state.usageAccess) "Allowed" else "Needed",
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
@@ -150,7 +150,7 @@ internal fun PhoneSettingsGroup() {
         )
         ZenRowDivider()
         ZenSettingsRow(
-            title = "ZenMode notifications",
+            title = "ZenMode OS notifications",
             subtitle = "Weekly reports and your Zen Bro's nudges.",
             trailing = RowTrailing.External,
             onClick = {

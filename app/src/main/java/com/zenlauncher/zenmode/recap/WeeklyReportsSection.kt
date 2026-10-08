@@ -56,8 +56,14 @@ import com.zenlauncher.zenmode.ui.theme.rsp
 import java.time.LocalDate
 
 /**
- * Settings → "Weekly reports". PRO users get every stored week (replay + PDF download);
- * everyone else sees a locked preview that opens the PRO sheet.
+ * Settings → "Weekly reports".
+ *
+ * Last week is free for everyone — the week you just lived is the one that changes what you
+ * do next, and putting it behind a paywall would make us the thing we built this to fix.
+ * PRO opens the weeks before it, and the PDF download on every week.
+ *
+ * [reports] arrives newest-first from [RecapStore.completedWeeks], so the free week is
+ * `reports.first()`.
  */
 @Composable
 fun WeeklyReportsSection(
@@ -80,48 +86,67 @@ fun WeeklyReportsSection(
                 fontSize = 20.rsp,
                 color = colors.textPrimary
             )
-            Spacer(Modifier.width(8.rdp))
-            ProBadge()
+            // No PRO badge on the heading any more: the section itself isn't PRO, only the
+            // weeks behind last week and the PDF are.
+            if (!isPro && reports.size > 1) {
+                Spacer(Modifier.width(8.rdp))
+                ProBadge()
+            }
         }
         Spacer(Modifier.height(4.rdp))
         Text(
-            text = "Every week you've spent in Zen. Replay it or download it as a PDF.",
+            text = if (isPro) "Every week you've spent in Zen. Replay it or download it as a PDF."
+            else "Last week is yours to replay, free. Pro opens every week before it, and the PDF.",
             fontFamily = Geist,
             fontSize = 14.rsp,
             color = colors.textSecondary
         )
         Spacer(Modifier.height(12.rdp))
 
-        when {
-            reports.isEmpty() -> EmptyReports()
-            isPro -> Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.rdp))
-                    .background(colors.bgSecondary)
-            ) {
-                reports.forEachIndexed { i, recap ->
-                    ReportRow(
-                        recap = recap,
-                        downloading = downloadingWeek == recap.weekStart,
-                        onOpen = { onOpen(recap.weekStart) },
-                        onDownload = { onDownload(recap.weekStart) },
-                        onShare = { onShare(recap.weekStart) }
-                    )
-                    if (i < reports.lastIndex) {
-                        Box(
-                            Modifier
-                                .padding(horizontal = 16.rdp)
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(colors.borderSubtle)
-                        )
-                    }
-                }
+        if (reports.isEmpty()) {
+            EmptyReports()
+            return@Column
+        }
+
+        // Free: the newest week is a real row; PRO: every week is.
+        val open = if (isPro) reports else reports.take(1)
+        val locked = if (isPro) emptyList() else reports.drop(1)
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.rdp))
+                .background(colors.bgSecondary)
+        ) {
+            open.forEachIndexed { i, recap ->
+                ReportRow(
+                    recap = recap,
+                    downloading = downloadingWeek == recap.weekStart,
+                    canDownload = isPro,
+                    onOpen = { onOpen(recap.weekStart) },
+                    onDownload = { if (isPro) onDownload(recap.weekStart) else onUnlockPro() },
+                    onShare = { onShare(recap.weekStart) }
+                )
+                if (i < open.lastIndex) RowRule()
             }
-            else -> LockedReports(reports, onUnlockPro)
+        }
+
+        if (locked.isNotEmpty()) {
+            Spacer(Modifier.height(10.rdp))
+            LockedReports(locked, onUnlockPro)
         }
     }
+}
+
+@Composable
+private fun RowRule() {
+    Box(
+        Modifier
+            .padding(horizontal = 16.rdp)
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(ZenTheme.colors.borderSubtle)
+    )
 }
 
 @Composable
@@ -131,6 +156,8 @@ private fun ReportRow(
     onOpen: () -> Unit,
     onDownload: () -> Unit,
     onShare: () -> Unit = {},
+    /** False on free: the PDF stays PRO, so the slot shows a lock and opens the sheet. */
+    canDownload: Boolean = true,
     interactive: Boolean = true
 ) {
     val colors = ZenTheme.colors
@@ -177,15 +204,20 @@ private fun ReportRow(
             modifier = Modifier
                 .size(44.dp)
                 .then(
-                    if (interactive) Modifier.pressScale(onClick = onDownload, enabled = !downloading, onClickLabel = "Download PDF report")
+                    if (interactive) Modifier.pressScale(
+                        onClick = onDownload,
+                        enabled = !downloading,
+                        onClickLabel = if (canDownload) "Download PDF report" else "Unlock PDF downloads with PRO"
+                    )
                     else Modifier
                 ),
             contentAlignment = Alignment.Center
         ) {
-            if (downloading) {
-                CircularProgressIndicator(modifier = Modifier.size(18.rdp), strokeWidth = 2.dp, color = colors.textBrand)
-            } else {
-                Icon(Icons.Rounded.Download, contentDescription = "Download PDF", tint = colors.textPrimary, modifier = Modifier.size(22.rdp))
+            when {
+                downloading -> CircularProgressIndicator(modifier = Modifier.size(18.rdp), strokeWidth = 2.dp, color = colors.textBrand)
+                canDownload -> Icon(Icons.Rounded.Download, contentDescription = "Download PDF", tint = colors.textPrimary, modifier = Modifier.size(22.rdp))
+                // Honest about the gate rather than a download that quietly does nothing.
+                else -> Icon(Icons.Rounded.Lock, contentDescription = "Download PDF, PRO only", tint = colors.textMuted, modifier = Modifier.size(20.rdp))
             }
         }
     }
@@ -206,7 +238,10 @@ private fun OutcomeChip(kept: Boolean) {
     )
 }
 
-/** Blurred real rows behind a lock — shows what PRO holds without giving it away. */
+/**
+ * Blurred real rows behind a lock — shows what PRO holds without giving it away.
+ * [reports] is only the weeks *before* last week; last week is drawn open above this.
+ */
 @Composable
 private fun LockedReports(reports: List<WeeklyRecap>, onUnlockPro: () -> Unit) {
     val colors = ZenTheme.colors
@@ -223,7 +258,7 @@ private fun LockedReports(reports: List<WeeklyRecap>, onUnlockPro: () -> Unit) {
                 .alpha(0.55f)
         ) {
             // Preview only: rows must not take taps meant for the unlock card.
-            reports.take(3).forEach { ReportRow(it, downloading = false, onOpen = {}, onDownload = {}, interactive = false) }
+            reports.take(3).forEach { ReportRow(it, downloading = false, onOpen = {}, onDownload = {}, canDownload = false, interactive = false) }
         }
         Column(
             modifier = Modifier
@@ -234,7 +269,7 @@ private fun LockedReports(reports: List<WeeklyRecap>, onUnlockPro: () -> Unit) {
             Icon(Icons.Rounded.Lock, contentDescription = null, tint = colors.textPrimary, modifier = Modifier.size(24.rdp))
             Spacer(Modifier.height(8.rdp))
             Text(
-                text = "${reports.size} ${if (reports.size == 1) "week" else "weeks"} saved",
+                text = "${reports.size} earlier ${if (reports.size == 1) "week" else "weeks"} saved",
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.rsp,
@@ -260,7 +295,7 @@ private fun LockedReports(reports: List<WeeklyRecap>, onUnlockPro: () -> Unit) {
 private fun EmptyReports() {
     val colors = ZenTheme.colors
     Text(
-        text = "Your first report arrives on Monday morning, after a full week with ZenMode.",
+        text = "Your first report arrives on Monday morning, after a full week with ZenMode OS.",
         fontFamily = Geist,
         fontSize = 14.rsp,
         color = colors.textSecondary,
@@ -323,8 +358,9 @@ fun ProUpsellSheet(
                     color = colors.textPrimary
                 )
                 Text(text = "ZenMode ", style = heading)
-                // Own Text so the gradient spans exactly "PRO".
-                Text(text = "PRO", style = heading.copy(brush = gradient))
+                // Own Texts so the gradient spans exactly "OS" (the brand rule) and "PRO".
+                Text(text = "OS", style = heading.copy(brush = gradient))
+                Text(text = " PRO", style = heading.copy(brush = gradient))
             }
             Spacer(Modifier.height(6.rdp))
             Text(
@@ -335,7 +371,7 @@ fun ProUpsellSheet(
             )
             Spacer(Modifier.height(20.rdp))
             Column(verticalArrangement = Arrangement.spacedBy(14.rdp)) {
-                Benefit("Every weekly report, saved for 16 weeks")
+                Benefit("Every weekly report, saved for 16 weeks — not just last week")
                 Benefit("Download reports as PDF")
                 Benefit("Weekly rankings in your Zen Circle")
             }

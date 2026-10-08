@@ -188,4 +188,88 @@ class ZenGoldPromiseTest {
         val state = ZenGoldPromise.monthly(emptyMap(), todayMinutes = 0, promiseHours = 4, recapFor = { null }, today = today)
         assertNull(state.units.last().kept)
     }
+
+    // ── Week identity and the Pro look-back ──────────────────────
+
+    @Test
+    fun `weekly names the week it describes with its ISO week number`() {
+        // Monday 7 Sep 2026 falls in ISO week 37.
+        val state = ZenGoldPromise.weekly(emptyMap(), todayMinutes = 0, promiseHours = 4, today = monday)
+
+        assertEquals(monday, state.weekStart)
+        assertEquals(37, state.weekNumber)
+        assertFalse(state.isHistoric)
+    }
+
+    @Test
+    fun `a negative week offset reads a finished week entirely from the record`() {
+        val lastWeek = monday.minusWeeks(1)
+        // 5 kept, 2 over — a week that was won.
+        val days = (0..6).associate { i ->
+            val date = lastWeek.plusDays(i.toLong())
+            date to day(date, if (i < 5) 100 else 500)
+        }
+        // Today's live usage is wildly over, and must not leak into last week's bars.
+        val state = ZenGoldPromise.weekly(
+            days = days,
+            todayMinutes = 9_000,
+            promiseHours = 4,
+            today = monday.plusDays(2),
+            weekOffset = -1
+        )
+
+        assertEquals(lastWeek, state.weekStart)
+        assertTrue(state.isHistoric)
+        assertEquals(listOf(true, true, true, true, true, false, false), state.units.map { it.kept })
+        assertEquals(5, state.unitsKept)
+        assertEquals(2, state.unitsMissed)
+        assertEquals(0, state.unitsRemaining) // nothing about a finished week is still open
+        assertTrue(state.goalMet)
+    }
+
+    @Test
+    fun `a finished week's daily average comes from its own seven days`() {
+        val lastWeek = monday.minusWeeks(1)
+        val days = (0..6).associate { i ->
+            val date = lastWeek.plusDays(i.toLong())
+            date to day(date, 120)
+        }
+        val state = ZenGoldPromise.weekly(
+            days = days,
+            todayMinutes = 9_000,
+            promiseHours = 4,
+            today = monday.plusDays(2),
+            weekOffset = -1
+        )
+
+        assertEquals(120, state.dailyAverageMinutes)
+    }
+
+    @Test
+    fun `a positive week offset is clamped to the current week`() {
+        val forward = ZenGoldPromise.weekly(
+            emptyMap(), todayMinutes = 60, promiseHours = 4, today = monday.plusDays(2), weekOffset = 3
+        )
+        val current = ZenGoldPromise.weekly(
+            emptyMap(), todayMinutes = 60, promiseHours = 4, today = monday.plusDays(2)
+        )
+
+        assertEquals(current.weekStart, forward.weekStart)
+        assertFalse(forward.isHistoric)
+    }
+
+    @Test
+    fun `monthly carries no single week number`() {
+        val state = ZenGoldPromise.monthly(
+            days = emptyMap(),
+            todayMinutes = 0,
+            promiseHours = 4,
+            recapFor = { null },
+            today = monday
+        )
+
+        assertNull(state.weekStart)
+        assertEquals(0, state.weekNumber)
+        assertFalse(state.isHistoric)
+    }
 }

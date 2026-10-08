@@ -134,7 +134,7 @@ fun ProWelcome(
             ProOpensCard()
             Spacer(Modifier.height(20.rdp))
             ZenButton(
-                text = "Back to ZenMode",
+                text = "Back to ZenMode OS",
                 onClick = onContinue,
                 modifier = Modifier
                     .padding(bottom = 16.rdp)

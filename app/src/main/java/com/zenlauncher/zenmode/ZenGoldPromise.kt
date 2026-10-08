@@ -4,6 +4,7 @@ import com.zenlauncher.zenmode.recap.DayRecord
 import com.zenlauncher.zenmode.recap.WeeklyRecap
 import com.zenlauncher.zenmode.recap.weekStartOf
 import java.time.LocalDate
+import java.time.temporal.WeekFields
 
 enum class GoldPromisePeriod { WEEKLY, MONTHLY }
 
@@ -14,6 +15,16 @@ data class PromiseUnit(val label: String, val kept: Boolean?)
 
 data class ZenGoldPromiseState(
     val period: GoldPromisePeriod = GoldPromisePeriod.WEEKLY,
+    /** Monday of the week this state describes. Null for MONTHLY, which spans several. */
+    val weekStart: LocalDate? = null,
+    /**
+     * ISO-8601 week of the year for [weekStart] — the "Week 41" the card shows, and the same
+     * number a calendar app or a spreadsheet's WEEKNUM would give for that Monday. 0 for
+     * MONTHLY.
+     */
+    val weekNumber: Int = 0,
+    /** A finished week being looked back at, rather than the one in progress. */
+    val isHistoric: Boolean = false,
     val promiseHours: Int = AppConstants.PLACEHOLDER_PROMISE_HOURS,
     val dailyAverageMinutes: Int = 0,
     val units: List<PromiseUnit> = emptyList(),
@@ -60,14 +71,21 @@ object ZenGoldPromise {
      * @param days finished-day history, as [com.zenlauncher.zenmode.recap.RecapStore.days] returns it.
      * @param todayMinutes today's live screen time in minutes, e.g. from
      *   `UsageRepository.getTodayUsage().screenTimeInMillis / 60_000L`.
+     * @param weekOffset 0 for the week in progress, -1 for last week, and so on — the Pro
+     *   "look back" on the Zen Gold card. A past week is read entirely from [days]: every one
+     *   of its dates is before [today], so [todayMinutes] never reaches it and nothing is
+     *   left open. Positive offsets aren't a thing: there's nothing to show for a week that
+     *   hasn't started, so they're clamped to 0.
      */
     fun weekly(
         days: Map<LocalDate, DayRecord>,
         todayMinutes: Long,
         promiseHours: Int,
-        today: LocalDate = LocalDate.now()
+        today: LocalDate = LocalDate.now(),
+        weekOffset: Int = 0
     ): ZenGoldPromiseState {
-        val weekStart = weekStartOf(today)
+        val weeksBack = weekOffset.coerceAtMost(0)
+        val weekStart = weekStartOf(today).plusWeeks(weeksBack.toLong())
         val week = weekProgress(weekStart, today, todayMinutes, promiseHours, days)
         val units = week.outcomes.mapIndexed { offset, kept -> PromiseUnit(DAY_LABELS[offset], kept) }
 
@@ -80,7 +98,16 @@ object ZenGoldPromise {
             daysElapsed++
         }
 
-        return buildState(GoldPromisePeriod.WEEKLY, promiseHours, units, week.stillOpen, minutesSoFar, daysElapsed)
+        return buildState(
+            period = GoldPromisePeriod.WEEKLY,
+            promiseHours = promiseHours,
+            units = units,
+            unitsRemaining = week.stillOpen,
+            minutesSoFar = minutesSoFar,
+            daysElapsed = daysElapsed,
+            weekStart = weekStart,
+            isHistoric = weeksBack < 0
+        )
     }
 
     /**
@@ -130,6 +157,7 @@ object ZenGoldPromise {
         }
 
         return buildState(GoldPromisePeriod.MONTHLY, promiseHours, units, stillOpen, minutesSoFar, daysElapsed)
+
     }
 
     /** One Monday–Sunday week, day by day, plus how many of its days can still be kept. */
@@ -199,7 +227,9 @@ object ZenGoldPromise {
         units: List<PromiseUnit>,
         unitsRemaining: Int,
         minutesSoFar: Long,
-        daysElapsed: Int
+        daysElapsed: Int,
+        weekStart: LocalDate? = null,
+        isHistoric: Boolean = false
     ): ZenGoldPromiseState {
         val kept = units.count { it.kept == true }
         val missed = units.count { it.kept == false }
@@ -211,6 +241,9 @@ object ZenGoldPromise {
         }
         return ZenGoldPromiseState(
             period = period,
+            weekStart = weekStart,
+            weekNumber = weekStart?.get(WeekFields.ISO.weekOfWeekBasedYear()) ?: 0,
+            isHistoric = isHistoric,
             promiseHours = promiseHours,
             dailyAverageMinutes = if (daysElapsed > 0) (minutesSoFar / daysElapsed).toInt() else 0,
             units = units,

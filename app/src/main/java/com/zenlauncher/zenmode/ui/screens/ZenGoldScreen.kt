@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -67,8 +68,20 @@ import com.zenlauncher.zenmode.PromiseUnit
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenGoldPromiseState
 import com.zenlauncher.zenmode.ui.components.HomePage
+import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.components.PinnedPageFooter
+import com.zenlauncher.zenmode.ui.components.PromiseBrokenGray
+import com.zenlauncher.zenmode.ui.components.PromiseKeptGreen
+import com.zenlauncher.zenmode.ui.components.PromiseUndecidedGray
+import com.zenlauncher.zenmode.ui.components.PromiseUnitBars
+import com.zenlauncher.zenmode.ui.components.GlyphKind
+import com.zenlauncher.zenmode.ui.components.ZenGlyph
+import com.zenlauncher.zenmode.recap.weekRangeLabel
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.semantics.Role
 import com.zenlauncher.zenmode.ui.components.moodWashColors
 import com.zenlauncher.zenmode.ui.components.rememberTodayMood
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -108,6 +121,16 @@ fun ZenGoldScreen(
     // actual unlock gate is always [weekly], regardless of which tab the card is showing.
     weekly: ZenGoldPromiseState = ZenGoldPromiseState(),
     monthly: ZenGoldPromiseState = ZenGoldPromiseState(period = GoldPromisePeriod.MONTHLY),
+    /**
+     * The week the Weekly tab shows. Equal to [weekly] at offset 0; a finished week when the
+     * user has paged back (Pro). Kept separate so gold pay's gate stays on the live week
+     * however far back the card is looking.
+     */
+    displayedWeek: ZenGoldPromiseState = weekly,
+    weekOffset: Int = 0,
+    /** How far back recorded history reaches, as a negative offset; 0 means no history. */
+    earliestWeekOffset: Int = 0,
+    onWeekOffsetChange: (Int) -> Unit = {},
     goldInvested: String = AppConstants.PLACEHOLDER_GOLD_INVESTED,
     goldChangePercent: Int = GoldOrder.changePercentFor(AppConstants.PLACEHOLDER_GOLD_INVESTED),
     forecastPercent: Int = AppConstants.PLACEHOLDER_FORECAST_PERCENT,
@@ -148,10 +171,14 @@ fun ZenGoldScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.rdp)
             ) {
-                ScreenTimeCard(
+                PromiseScreenTimeCard(
                     weekly = weekly,
                     monthly = monthly,
-                    isPro = isPro
+                    isPro = isPro,
+                    displayedWeek = displayedWeek,
+                    weekOffset = weekOffset,
+                    earliestWeekOffset = earliestWeekOffset,
+                    onWeekOffsetChange = onWeekOffsetChange
                 )
 
                 ForecastCard(
@@ -191,19 +218,11 @@ fun ZenGoldScreen(
                     HomePage.ZEN_SCORE -> onZenScoreClick()
                     HomePage.ZEN_GOLD -> Unit
                 }
-            }
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = ScreenMargin)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.rdp)
-            ) {
-                InvestGoldButton(unlocked = weekly.goalMet, onClick = onInvestGoldClick)
-                EditPromiseButton(onClick = onEditPromiseClick)
-            }
-        }
+            },
+            horizontalMargin = ScreenMargin,
+            primary = { InvestGoldButton(unlocked = weekly.goalMet, onClick = onInvestGoldClick) },
+            secondary = { EditPromiseButton(onClick = onEditPromiseClick) }
+        )
     }
 }
 
@@ -250,364 +269,6 @@ private fun ZenGoldHeader(onBackClick: () -> Unit) {
     }
 }
 
-// ── My Screen Time card ───────────────────────────────────────────
-
-// SOURCE OF TRUTH: design tokens — values live in colors.xml (never a bare
-// Color(0x...) literal here).
-private val PromiseKeptGreen: Color @Composable get() = colorResource(R.color.gold_delta_text)
-private val PromiseBrokenGray: Color @Composable get() = colorResource(R.color.stone_500)
-
-@Composable
-private fun ScreenTimeCard(
-    weekly: ZenGoldPromiseState,
-    monthly: ZenGoldPromiseState,
-    isPro: Boolean
-) {
-    var isMonthly by remember { mutableStateOf(false) }
-    val state = if (isMonthly) monthly else weekly
-    // The badge and happy fill mean "gold pay is open", which only the weekly result decides —
-    // on either tab, so the card never reads UNLOCKED over a locked Invest Gold button.
-    val goldPayOpen = weekly.goalMet
-
-    val colors = ZenTheme.colors
-    val rule = colorResource(R.color.zen_700)
-    val radius = 16.rdp
-    val hrs = state.dailyAverageMinutes / 60
-    val mins = state.dailyAverageMinutes % 60
-
-    // Node 2026:1449 — a 3dp rule on the top edge that tapers round the corners, and the
-    // status tab tucked into the bottom-right corner, flush with the card's own curve.
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(radius))
-            .background(if (goldPayOpen) colors.statsCardFillHappy else colors.bgPrimary)
-            .taperedBorder(rule, radius, top = 3.rdp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 20.rdp, end = 20.rdp, top = 17.rdp, bottom = 16.rdp + StatusTabHeight)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "My Screen time",
-                    fontFamily = ClashDisplay,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.rsp,
-                    letterSpacing = (-0.16).sp,
-                    color = colors.textPrimary
-                )
-                WeeklyMonthlyToggle(
-                    isPro = isPro,
-                    isMonthly = isMonthly,
-                    onToggleChange = { isMonthly = it }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.rdp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Daily Average  •  ${if (isMonthly) "This Month" else "This Week"}",
-                    fontFamily = Geist,
-                    fontSize = 12.rsp,
-                    letterSpacing = (-0.12).sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = "My promise - ",
-                    fontFamily = Geist,
-                    fontSize = 10.rsp,
-                    color = colors.textPrimary
-                )
-                Text(
-                    text = "${state.promiseHours}Hrs/day",
-                    fontFamily = Geist,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 10.rsp,
-                    color = rule
-                )
-            }
-
-            Spacer(modifier = Modifier.height(2.rdp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = "%02d".format(hrs),
-                        fontFamily = DepartureMono,
-                        fontSize = 31.5.rsp,
-                        letterSpacing = (-2.5).sp,
-                        color = colors.textSecondary
-                    )
-                    Text(
-                        text = " HRS  ",
-                        fontFamily = DepartureMono,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 7.rsp,
-                        color = colors.textSecondary,
-                        modifier = Modifier.padding(bottom = 6.rdp)
-                    )
-                    Text(
-                        text = "%02d".format(mins),
-                        fontFamily = DepartureMono,
-                        fontSize = 33.6.rsp,
-                        letterSpacing = (-2.7).sp,
-                        color = colors.textSecondary
-                    )
-                    Text(
-                        text = " MINS",
-                        fontFamily = DepartureMono,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 6.rsp,
-                        color = colors.textSecondary,
-                        modifier = Modifier.padding(bottom = 6.rdp)
-                    )
-                }
-                WeeklyPromiseLegend()
-            }
-
-            Spacer(modifier = Modifier.height(10.rdp))
-
-            PromiseUnitBars(state.units)
-
-            Spacer(modifier = Modifier.height(10.rdp))
-
-            BasicText(
-                text = promiseStatusMessage(state),
-                style = TextStyle(
-                    fontFamily = Geist,
-                    fontSize = 11.rsp,
-                    lineHeight = 14.rsp,
-                    letterSpacing = (-0.22).sp,
-                    color = colors.textPrimary
-                )
-            )
-        }
-
-        StatusTab(
-            unlocked = goldPayOpen,
-            modifier = Modifier.align(Alignment.BottomEnd)
-        )
-    }
-}
-
-/** The card's bottom line, tailored to the period. Only WEEKLY talks about gold pay —
- * Monthly is a streak and never gates it (see [ZenGoldPromiseState.goalMet]). */
-private fun promiseStatusMessage(state: ZenGoldPromiseState) = when (state.period) {
-    GoldPromisePeriod.WEEKLY -> when {
-        state.goalMet -> buildAnnotatedString {
-            append("You cleared the line with ${days(state.unitsKept)} under. ")
-            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Gold pay stays open until Sunday midnight.")
-            }
-        }
-        state.goalOutOfReach -> buildAnnotatedString {
-            append("Gold pay can't open this week any more. ")
-            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("A fresh week starts Monday.")
-            }
-        }
-        else -> {
-            val daysUntilUnlock = (AppConstants.PROMISE_DAYS_TO_UNLOCK - state.unitsKept).coerceAtLeast(0)
-            buildAnnotatedString {
-                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                    append("${days(daysUntilUnlock)} more under ${state.promiseHours} hrs opens gold pay, ")
-                }
-                append("and you have ${days(state.unitsRemaining)} left this week to do it.")
-            }
-        }
-    }
-    GoldPromisePeriod.MONTHLY -> when {
-        state.goalMet -> buildAnnotatedString {
-            append("Not a single week missed. ")
-            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Your monthly streak is intact.")
-            }
-        }
-        state.unitsMissed > 0 -> buildAnnotatedString {
-            append("Not every week went as planned this month. ")
-            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Stay under ${state.promiseHours} hrs/day this week to begin again.")
-            }
-        }
-        else -> buildAnnotatedString {
-            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Stay under ${state.promiseHours} hrs/day this week ")
-            }
-            append("to start your monthly streak.")
-        }
-    }
-}
-
-private fun days(count: Int) = if (count == 1) "1 day" else "$count days"
-
-private val StatusTabHeight: Dp @Composable get() = 22.rdp
-
-/** UNLOCKED / IN PROGRESS tab sitting in the card's bottom-right corner. */
-@Composable
-private fun StatusTab(unlocked: Boolean, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .width(105.rdp)
-            .height(StatusTabHeight)
-            .clip(RoundedCornerShape(topStart = 8.rdp))
-            .background(if (unlocked) PromiseKeptGreen else colorResource(R.color.promise_badge_bg)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = if (unlocked) "UNLOCKED" else "IN PROGRESS",
-            fontFamily = DepartureMono,
-            fontSize = 9.5.rsp,
-            letterSpacing = 0.4.sp,
-            color = if (unlocked) Color.White else PromiseKeptGreen
-        )
-    }
-}
-
-@Composable
-private fun WeeklyPromiseLegend() {
-    Column(verticalArrangement = Arrangement.spacedBy(3.rdp)) {
-        WeeklyPromiseLegendRow(color = PromiseKeptGreen, label = "Promise within limits")
-        WeeklyPromiseLegendRow(color = PromiseBrokenGray, label = "Promise Broken")
-        WeeklyPromiseLegendRow(color = colorResource(R.color.stone_200), label = "Not decided yet")
-    }
-}
-
-@Composable
-private fun WeeklyPromiseLegendRow(color: Color, label: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(3.75.rdp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(6.75.rdp)
-                .clip(RoundedCornerShape(1.5.rdp))
-                .background(color)
-        )
-        Text(
-            text = label,
-            fontFamily = Geist,
-            fontSize = 7.5.rsp,
-            // Explicit line height: the inherited body style (~24sp) triples each row's height.
-            lineHeight = 9.rsp,
-            letterSpacing = (-0.075).sp,
-            color = ZenTheme.colors.textPrimary,
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
-private fun WeeklyMonthlyToggle(isPro: Boolean, isMonthly: Boolean, onToggleChange: (Boolean) -> Unit) {
-    val context = LocalContext.current
-    val haptics = LocalHapticFeedback.current
-    val scope = rememberCoroutineScope()
-    val wiggle = remember { androidx.compose.animation.core.Animatable(0f) }
-
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .border(1.dp, colorResource(R.color.toggle_border_green), RoundedCornerShape(percent = 50))
-            .padding(2.rdp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(percent = 50))
-                .background(if (!isMonthly) Color.White else Color.Transparent)
-                .then(if (!isMonthly) Modifier.border(0.5.dp, colorResource(R.color.toggle_pill_border), RoundedCornerShape(percent = 50)) else Modifier)
-                .clickable { onToggleChange(false) }
-                .padding(horizontal = 12.rdp, vertical = 4.rdp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Weekly", fontFamily = Geist, fontWeight = if (!isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
-        }
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(percent = 50))
-                .background(if (isMonthly) Color.White else Color.Transparent)
-                .then(if (isMonthly) Modifier.border(0.5.dp, colorResource(R.color.toggle_pill_border), RoundedCornerShape(percent = 50)) else Modifier)
-                .clickable {
-                    if (isPro) {
-                        onToggleChange(true)
-                    } else {
-                        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                        ZenSound.play(Sfx.ERROR)
-                        scope.launch {
-                            for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, androidx.compose.animation.core.tween(55))
-                        }
-                        Toast.makeText(context, "You need to be Pro to access this.", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                .padding(horizontal = 14.rdp, vertical = 4.rdp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Monthly", fontFamily = Geist, fontWeight = if (isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
-            
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 10.rdp, y = (-2).rdp)
-                    .graphicsLayer { rotationZ = wiggle.value }
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(PromiseKeptGreen)
-                    .padding(horizontal = 3.rdp, vertical = 1.rdp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("PRO", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
-            }
-        }
-    }
-}
-
-/** Renders [units] as equal columns — one bar + label per day (Weekly) or week (Monthly),
- * each column centred under its own bar. Green = kept, grey = broken, light = not decided yet. */
-@Composable
-private fun PromiseUnitBars(units: List<PromiseUnit>) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(7.6.rdp)
-    ) {
-        units.forEach { unit ->
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(5.5.rdp)
-                        .clip(RoundedCornerShape(percent = 50))
-                        .background(
-                            when (unit.kept) {
-                                true -> PromiseKeptGreen
-                                false -> PromiseBrokenGray
-                                null -> colorResource(R.color.stone_200)
-                            }
-                        )
-                )
-                Spacer(modifier = Modifier.height(10.rdp))
-                Text(unit.label, fontFamily = Geist, fontSize = 12.rsp, letterSpacing = (-0.24).sp, color = ZenTheme.colors.textPrimary)
-            }
-        }
-    }
-}
-
 // ── Forecast card ─────────────────────────────────────────────────
 
 @Composable
@@ -620,7 +281,10 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
     // Real, not placeholder: whatever day the user opens this on, "today" sits at the
     // same column (see MonthsBeforeToday) with that many months of history behind it and
     // the rest as outlook — so the axis and headline are always true for this user, this day.
-    val today = remember { LocalDate.now() }
+    // The app's clock, not the system's: screenshot goldens pin it, so the axis and headline
+    // don't roll over with the month the suite happens to run in.
+    val clock = LocalZenClock.current
+    val today = remember(clock) { LocalDate.now(clock) }
     val windowMonths = remember(today) {
         (0 until ForecastWindowSize).map { i -> today.plusMonths((i - MonthsBeforeToday).toLong()).month }
     }
@@ -652,7 +316,7 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
             )
             Spacer(modifier = Modifier.width(4.rdp))
             Text(
-                text = "(${LocalDate.now().year})",
+                text = "(${today.year})",
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 10.3.rsp,
@@ -888,7 +552,7 @@ private fun InvestGoldButton(unlocked: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(47.rdp)
+            .fillMaxHeight()
             .clip(RoundedCornerShape(percent = 50))
             .background(if (unlocked) PromiseKeptGreen else colorResource(R.color.disabled_button_bg))
             .clickable(
@@ -924,7 +588,7 @@ private fun EditPromiseButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(42.rdp)
+            .fillMaxHeight()
             .clip(RoundedCornerShape(percent = 50))
             .clickable(
                 indication = null,
