@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -63,11 +65,15 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.Sfx
+import com.zenlauncher.zenmode.ZenSound
 import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.FanMember
 import com.zenlauncher.zenmode.ui.components.MemberCardFan
 import com.zenlauncher.zenmode.ui.components.ZenModeOsWordmark
 import com.zenlauncher.zenmode.ui.components.rememberBrandOsGradient
+import com.zenlauncher.zenmode.ui.components.rememberZenFeedback
+import com.zenlauncher.zenmode.share.trackShare
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
 import com.zenlauncher.zenmode.ui.components.shareImage
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
@@ -75,8 +81,9 @@ import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.LightOnly
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
+import com.zenlauncher.zenmode.ui.components.LocalZenClock
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 // ── My Zen Circle: shareable leaderboard card ─────────────────────
@@ -106,7 +113,9 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
     val green = colorResource(R.color.gold_delta_text)
     val ink = colorResource(R.color.ink_surface)
     val rule = colorResource(R.color.zen_circle_card_rule)
-    val date = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()) }
+    // The app's clock (pinned in screenshot tests), the same one the reset countdown reads.
+    val clock = LocalZenClock.current
+    val date = remember(clock) { LocalDate.now(clock).format(DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())) }
 
     Column(
         modifier = modifier
@@ -178,11 +187,27 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
             }
         }
 
+        // Leading today, the fan sits in a warm glow — the one reward hue, behind the crown.
+        val glow = colorResource(R.color.amber_500)
         MemberCardFan(
             ranked = ranked.map { FanMember(it.name, it.screenTimeMinutes, it.zenScore, it.streaks, it.isYou) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(250.dp)
+                .then(
+                    if (circleMoment(ranked) == CircleMoment.LEADING) {
+                        Modifier.drawBehind {
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    listOf(glow.copy(alpha = 0.34f), glow.copy(alpha = 0f)),
+                                    center = center,
+                                    radius = size.minDimension * 0.75f
+                                ),
+                                radius = size.minDimension * 0.75f
+                            )
+                        }
+                    } else Modifier
+                )
         )
 
         LeaderStrip(leader = leader, green = green, rule = rule)
@@ -203,7 +228,7 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
         }
         Spacer(Modifier.height(18.dp))
         Text(
-            text = "Create your Zen Circle, with your loved ones! #ZenTogether",
+            text = circleTagline(ranked),
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 22.sp,
@@ -212,6 +237,22 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
             color = green
         )
     }
+}
+
+/** Where the person sharing stands today — the card's last line and its sound follow it. */
+internal enum class CircleMoment { SOLO, LEADING, CHASING }
+
+internal fun circleMoment(ranked: List<ZenCircleMember>): CircleMoment = when {
+    ranked.size <= 1 -> CircleMoment.SOLO
+    ranked.first().isYou -> CircleMoment.LEADING
+    else -> CircleMoment.CHASING
+}
+
+/** The card's closing line, in the sharer's own voice. */
+internal fun circleTagline(ranked: List<ZenCircleMember>): String = when (circleMoment(ranked)) {
+    CircleMoment.SOLO -> "Building my Zen Circle. Come and be in it! #ZenTogether"
+    CircleMoment.LEADING -> "Leading my Zen Circle today. Come and take it! #ZenTogether"
+    CircleMoment.CHASING -> "Chasing ${arcName(ranked.first())} for #01 in my Zen Circle. #ZenTogether"
 }
 
 /** "Ranking ▲#01 · Zen Bro's name · Zen Score 9.1" for today's leader. */
@@ -340,6 +381,15 @@ fun ZenCircleSharePreview(
         val layer = rememberGraphicsLayer()
         var cardSize by remember { mutableStateOf(IntSize.Zero) }
         val shareText = shareText ?: "Join my Zen Circle on ZenMode OS. #ZenTogether"
+        val feedback = rememberZenFeedback()
+        val moment = remember(members, ranks) {
+            circleMoment(members.indices.sortedBy { ranks[it] ?: Int.MAX_VALUE }.map { members[it] })
+        }
+        val analyticsKey = "circle_${moment.name.lowercase(Locale.US)}"
+        // Leading the circle lands like a milestone; anything else opens like any sheet.
+        LaunchedEffect(Unit) {
+            if (moment == CircleMoment.LEADING) ZenSound.play(Sfx.STREAK_MILESTONE) else feedback.sheetOpen()
+        }
 
         Column(
             modifier = Modifier
@@ -384,6 +434,8 @@ fun ZenCircleSharePreview(
                 ZenCirclePillButton(
                     text = "Share my Zen Circle",
                     onClick = {
+                        feedback.shared()
+                        trackShare("share_image", analyticsKey)
                         scope.launch {
                             shareImage(
                                 context = context,
@@ -400,6 +452,8 @@ fun ZenCircleSharePreview(
                 ZenCirclePillButton(
                     text = "Save as image",
                     onClick = {
+                        feedback.saved()
+                        trackShare("save_image", analyticsKey)
                         scope.launch {
                             saveImageToPictures(context, layer.toImageBitmap().asAndroidBitmap(), fileBaseName = "zenmode_circle")
                         }

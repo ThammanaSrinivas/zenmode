@@ -31,7 +31,20 @@ enum class Sfx(@RawRes val res: Int, val volume: Float) {
     THEME_LIGHT(R.raw.sfx_theme_light, 0.55f),
     ENTER(R.raw.sfx_enter, 0.65f),
     /** Ambience, not a cue: it plays under PRO_UNLOCK on the Pro welcome and nowhere else. */
-    FOREST_DAWN(R.raw.sfx_forest_dawn, 0.5f)
+    FOREST_DAWN(R.raw.sfx_forest_dawn, 0.5f),
+
+    // Share cards: each lands with the sound of what the user just reached. Several are replayed
+    // at a pentatonic playback rate (see [ZenSound.play]) so one file covers a family of tiers.
+    STREAK_SPARK(R.raw.sfx_streak_spark, 0.55f),
+    STREAK_MILESTONE(R.raw.sfx_streak_milestone, 0.6f),
+    STREAK_LEGEND(R.raw.sfx_streak_legend, 0.65f),
+    SCORE_BOWL(R.raw.sfx_score_bowl, 0.55f),
+    GOLD_CASCADE(R.raw.sfx_gold_cascade, 0.55f),
+    WEEK_TICK(R.raw.sfx_week_tick, 0.45f),
+    WEEK_MISS(R.raw.sfx_week_miss, 0.4f),
+    WEEK_RECOMMIT(R.raw.sfx_week_recommit, 0.55f),
+    SHUTTER(R.raw.sfx_shutter, 0.5f),
+    SHARE_SEND(R.raw.sfx_share_send, 0.45f)
 }
 
 /**
@@ -92,7 +105,12 @@ object ZenSound {
             .getBoolean(KEY_ENABLED, true)
     }
 
-    fun play(sfx: Sfx) {
+    /**
+     * [rate] is SoundPool's playback rate (0.5-2.0): it shifts pitch and length together. Keep it
+     * on the C-major pentatonic ratios (0.75, 0.833, 1, 1.125, 1.25, 1.5, 1.667) so a replayed
+     * sound never leaves the key every other sound is written in.
+     */
+    fun play(sfx: Sfx, rate: Float = 1f) {
         val p = pool ?: return
         if (!_enabled.value || !loaded[sfx.ordinal]) return
         if (audio?.ringerMode != AudioManager.RINGER_MODE_NORMAL) return
@@ -100,6 +118,6 @@ object ZenSound {
         if (now - lastPlayed[sfx.ordinal] < MIN_GAP_MS) return
         lastPlayed[sfx.ordinal] = now
         val v = sfx.volume * MASTER
-        p.play(ids[sfx.ordinal], v, v, 1, 0, 1f)
+        p.play(ids[sfx.ordinal], v, v, 1, 0, rate.coerceIn(0.5f, 2f))
     }
 }

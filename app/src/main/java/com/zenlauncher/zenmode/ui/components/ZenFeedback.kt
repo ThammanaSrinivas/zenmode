@@ -75,6 +75,10 @@ class ZenFeedback internal constructor(private val haptics: HapticFeedback?) {
     fun theme(dark: Boolean) = fire(if (dark) Sfx.THEME_DARK else Sfx.THEME_LIGHT, HapticFeedbackType.GestureThresholdActivate)
     /** The last beat of onboarding. */
     fun enter() = fire(Sfx.ENTER, HapticFeedbackType.LongPress)
+    /** A share card was saved to the gallery: the shutter. */
+    fun saved() = fire(Sfx.SHUTTER, HapticFeedbackType.Confirm)
+    /** A share card is on its way to the system share sheet. */
+    fun shared() = fire(Sfx.SHARE_SEND, null)
     /** Dragging past a detent (steppers, wheels). Haptic only — sound here would machine-gun. */
     fun detent() = fire(null, HapticFeedbackType.SegmentFrequentTick)
 }

@@ -7,14 +7,18 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.zenlauncher.zenmode.InvestGoldActivity
 import com.zenlauncher.zenmode.MyPromiseActivity
 import com.zenlauncher.zenmode.ProAccess
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.share.WeeklyShareStudio
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +44,7 @@ class RecapActivity : ComponentActivity() {
 
     private var recap by mutableStateOf<WeeklyRecap?>(null)
     private var completedTracked = false
+    private var showShareStudio by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -84,40 +89,56 @@ class RecapActivity : ComponentActivity() {
                 val current = recap ?: return@ZenTheme
                 val week = current.weekStart.toString()
                 val outcome = current.outcome.analyticsKey
-                RecapScreen(
-                    recap = current,
-                    onCardViewed = { card, position ->
-                        ServiceLocator.analyticsTracker.trackRecapCardViewed(week, outcome, card.key, position)
-                        if (position == RecapStory.cards(current).lastIndex && !completedTracked) {
-                            completedTracked = true
-                            ServiceLocator.analyticsTracker.trackRecapCompleted(week, outcome)
-                        }
-                    },
-                    onInvest = {
-                        ServiceLocator.analyticsTracker.trackRecapCtaClicked(week, outcome, "invest")
-                        trackMilestoneEngaged()
-                        startActivity(Intent(this, InvestGoldActivity::class.java))
-                        finish()
-                    },
-                    onRecommit = {
-                        ServiceLocator.analyticsTracker.trackRecapCtaClicked(week, outcome, "recommit")
-                        trackMilestoneEngaged()
-                        val suggested = (RecapStory.cards(current).last() as? RecapCard.Recommit)?.suggestedPromiseHours
-                        startActivity(MyPromiseActivity.intent(this, suggested))
-                        finish()
-                    },
-                    onShare = {
-                        lifecycleScope.launch {
-                            runCatching {
-                                RecapReport.share(this@RecapActivity, current, attachPdf = ProAccess.isPro(this@RecapActivity))
-                            }.onFailure {
-                                Toast.makeText(this@RecapActivity, "Couldn't share the report. Please try again.", Toast.LENGTH_LONG).show()
+                Box(Modifier.fillMaxSize()) {
+                    RecapScreen(
+                        recap = current,
+                        onCardViewed = { card, position ->
+                            ServiceLocator.analyticsTracker.trackRecapCardViewed(week, outcome, card.key, position)
+                            if (position == RecapStory.cards(current).lastIndex && !completedTracked) {
+                                completedTracked = true
+                                ServiceLocator.analyticsTracker.trackRecapCompleted(week, outcome)
                             }
-                        }
-                    },
-                    onClose = ::finish
-                )
+                        },
+                        onInvest = {
+                            ServiceLocator.analyticsTracker.trackRecapCtaClicked(week, outcome, "invest")
+                            trackMilestoneEngaged()
+                            startActivity(Intent(this@RecapActivity, InvestGoldActivity::class.java))
+                            finish()
+                        },
+                        onRecommit = {
+                            ServiceLocator.analyticsTracker.trackRecapCtaClicked(week, outcome, "recommit")
+                            trackMilestoneEngaged()
+                            val suggested = (RecapStory.cards(current).last() as? RecapCard.Recommit)?.suggestedPromiseHours
+                            startActivity(MyPromiseActivity.intent(this@RecapActivity, suggested))
+                            finish()
+                        },
+                        // The week leaves as its own animated story (share/WeeklyShareStudio.kt);
+                        // PRO still gets the PDF report from inside the studio.
+                        onShare = {
+                            ServiceLocator.analyticsTracker.trackRecapCtaClicked(week, outcome, "share")
+                            showShareStudio = true
+                        },
+                        onClose = ::finish,
+                        paused = showShareStudio
+                    )
+                    WeeklyShareStudio(
+                        visible = showShareStudio,
+                        recap = current,
+                        canSharePdf = ProAccess.isPro(this@RecapActivity),
+                        onSharePdf = { sharePdf(current) },
+                        onDismiss = { showShareStudio = false }
+                    )
+                }
             }
+        }
+    }
+
+    private fun sharePdf(current: WeeklyRecap) {
+        lifecycleScope.launch {
+            runCatching { RecapReport.share(this@RecapActivity, current, attachPdf = true) }
+                .onFailure {
+                    Toast.makeText(this@RecapActivity, "Couldn't share the report. Please try again.", Toast.LENGTH_LONG).show()
+                }
         }
     }
 

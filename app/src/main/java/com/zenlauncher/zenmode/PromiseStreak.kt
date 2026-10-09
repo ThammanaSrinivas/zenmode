@@ -19,9 +19,9 @@ import java.time.LocalDate
  *    week was won and the streak was lost in the same breath.
  *
  * So one bad Tuesday costs nothing; a bad *week* starts you over. That's the promise ZenMode
- * OS makes to the user, and it's deliberately more forgiving than
- * [AppLogic.getStreakCount]'s mindful-day run, which the milestone card still uses for its
- * "longest" day-run stat.
+ * OS makes to the user, and it's deliberately more forgiving than a day-by-day run. It is the
+ * only streak in the app: Home's flame, the check-in card and the streak share card
+ * (share/StreakShare.kt) all read this one.
  *
  * Pure functions over plain data, like [ZenGoldPromise] — callers read RecapStore /
  * UsageRepository themselves and pass the results in, so this is unit-testable without a

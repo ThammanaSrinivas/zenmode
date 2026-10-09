@@ -115,10 +115,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.zenlauncher.zenmode.PromiseStreak
 import com.zenlauncher.zenmode.PromiseUnit
 import com.zenlauncher.zenmode.ZenCheckInCard
 import java.time.LocalDate
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
+import com.zenlauncher.zenmode.ZenGoldPromise
+import com.zenlauncher.zenmode.share.GoldShare
+import com.zenlauncher.zenmode.share.StreakShare
+import com.zenlauncher.zenmode.share.StreakShareSheet
+import com.zenlauncher.zenmode.share.ZenGoldShareSheet
 import java.util.Locale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -310,7 +316,7 @@ fun HomeScreen(
     val colors = ZenTheme.colors
     val context = LocalContext.current
     // Streaks and Gold have no page of their own, so their stat opens a shareable card
-    // here (HomeShareOverlays.kt). Zen Score has a page — its tap opens that, and the
+    // here (share/ShareOverlays.kt). Zen Score has a page — its tap opens that, and the
     // card lives behind the page's own "Share Zen Score".
     var showStreakOverlay by remember { mutableStateOf(false) }
     var showGoldOverlay by remember { mutableStateOf(false) }
@@ -526,49 +532,49 @@ fun HomeScreen(
             )
         }
 
-        // Streak overlay
-        // Compute milestone stats once per composition, re-derived when zenScore changes.
-        val recapStore = remember { RecapStore(context) }
-        val promiseHours = remember { PromisePreferences.getDailyHours(context) }
-        val todayIsMindful = remember(zenScore) {
-            AppLogic.isMindfulDay(
-                screenTimeMinutes = todayMinutes,
-                promiseHours = promiseHours
-            )
-        }
-        val totalMindfulDays = remember(zenScore) { AppLogic.getTotalMindfulDays(recapStore, todayIsMindful) }
-        val longestStreak = remember(zenScore) { AppLogic.getLongestStreak(recapStore, todayIsMindful) }
-        val longestStreakDays = longestStreak?.days ?: 0
-        val longestStreakRange = longestStreak?.let { AppLogic.formatStreakRange(it) } ?: ""
-
+        // Streak / Gold share sheets (share/ShareOverlays.kt). Their numbers are worked out as a
+        // sheet opens, not on every Home frame — the history behind them only changes overnight.
         AnimatedVisibility(
             visible = showStreakOverlay,
             modifier = Modifier.systemBarsPadding(),
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            StreakOverlay(
-                onDismiss = { showStreakOverlay = false },
-                totalMindfulDays = totalMindfulDays,
-                longestStreakDays = longestStreakDays,
-                longestStreakRange = longestStreakRange,
-                currentStreakDays = streaks,
-                currentStreakStart = streakStart
-            )
+            val today = LocalDate.now(LocalZenClock.current)
+            val share = remember(streaks, todayMinutes, checkInWeekUnits) {
+                val promiseHours = PromisePreferences.getDailyHours(context)
+                val week = checkInWeekUnits.ifEmpty {
+                    ZenGoldPromise.weekly(RecapStore(context).days(), todayMinutes, promiseHours, today).units
+                }
+                // The same promise streak as the flame (see PromiseStreak), with the flame's own
+                // count as the hero so the card can never disagree with the number just tapped.
+                val streak = PromiseStreak.of(RecapStore(context).days(), todayMinutes <= promiseHours * 60L, today)
+                StreakShare.of(streak.copy(days = streaks), week, today)
+            }
+            StreakShareSheet(share = share, onDismiss = { showStreakOverlay = false })
         }
 
-        // Gold Invested overlay
         AnimatedVisibility(
             visible = showGoldOverlay,
             modifier = Modifier.systemBarsPadding(),
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            GoldInvestedOverlay(
-                gold = goldInvested,
-                changePercent = goldChangePercent,
-                onDismiss = { showGoldOverlay = false }
-            )
+            val today = LocalDate.now(LocalZenClock.current)
+            val share = remember(goldInvested, goldChangePercent, todayMinutes) {
+                GoldShare(
+                    investedRupees = GoldShare.rupees(goldInvested),
+                    changePercent = goldChangePercent,
+                    week = ZenGoldPromise.weekly(
+                        days = RecapStore(context).days(),
+                        todayMinutes = todayMinutes,
+                        promiseHours = PromisePreferences.getDailyHours(context),
+                        today = today
+                    ),
+                    today = today
+                )
+            }
+            ZenGoldShareSheet(share = share, onDismiss = { showGoldOverlay = false })
         }
 
         // Above the share sheets, below the first-run guide: a new user meets the guide
@@ -589,7 +595,13 @@ fun HomeScreen(
                     weekUnits = checkInWeekUnits,
                     onDismiss = onCheckInDismiss,
                     onSeeMyWeekClick = onCheckInSeeWeekClick,
-                    onLockToday = onCheckInLockToday
+                    onLockToday = onCheckInLockToday,
+                    // The evening it was kept is the moment to post it: straight into the
+                    // streak's own share card (share/ShareOverlays.kt), the check-in done.
+                    onShareClick = {
+                        onCheckInDismiss()
+                        showStreakOverlay = true
+                    }
                 )
             }
         }
@@ -1617,233 +1629,4 @@ private fun GoogleFallbackRow(query: String, onClick: () -> Unit, modifier: Modi
             overflow = TextOverflow.Ellipsis
         )
     }
-}
-
-// ── Streak Overlay ───────────────────────────────────────────────
-// v3 redesign — Figma node 2026:2137 ("ZM_OS v3' Zen Home/ streaks OVerlay").
-// Replaces the old weekly-calendar sheet with a shareable milestone card. Total
-// mindful days, community percentile and longest streak all need real streak-
-// history tracking that doesn't exist yet (see AppConstants placeholders).
-
-// The dark card's colour tokens, the sheet chrome around it and the Save/Share
-// capture are shared with the Zen Score and Gold cards — see HomeShareOverlays.kt.
-
-@Composable
-private fun StreakOverlay(
-    onDismiss: () -> Unit,
-    totalMindfulDays: Int,
-    longestStreakDays: Int,
-    longestStreakRange: String,
-    zenScoreThreshold: Int = AppConstants.MINDFUL_DAY_ZEN_SCORE_THRESHOLD,
-    /** The same live count as the flame in Home's header. */
-    currentStreakDays: Int = 0,
-    /** Where that run began; null falls back to counting back from today. */
-    currentStreakStart: LocalDate? = null
-) {
-    // Community percentile has no real cross-user data source yet, so it's derived
-    // from the current streak itself rather than a flat placeholder: under 5 days
-    // there's nothing worth bragging about yet, so the line is hidden entirely.
-    val topPercentile = streakTopPercentile(currentStreakDays)
-    val colors = ZenTheme.colors
-
-    ShareSheet(
-        eyebrow = "STREAKS",
-        shareLabel = "Share my streaks",
-        fileBaseName = "zenmode_milestone",
-        shareText = "$totalMindfulDays days of intentional time with ZenMode OS. Start your streak: " +
-            AppConstants.PLAY_STORE_URL,
-        chooserTitle = "Share Streak",
-        onDismiss = onDismiss
-    ) { cardModifier ->
-        Spacer(modifier = Modifier.height(35.rdp))
-
-        // Headline — spelled-out day count, matching the design's voice
-        Text(
-            text = "${numberToWords(totalMindfulDays)} days of intentional time away from the noise — promise kept.",
-            fontFamily = ClashDisplay,
-            fontWeight = FontWeight.Medium,
-            fontSize = 20.rsp,
-            lineHeight = 24.rsp,
-            letterSpacing = (-0.6).sp,
-            color = colors.textPrimary
-        )
-
-        Spacer(modifier = Modifier.height(15.rdp))
-
-        if (topPercentile != null) {
-            Text(
-                text = "You're in the top $topPercentile% of the Zen Bros",
-                fontFamily = Geist,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.rsp,
-                letterSpacing = (-0.16).sp,
-                color = colors.textBrand
-            )
-
-            Spacer(modifier = Modifier.height(15.rdp))
-        }
-
-        // The shareable milestone card — "Save as image" / "Share my streaks"
-        // crop exactly this, not the whole sheet.
-        MilestoneCard(
-            modifier = cardModifier,
-            totalMindfulDays = totalMindfulDays,
-            zenScoreThreshold = zenScoreThreshold
-        )
-
-        Spacer(modifier = Modifier.height(20.rdp))
-
-        ShareStatLine(
-            lead = "LONGEST \u00B7 $longestStreakDays DAYS",
-            trail = "($longestStreakRange)"
-        )
-
-        Spacer(modifier = Modifier.height(10.rdp))
-
-        ShareStatLine(
-            lead = "CURRENT \u00B7 ${"%02d".format(Locale.US, currentStreakDays)} DAYS",
-            trail = "(${currentStreakRange(currentStreakDays, LocalDate.now(LocalZenClock.current), currentStreakStart)})"
-        )
-    }
-}
-
-/**
- * Streak-based stand-in for the community percentile, until real cross-user streak
- * data exists (see [AppConstants.PLACEHOLDER_MILESTONE_PERCENTILE]'s old flat value).
- * Null hides the line — under 5 days there's nothing worth claiming yet.
- */
-internal fun streakTopPercentile(currentStreakDays: Int): Int? = when {
-    currentStreakDays < 5 -> null
-    currentStreakDays <= 10 -> 50
-    else -> 10
-}
-
-/**
- * "SEP 11–PRESENT". [start] is the real first day of the run when the caller knows it: a
- * promise streak's kept days aren't contiguous (one day over holds the streak rather than
- * ending it -- see PromiseStreak), so counting back [days] from today would date it wrong.
- * Without one, it falls back to that count-back.
- */
-internal fun currentStreakRange(
-    days: Int,
-    today: LocalDate = LocalDate.now(),
-    start: LocalDate? = null
-): String {
-    if (days <= 0) return "STARTS TODAY"
-    val from = start ?: today.minusDays((days - 1).toLong())
-    return "${StreakDateFormat.format(from).uppercase(Locale.US)}–PRESENT"
-}
-
-private val StreakDateFormat = java.time.format.DateTimeFormatter.ofPattern("MMM d", Locale.US)
-
-@Composable
-private fun MilestoneCard(
-    totalMindfulDays: Int,
-    zenScoreThreshold: Int,
-    modifier: Modifier = Modifier
-) {
-    ShareCardFrame(stamp = "$totalMindfulDays DAY MILESTONE", modifier = modifier) {
-        ShareCardHero(
-            unit = "DAYS",
-            caption = "That's ${approxDurationPhrase(totalMindfulDays)} that ended above Zen score $zenScoreThreshold.",
-            badge = {
-                Image(
-                    painter = painterResource(R.drawable.ic_streak_fire),
-                    contentDescription = null,
-                    modifier = Modifier.size(46.rdp)
-                )
-            },
-            value = { ShareCardValue(text = "$totalMindfulDays", color = ShareCardAmber) }
-        )
-
-        Spacer(modifier = Modifier.height(20.rdp))
-
-        MilestoneDotGrid(
-            filledCells = totalMindfulDays,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(46.rdp)
-        )
-    }
-}
-
-/**
- * Decorative contribution-style grid inside the milestone card. Figma's own node for
- * this area (2026:2206) carried no exported vector data — drawn procedurally here,
- * filling cells left-to-right/top-to-bottom in proportion to [filledCells] against a
- * fixed 30x4 grid, rather than reproducing exact source pixels we don't have.
- */
-@Composable
-private fun MilestoneDotGrid(filledCells: Int, modifier: Modifier = Modifier) {
-    val filledColor = ShareCardAmber
-    val emptyColor = Color.White.copy(alpha = 0.08f)
-    Canvas(modifier = modifier) {
-        val columns = 30
-        val rows = 4
-        val gap = 3.dp.toPx()
-        val cell = ((size.width - gap * (columns - 1)) / columns)
-            .coerceAtMost((size.height - gap * (rows - 1)) / rows)
-        val totalWidth = cell * columns + gap * (columns - 1)
-        val startX = (size.width - totalWidth) / 2f
-        val totalCells = columns * rows
-        val filled = filledCells.coerceIn(0, totalCells)
-        for (row in 0 until rows) {
-            for (col in 0 until columns) {
-                val index = row * columns + col
-                drawRoundRect(
-                    color = if (index < filled) filledColor.copy(alpha = 0.85f) else emptyColor,
-                    topLeft = Offset(startX + col * (cell + gap), row * (cell + gap)),
-                    size = Size(cell, cell),
-                    cornerRadius = CornerRadius(1.dp.toPx())
-                )
-            }
-        }
-    }
-}
-
-/** "120" -> "One hundred and twenty". Placeholder-metric scale only (0-999). */
-private fun numberWordsRaw(n: Int): String {
-    if (n == 0) return "zero"
-    val ones = arrayOf(
-        "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-        "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
-        "seventeen", "eighteen", "nineteen"
-    )
-    val tens = arrayOf("", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
-
-    if (n >= 1000) return n.toString()
-
-    val parts = mutableListOf<String>()
-    var rem = n
-    if (rem >= 100) {
-        parts += "${ones[rem / 100]} hundred"
-        rem %= 100
-        if (rem > 0) parts += "and"
-    }
-    when {
-        rem in 1..19 -> parts += ones[rem]
-        rem >= 20 -> {
-            val onesDigit = rem % 10
-            parts += if (onesDigit > 0) "${tens[rem / 10]}-${ones[onesDigit]}" else tens[rem / 10]
-        }
-    }
-    return parts.joinToString(" ")
-}
-
-private fun numberToWords(n: Int): String =
-    numberWordsRaw(n).replaceFirstChar { it.uppercase() }
-
-/**
- * "1" -> "one day", "5" -> "five days", "120" -> "four months of days". Under a month,
- * milestones read day-by-day; past that, the old approach floored everything to "at
- * least one month" even for a 1-day streak ("one month of days that ended above Zen score
- * 7" for someone on day one) — this scales the unit with the count instead.
- */
-private fun approxDurationPhrase(days: Int): String {
-    if (days < 30) {
-        val word = numberWordsRaw(days.coerceAtLeast(1))
-        return "$word day${if (days == 1) "" else "s"}"
-    }
-    val months = days / 30
-    return "${numberWordsRaw(months)} month${if (months == 1) "" else "s"} of days"
 }

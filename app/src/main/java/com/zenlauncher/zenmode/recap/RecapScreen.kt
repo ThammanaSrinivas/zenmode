@@ -102,10 +102,13 @@ fun RecapScreen(
     onInvest: () -> Unit,
     onRecommit: () -> Unit,
     onShare: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    /** Holds the story where it is while something sits over it (the share studio). */
+    paused: Boolean = false
 ) {
     val cards = remember(recap) { RecapStory.cards(recap) }
     val story = rememberStoryState(cards.size, storyMillis = 6_500)
+    LaunchedEffect(paused) { story.paused = paused }
     val card = cards[story.index]
     val palette = paletteFor(card, recap.outcome)
     val background by animateColorAsState(palette.background, tween(500), label = "recapBg")

@@ -141,6 +141,53 @@ def bird(base, seconds, amp=0.18, chirps=3, gap=0.085, rise=True):
     return mix(*layers)
 
 
+def flame(seconds, amp=0.2):
+    """A match catching: a dry crackle into a soft rising roar of air, gone as fast as it came."""
+    n = int(RATE * seconds)
+    out, lp, hp_prev, hp = [], 0.0, 0.0, 0.0
+    for i in range(n):
+        p = i / n
+        noise = random.uniform(-1, 1)
+        lp += (0.05 + 0.3 * p) * (noise - lp)
+        hp = 0.9 * (hp + lp - hp_prev)
+        hp_prev = lp
+        crackle = noise * 0.6 if random.random() < 0.012 * (1 - p) else 0.0
+        shape = min(1.0, p * 9) * math.exp(-3.2 * p)
+        out.append(amp * (hp * 1.6 + crackle) * shape)
+    return out
+
+
+def bowl(freq, seconds, amp=0.5):
+    """A singing bowl: two near-unison partials that beat slowly against each other, plus the
+    bowl's bright upper modes dying away first. Long and calm — the Zen Score's own sound."""
+    n = int(RATE * seconds)
+    out = []
+    for i in range(n):
+        t = i / RATE
+        p = i / n
+        s = (math.sin(2 * math.pi * freq * t) +
+             0.42 * math.sin(2 * math.pi * freq * 1.004 * t) +
+             0.32 * math.sin(2 * math.pi * freq * 2.71 * t) * math.exp(-5 * p) +
+             0.14 * math.sin(2 * math.pi * freq * 5.18 * t) * math.exp(-9 * p))
+        attack = min(1.0, t / 0.012)
+        out.append(amp * 0.5 * s * attack * math.exp(-2.6 * p))
+    return out
+
+
+def coin_clink(freq, seconds=0.18, amp=0.4):
+    """One coin landing on another: a bright inharmonic ping, shorter than sfx_coin's."""
+    return bell(freq, seconds, amp=amp, decay=7, partials=((1, 1.0), (2.4, 0.35), (4.1, 0.12)))
+
+
+def shutter(amp=0.5):
+    """Two soft mechanical ticks a breath apart, with a puff of air: the card was kept."""
+    return mix(
+        (0.000, tick(note("A5"), 0.03, amp=amp)),
+        (0.000, whoosh(0.07, rising=False, amp=0.12)),
+        (0.055, tick(note("E5"), 0.04, amp=amp * 0.8)),
+    )
+
+
 def mix(*layers):
     """Overlay (offset_seconds, samples) layers."""
     length = max(int(RATE * off) + len(s) for off, s in layers)
@@ -244,6 +291,63 @@ def main():
         (1.45, bird(note("E6"), 0.44, amp=0.10, chirps=2, rise=False)),
         (2.40, bird(note("B6"), 0.30, amp=0.08, chirps=2)),
     ), peak=0.5)
+
+    # ── Share cards ──────────────────────────────────────────────
+    # Each card lands with its own sound, chosen by what the user just reached (see
+    # share/ShareCues.kt). ZenSound replays several of these at a pentatonic playback rate
+    # (C D E G A ratios), so one file serves a whole family of tiers without leaving the key.
+    # They come last on purpose: everything above draws from the seeded noise stream first, so
+    # the older sounds still regenerate byte-identical.
+
+    # Streak, days 1-6: a match catching and one warm note.
+    write("sfx_streak_spark", mix(
+        (0.00, flame(0.42, amp=0.22)),
+        (0.08, bell(note("G5"), 0.5, amp=0.42, decay=5)),
+    ), peak=0.5)
+    # Streak milestones (a week, two weeks, a moon, a tide): the flame, then a rising triad.
+    write("sfx_streak_milestone", mix(
+        (0.00, flame(0.5, amp=0.2)),
+        (0.10, bell(note("C5"), 0.7, decay=4.6)),
+        (0.18, bell(note("E5"), 0.7, decay=4.6)),
+        (0.26, bell(note("G5"), 0.8, decay=4.2)),
+        (0.38, bell(note("C6"), 0.9, amp=0.32, decay=4)),
+    ), peak=0.56)
+    # Streak legends (a season, half an orbit, a full orbit): the triad over a low fifth with
+    # a long shimmer of air — the biggest thing the app ever says about a streak.
+    write("sfx_streak_legend", mix(
+        (0.00, flame(0.6, amp=0.18)),
+        (0.00, bell(note("C3"), 1.8, amp=0.3, decay=2.6, partials=((1, 1.0), (2.0, 0.15)))),
+        (0.00, bell(note("G3"), 1.8, amp=0.2, decay=2.6, partials=((1, 1.0), (2.0, 0.12)))),
+        (0.12, bell(note("C5"), 1.2, decay=3.8)),
+        (0.22, bell(note("E5"), 1.2, decay=3.8)),
+        (0.32, bell(note("G5"), 1.3, decay=3.6)),
+        (0.44, bell(note("C6"), 1.3, amp=0.34, decay=3.4)),
+        (0.58, bell(note("E6"), 1.1, amp=0.24, decay=3.6)),
+        (0.15, [v * 0.5 for v in whoosh(1.3, rising=True, amp=0.2)]),
+    ), peak=0.58)
+    # Zen Score: one struck bowl. Played higher for a calm day, lower for a loud one.
+    write("sfx_score_bowl", bowl(note("C5"), 1.6, amp=0.5), peak=0.46)
+    # Zen Gold: a short cascade of coins settling onto a stack.
+    cascade = [(k * 0.055 + random.uniform(0, 0.02), coin_clink(note(n), amp=0.42 - k * 0.03))
+               for k, n in enumerate(["E7", "B6", "G6", "E7", "A6", "D7", "G6"])]
+    write("sfx_gold_cascade", mix(*cascade, (0.40, bell(note("E6"), 0.5, amp=0.3, decay=5))), peak=0.48)
+    # Weekly story, one per day as its bar lands: a soft marimba pluck, pitched up the scale by
+    # ZenSound for each kept day...
+    write("sfx_week_tick", bell(note("C5"), 0.26, amp=0.5, decay=7, partials=((1, 1.0), (4.0, 0.16))), peak=0.42)
+    # ...and a muted wooden knock for a missed one. Never a buzzer.
+    write("sfx_week_miss", tick(note("A3"), 0.09, amp=0.5), peak=0.34)
+    # A missed week's last beat: a warm fourth that leans forward into the next one.
+    write("sfx_week_recommit", mix(
+        (0.00, bell(note("G4"), 0.7, amp=0.45, decay=4.4)),
+        (0.16, bell(note("C5"), 0.9, amp=0.45, decay=4)),
+    ), peak=0.46)
+    # Save as image / save clip: the shutter.
+    write("sfx_shutter", shutter(), peak=0.4)
+    # Share: the card leaving on a breath of air and one bright note.
+    write("sfx_share_send", mix(
+        (0.00, whoosh(0.26, rising=True, amp=0.2)),
+        (0.12, bell(note("A5"), 0.32, amp=0.3, decay=6)),
+    ), peak=0.36)
 
 
 if __name__ == "__main__":

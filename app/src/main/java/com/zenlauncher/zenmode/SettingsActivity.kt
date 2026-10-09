@@ -7,6 +7,7 @@ import com.zenlauncher.zenmode.recap.DataExport
 import com.zenlauncher.zenmode.recap.ProUpsellSheet
 import com.zenlauncher.zenmode.recap.RecapActivity
 import com.zenlauncher.zenmode.recap.RecapReport
+import com.zenlauncher.zenmode.share.WeeklyShareStudio
 import com.zenlauncher.zenmode.recap.RecapStore
 import com.zenlauncher.zenmode.recap.WeeklyRecap
 import com.zenlauncher.zenmode.recap.WeeklyReportsSection
@@ -44,6 +45,8 @@ class SettingsActivity : AppCompatActivity() {
     // Filled off the main thread: reading a week of usage stats here stalled the slide-in.
     private var weeklyHours by mutableStateOf(List(7) { 0f })
     private var downloadingWeek by mutableStateOf<LocalDate?>(null)
+    /** The week open in the share studio, if any. */
+    private var sharingWeek by mutableStateOf<WeeklyRecap?>(null)
     private var showProSheet by mutableStateOf(false)
     /** The surface that opened the upsell sheet, for analytics on the plan page. */
     private var proSheetSource = ""
@@ -189,6 +192,13 @@ class SettingsActivity : AppCompatActivity() {
                         } else null
                     )
                 }
+                WeeklyShareStudio(
+                    visible = sharingWeek != null,
+                    recap = sharingWeek,
+                    canSharePdf = isPro,
+                    onSharePdf = { sharingWeek?.let(::sharePdf) },
+                    onDismiss = { sharingWeek = null }
+                )
                 HomeAppsPickerOverlay(
                     visible = showHomeAppsPicker,
                     limit = AppGridPreferences.getAppCount(this),
@@ -214,10 +224,14 @@ class SettingsActivity : AppCompatActivity() {
         writeReport(week) { recap -> RecapReport.saveToDownloads(this, recap) }
     }
 
+    /** Opens the week's share studio: its animated story as a clip or an image, and the PDF. */
     private fun shareReport(week: LocalDate) {
-        val recap = weeklyReports.firstOrNull { it.weekStart == week } ?: return
+        sharingWeek = weeklyReports.firstOrNull { it.weekStart == week } ?: return
+    }
+
+    private fun sharePdf(recap: WeeklyRecap) {
         lifecycleScope.launch {
-            runCatching { RecapReport.share(this@SettingsActivity, recap, attachPdf = ProAccess.isPro(this@SettingsActivity)) }
+            runCatching { RecapReport.share(this@SettingsActivity, recap, attachPdf = true) }
                 .onFailure {
                     Toast.makeText(this@SettingsActivity, "Couldn't share the report. Please try again.", Toast.LENGTH_LONG).show()
                 }

@@ -130,10 +130,7 @@
     <color name="zen_mindfulness_neutral">#FFC800</color>
     <color name="zen_mindfulness_annoyed">#FF6600</color>
 
-    <!-- Streaks milestone overlay card (Figma node 2026:2137, ui/screens/HomeScreen.kt). -->
-    <color name="milestone_muted">#989898</color>
-    <color name="milestone_dim">#CFCFCF</color>
-    <color name="milestone_tagline">#D7D7D7</color>
+    <!-- Share sheet's "Save as image" pill (Figma node 2026:2137, share/ShareSheet.kt). -->
     <color name="milestone_outline_bg">#E2F8E6</color>
 
     <!-- Zen Gold screen, the home screen's right-swipe page (Figma node 2026:1648,
@@ -277,6 +274,16 @@
     <color name="recap_dusk_glow">#FF7A2E</color>
     <color name="recap_gold_light">#FFF4C7</color>
     <color name="recap_gold_deep">#FFD84D</color>
+
+    <!-- Share cards (share/*): the illustrated, tiered cards every share point exports. Most of
+         their colour is the primitives above; these are the few the pictures add. Light only —
+         a card leaves the app as an image, so nothing here has a values-night twin. -->
+    <!-- Two-week streak's cut log: the face, the growth rings, the bark and its shadowed side. -->
+    <color name="share_wood_face_light">#F3E3C3</color>
+    <color name="share_wood_face">#E2C291</color>
+    <color name="share_wood_ring">#A87A4A</color>
+    <color name="share_wood_bark">#6E4B2B</color>
+    <color name="share_wood_side">#4E3420</color>
 
     <!-- Settings / Distraction Blocker (Figma 2026:949). Card and chips reuse gold_delta_text,
          ink_surface and zen_050; these are the two values the design adds. -->

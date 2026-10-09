@@ -65,6 +65,8 @@ import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.SessionEventType
 import com.zenlauncher.zenmode.coreapi.ZenScore
+import com.zenlauncher.zenmode.share.ScoreShare
+import com.zenlauncher.zenmode.share.ZenScoreShareSheet
 import com.zenlauncher.zenmode.ui.components.HomePage
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
@@ -134,7 +136,8 @@ fun ZenScoreScreen(
     val mood = rememberTodayMood()
     var footerHeight by remember { mutableStateOf(0.dp) }
     // "Share Zen Score" opens the shareable card rather than a bare text share — the same
-    // sheet Home's Streaks and Gold stats open (HomeShareOverlays.kt).
+    // sheet Home's Streaks and Gold stats open (share/ShareOverlays.kt), with a card drawn for
+    // today's score band.
     var showShareOverlay by remember { mutableStateOf(false) }
 
     Box(
@@ -222,12 +225,10 @@ fun ZenScoreScreen(
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            ZenScoreOverlay(
-                zenScore = score,
-                reclaimedMinutes = reclaimedMinutes,
-                today = today,
-                onDismiss = { showShareOverlay = false }
-            )
+            val share = remember(score, yesterdayScore, reclaimedMinutes, today) {
+                ScoreShare(score, yesterdayScore, reclaimedMinutes, today)
+            }
+            ZenScoreShareSheet(share = share, onDismiss = { showShareOverlay = false })
         }
     }
 }
@@ -688,8 +689,8 @@ private fun ZenScoreDial(score: Int, maxScore: Int, modifier: Modifier = Modifie
 }
 
 // ── CTA buttons ─────────────────────────────────────────────────────
-// Same pill visual language as HomeShareOverlays' ShareOutlineButton /
-// ShareSolidButton and ZenGoldScreen's InvestGoldButton / EditPromiseButton.
+// Same pill visual language as the share sheet's ShareOutlineButton / ShareSolidButton
+// (share/ShareSheet.kt) and ZenGoldScreen's InvestGoldButton / EditPromiseButton.
 
 @Composable
 private fun DownloadReportButton(isPro: Boolean, onClick: () -> Unit) {

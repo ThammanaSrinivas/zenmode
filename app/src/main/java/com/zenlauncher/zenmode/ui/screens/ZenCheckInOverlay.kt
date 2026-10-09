@@ -19,6 +19,13 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.Icon
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -74,6 +81,11 @@ fun ZenCheckInOverlay(
     onSeeMyWeekClick: () -> Unit = {},
     /** "Lock in today" — the act that actually banks the day, not just a way to close. */
     onLockToday: () -> Unit = onDismiss,
+    /**
+     * Opens the streak's share card. Offered on the celebration only — the evening the promise
+     * was kept is the moment worth posting; a warning or an over-promise day isn't.
+     */
+    onShareClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = ZenTheme.colors
@@ -114,13 +126,35 @@ fun ZenCheckInOverlay(
                 )
                 .padding(horizontal = 22.rdp, vertical = 22.rdp)
         ) {
-            Text(
-                text = card.kind.eyebrow,
-                fontFamily = DepartureMono,
-                fontSize = 9.5.rsp,
-                letterSpacing = 0.6.sp,
-                color = if (urgent) accent else PromiseKeptGreen
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = card.kind.eyebrow,
+                    fontFamily = DepartureMono,
+                    fontSize = 9.5.rsp,
+                    letterSpacing = 0.6.sp,
+                    color = if (urgent) accent else PromiseKeptGreen,
+                    modifier = Modifier.weight(1f)
+                )
+                if (onShareClick != null && card.kind == ZenCheckInKind.CELEBRATION) {
+                    // A 48dp target that draws as a quiet glyph, so the card's one loud thing
+                    // stays the streak.
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .offset(x = 12.dp, y = (-4).dp)
+                            .clip(CircleShape)
+                            .clickable(onClickLabel = "Share my streak", role = Role.Button, onClick = onShareClick),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Share,
+                            contentDescription = "Share my streak",
+                            tint = PromiseKeptGreen,
+                            modifier = Modifier.size(20.rdp)
+                        )
+                    }
+                }
+            }
 
             if (urgent) {
                 LastHourCheckInContent(

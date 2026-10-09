@@ -50,8 +50,7 @@ internal fun rememberZenCheckIn(
     val todayKept = todayMinutes <= promiseHours * 60L
 
     // The streak Home shows is the promise streak: a day over the line holds it, only a lost
-    // week resets it (see PromiseStreak). AppLogic.getStreakCount's stricter mindful-day run
-    // stays where it's labelled as such — the milestone card's "longest".
+    // week resets it (see PromiseStreak) — the one streak definition in the app.
     val streak = remember(resumeCount, todayMinutes, promiseHours) {
         PromiseStreak.of(recapStore.days(), todayKept)
     }
