@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.AppConstants.BACK_TO_ZEN_GOLD
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.dropShadow
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -64,14 +65,20 @@ data class GoldHoldingEntry(
     val isAccessDenied: Boolean = false
 )
 
+/** "6 of 7 days promise kept", the one spelling of a week's status line. */
+private fun keptStatus(daysKept: Int) = "$daysKept of 7 days promise kept"
+
+/** A week that fell short: the status line with Gold access denied. */
+private fun deniedStatus(daysKept: Int) = "Only ${keptStatus(daysKept)}, access denied"
+
 private fun defaultGoldHoldings() = listOf(
-    GoldHoldingEntry("Sep 01-07, 2026", "6 of 7 days promise kept", "₹180", "3 Units"),
-    GoldHoldingEntry("Oct 12-18, 2026", "Only 3 of 7 days promise kept, access denied", isAccessDenied = true),
-    GoldHoldingEntry("Nov 03-09, 2026", "6 of 7 days promise kept", "₹320", "5 Units"),
-    GoldHoldingEntry("Dec 07-13, 2026", "6 of 7 days promise kept", "₹320", "5 Units"),
-    GoldHoldingEntry("Jan 15-21, 2027", "Only 3 of 7 days promise kept, access denied", isAccessDenied = true),
-    GoldHoldingEntry("Feb 01-07, 2027", "6 of 7 days promise kept", "₹265", "4 Units"),
-    GoldHoldingEntry("Mar 08-14, 2027", "6 of 7 days promise kept", "₹265", "4 Units")
+    GoldHoldingEntry("Sep 01-07, 2026", keptStatus(6), "₹180", "3 Units"),
+    GoldHoldingEntry("Oct 12-18, 2026", deniedStatus(3), isAccessDenied = true),
+    GoldHoldingEntry("Nov 03-09, 2026", keptStatus(6), "₹320", "5 Units"),
+    GoldHoldingEntry("Dec 07-13, 2026", keptStatus(6), "₹320", "5 Units"),
+    GoldHoldingEntry("Jan 15-21, 2027", deniedStatus(3), isAccessDenied = true),
+    GoldHoldingEntry("Feb 01-07, 2027", keptStatus(6), "₹265", "4 Units"),
+    GoldHoldingEntry("Mar 08-14, 2027", keptStatus(6), "₹265", "4 Units")
 )
 
 // ── Main Gold Holdings Screen ───────────────────────────────────────
@@ -491,7 +498,7 @@ private fun BackToZenGoldButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Back to Zen Gold",
+            text = BACK_TO_ZEN_GOLD,
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 16.rsp,

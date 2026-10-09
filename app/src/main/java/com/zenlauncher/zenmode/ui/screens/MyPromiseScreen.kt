@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.BACK_TO_ZEN_GOLD
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.PromiseEditLock
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
@@ -137,7 +138,7 @@ fun MyPromiseScreen(
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(34.rdp))
-                    V3ScreenHeader(title = "My Promise", backLabel = "Back to Zen Gold", onBackClick = onBackClick)
+                    V3ScreenHeader(title = "My Promise", backLabel = BACK_TO_ZEN_GOLD, onBackClick = onBackClick)
                     Spacer(modifier = Modifier.height(45.rdp))
                     IntroText()
                     Spacer(modifier = Modifier.height(13.86.rdp))
@@ -167,7 +168,7 @@ fun MyPromiseScreen(
                             .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.rdp)
                     ) {
-                        V3PrimaryPillButton(text = "Back to Zen Gold", onClick = onBackClick)
+                        V3PrimaryPillButton(text = BACK_TO_ZEN_GOLD, onClick = onBackClick)
                         OutlinedPillButton(text = "See all holdings", onClick = onSeeAllHoldingsClick)
                     }
                     Spacer(modifier = Modifier.height(45.rdp))
