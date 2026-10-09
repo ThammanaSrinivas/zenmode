@@ -14,7 +14,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -130,20 +132,32 @@ fun MoodBackdrop(mood: MoodState = rememberTodayMood(), modifier: Modifier = Mod
     val accent by animateColorAsState(lerp(wash[1], pull, 0.28f), tween(700), label = "wash-accent")
 
     val still = rememberReduceMotion() || LocalInspectionMode.current
-    val drift = rememberInfiniteTransition(label = "wash-drift")
-    // Kept as State and read only inside the Canvas, so each drift frame redraws without recomposing.
-    val t = drift.animateFloat(
-        initialValue = 0f,
-        targetValue = (2 * Math.PI).toFloat(),
-        animationSpec = infiniteRepeatable(tween(28_000, easing = LinearEasing)),
-        label = "wash-drift-t"
-    )
-    val swell = drift.animateFloat(
-        initialValue = 0.92f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(tween(9_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "wash-swell"
-    )
+
+    // Kept as State and read only inside the Canvas, so each drift frame redraws without
+    // recomposing — and only created at all when motion is on. An InfiniteTransition asks the
+    // frame clock for a new frame every vsync for as long as it exists, whether or not anyone
+    // reads its value, so building one in reduced-motion mode kept the UI thread waking ~120x
+    // a second to animate a backdrop that was pinned to its first frame anyway.
+    val t: State<Float>
+    val swell: State<Float>
+    if (still) {
+        t = remember { mutableStateOf(0f) }
+        swell = remember { mutableStateOf(1f) }
+    } else {
+        val drift = rememberInfiniteTransition(label = "wash-drift")
+        t = drift.animateFloat(
+            initialValue = 0f,
+            targetValue = (2 * Math.PI).toFloat(),
+            animationSpec = infiniteRepeatable(tween(28_000, easing = LinearEasing)),
+            label = "wash-drift-t"
+        )
+        swell = drift.animateFloat(
+            initialValue = 0.92f,
+            targetValue = 1.08f,
+            animationSpec = infiniteRepeatable(tween(9_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "wash-swell"
+        )
+    }
     // Real blur exists from API 31; below that the radial falloff alone keeps the pools soft.
     val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
@@ -155,8 +169,8 @@ fun MoodBackdrop(mood: MoodState = rememberTodayMood(), modifier: Modifier = Mod
         ) {
             val w = size.width
             val h = size.height
-            val phase = if (still) 0f else t.value
-            val scale = if (still) 1f else swell.value
+            val phase = t.value
+            val scale = swell.value
             fun pool(color: Color, x: Float, y: Float, radius: Float, alpha: Float) {
                 val c = Offset(x, y)
                 drawCircle(
