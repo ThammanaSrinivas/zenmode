@@ -104,6 +104,8 @@ class MainActivity : AppCompatActivity() {
     // pressing back wouldn't take effect until the process restarted — MainActivity
     // is singleTask, so returning from Settings resumes it rather than recreating it.
     private var homeAppCount by mutableStateOf(AppGridPreferences.DEFAULT_APP_COUNT)
+    // Re-read on resume: an order recorded in InvestGoldActivity shows on the way back.
+    private var goldInvested by mutableStateOf("0")
     private var showSearch by mutableStateOf(false)
     private var longPressedApp by mutableStateOf<AppInfo?>(null)
     private var showHomeAppsPicker by mutableStateOf(false)
@@ -284,6 +286,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        goldInvested = GoldLedger.balanceLabel(this)
         resolveUnlockReveal()
         A11yPermissionMonitor.check(this)
         if (::viewModel.isInitialized) {
@@ -583,8 +586,8 @@ class MainActivity : AppCompatActivity() {
                     isSignedIn = isSignedIn,
                     showSearch = showSearch,
                     zenScore = zenScore,
-                    goldInvested = AppConstants.PLACEHOLDER_GOLD_INVESTED,
-                    goldChangePercent = GoldOrder.changePercentFor(AppConstants.PLACEHOLDER_GOLD_INVESTED),
+                    goldInvested = goldInvested,
+                    goldChangePercent = null,
                     appCount = homeAppCount,
                     gestures = homeGestures,
                     myLikes = myLikes,

@@ -23,12 +23,15 @@ import androidx.compose.runtime.setValue
 import com.zenlauncher.zenmode.ui.screens.InvestGoldReviewScreen
 import com.zenlauncher.zenmode.ui.screens.InvestGoldScreen
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import java.time.LocalDate
 
 /**
  * Zen Gold's "Invest Gold" destination: step 1 picks a quantity (Figma node 2026:1250),
  * step 2 reads the order back. ZenMode never places or pre-fills the order: "Open Kite to
  * authorise" only opens Kite (the app if installed, the web otherwise) where the user buys
- * it themselves. The quantity starts at the minimum, so the screen never suggests an amount.
+ * it themselves - and records the order in [GoldLedger], since that hand-off is the only
+ * purchase signal ZenMode gets. The quantity starts at the minimum, so the screen never
+ * suggests an amount.
  */
 class InvestGoldActivity : AppCompatActivity() {
 
@@ -55,9 +58,13 @@ class InvestGoldActivity : AppCompatActivity() {
                         InvestGoldReviewScreen(
                             units = units,
                             onBackClick = { reviewing = false },
-                            onOpenKiteClick = { 
-                                ServiceLocator.analyticsTracker.trackGoldPurchaseCompleted(0, "INR", units, "kite")
-                                openKite() 
+                            onOpenKiteClick = {
+                                // No payment acknowledgement exists, so the hand-off counts as the
+                                // purchase (GoldLedger); the review screen says so above this button.
+                                val paise = GoldOrder.totalPaise(units, AppConstants.PLACEHOLDER_GOLD_UNIT_PRICE_PAISE)
+                                GoldLedger.record(this@InvestGoldActivity, LocalDate.now(), paise)
+                                ServiceLocator.analyticsTracker.trackGoldPurchaseCompleted((paise / 100).toInt(), "INR", units, "kite")
+                                openKite()
                             },
                             onChangeQuantityClick = { reviewing = false }
                         )
@@ -66,9 +73,10 @@ class InvestGoldActivity : AppCompatActivity() {
                             units = units,
                             onUnitsChange = { units = GoldOrder.clampUnits(it) },
                             onBackClick = { finish() },
-                            onReviewInKiteClick = { 
-                                ServiceLocator.analyticsTracker.trackGoldPurchaseInitiated(0, units)
-                                reviewing = true 
+                            onReviewInKiteClick = {
+                                val paise = GoldOrder.totalPaise(units, AppConstants.PLACEHOLDER_GOLD_UNIT_PRICE_PAISE)
+                                ServiceLocator.analyticsTracker.trackGoldPurchaseInitiated((paise / 100).toInt(), units)
+                                reviewing = true
                             },
                             onViewTermsClick = { openTerms() }
                         )

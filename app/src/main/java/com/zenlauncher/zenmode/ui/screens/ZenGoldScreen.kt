@@ -62,7 +62,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
-import com.zenlauncher.zenmode.GoldOrder
 import com.zenlauncher.zenmode.GoldPromisePeriod
 import com.zenlauncher.zenmode.PromiseUnit
 import com.zenlauncher.zenmode.R
@@ -131,8 +130,10 @@ fun ZenGoldScreen(
     /** How far back recorded history reaches, as a negative offset; 0 means no history. */
     earliestWeekOffset: Int = 0,
     onWeekOffsetChange: (Int) -> Unit = {},
-    goldInvested: String = AppConstants.PLACEHOLDER_GOLD_INVESTED,
-    goldChangePercent: Int = GoldOrder.changePercentFor(AppConstants.PLACEHOLDER_GOLD_INVESTED),
+    /** The balance from [com.zenlauncher.zenmode.GoldLedger], as printed after the ₹. */
+    goldInvested: String = "0",
+    /** Gain or loss on the balance; null while there's no live gold price to measure it by. */
+    goldChangePercent: Int? = null,
     forecastPercent: Int = AppConstants.PLACEHOLDER_FORECAST_PERCENT,
     forecastMonthlyAmount: Int = AppConstants.PLACEHOLDER_FORECAST_MONTHLY_AMOUNT,
     isPro: Boolean = false,

@@ -46,7 +46,7 @@ class ShareArtDeviceTest {
         "streak_moon" to StreakArt(kit, StreakShare(30, 4, 3, false, week, today)),
         "streak_orbit" to StreakArt(kit, StreakShare(400, 57, 5, false, week, today)),
         "score_calm" to ScoreArt(kit, ScoreShare(84, 78, 47, today)),
-        "gold_earning" to GoldArt(kit, GoldShare(0, 0, earningWeek, today)),
+        "gold_earning" to GoldArt(kit, GoldShare(0, earningWeek, today)),
         "week_kept" to WeeklyArt(kit, WeeklyShare(keptWeek))
     )
 

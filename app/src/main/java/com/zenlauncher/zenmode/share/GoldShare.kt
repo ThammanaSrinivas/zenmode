@@ -35,7 +35,6 @@ enum class GoldTier {
  */
 data class GoldShare(
     val investedRupees: Long,
-    val changePercent: Int,
     val week: ZenGoldPromiseState,
     val today: LocalDate
 ) {
@@ -77,7 +76,7 @@ data class GoldShare(
         )
         else -> listOf(
             PosterStat("IN GOLD", amount),
-            PosterStat("CHANGE", "+$changePercent%"),
+            PosterStat("PROMISE", "${week.promiseHours}H/DAY"),
             PosterStat("THIS WEEK", "$kept/7 KEPT")
         )
     }
@@ -92,7 +91,8 @@ data class GoldShare(
             "${plural(needed - kept, "more kept day")} and gold pay opens."
         }
         GoldTier.UNLOCKED -> "Gold pay stays open until Sunday midnight."
-        else -> "Up $changePercent% since the first promise kept."
+        // GoldLedger: the hand-off is the purchase signal, so say what the total counts.
+        else -> "Counts the orders you opened in Kite from Zen Gold."
     }
 
     val shareText: String = when (tier) {

@@ -72,7 +72,7 @@ class ShareCardsScreenshotTest {
     @Test
     fun `zen gold cards - earning to a vault`() = sheet {
         val kit = rememberShareKit()
-        Grid(golds.map { (rupees, week) -> GoldArt(kit, GoldShare(rupees, 38, week, today)) })
+        Grid(golds.map { (rupees, week) -> GoldArt(kit, GoldShare(rupees, week, today)) })
     }
 
     @Test

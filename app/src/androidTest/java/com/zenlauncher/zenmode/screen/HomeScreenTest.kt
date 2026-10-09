@@ -72,8 +72,8 @@ class HomeScreenTest {
                     isSignedIn = isSignedIn,
                     showSearch = showSearch,
                     zenScore = 93, // 9.3 of 10, see ZenScore
-                    goldInvested = AppConstants.PLACEHOLDER_GOLD_INVESTED,
-                    goldChangePercent = AppConstants.PLACEHOLDER_GOLD_CHANGE_PERCENT,
+                    goldInvested = "0",
+                    goldChangePercent = null,
                     onShowSearchChange = onShowSearchChange,
                     onZenGoldClick = onZenGoldClick,
                     onZenScoreClick = onZenScoreClick,

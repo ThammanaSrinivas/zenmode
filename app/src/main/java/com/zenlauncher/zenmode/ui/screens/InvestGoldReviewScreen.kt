@@ -355,7 +355,9 @@ private fun HandOffNotes(units: Int, symbol: String, modifier: Modifier = Modifi
     val lines = listOf(
         "In Kite, buy $symbol, $unitsLabel. Nothing else goes with it.",
         "No money moves through $PRODUCT_NAME. We never see your funds or your login.",
-        "We can't cancel, modify or exit the position for you. Kite handles everything and is solely responsible."
+        "We can't cancel, modify or exit the position for you. Kite handles everything and is solely responsible.",
+        // GoldLedger records the order on the tap below; say so before it happens.
+        "Opening Kite adds this order to your Zen Gold total. We can't see whether it went through, so the total is what you set out to buy."
     )
     val noteStyle = FullLineBox.copy(
         fontFamily = Geist,

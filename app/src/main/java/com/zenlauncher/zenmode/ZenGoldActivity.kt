@@ -44,6 +44,7 @@ class ZenGoldActivity : AppCompatActivity() {
     private var weekOffset by mutableIntStateOf(0)
     private var displayedWeek by mutableStateOf(ZenGoldPromiseState())
     private var earliestWeekOffset by mutableIntStateOf(0)
+    private var goldInvested by mutableStateOf("0")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +66,7 @@ class ZenGoldActivity : AppCompatActivity() {
                     weekOffset = weekOffset,
                     earliestWeekOffset = earliestWeekOffset,
                     onWeekOffsetChange = { offset -> showWeek(offset) },
+                    goldInvested = goldInvested,
                     onBackClick = { finish() },
                     onZenScoreClick = {
                         finish()
@@ -101,6 +103,7 @@ class ZenGoldActivity : AppCompatActivity() {
     // MyPromiseActivity — or usage that accrued while this screen was backgrounded — shows on return.
     override fun onResume() {
         super.onResume()
+        goldInvested = GoldLedger.balanceLabel(this)
         refreshPromiseState()
     }
 

@@ -164,12 +164,12 @@ class ShareCopyTest {
     fun `gold tiers grow with the balance, and with the promise before there is one`() {
         val earning = week(true, true, null, null, null, null, null)
         val open = week(true, true, true, true, true, null, null)
-        assertEquals(GoldTier.EARNING, GoldShare(0, 0, earning, today).tier)
-        assertEquals(GoldTier.UNLOCKED, GoldShare(0, 0, open, today).tier)
-        assertEquals(GoldTier.FIRST, GoldShare(1, 0, earning, today).tier)
-        assertEquals(GoldTier.STACK, GoldShare(1_000, 0, earning, today).tier)
-        assertEquals(GoldTier.BARS, GoldShare(10_000, 0, earning, today).tier)
-        assertEquals(GoldTier.VAULT, GoldShare(1_00_000, 0, earning, today).tier)
+        assertEquals(GoldTier.EARNING, GoldShare(0, earning, today).tier)
+        assertEquals(GoldTier.UNLOCKED, GoldShare(0, open, today).tier)
+        assertEquals(GoldTier.FIRST, GoldShare(1, earning, today).tier)
+        assertEquals(GoldTier.STACK, GoldShare(1_000, earning, today).tier)
+        assertEquals(GoldTier.BARS, GoldShare(10_000, earning, today).tier)
+        assertEquals(GoldTier.VAULT, GoldShare(1_00_000, earning, today).tier)
     }
 
     @Test
@@ -182,7 +182,7 @@ class ShareCopyTest {
 
     @Test
     fun `an earning week counts down to gold pay`() {
-        val share = GoldShare(0, 0, week(true, true, false, true, null, null, null), today)
+        val share = GoldShare(0, week(true, true, false, true, null, null, null), today)
         assertEquals("3 of 5 promise days kept this week. 2 more and my calm turns into gold.", share.caption)
         assertEquals("2 more kept days and gold pay opens.", share.nextStep)
         assertEquals(listOf("3/7", "4H/DAY", "AT 5"), share.stats.map { it.value })
@@ -190,7 +190,7 @@ class ShareCopyTest {
 
     @Test
     fun `a week that can no longer unlock says so kindly`() {
-        val share = GoldShare(0, 0, week(false, false, false, true, false, false, null), today)
+        val share = GoldShare(0, week(false, false, false, true, false, false, null), today)
         assertTrue(share.week.goalOutOfReach)
         assertEquals("A fresh week starts Monday.", share.nextStep)
         assertFalse(share.caption.contains("more and my calm"))

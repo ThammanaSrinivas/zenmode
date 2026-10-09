@@ -30,13 +30,6 @@ object AppConstants {
     // UsageRepository.kt), not here — core-private's FirestoreDataSourceImpl needs the cap
     // for its join check, and core-private cannot depend on the app module.
 
-    // v3 home screen placeholders. Stand-ins until the scoring and rewards
-    // backend exists — swap these for real values, not the UI around them.
-    const val PLACEHOLDER_GOLD_INVESTED = "0"
-    // Only shown when PLACEHOLDER_GOLD_INVESTED is non-zero — see GoldOrder.changePercentFor,
-    // which forces 0% for a ₹0 balance instead of this figure.
-    const val PLACEHOLDER_GOLD_CHANGE_PERCENT = 38
-
     // BuddyStats has no real score/streak fields yet, so the buddy's side stays a
     // placeholder. Zen Scores are tenths (88 = 8.8), see ZenScore. Never wire these
     // to the signed-in user's own numbers, which come from ZenScoreStore.

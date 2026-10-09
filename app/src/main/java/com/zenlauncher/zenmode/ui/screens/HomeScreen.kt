@@ -259,7 +259,8 @@ fun HomeScreen(
     showSearch: Boolean,
     zenScore: Int,
     goldInvested: String,
-    goldChangePercent: Int,
+    /** Gain or loss on the gold balance; null while there's no live gold price to measure it by. */
+    goldChangePercent: Int?,
     appCount: Int = AppGridPreferences.DEFAULT_APP_COUNT,
     /**
      * The home gestures in force, already filtered for Pro by [GesturePreferences.active].
@@ -559,10 +560,9 @@ fun HomeScreen(
             exit = fadeOut()
         ) {
             val today = LocalDate.now(LocalZenClock.current)
-            val share = remember(goldInvested, goldChangePercent, todayMinutes) {
+            val share = remember(goldInvested, todayMinutes) {
                 GoldShare(
                     investedRupees = GoldShare.rupees(goldInvested),
-                    changePercent = goldChangePercent,
                     week = ZenGoldPromise.weekly(
                         days = RecapStore(context).days(),
                         todayMinutes = todayMinutes,
@@ -692,7 +692,8 @@ private fun HomeHeader(
 @Composable
 fun GoldInvestedRow(
     gold: String,
-    changePercent: Int,
+    /** Shown as a "+n%" badge beside the amount; null hides it (no price to measure a change by). */
+    changePercent: Int?,
     modifier: Modifier = Modifier,
     fullWidth: Boolean = false,
     /** Home opens the shareable gold card from here; Zen Gold's own row isn't tappable. */
@@ -774,7 +775,7 @@ fun GoldInvestedRow(
                             Modifier.blur(5.35.rdp, BlurredEdgeTreatment.Unbounded)
                         else Modifier
                     )
-                    Box(
+                    if (changePercent != null) Box(
                         modifier = Modifier
                             .height(12.4.rdp)
                             .clip(RoundedCornerShape(percent = 50))
