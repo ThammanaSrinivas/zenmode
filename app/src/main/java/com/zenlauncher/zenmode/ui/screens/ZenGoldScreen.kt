@@ -114,6 +114,9 @@ import java.util.Locale
 // not the app-wide Spacing.screenMargin, since it's the same v3 frame width.
 private val ScreenMargin: Dp @Composable get() = 30.rdp
 
+/** Every Zen Gold sub-screen's way back: header label and bottom button alike. */
+internal const val BACK_TO_ZEN_GOLD = "Back to Zen Gold"
+
 @Composable
 fun ZenGoldScreen(
     // Real, on-device Weekly/Monthly promise tracking — see ZenGoldPromise.kt. Gold pay's

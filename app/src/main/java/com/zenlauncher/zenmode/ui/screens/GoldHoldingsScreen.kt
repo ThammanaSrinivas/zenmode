@@ -64,14 +64,18 @@ data class GoldHoldingEntry(
     val isAccessDenied: Boolean = false
 )
 
+// Sample weeks for previews until the screen is fed real ledger data.
+private const val SAMPLE_KEPT = "6 of 7 days promise kept"
+private const val SAMPLE_DENIED = "Only 3 of 7 days promise kept, access denied"
+
 private fun defaultGoldHoldings() = listOf(
-    GoldHoldingEntry("Sep 01-07, 2026", "6 of 7 days promise kept", "₹180", "3 Units"),
-    GoldHoldingEntry("Oct 12-18, 2026", "Only 3 of 7 days promise kept, access denied", isAccessDenied = true),
-    GoldHoldingEntry("Nov 03-09, 2026", "6 of 7 days promise kept", "₹320", "5 Units"),
-    GoldHoldingEntry("Dec 07-13, 2026", "6 of 7 days promise kept", "₹320", "5 Units"),
-    GoldHoldingEntry("Jan 15-21, 2027", "Only 3 of 7 days promise kept, access denied", isAccessDenied = true),
-    GoldHoldingEntry("Feb 01-07, 2027", "6 of 7 days promise kept", "₹265", "4 Units"),
-    GoldHoldingEntry("Mar 08-14, 2027", "6 of 7 days promise kept", "₹265", "4 Units")
+    GoldHoldingEntry("Sep 01-07, 2026", SAMPLE_KEPT, "₹180", "3 Units"),
+    GoldHoldingEntry("Oct 12-18, 2026", SAMPLE_DENIED, isAccessDenied = true),
+    GoldHoldingEntry("Nov 03-09, 2026", SAMPLE_KEPT, "₹320", "5 Units"),
+    GoldHoldingEntry("Dec 07-13, 2026", SAMPLE_KEPT, "₹320", "5 Units"),
+    GoldHoldingEntry("Jan 15-21, 2027", SAMPLE_DENIED, isAccessDenied = true),
+    GoldHoldingEntry("Feb 01-07, 2027", SAMPLE_KEPT, "₹265", "4 Units"),
+    GoldHoldingEntry("Mar 08-14, 2027", SAMPLE_KEPT, "₹265", "4 Units")
 )
 
 // ── Main Gold Holdings Screen ───────────────────────────────────────
@@ -491,7 +495,7 @@ private fun BackToZenGoldButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Back to Zen Gold",
+            text = BACK_TO_ZEN_GOLD,
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 16.rsp,

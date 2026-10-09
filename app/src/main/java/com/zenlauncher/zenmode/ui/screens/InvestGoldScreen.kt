@@ -163,7 +163,7 @@ fun InvestGoldScreen(
                     Spacer(modifier = Modifier.height(34.rdp))
                     V3ScreenHeader(
                         title = "Invest Gold",
-                        backLabel = "Back to Zen Gold",
+                        backLabel = BACK_TO_ZEN_GOLD,
                         onBackClick = onBackClick,
                         dotGap = 3.5.rdp,
                         centerOnTitle = true,
