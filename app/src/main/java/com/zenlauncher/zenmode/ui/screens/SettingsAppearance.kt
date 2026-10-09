@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.ui.components.settingsRowVisible
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -188,6 +189,7 @@ private fun HomeThemeTile(theme: HomeTheme, selected: Boolean, onClick: () -> Un
 
 @Composable
 internal fun AppearanceRow(mode: ThemeMode, onModeChange: (ThemeMode) -> Unit) {
+    if (!settingsRowVisible("Appearance", "Light dark system theme mode")) return
     val colors = ZenTheme.colors
     Column(
         modifier = Modifier

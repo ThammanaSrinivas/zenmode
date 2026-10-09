@@ -7,10 +7,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
@@ -115,22 +117,48 @@ fun ZenSettingsGroup(
     trailingLabel: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.rdp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.rdp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ZenEyebrow(label, Modifier.weight(1f))
-            if (trailingLabel != null) {
-                Text(trailingLabel.uppercase(), style = ZenTypography.monoLabel, color = ZenTheme.colors.textMuted)
+    val gap = with(LocalDensity.current) { 8.rdp.roundToPx() }
+    // Settings drops its between-group spacing while searching (folded groups would leave it
+    // behind), so a surviving group brings its own.
+    val topGap = if (isSettingsSearching()) with(LocalDensity.current) { 16.rdp.roundToPx() } else 0
+    // While Settings search filters, rows that don't match emit nothing; a card left with no
+    // rows measures to zero height, and then the whole group (label too) takes no space.
+    Layout(
+        modifier = modifier.fillMaxWidth(),
+        content = {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.rdp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ZenEyebrow(label, Modifier.weight(1f))
+                if (trailingLabel != null) {
+                    Text(trailingLabel.uppercase(), style = ZenTypography.monoLabel, color = ZenTheme.colors.textMuted)
+                }
+            }
+            CompositionLocalProvider(LocalSettingsGroupLabel provides label) {
+                Column(modifier = Modifier.fillMaxWidth().zenCard(), content = content)
             }
         }
-        Column(modifier = Modifier.fillMaxWidth().zenCard(), content = content)
+    ) { measurables, constraints ->
+        val loose = constraints.copy(minHeight = 0)
+        val header = measurables[0].measure(loose)
+        val card = measurables[1].measure(loose)
+        val width = maxOf(header.width, card.width, constraints.minWidth)
+        if (card.height == 0) {
+            layout(width, 0) {}
+        } else {
+            layout(width, topGap + header.height + gap + card.height) {
+                header.placeRelative(0, topGap)
+                card.placeRelative(0, topGap + header.height + gap)
+            }
+        }
     }
 }
 
 @Composable
 fun ZenRowDivider() {
+    // Search results are a short list of survivors; dividers between hidden rows would stack up.
+    if (isSettingsSearching()) return
     HorizontalDivider(
         modifier = Modifier.padding(start = 16.rdp),
         thickness = 1.dp,
@@ -212,6 +240,7 @@ fun ZenSettingsRow(
     pro: ProTagState = ProTagState.None,
     trailing: RowTrailing = RowTrailing.Chevron
 ) {
+    if (!settingsRowVisible(title, subtitle)) return
     val colors = ZenTheme.colors
     val feedback = rememberZenFeedback()
     Row(
@@ -338,6 +367,7 @@ fun ZenSettingToggleItem(
      */
     onLocked: (() -> Unit)? = null
 ) {
+    if (!settingsRowVisible(text, subtitle)) return
     val locked = pro == ProTagState.Locked && onLocked != null
     Row(
         modifier = modifier
