@@ -118,6 +118,17 @@ object ContentBlockPrefs {
         fun isAppQuieted(packageName: String): Boolean = packageName in quietedApps
         fun isSurfaceBlocked(packageName: String, surfaceId: String): Boolean =
             surfaceKey(packageName, surfaceId) in blockedSurfaceKeys
+
+        /**
+         * Whether any surface at all is blocked in [packageName]. Lets the accessibility
+         * service skip the window node walk for a tracked app the user hasn't blocked
+         * anything in — blocking only one app's feed used to still mean walking the other
+         * tracked apps' node trees several times a second, just to find nothing to do.
+         */
+        fun hasBlockedSurface(packageName: String): Boolean {
+            val prefix = surfaceKey(packageName, "")
+            return blockedSurfaceKeys.any { it.startsWith(prefix) }
+        }
     }
 
     fun snapshot(ctx: Context): Snapshot {

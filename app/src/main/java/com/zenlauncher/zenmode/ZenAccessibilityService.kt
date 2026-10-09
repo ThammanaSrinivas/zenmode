@@ -158,6 +158,9 @@ class ZenAccessibilityService : AccessibilityService() {
         val debug = prefs.isDebugDumpEnabled
         val appRule = rules.appRule(pkg) ?: return
         if (!prefs.isAnyBlockEnabled) return
+        // Nothing blocked in this app: the surface check below would refuse every surface
+        // we could detect, so skip the node walk rather than pay for it on every scroll.
+        if (!prefs.hasBlockedSurface(pkg)) return
 
         val root = rootInActiveWindow
         if (root == null) {

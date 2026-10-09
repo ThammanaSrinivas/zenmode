@@ -34,6 +34,21 @@ object LauncherActivities {
         val sharesPackage = all.count { it.activityInfo.packageName == pkg } > 1
         return if (sharesPackage) key(info) else pkg
     }
+
+    /**
+     * Home-grid order: the picked home apps lead in the order chosen, everything else stays
+     * A–Z behind them. [apps] is expected already sorted by label.
+     *
+     * Split out from the package-manager query so changing the pins — which happens often —
+     * doesn't re-enumerate every launcher activity and reload every icon. Pure, so the
+     * ordering is unit-testable.
+     */
+    fun orderForHome(apps: List<AppInfo>, pinnedKeys: List<String>): List<AppInfo> {
+        if (pinnedKeys.isEmpty()) return apps
+        val rank = pinnedKeys.withIndex().associate { (i, key) -> key to i }
+        val (pinned, rest) = apps.partition { it.key in rank }
+        return pinned.sortedBy { rank.getValue(it.key) } + rest
+    }
 }
 
 /**
