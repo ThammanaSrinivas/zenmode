@@ -48,7 +48,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 16
-        versionName = "3.06"
+        versionName = "3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -139,6 +139,7 @@ dependencies {
     implementation(libs.androidx.compose.runtime.livedata)
     implementation(libs.androidx.activity.compose)
     implementation(libs.coil.compose)
+    implementation(libs.haze)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

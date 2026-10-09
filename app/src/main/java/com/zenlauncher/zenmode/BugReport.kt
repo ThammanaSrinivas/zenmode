@@ -1,8 +1,6 @@
 package com.zenlauncher.zenmode
 
 import android.content.ActivityNotFoundException
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -19,18 +17,22 @@ import java.util.Locale
  * ([com.zenlauncher.zenmode.ui.components.BugReportSheet]) only explains it; everything about
  * the details and the destination lives here, so a report from any surface reads the same.
  *
- * Reports go to our community Telegram group, where the team reads every message and the
- * user can attach screenshots and follow the thread. Nothing is uploaded by the app: the
- * device details are copied to the clipboard, and the user decides whether to paste them.
+ * Reports go to the helpdesk inbox through the user's own mail app: they write it and attach
+ * screenshots there, and can read every line of it, the device details included, before it's
+ * sent. Nothing is uploaded by the app. A phone with no mail app gets the community Telegram
+ * group instead, where the team also reads every message.
  */
 object BugReport {
 
+    /** What the mail subject carries, so reports thread sensibly in the helpdesk inbox. */
+    private const val SUBJECT_PREFIX = "$PRODUCT_NAME bug report"
+
     /**
-     * The device/build block a report should carry. Deliberately small and legible: enough to
+     * The device/build block appended to every report. Deliberately small and legible: enough to
      * reproduce a bug (OEM ROM, Android version, app build) and nothing that identifies a person.
      */
     fun diagnostics(context: Context): String = buildString {
-        appendLine("— $PRODUCT_NAME bug report —")
+        appendLine("— sent from $PRODUCT_NAME, please keep the lines below —")
         appendLine("App: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})${if (BuildConfig.DEBUG) " debug" else ""}")
         appendLine("Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
         appendLine("Device: ${Build.MANUFACTURER} ${Build.MODEL}")
@@ -39,19 +41,31 @@ object BugReport {
         appendLine("Pro: ${if (ProAccess.isPro(context)) "yes" else "no"}")
     }
 
-    /** Copies [diagnostics] for the user to paste, then opens the Telegram group. */
-    fun openInTelegram(context: Context) {
-        context.getSystemService(ClipboardManager::class.java)
-            ?.setPrimaryClip(ClipData.newPlainText("$PRODUCT_NAME device details", diagnostics(context)))
-        // Android 13+ shows its own "copied" confirmation; a second toast would just repeat it.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            Toast.makeText(context, "Device details copied — paste them with your report.", Toast.LENGTH_LONG).show()
+    /**
+     * Opens a mail to the helpdesk with the subject and device details filled in, room above
+     * them for what happened. Falls back to the Telegram group when nothing can send mail.
+     */
+    fun send(context: Context) {
+        val mail = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${AppConstants.SUPPORT_EMAIL}")).apply {
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(AppConstants.SUPPORT_EMAIL))
+            putExtra(Intent.EXTRA_SUBJECT, "$SUBJECT_PREFIX · ${Build.MANUFACTURER} ${Build.MODEL}")
+            putExtra(Intent.EXTRA_TEXT, "\n\n\n${diagnostics(context)}")
         }
+        try {
+            context.startActivity(mail)
+            ServiceLocator.analyticsManager.trackEvent("bug_report_sent", mapOf("channel" to "email"))
+        } catch (_: ActivityNotFoundException) {
+            openTelegram(context)
+        }
+    }
+
+    /** No mail app on the phone: the Telegram group is where a person still reads it. */
+    private fun openTelegram(context: Context) {
         try {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.TELEGRAM_URL)))
             ServiceLocator.analyticsManager.trackEvent("bug_report_sent", mapOf("channel" to "telegram"))
         } catch (_: ActivityNotFoundException) {
-            Toast.makeText(context, "No app can open Telegram links.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Email ${AppConstants.SUPPORT_EMAIL} to report it.", Toast.LENGTH_LONG).show()
         }
     }
 }
