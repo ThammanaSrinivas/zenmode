@@ -52,6 +52,15 @@ object LauncherActivities {
 }
 
 /**
+ * Puts an outside app opened from home into its own task, the way the system launcher does.
+ *
+ * Home (MainActivity) is `singleTask` + `excludeFromRecents`, so without NEW_TASK the app was
+ * stacked inside ZenMode's own task: it never showed up in Recents, and apps whose launch screen
+ * closes itself when it isn't the root of its task (LinkedIn) didn't open at all.
+ */
+internal fun Intent.inOwnTask(): Intent = addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+/**
  * Opens the app a home tile stands for, or refuses it when the Distraction Blocker has it
  * quieted. Lives here rather than inline in MainActivity's HomeScreen call so the launch
  * rules sit with the rest of the launcher-intent handling.
@@ -79,5 +88,7 @@ internal fun Activity.launchHomeApp(appInfo: AppInfo) {
     } else {
         packageManager.getLaunchIntentForPackage(packageName)
     }
-    launchIntent?.let(::startActivity)
+    // RESET_TASK_IF_NEEDED: bring an app that's already running back as it was left, like the
+    // system launcher does, instead of stacking a second copy of its launch screen.
+    launchIntent?.inOwnTask()?.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)?.let(::startActivity)
 }

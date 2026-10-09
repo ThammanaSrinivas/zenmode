@@ -593,7 +593,7 @@ class MainActivity : AppCompatActivity() {
                     onGoogleSearch = { query -> WebSearch.run(this, query) },
                     onLensClick = if (WebSearch.isLensAvailable(this)) ({ WebSearch.openLens(this) }) else null,
                     onPhoneClick = {
-                        startActivity(Intent(Intent.ACTION_DIAL))
+                        startActivity(Intent(Intent.ACTION_DIAL).inOwnTask())
                     },
                     onLockClick = {
                         lockScreen()
@@ -659,6 +659,7 @@ class MainActivity : AppCompatActivity() {
                         startActivity(
                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                 .setData(Uri.parse("package:${appInfo.packageName}"))
+                                .inOwnTask()
                         )
                     },
                     onDismiss = { longPressedApp = null }

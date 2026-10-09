@@ -17,6 +17,11 @@ object WebSearch {
     private const val GOOGLE_PACKAGE = "com.google.android.googlequicksearchbox"
     /** Google Lens lives inside the Google app; this is its exported entry point. */
     private const val LENS_ACTIVITY = "com.google.android.apps.search.lens.LensExportedActivity"
+    /**
+     * Lens's exported activity only accepts a launch marked as a home-screen shortcut; anything
+     * else crashes it on open ("Launch mode only supported for shortcuts", Google app 17.x).
+     */
+    private const val LENS_SHORTCUT_EXTRA = "LensHomescreenShortcut"
     private const val LENS_PLAY_URL =
         "https://play.google.com/store/apps/details?id=$GOOGLE_PACKAGE"
 
@@ -32,7 +37,7 @@ object WebSearch {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return
         val results = Uri.parse("https://www.google.com/search?q=${Uri.encode(trimmed)}")
-        val view = Intent(Intent.ACTION_VIEW, results).addCategory(Intent.CATEGORY_BROWSABLE)
+        val view = Intent(Intent.ACTION_VIEW, results).addCategory(Intent.CATEGORY_BROWSABLE).inOwnTask()
         try {
             context.startActivity(view)
         } catch (_: ActivityNotFoundException) {
@@ -49,19 +54,22 @@ object WebSearch {
      * a phone that ships a Google app too old to have the activity.
      */
     fun openLens(context: Context) {
+        // A bare intent here crashed Lens straight away, so the tap looked like it did nothing
+        // and, since startActivity itself succeeded, no fallback ran either.
         val lens = Intent(Intent.ACTION_VIEW)
             .setClassName(GOOGLE_PACKAGE, LENS_ACTIVITY)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra(LENS_SHORTCUT_EXTRA, true)
+            .inOwnTask()
         if (lens.resolveActivity(context.packageManager) != null) {
             runCatching { context.startActivity(lens) }.onSuccess { return }
         }
         val google = context.packageManager.getLaunchIntentForPackage(GOOGLE_PACKAGE)
         if (google != null) {
-            context.startActivity(google)
+            context.startActivity(google.inOwnTask())
             return
         }
         runCatching {
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(LENS_PLAY_URL)))
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(LENS_PLAY_URL)).inOwnTask())
         }.onFailure {
             Toast.makeText(context, "Install the Google app to scan.", Toast.LENGTH_SHORT).show()
         }
