@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.GoldOrder
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.SettingsMenuButton
@@ -665,7 +666,7 @@ private fun DematNote(dematMaskedId: String, onViewTermsClick: () -> Unit, modif
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = zen900)) {
                     append("$dematMaskedId.")
                 }
-                append(" ZenMode OS never holds, moves or advises on your money the order is placed by you in Kite. ")
+                append(" $PRODUCT_NAME never holds, moves or advises on your money the order is placed by you in Kite. ")
                 withLink(
                     LinkAnnotation.Clickable(
                         tag = "terms",

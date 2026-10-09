@@ -1,9 +1,9 @@
 package com.zenlauncher.zenmode.share
 
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.PromiseStreak
 import com.zenlauncher.zenmode.PromiseUnit
-import com.zenlauncher.zenmode.ui.components.PRODUCT_NAME
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale

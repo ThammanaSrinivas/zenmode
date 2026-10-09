@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 
 @Composable
 fun ForceUpdateDialog(
@@ -32,7 +33,7 @@ fun ForceUpdateDialog(
         },
         text = {
             Text(
-                text = "A new version of ZenMode OS is required to continue. Please update to the latest version to enjoy new features and improvements.",
+                text = "A new version of $PRODUCT_NAME is required to continue. Please update to the latest version to enjoy new features and improvements.",
                 style = MaterialTheme.typography.bodyMedium
             )
         },

@@ -3,15 +3,24 @@ package com.zenlauncher.zenmode
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.widget.Toast
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import kotlinx.coroutines.TimeoutCancellationException
+
+/** Puts a buddy [code] on the clipboard, confirming with a toast when [confirm]. */
+fun copyInviteCode(context: Context, code: String, confirm: Boolean = true) {
+    context.getSystemService(ClipboardManager::class.java)
+        .setPrimaryClip(ClipData.newPlainText("$PRODUCT_NAME Code", code))
+    if (confirm) Toast.makeText(context, "Code copied!", Toast.LENGTH_SHORT).show()
+}
 
 /**
  * The "My Zen Circle" connect actions — share a link, trade codes, random connect —
@@ -25,12 +34,8 @@ class BuddyConnector(
 ) {
 
     fun copyUserCode(code: String, showToast: Boolean) {
-        val clipboard = activity.getSystemService(ClipboardManager::class.java)
-        clipboard.setPrimaryClip(ClipData.newPlainText("ZenMode OS Code", code))
+        copyInviteCode(activity, code, confirm = showToast)
         ServiceLocator.analyticsTracker.trackBuddyCodeCopied("manual")
-        if (showToast) {
-            Toast.makeText(activity, "Code copied!", Toast.LENGTH_SHORT).show()
-        }
     }
 
     /** "Share a link": this user's invite link, via the system share sheet. */
@@ -41,7 +46,7 @@ class BuddyConnector(
         // with no app installed - the zenmodeos.com/b/ page there points to the Play Store instead.
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on ZenMode OS")
+            putExtra(Intent.EXTRA_SUBJECT, "Be my Zen Bro on $PRODUCT_NAME")
             putExtra(Intent.EXTRA_TEXT, inviteMessage(code))
         }
         activity.startActivity(Intent.createChooser(intent, "Share invite"))
@@ -53,7 +58,7 @@ class BuddyConnector(
         ServiceLocator.analyticsTracker.trackBuddyShareStarted("circle_link")
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Join my Zen Circle on ZenMode OS")
+            putExtra(Intent.EXTRA_SUBJECT, "Join my Zen Circle on $PRODUCT_NAME")
             putExtra(Intent.EXTRA_TEXT, circleInviteMessage(circleId))
         }
         activity.startActivity(Intent.createChooser(intent, "Share invite"))
@@ -171,10 +176,10 @@ class BuddyConnector(
     companion object {
         /** The invite text: the user's zenmodeos.com/b/ invite link. Shared by the link and the circle card. */
         fun inviteMessage(code: String): String =
-            "Be my Zen Bro on ZenMode OS! ${AppConstants.BUDDY_INVITE_BASE_URL}$code"
+            "Be my Zen Bro on $PRODUCT_NAME! ${AppConstants.BUDDY_INVITE_BASE_URL}$code"
 
         /** Same idea for a real Zen Circle -- separate path/message, see [shareCircleInvite]. */
         fun circleInviteMessage(circleId: String): String =
-            "Join my Zen Circle on ZenMode OS! ${AppConstants.CIRCLE_INVITE_BASE_URL}$circleId"
+            "Join my Zen Circle on $PRODUCT_NAME! ${AppConstants.CIRCLE_INVITE_BASE_URL}$circleId"
     }
 }

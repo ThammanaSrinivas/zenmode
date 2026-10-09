@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode.share
 
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.recap.formatMinutes
 import java.time.LocalDate
@@ -82,7 +83,7 @@ data class ScoreShare(
     val footer: String = today.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.US)).uppercase(Locale.US)
 
     val shareText: String =
-        "$score/10 on ZenMode OS today — ${band.label}. What's yours? ${AppConstants.PLAY_STORE_URL}"
+        "$score/10 on $PRODUCT_NAME today — ${band.label}. What's yours? ${AppConstants.PLAY_STORE_URL}"
 
     val description: String = "$title $caption Change from yesterday $delta. " +
         "${formatMinutes(reclaimedMinutes.coerceAtLeast(0).toLong())} won back today."

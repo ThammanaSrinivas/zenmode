@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.recap
 
+import android.content.ActivityNotFoundException
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -18,9 +19,10 @@ import android.provider.MediaStore
 import androidx.annotation.ColorRes
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.shareableUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -35,6 +37,8 @@ import java.util.Locale
  * it needs no extra dependency and renders identically on every device.
  */
 object RecapReport {
+
+    const val MIME_TYPE = "application/pdf"
 
     fun fileName(recap: WeeklyRecap) = "ZenMode-OS-week-${recap.weekStart}.pdf"
 
@@ -52,7 +56,7 @@ object RecapReport {
         val resolver = context.contentResolver
         val values = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, fileName(recap))
-            put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+            put(MediaStore.Downloads.MIME_TYPE, MIME_TYPE)
             put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             put(MediaStore.Downloads.IS_PENDING, 1)
         }
@@ -76,7 +80,7 @@ object RecapReport {
      */
     suspend fun share(context: Context, recap: WeeklyRecap, attachPdf: Boolean) {
         val summary = "My week in Zen (${recap.rangeLabel()}): ${formatMinutes(recap.totalMinutes)} on my phone, " +
-            "promise kept ${recap.daysKept} of 7 days. Tracked with ZenMode OS: zenmodeos.com"
+            "promise kept ${recap.daysKept} of 7 days. Tracked with $PRODUCT_NAME: zenmodeos.com"
         val send = Intent(Intent.ACTION_SEND).apply {
             putExtra(Intent.EXTRA_SUBJECT, "My week in Zen · ${recap.rangeLabel()}")
             putExtra(Intent.EXTRA_TEXT, summary)
@@ -86,14 +90,26 @@ object RecapReport {
                 val folder = File(context.cacheDir, SHARE_FOLDER).apply { mkdirs() }
                 File(folder, fileName(recap)).also { f -> f.outputStream().use { write(context, recap, it) } }
             }
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-            send.type = "application/pdf"
+            val uri = context.shareableUri(file)
+            send.type = MIME_TYPE
             send.putExtra(Intent.EXTRA_STREAM, uri)
             send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         } else {
             send.type = "text/plain"
         }
         context.startActivity(Intent.createChooser(send, "Share weekly report"))
+    }
+
+    /** Opens a saved report in the phone's PDF viewer; with none installed it stays in Downloads. */
+    fun open(context: Context, uri: Uri) {
+        val view = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, MIME_TYPE)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        try {
+            context.startActivity(view)
+        } catch (_: ActivityNotFoundException) {
+            // No PDF viewer installed; the file is still in Downloads.
+        }
     }
 
     /** Matches the cache-path in res/xml/file_paths.xml. */
@@ -274,9 +290,9 @@ object RecapReport {
         private fun footer() {
             val generated = LocalDate.now().format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
             val small = text(geist, 8f, color(R.color.stone_500))
-            c.drawText("Generated on this phone by ZenMode OS on $generated. Screen time comes from Android's usage data.",
+            c.drawText("Generated on this phone by $PRODUCT_NAME on $generated. Screen time comes from Android's usage data.",
                 margin, PAGE_H - 44f, small)
-            c.drawText("ZenMode OS never holds or receives your money. Investing happens in your own broker's app. Not investment advice.",
+            c.drawText("$PRODUCT_NAME never holds or receives your money. Investing happens in your own broker's app. Not investment advice.",
                 margin, PAGE_H - 30f, small)
         }
 

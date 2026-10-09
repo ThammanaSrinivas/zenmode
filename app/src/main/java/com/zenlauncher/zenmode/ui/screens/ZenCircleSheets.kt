@@ -74,6 +74,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
@@ -313,7 +314,7 @@ private fun SheetContent(
                 iconRes = R.drawable.ic_zen_circle_share,
                 iconSize = 26.42.rdp,
                 title = "Share invite link",
-                subtitle = "Works even without having ZenMode OS installed",
+                subtitle = "Works even without having $PRODUCT_NAME installed",
                 enabled = userCode != null,
                 entranceDelay = 140,
                 onClick = onShareInviteLink

@@ -138,17 +138,18 @@ fun ZenCheckInOverlay(
                 if (onShareClick != null && card.kind == ZenCheckInKind.CELEBRATION) {
                     // A 48dp target that draws as a quiet glyph, so the card's one loud thing
                     // stays the streak.
+                    val label = "Share my streak"
                     Box(
                         modifier = Modifier
                             .size(48.dp)
                             .offset(x = 12.dp, y = (-4).dp)
                             .clip(CircleShape)
-                            .clickable(onClickLabel = "Share my streak", role = Role.Button, onClick = onShareClick),
+                            .clickable(onClickLabel = label, role = Role.Button, onClick = onShareClick),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Share,
-                            contentDescription = "Share my streak",
+                            contentDescription = label,
                             tint = PromiseKeptGreen,
                             modifier = Modifier.size(20.rdp)
                         )

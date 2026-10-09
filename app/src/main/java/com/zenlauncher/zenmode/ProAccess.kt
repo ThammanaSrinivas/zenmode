@@ -7,7 +7,9 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.coreapi.zenPrefs
 import com.zenlauncher.zenmode.ui.screens.ProEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -18,7 +20,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * Debug builds can additionally switch PRO on locally to test PRO surfaces.
  */
 object ProAccess {
-    private const val PREFS_NAME = "zenmode_prefs"
     private const val KEY_DEBUG_OVERRIDE = "pro_debug_override"
 
     @Volatile
@@ -47,7 +48,7 @@ object ProAccess {
 
     fun setDebugOverride(context: Context, enabled: Boolean) {
         if (!BuildConfig.DEBUG) return
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
             .edit().putBoolean(KEY_DEBUG_OVERRIDE, enabled).apply()
         debugOverride(context).value = enabled
     }
@@ -55,7 +56,7 @@ object ProAccess {
     private fun debugOverride(context: Context): MutableStateFlow<Boolean> =
         debugOverride ?: synchronized(this) {
             debugOverride ?: MutableStateFlow(
-                BuildConfig.DEBUG && context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                BuildConfig.DEBUG && context.zenPrefs()
                     .getBoolean(KEY_DEBUG_OVERRIDE, false)
             ).also { debugOverride = it }
         }
@@ -81,8 +82,8 @@ object ProAccess {
      */
     private fun requestAccess(context: Context) {
         val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${AppConstants.SUPPORT_EMAIL}"))
-            .putExtra(Intent.EXTRA_SUBJECT, "ZenMode OS PRO early access")
-            .putExtra(Intent.EXTRA_TEXT, "Hi ZenMode OS team, I'd love early access to ZenMode OS PRO.")
+            .putExtra(Intent.EXTRA_SUBJECT, "$PRODUCT_NAME PRO early access")
+            .putExtra(Intent.EXTRA_TEXT, "Hi $PRODUCT_NAME team, I'd love early access to $PRODUCT_NAME PRO.")
         try {
             context.startActivity(intent)
         } catch (_: ActivityNotFoundException) {

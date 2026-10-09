@@ -1,7 +1,5 @@
 package com.zenlauncher.zenmode
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -58,11 +56,7 @@ class AccountabilityActivity : AppCompatActivity() {
                 AccountabilityScreen(
                     uiState = uiState,
                     onBackClick = { finish() },
-                    onCopyCode = { code ->
-                        val clipboard = getSystemService(ClipboardManager::class.java)
-                        clipboard.setPrimaryClip(ClipData.newPlainText("ZenMode OS Code", code))
-                        Toast.makeText(this@AccountabilityActivity, "Code copied!", Toast.LENGTH_SHORT).show()
-                    },
+                    onCopyCode = { code -> copyInviteCode(this@AccountabilityActivity, code) },
                     onBackToHomeClick = { finish() },
                     onChangeBuddyConfirmed = { viewModel.disconnectBuddy() },
                     myLikes = myLikes,

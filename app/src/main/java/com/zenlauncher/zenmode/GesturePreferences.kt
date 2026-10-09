@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode
 
 import android.content.Context
+import com.zenlauncher.zenmode.coreapi.zenPrefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -26,7 +27,6 @@ enum class HomeGesture(val isPro: Boolean) {
 }
 
 object GesturePreferences {
-    private const val PREFS_NAME = "zenmode_prefs"
 
     @Volatile
     private var flow: MutableStateFlow<Set<HomeGesture>>? = null
@@ -38,7 +38,7 @@ object GesturePreferences {
         gesture in flow(context).value
 
     fun setEnabled(context: Context, gesture: HomeGesture, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
             .edit().putBoolean(key(gesture), enabled).apply()
         flow(context).value = read(context)
     }
@@ -62,7 +62,7 @@ object GesturePreferences {
         }
 
     private fun read(context: Context): Set<HomeGesture> {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = context.zenPrefs()
         return HomeGesture.entries.filterTo(LinkedHashSet()) { prefs.getBoolean(key(it), false) }
     }
 

@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import java.util.Locale
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.MoodState
 import com.zenlauncher.zenmode.R
@@ -490,7 +491,7 @@ private fun ResistenceHeader(streaks: Int) {
     ) {
         Image(
             painter = painterResource(R.drawable.ic_zen_mark_gradient),
-            contentDescription = "ZenMode OS",
+            contentDescription = PRODUCT_NAME,
             modifier = Modifier.size(44.rdp)
         )
 

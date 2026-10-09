@@ -41,6 +41,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.BuildConfig
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenAccessibilityService
@@ -110,15 +111,15 @@ internal fun PhoneSettingsGroup() {
     ZenSettingsGroup(label = "Phone") {
         ZenSettingsRow(
             title = "Default home app",
-            subtitle = "ZenMode OS only works as your home screen.",
-            value = if (state.isDefaultHome) "ZenMode OS" else "Not set",
+            subtitle = "$PRODUCT_NAME only works as your home screen.",
+            value = if (state.isDefaultHome) PRODUCT_NAME else "Not set",
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_HOME_SETTINGS)) }
         )
         ZenRowDivider()
         ZenSettingsRow(
             title = "Usage access",
-            subtitle = "Lets ZenMode OS read your screen time. It never leaves the phone.",
+            subtitle = "Lets $PRODUCT_NAME read your screen time. It never leaves the phone.",
             value = if (state.usageAccess) "Allowed" else "Needed",
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
@@ -150,7 +151,7 @@ internal fun PhoneSettingsGroup() {
         )
         ZenRowDivider()
         ZenSettingsRow(
-            title = "ZenMode OS notifications",
+            title = "$PRODUCT_NAME notifications",
             subtitle = "Weekly reports and your Zen Bro's nudges.",
             trailing = RowTrailing.External,
             onClick = {

@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode
 
 import android.content.Context
+import com.zenlauncher.zenmode.coreapi.zenPrefs
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -12,7 +13,6 @@ import java.time.LocalTime
  * The evening time is the one piece of this the user controls — Settings → Daily check-in.
  */
 object ZenCheckInPreferences {
-    private const val PREFS_NAME = "zenmode_prefs"
     private const val KEY_ENABLED = "check_in_enabled"
     private const val KEY_EVENING_MINUTE_OF_DAY = "check_in_evening_minute_of_day"
     private const val KEY_LAST_SHOWN_PREFIX = "check_in_last_shown_"
@@ -63,5 +63,5 @@ object ZenCheckInPreferences {
     private const val LATEST_MINUTE_OF_DAY = 23 * 60 + 30 // 23:30
 
     private fun prefs(context: Context) =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
 }

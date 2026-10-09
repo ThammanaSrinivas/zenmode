@@ -7,6 +7,7 @@ import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.coreapi.SessionLogRepository
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.ZenScore
+import com.zenlauncher.zenmode.coreapi.zenPrefs
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -24,7 +25,7 @@ class ZenScoreStore(
     private val sessionLogRepository: SessionLogRepository = SessionLogRepository(context, repository)
 ) {
 
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs = context.zenPrefs()
 
     /** Recomputes today's score from [usage] (or a fresh read), saves it and returns it. */
     fun refresh(usage: DailyUsage = repository.getTodayUsage()): Int {
@@ -53,7 +54,6 @@ class ZenScoreStore(
     }
 
     private companion object {
-        const val PREFS_NAME = "zenmode_prefs"
         const val KEY_PREFIX = "zen_score_"
     }
 }

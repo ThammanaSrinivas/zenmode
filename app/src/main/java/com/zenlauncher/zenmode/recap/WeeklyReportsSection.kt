@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.pressScale
 import com.zenlauncher.zenmode.ui.components.rememberBrandOsGradient
@@ -295,7 +296,7 @@ private fun LockedReports(reports: List<WeeklyRecap>, onUnlockPro: () -> Unit) {
 private fun EmptyReports() {
     val colors = ZenTheme.colors
     Text(
-        text = "Your first report arrives on Monday morning, after a full week with ZenMode OS.",
+        text = "Your first report arrives on Monday morning, after a full week with $PRODUCT_NAME.",
         fontFamily = Geist,
         fontSize = 14.rsp,
         color = colors.textSecondary,

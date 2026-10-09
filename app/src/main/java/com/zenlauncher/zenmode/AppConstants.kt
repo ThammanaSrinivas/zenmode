@@ -1,6 +1,13 @@
 package com.zenlauncher.zenmode
 
 object AppConstants {
+    // The product's name wherever the app says it: "Welcome to $PRODUCT_NAME". ZenModeWordmark
+    // draws its "OS" in the brand gradient wherever it appears in text. The only other copies
+    // are in res/values/strings.xml (launcher label, accessibility description), which can't
+    // reference Kotlin. scripts/check-duplicate-literals.sh fails on any other spelling.
+    // ONE_SPELLING
+    const val PRODUCT_NAME = "ZenMode OS"
+
     const val THRESHOLD_HAPPY_MINUTES = 120
     const val THRESHOLD_NEUTRAL_MINUTES = 210
     const val GOAL_UNLOCKS_COUNT = 60
@@ -105,6 +112,6 @@ object AppConstants {
     // Play Store listing. Same id="com.zenlauncher.zenmode" MainActivity/SettingsActivity
     // build from `packageName` for the in-app "Rate us" flow; hardcoded here since this
     // object has no Context. Doubles as the download CTA appended to every share-card's
-    // share text (Zen Score / Zen Gold / Streaks — see HomeShareOverlays.kt, HomeScreen.kt).
+    // share text (Zen Score / Zen Gold / Streaks / weekly story — see share/*Share.kt).
     const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.zenlauncher.zenmode&hl=en_IN"
 }

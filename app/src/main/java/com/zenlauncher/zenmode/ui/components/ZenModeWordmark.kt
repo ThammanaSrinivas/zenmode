@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import kotlin.math.abs
@@ -43,9 +44,8 @@ import kotlin.math.sin
 
 // ── ZenMode OS wordmark ─────────────────────────────────────────────
 // Brand rule: in "ZenMode OS" the "OS" is always drawn in the brand OS gradient.
-// Every screen that names the product goes through this file.
-
-const val PRODUCT_NAME = "ZenMode OS"
+// Every screen that draws the product's name goes through this file; the name itself
+// is AppConstants.PRODUCT_NAME.
 
 /**
  * Figma's "Brand zen gradient" style: a CSS linear-gradient at -67.92deg through

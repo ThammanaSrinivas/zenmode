@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.media.SoundPool
 import android.os.SystemClock
 import androidx.annotation.RawRes
+import com.zenlauncher.zenmode.coreapi.zenPrefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -55,7 +56,6 @@ enum class Sfx(@RawRes val res: Int, val volume: Float) {
  *  · sonification stream, so it follows the system's own "touch sounds" volume
  */
 object ZenSound {
-    private const val PREFS_NAME = "zenmode_prefs"
     private const val KEY_ENABLED = "ui_sounds_enabled"
     private const val MIN_GAP_MS = 45L
     private const val MASTER = 0.6f
@@ -73,7 +73,7 @@ object ZenSound {
     fun init(context: Context) {
         if (pool != null) return
         val app = context.applicationContext
-        _enabled.value = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getBoolean(KEY_ENABLED, true)
+        _enabled.value = app.zenPrefs().getBoolean(KEY_ENABLED, true)
         audio = app.getSystemService(AudioManager::class.java)
         pool = SoundPool.Builder()
             .setMaxStreams(4)
@@ -94,14 +94,14 @@ object ZenSound {
     }
 
     fun setEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
             .edit().putBoolean(KEY_ENABLED, enabled).apply()
         _enabled.value = enabled
     }
 
     /** Re-reads the stored switch; called when the prefs file is wiped out from under the cache. */
     internal fun reload(context: Context) {
-        _enabled.value = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        _enabled.value = context.zenPrefs()
             .getBoolean(KEY_ENABLED, true)
     }
 

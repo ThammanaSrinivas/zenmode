@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode.share
 
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.GoldOrder
 import com.zenlauncher.zenmode.ZenGoldPromiseState
 import java.time.LocalDate
@@ -95,11 +96,11 @@ data class GoldShare(
     }
 
     val shareText: String = when (tier) {
-        GoldTier.EARNING -> "Turning my screen time into gold with ZenMode OS — $kept of $needed promise days kept " +
+        GoldTier.EARNING -> "Turning my screen time into gold with $PRODUCT_NAME — $kept of $needed promise days kept " +
             "this week. ${AppConstants.PLAY_STORE_URL}"
         GoldTier.UNLOCKED -> "Kept my screen-time promise $kept of 7 days this week, and unlocked gold pay on " +
-            "ZenMode OS. ${AppConstants.PLAY_STORE_URL}"
-        else -> "$amount of screen time turned into gold with ZenMode OS. Start turning yours: " +
+            "$PRODUCT_NAME. ${AppConstants.PLAY_STORE_URL}"
+        else -> "$amount of screen time turned into gold with $PRODUCT_NAME. Start turning yours: " +
             AppConstants.PLAY_STORE_URL
     }
 

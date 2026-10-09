@@ -71,6 +71,8 @@ import kotlin.math.roundToInt
 // soundtrack, or as the settled image; PRO keeps the PDF report one tap away. Making the clip
 // takes a few seconds, so its button turns into the progress, and closing the studio stops it.
 
+private const val CHOOSER_TITLE = "Share your week"
+
 @Composable
 fun WeeklyShareStudio(
     visible: Boolean,
@@ -111,12 +113,12 @@ private fun StudioContent(recap: WeeklyRecap, canSharePdf: Boolean, onSharePdf: 
                 val done = if (save) {
                     ShareExport.saveClip(context, makeArt, share.fileBaseName) { progress = it }
                 } else {
-                    ShareExport.shareClip(context, makeArt, share.fileBaseName, share.shareText, "Share your week") { progress = it }
+                    ShareExport.shareClip(context, makeArt, share.fileBaseName, share.shareText, CHOOSER_TITLE) { progress = it }
                 }
                 if (!done && !save) {
                     // Some phones can't encode video; the settled image still tells the week.
                     Toast.makeText(context, "Couldn't make a clip on this phone, so here's the image.", Toast.LENGTH_LONG).show()
-                    ShareExport.shareImage(context, makeArt, share.fileBaseName, share.shareText, "Share your week")
+                    ShareExport.shareImage(context, makeArt, share.fileBaseName, share.shareText, CHOOSER_TITLE)
                 } else if (!done) {
                     Toast.makeText(context, "Couldn't save the clip. Please try again.", Toast.LENGTH_LONG).show()
                 }
@@ -200,7 +202,7 @@ private fun StudioContent(recap: WeeklyRecap, canSharePdf: Boolean, onSharePdf: 
                 GhostButton("Share image", enabled = !busy, modifier = Modifier.weight(1f)) {
                     feedback.shared()
                     trackShare("share_image", share.analyticsKey)
-                    scope.launch { ShareExport.shareImage(context, makeArt, share.fileBaseName, share.shareText, "Share your week") }
+                    scope.launch { ShareExport.shareImage(context, makeArt, share.fileBaseName, share.shareText, CHOOSER_TITLE) }
                 }
                 GhostButton("Save clip", enabled = !busy, modifier = Modifier.weight(1f)) {
                     feedback.saved()

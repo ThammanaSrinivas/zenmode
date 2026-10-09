@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.ZenModeOsWordmark
 import com.zenlauncher.zenmode.ui.components.pressScale
@@ -129,7 +130,7 @@ internal fun WelcomeStep(
             MissionHeadline(modifier = Modifier.staggeredEntrance(2))
             Spacer(Modifier.height(14.rdp))
             OnboardingBody(
-                text = "ZenMode OS is a calmer home screen that helps you use your phone on purpose, " +
+                text = "$PRODUCT_NAME is a calmer home screen that helps you use your phone on purpose, " +
                     "and brings the people you love along.",
                 modifier = Modifier.staggeredEntrance(3)
             )
@@ -192,7 +193,7 @@ private fun RevampBanner(modifier: Modifier = Modifier) {
                 color = Color.White
             )
             BrandedText(
-                text = "ZenMode is now ZenMode OS. A two-minute tour and you're in.",
+                text = "ZenMode is now $PRODUCT_NAME. A two-minute tour and you're in.",
                 style = TextStyle(
                     fontFamily = Geist,
                     fontSize = 13.rsp,

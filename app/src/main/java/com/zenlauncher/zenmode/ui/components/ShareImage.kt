@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -20,6 +21,13 @@ import java.io.File
 
 private const val TAG = "ShareImage"
 
+/**
+ * A content:// Uri another app may read for [file], through the FileProvider the manifest
+ * declares (authority `${applicationId}.fileprovider`, readable folders in res/xml/file_paths.xml).
+ * Pair it with FLAG_GRANT_READ_URI_PERMISSION on the intent that carries it.
+ */
+fun Context.shareableUri(file: File): Uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+
 /** Writes [bitmap] to the share cache and opens the system share sheet with [text]. */
 suspend fun shareImage(
     context: Context,
@@ -35,7 +43,7 @@ suspend fun shareImage(
                 f.outputStream().use { out -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, out) }
             }
         }
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val uri = context.shareableUri(file)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)

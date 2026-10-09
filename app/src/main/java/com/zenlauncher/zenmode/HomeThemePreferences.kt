@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode
 
 import android.content.Context
+import com.zenlauncher.zenmode.coreapi.zenPrefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -20,7 +21,6 @@ enum class HomeTheme(val label: String, val caption: String) {
 }
 
 object HomeThemePreferences {
-    private const val PREFS_NAME = "zenmode_prefs"
     private const val KEY_THEME = "home_theme"
 
     @Volatile
@@ -29,7 +29,7 @@ object HomeThemePreferences {
     fun state(context: Context): StateFlow<HomeTheme> = flow(context)
 
     fun set(context: Context, theme: HomeTheme) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
             .edit().putString(KEY_THEME, theme.name).apply()
         flow(context).value = theme
     }
@@ -45,7 +45,7 @@ object HomeThemePreferences {
     }
 
     private fun read(context: Context): HomeTheme =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(KEY_THEME, null)
+        context.zenPrefs().getString(KEY_THEME, null)
             ?.let { name -> HomeTheme.entries.firstOrNull { it.name == name } }
             ?: HomeTheme.MOOD
 }

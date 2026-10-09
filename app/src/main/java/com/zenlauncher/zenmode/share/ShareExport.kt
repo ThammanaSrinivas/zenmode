@@ -10,9 +10,9 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.FileProvider
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
 import com.zenlauncher.zenmode.ui.components.shareImage
+import com.zenlauncher.zenmode.ui.components.shareableUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
@@ -56,7 +56,7 @@ object ShareExport {
     ): Boolean {
         val file = encode(context, art, fileBaseName, onProgress) ?: return false
         return runCatching {
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            val uri = context.shareableUri(file)
             val send = Intent(Intent.ACTION_SEND).apply {
                 type = "video/mp4"
                 putExtra(Intent.EXTRA_STREAM, uri)

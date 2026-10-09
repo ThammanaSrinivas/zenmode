@@ -6,6 +6,7 @@ import android.content.res.Resources
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatDelegate
+import com.zenlauncher.zenmode.coreapi.zenPrefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -19,7 +20,6 @@ enum class ThemeMode(val label: String, private val nightMode: Int) {
 }
 
 object ThemePreferences {
-    private const val PREFS_NAME = "zenmode_prefs"
     private const val KEY_MODE = "theme_mode"
     /** v3.0 stored a plain on/off. Read once as a fallback so nobody's choice flips on update. */
     private const val KEY_LEGACY_DARK = "dark_mode_enabled"
@@ -40,7 +40,7 @@ object ThemePreferences {
         }
 
     fun mode(context: Context): ThemeMode {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = context.zenPrefs()
         prefs.getString(KEY_MODE, null)
             ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } }
             ?.let { return it }
@@ -74,7 +74,7 @@ object ThemePreferences {
      */
     fun setMode(context: Context, mode: ThemeMode, applyAfterMillis: Long = 0L) {
         val app = context.applicationContext
-        app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        app.zenPrefs()
             .edit()
             .putString(KEY_MODE, mode.name)
             .remove(KEY_LEGACY_DARK)
@@ -103,7 +103,7 @@ object ThemePreferences {
      * home gestures until the next launch.
      */
     fun clear(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
             .edit().clear().apply()
         modeFlow?.value = ThemeMode.SYSTEM
         // Reapply to AppCompat too: otherwise a prior explicit Dark/Light choice stays forced on

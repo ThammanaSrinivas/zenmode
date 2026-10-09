@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.pressScale
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
@@ -101,7 +102,7 @@ internal fun HomeAppsStep(
         },
         bottomBar = {
             OnboardingButton(
-                text = if (isDefaultLauncher) "Enter ZenMode" else "Set ZenMode OS as default",
+                text = if (isDefaultLauncher) "Enter ZenMode" else "Set $PRODUCT_NAME as default",
                 onClick = onSetDefault,
                 enabled = selected.isNotEmpty(),
                 style = OnboardingButtonStyle.Brand

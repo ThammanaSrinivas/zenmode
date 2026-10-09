@@ -83,6 +83,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.core.graphics.drawable.toBitmap
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -360,7 +361,7 @@ private fun AccessibilityBanner(onClick: () -> Unit) {
             .padding(14.rdp)
     ) {
         Text(
-            text = "Turn on ZenMode OS in Accessibility",
+            text = "Turn on $PRODUCT_NAME in Accessibility",
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.rsp,

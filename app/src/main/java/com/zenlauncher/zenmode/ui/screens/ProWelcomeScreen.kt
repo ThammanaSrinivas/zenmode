@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.ui.components.ForestGlass
 import com.zenlauncher.zenmode.ui.components.ForestGlassLine
 import com.zenlauncher.zenmode.ui.components.ForestScene
@@ -134,7 +135,7 @@ fun ProWelcome(
             ProOpensCard()
             Spacer(Modifier.height(20.rdp))
             ZenButton(
-                text = "Back to ZenMode OS",
+                text = "Back to $PRODUCT_NAME",
                 onClick = onContinue,
                 modifier = Modifier
                     .padding(bottom = 16.rdp)

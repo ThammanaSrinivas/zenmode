@@ -75,6 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.onboarding.DarkSystemBars
 import com.zenlauncher.zenmode.onboarding.OnboardingButton
@@ -646,7 +647,7 @@ private fun LockedInvestPill(daysToUnlock: Int, content: Color) {
 @Composable
 private fun Disclaimer(content: Color) {
     Text(
-        text = "ZenMode OS never holds or receives your money. You invest in your own broker's app, " +
+        text = "$PRODUCT_NAME never holds or receives your money. You invest in your own broker's app, " +
             "at your discretion. This is not investment advice, and gold prices can go down as well as up.",
         fontFamily = Geist,
         fontSize = 11.rsp,

@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -76,7 +77,7 @@ fun AccessibilityDisclosureScreen(
 
             // Section: Why
             Text(
-                text = "Why ZenMode OS needs Accessibility Service",
+                text = "Why $PRODUCT_NAME needs Accessibility Service",
                 color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = Geist,
@@ -86,7 +87,7 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "ZenMode OS uses Android's Accessibility Service API for two features:\n\n" +
+                text = "$PRODUCT_NAME uses Android's Accessibility Service API for two features:\n\n" +
                         "1. Lock screen: Android gives a launcher no other way to lock the screen, " +
                         "so this permission is required for the lock button to work.\n\n" +
                         "2. In-app content blocking (optional): when you turn on blocking for a " +

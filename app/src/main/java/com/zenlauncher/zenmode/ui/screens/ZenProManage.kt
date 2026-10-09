@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
@@ -139,7 +140,7 @@ internal fun ManagePro(
             // no app can act on a subscription on the user's behalf, only Play's own UI can.
             else ->
                 "Renewals, cancellations and refunds are all managed in the Play Store, not " +
-                    "here. Changes made there can take a few minutes to show up in ZenMode OS."
+                    "here. Changes made there can take a few minutes to show up in $PRODUCT_NAME."
         },
         fontFamily = Geist,
         fontSize = 15.rsp,

@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.accessibility.A11yPermissionMonitor
 import com.zenlauncher.zenmode.accessibility.ContentBlockRules
 import com.zenlauncher.zenmode.accessibility.NodeQuery
@@ -182,7 +183,7 @@ class ZenAccessibilityService : AccessibilityService() {
         Log.i(TAG, "Blocking $pkg / ${surface.id}")
         performGlobalAction(GLOBAL_ACTION_BACK)
         ServiceLocator.analyticsTracker.trackBlockedAppAttempt(pkg)
-        Toast.makeText(this, "Blocked by ZenMode OS", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Blocked by $PRODUCT_NAME", Toast.LENGTH_SHORT).show()
         ContentBlockPrefs.recordStop(this)
 
         runCatching {
@@ -203,7 +204,7 @@ class ZenAccessibilityService : AccessibilityService() {
         val label = runCatching {
             packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
         }.getOrDefault("This app")
-        Toast.makeText(this, "$label is quieted by ZenMode OS", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "$label is quieted by $PRODUCT_NAME", Toast.LENGTH_SHORT).show()
         ContentBlockPrefs.recordStop(this)
 
         runCatching {

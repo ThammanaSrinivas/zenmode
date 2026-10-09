@@ -722,6 +722,7 @@ private fun DownloadReportButton(isPro: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun ShareScoreButton(onClick: () -> Unit) {
+    val label = "Share Zen Score"
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -729,10 +730,10 @@ private fun ShareScoreButton(onClick: () -> Unit) {
             .fillMaxHeight()
             .clip(RoundedCornerShape(50))
             .background(colorResource(R.color.zen_950))
-            .pressScale(onClick = onClick, onClickLabel = "Share Zen Score", pressedScale = 0.97f)
+            .pressScale(onClick = onClick, onClickLabel = label, pressedScale = 0.97f)
     ) {
         Text(
-            text = "Share Zen Score",
+            text = label,
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 18.rsp,

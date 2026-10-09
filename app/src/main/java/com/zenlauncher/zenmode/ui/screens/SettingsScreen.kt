@@ -95,6 +95,7 @@ import java.time.format.TextStyle as JavaTextStyle
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.graphics.Color
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.ZenCheckInPreferences
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -388,7 +389,7 @@ fun SettingsScreen(
                     ZenSettingsGroup(label = "Your data") {
                         ZenSettingsRow(
                             title = "Export data",
-                            subtitle = "A CSV of every day ZenMode OS remembers.",
+                            subtitle = "A CSV of every day $PRODUCT_NAME remembers.",
                             pro = proTag(),
                             onClick = { openProFeature(ProFeature.DATA_EXPORT) }
                         )
@@ -412,10 +413,10 @@ fun SettingsScreen(
                     )
                 }
 
-                ZenSettingsGroup(label = "ZenMode OS") {
+                ZenSettingsGroup(label = PRODUCT_NAME) {
                     ZenSettingsRow(title = "Rate on Play Store", trailing = RowTrailing.External, onClick = onRateClick)
                     ZenRowDivider()
-                    ZenSettingsRow(title = "Share ZenMode OS", trailing = RowTrailing.External, onClick = onShareClick)
+                    ZenSettingsRow(title = "Share $PRODUCT_NAME", trailing = RowTrailing.External, onClick = onShareClick)
                     ZenRowDivider()
                     ZenSettingsRow(
                         title = "Contribute on GitHub",
@@ -621,7 +622,7 @@ private fun PlanCard(
             }
         }
         Text(
-            text = "ZenMode OS Pro",
+            text = "$PRODUCT_NAME Pro",
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 20.rsp,
@@ -734,7 +735,7 @@ private fun ProFeature.gateCopy(): Triple<String, String, String> = when (this) 
     ProFeature.RANDOM_CONNECT -> Triple(
         "Random Connect",
         "Free keeps the partner you already have.",
-        "Pro pairs you with one other ZenMode OS user. No feed, no profile."
+        "Pro pairs you with one other $PRODUCT_NAME user. No feed, no profile."
     )
     ProFeature.SUPPORTERS_LIST -> Triple(
         "Supporters list",

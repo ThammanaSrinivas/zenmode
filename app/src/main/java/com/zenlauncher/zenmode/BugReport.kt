@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
-import com.zenlauncher.zenmode.ui.components.PRODUCT_NAME
 import java.util.Locale
 
 /**

@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode.coreapi
 
 import android.content.Context
+import com.zenlauncher.zenmode.coreapi.zenPrefs
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -20,7 +21,6 @@ enum class PromiseEditLock {
  * reasoning as [ZenScore] itself — and core-private cannot depend on the app module.
  */
 object PromisePreferences {
-    private const val PREFS_NAME = "zenmode_prefs"
     private const val KEY_DAILY_HOURS = "promise_daily_hours"
     private const val KEY_EDIT_WEEK_START = "promise_edit_week_start"
     private const val KEY_EDIT_COUNT = "promise_edit_count"
@@ -29,12 +29,12 @@ object PromisePreferences {
     private const val PRO_EDITS_PER_WEEK = 2
 
     fun getDailyHours(context: Context): Int =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
             .getInt(KEY_DAILY_HOURS, CoreConstants.PLACEHOLDER_PROMISE_HOURS)
             .coerceIn(CoreConstants.PROMISE_MIN_DAILY_HOURS, CoreConstants.PROMISE_MAX_DAILY_HOURS)
 
     fun setDailyHours(context: Context, hours: Int) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
             .edit()
             .putInt(
                 KEY_DAILY_HOURS,
@@ -58,7 +58,7 @@ object PromisePreferences {
     /** Call once an edit has actually been committed, so it counts against this week's quota. */
     fun recordPromiseEdit(context: Context, today: LocalDate = LocalDate.now()) {
         val used = editsUsedThisWeek(context, today)
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.zenPrefs()
             .edit()
             .putString(KEY_EDIT_WEEK_START, weekStartOf(today).toString())
             .putInt(KEY_EDIT_COUNT, used + 1)
@@ -66,7 +66,7 @@ object PromisePreferences {
     }
 
     private fun editsUsedThisWeek(context: Context, today: LocalDate): Int {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = context.zenPrefs()
         val storedWeekStart = prefs.getString(KEY_EDIT_WEEK_START, null)
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
         if (storedWeekStart != weekStartOf(today)) return 0

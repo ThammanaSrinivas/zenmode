@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.FullLineBox
 import com.zenlauncher.zenmode.ui.components.GeistLineHeight
@@ -166,7 +167,7 @@ data class StepProgress(val segments: Int, val currentIndex: Int) {
     @Composable
     fun TopBar(
         onBack: (() -> Unit)?,
-        eyebrow: String = "Welcome to ZenMode OS",
+        eyebrow: String = "Welcome to $PRODUCT_NAME",
         trailing: (@Composable () -> Unit)? = null
     ) = OnboardingTopBar(
         segments = segments,
@@ -191,7 +192,7 @@ internal fun OnboardingTopBar(
     currentFraction: Float = 1f,
     dark: Boolean = false,
     percent: Int? = null,
-    eyebrow: String = "Welcome to ZenMode OS",
+    eyebrow: String = "Welcome to $PRODUCT_NAME",
     trailing: (@Composable () -> Unit)? = null
 ) {
     val content = if (dark) Color.White else ZenTheme.colors.textPrimary

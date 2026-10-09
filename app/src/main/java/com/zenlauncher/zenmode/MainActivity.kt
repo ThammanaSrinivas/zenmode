@@ -723,11 +723,7 @@ class MainActivity : AppCompatActivity() {
                     AccountabilityScreen(
                         uiState = accountabilityUiState,
                         onBackClick = { showBuddyBattle = false },
-                        onCopyCode = { code ->
-                            val clipboard = getSystemService(android.content.ClipboardManager::class.java)
-                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("ZenMode OS Code", code))
-                            android.widget.Toast.makeText(this@MainActivity, "Code copied!", android.widget.Toast.LENGTH_SHORT).show()
-                        },
+                        onCopyCode = { code -> copyInviteCode(this@MainActivity, code) },
                         onBackToHomeClick = { showBuddyBattle = false },
                         onChangeBuddyConfirmed = { accountabilityViewModel.disconnectBuddy() },
                         myLikes = accMyLikes,

@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.components.taperedBorder
@@ -362,7 +363,7 @@ private fun ShareLinkCard(enabled: Boolean, onShareLink: () -> Unit) {
             )
         }
     }) {
-        StepBody("Anyone can join even without having ZenMode OS installed.")
+        StepBody("Anyone can join even without having $PRODUCT_NAME installed.")
         Spacer(Modifier.height(StepSectionGap))
         ZenCirclePillButton(
             text = "Share link",

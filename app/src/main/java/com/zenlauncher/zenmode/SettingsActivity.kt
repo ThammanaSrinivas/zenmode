@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.lifecycle.lifecycleScope
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
@@ -54,7 +55,7 @@ class SettingsActivity : AppCompatActivity() {
     /** Android 9 has no MediaStore Downloads; the user picks where the PDF goes. */
     private var pendingPickerWeek: LocalDate? = null
     private val createDocument = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/pdf")
+        ActivityResultContracts.CreateDocument(RecapReport.MIME_TYPE)
     ) { uri ->
         val week = pendingPickerWeek ?: return@registerForActivityResult
         pendingPickerWeek = null
@@ -252,18 +253,7 @@ class SettingsActivity : AppCompatActivity() {
             ServiceLocator.analyticsTracker.trackReportDownloaded(week.toString())
             val where = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) " to Downloads" else ""
             Toast.makeText(this@SettingsActivity, "Report saved$where", Toast.LENGTH_SHORT).show()
-            openPdf(uri)
-        }
-    }
-
-    private fun openPdf(uri: Uri) {
-        val view = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, "application/pdf")
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        try {
-            startActivity(view)
-        } catch (_: android.content.ActivityNotFoundException) {
-            // No PDF viewer installed; the file is still in Downloads.
+            RecapReport.open(this@SettingsActivity, uri)
         }
     }
 
@@ -302,13 +292,13 @@ class SettingsActivity : AppCompatActivity() {
     private fun shareZenMode() {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "ZenMode OS")
+            putExtra(Intent.EXTRA_SUBJECT, PRODUCT_NAME)
             putExtra(
                 Intent.EXTRA_TEXT,
-                "Check out ZenMode OS - a minimalist open-source android launcher! ${AppConstants.GITHUB_URL}"
+                "Check out $PRODUCT_NAME - a minimalist open-source android launcher! ${AppConstants.GITHUB_URL}"
             )
         }
-        startActivity(Intent.createChooser(intent, "Share ZenMode OS"))
+        startActivity(Intent.createChooser(intent, "Share $PRODUCT_NAME"))
     }
 
     private fun performLogout(repository: UsageRepository) {

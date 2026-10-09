@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.GoldOrder
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.SettingsMenuButton
@@ -353,7 +354,7 @@ private fun HandOffNotes(units: Int, symbol: String, modifier: Modifier = Modifi
     val unitsLabel = if (units == 1) "1 unit" else "$units units"
     val lines = listOf(
         "In Kite, buy $symbol, $unitsLabel. Nothing else goes with it.",
-        "No money moves through ZenMode OS. We never see your funds or your login.",
+        "No money moves through $PRODUCT_NAME. We never see your funds or your login.",
         "We can't cancel, modify or exit the position for you. Kite handles everything and is solely responsible."
     )
     val noteStyle = FullLineBox.copy(

@@ -64,6 +64,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.Sfx
 import com.zenlauncher.zenmode.ZenSound
@@ -380,7 +381,7 @@ fun ZenCircleSharePreview(
         val scope = rememberCoroutineScope()
         val layer = rememberGraphicsLayer()
         var cardSize by remember { mutableStateOf(IntSize.Zero) }
-        val shareText = shareText ?: "Join my Zen Circle on ZenMode OS. #ZenTogether"
+        val shareText = shareText ?: "Join my Zen Circle on $PRODUCT_NAME. #ZenTogether"
         val feedback = rememberZenFeedback()
         val moment = remember(members, ranks) {
             circleMoment(members.indices.sortedBy { ranks[it] ?: Int.MAX_VALUE }.map { members[it] })

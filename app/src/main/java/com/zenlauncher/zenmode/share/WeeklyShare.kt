@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode.share
 
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.recap.RecapOutcome
 import com.zenlauncher.zenmode.recap.RecapStory
 import com.zenlauncher.zenmode.recap.WeeklyRecap
@@ -67,12 +68,12 @@ data class WeeklyShare(val recap: WeeklyRecap) {
     }
 
     val shareText: String = when (tier) {
-        WeekTier.PERFECT -> "Seven for seven: a perfect week of calmer screen time with ZenMode OS. " +
+        WeekTier.PERFECT -> "Seven for seven: a perfect week of calmer screen time with $PRODUCT_NAME. " +
             AppConstants.PLAY_STORE_URL
-        WeekTier.KEPT -> "Kept my screen-time promise ${recap.daysKept} of 7 days this week with ZenMode OS. " +
+        WeekTier.KEPT -> "Kept my screen-time promise ${recap.daysKept} of 7 days this week with $PRODUCT_NAME. " +
             AppConstants.PLAY_STORE_URL
         WeekTier.MISSED -> "Not every week is calm — ${recap.daysKept} of 7 this time, and a fresh one starts now. " +
-            "ZenMode OS: ${AppConstants.PLAY_STORE_URL}"
+            "$PRODUCT_NAME: ${AppConstants.PLAY_STORE_URL}"
     }
 
     val description: String = "$headline ${recap.rangeLabel(Locale.US)}: $total on the phone, " +

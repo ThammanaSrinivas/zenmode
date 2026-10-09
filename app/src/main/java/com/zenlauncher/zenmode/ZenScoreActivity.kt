@@ -174,18 +174,7 @@ class ZenScoreActivity : AppCompatActivity() {
             }
             ServiceLocator.analyticsTracker.trackReportDownloaded(recap.weekStart.toString())
             toast("Report saved to Downloads")
-            openPdf(uri)
-        }
-    }
-
-    private fun openPdf(uri: Uri) {
-        val view = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, "application/pdf")
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        try {
-            startActivity(view)
-        } catch (_: android.content.ActivityNotFoundException) {
-            // No PDF viewer installed; the file is still in Downloads.
+            RecapReport.open(this@ZenScoreActivity, uri)
         }
     }
 

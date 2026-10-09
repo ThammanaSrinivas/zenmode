@@ -81,6 +81,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
 import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.ui.components.ZenButton
 import com.zenlauncher.zenmode.ui.components.ZenButtonStyle
 import com.zenlauncher.zenmode.ui.components.ZenEyebrow
@@ -229,7 +230,7 @@ fun ZenProScreen(
             .then(if (onPlanPage) Modifier else Modifier.navigationBarsPadding())
     ) {
         ProTopBar(
-            title = if (isPro) "Manage Pro" else "ZenMode OS Pro",
+            title = if (isPro) "Manage Pro" else "$PRODUCT_NAME Pro",
             onBackClick = onBackClick
         )
         if (onPlanPage) {
@@ -879,7 +880,7 @@ private fun ConfirmSheet(
             }
             ZenSheetBody(
                 (if (trial) "A notice arrives before the trial ends. No silent charge. " else "") +
-                    "Cancel any time: Settings → ZenMode OS Pro → Cancel. Two taps, the same two as this."
+                    "Cancel any time: Settings → $PRODUCT_NAME Pro → Cancel. Two taps, the same two as this."
             )
             PriceLine(offer.priceLine())
         }

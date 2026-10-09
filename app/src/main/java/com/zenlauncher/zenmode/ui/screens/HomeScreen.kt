@@ -230,9 +230,7 @@ private val AppsToSearchGap: Dp @Composable get() = 40.rdp
 
 // Figma node 2001:1504 — header text colours and gradients. Values live in colors.xml
 // (SOURCE OF TRUTH: design tokens) — never inline a Color(0x...) literal here.
-// Not private — the Zen Score share card (HomeShareOverlays.kt) draws its big number
-// with the same left-to-right green→orange ramp the header uses, so the two match.
-internal val ZenScoreGradient: Brush
+private val ZenScoreGradient: Brush
     @Composable get() = Brush.linearGradient(
         listOf(
             colorResource(R.color.score_grad_start),

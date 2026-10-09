@@ -3,8 +3,9 @@ package com.zenlauncher.zenmode.recap
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
-import androidx.core.content.FileProvider
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.ZenScore
+import com.zenlauncher.zenmode.ui.components.shareableUri
 import java.io.File
 import java.time.LocalDate
 
@@ -68,15 +69,15 @@ object DataExport {
         if (days.isEmpty()) return 0
         val folder = File(context.cacheDir, SHARE_FOLDER).apply { mkdirs() }
         val file = File(folder, "zenmode-export-$today.csv").apply { writeText(csv(days)) }
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val uri = context.shareableUri(file)
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/csv"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "My ZenMode OS data")
+            putExtra(Intent.EXTRA_SUBJECT, "My $PRODUCT_NAME data")
             clipData = ClipData.newRawUri(file.name, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(send, "Export your ZenMode OS data"))
+        context.startActivity(Intent.createChooser(send, "Export your $PRODUCT_NAME data"))
         return days.size
     }
 }
