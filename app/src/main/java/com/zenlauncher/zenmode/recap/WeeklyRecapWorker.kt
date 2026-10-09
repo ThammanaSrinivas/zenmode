@@ -72,8 +72,21 @@ class WeeklyRecapWorker(context: Context, params: WorkerParameters) : CoroutineW
             val wm = WorkManager.getInstance(context)
             wm.enqueueUniquePeriodicWork(
                 PERIODIC_WORK,
-                ExistingPeriodicWorkPolicy.KEEP,
-                PeriodicWorkRequestBuilder<WeeklyRecapWorker>(6, TimeUnit.HOURS).build()
+                // UPDATE, not KEEP: KEEP would leave every existing install on whatever
+                // schedule it was first enqueued with, so the flex window below would only
+                // ever reach fresh installs.
+                ExistingPeriodicWorkPolicy.UPDATE,
+                // The flex window is the battery-relevant part: the backfill only needs to
+                // happen a few times a day, not at a precise moment, so giving WorkManager a
+                // 2-hour window lets it batch this wakeup with other apps' deferred work
+                // instead of waking the device on its own. Deliberately no battery-not-low
+                // constraint — the whole point of the 6-hour cadence is to record finished
+                // days before Android drops them from usage stats, and a long stretch on low
+                // battery is exactly when a skipped run would lose a day for good.
+                PeriodicWorkRequestBuilder<WeeklyRecapWorker>(
+                    6, TimeUnit.HOURS,
+                    2, TimeUnit.HOURS
+                ).build()
             )
             // Periodic work may not run for hours after install; catch up once now.
             wm.enqueueUniqueWork(
