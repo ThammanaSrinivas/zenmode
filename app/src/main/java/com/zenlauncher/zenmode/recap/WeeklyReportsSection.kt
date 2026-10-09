@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.coreapi.services.Entitlement.Companion.FREE_WEEKLY_REPORTS
 import com.zenlauncher.zenmode.ui.components.pressScale
 import com.zenlauncher.zenmode.ui.components.rememberBrandOsGradient
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
@@ -59,12 +60,13 @@ import java.time.LocalDate
 /**
  * Settings → "Weekly reports".
  *
- * Last week is free for everyone — the week you just lived is the one that changes what you
- * do next, and putting it behind a paywall would make us the thing we built this to fix.
- * PRO opens the weeks before it, and the PDF download on every week.
+ * The last two weeks are free for everyone — the week you just lived, and the one to hold it
+ * against, are what change what you do next, and putting them behind a paywall would make us
+ * the thing we built this to fix. PRO opens the weeks before them, and the PDF download on
+ * every week.
  *
- * [reports] arrives newest-first from [RecapStore.completedWeeks], so the free week is
- * `reports.first()`.
+ * [reports] arrives newest-first from [RecapStore.completedWeeks], so the free weeks are
+ * `reports.take(Entitlement.FREE_WEEKLY_REPORTS)`.
  */
 @Composable
 fun WeeklyReportsSection(
@@ -88,8 +90,8 @@ fun WeeklyReportsSection(
                 color = colors.textPrimary
             )
             // No PRO badge on the heading any more: the section itself isn't PRO, only the
-            // weeks behind last week and the PDF are.
-            if (!isPro && reports.size > 1) {
+            // weeks behind the free ones and the PDF are.
+            if (!isPro && reports.size > FREE_WEEKLY_REPORTS) {
                 Spacer(Modifier.width(8.rdp))
                 ProBadge()
             }
@@ -97,7 +99,7 @@ fun WeeklyReportsSection(
         Spacer(Modifier.height(4.rdp))
         Text(
             text = if (isPro) "Every week you've spent in Zen. Replay it or download it as a PDF."
-            else "Last week is yours to replay, free. Pro opens every week before it, and the PDF.",
+            else "Your last two weeks are free to replay. Pro opens every week before them, and the PDF.",
             fontFamily = Geist,
             fontSize = 14.rsp,
             color = colors.textSecondary
@@ -109,9 +111,9 @@ fun WeeklyReportsSection(
             return@Column
         }
 
-        // Free: the newest week is a real row; PRO: every week is.
-        val open = if (isPro) reports else reports.take(1)
-        val locked = if (isPro) emptyList() else reports.drop(1)
+        // Free: the newest weeks are real rows; PRO: every week is.
+        val open = if (isPro) reports else reports.take(FREE_WEEKLY_REPORTS)
+        val locked = if (isPro) emptyList() else reports.drop(FREE_WEEKLY_REPORTS)
 
         Column(
             modifier = Modifier
@@ -241,7 +243,7 @@ private fun OutcomeChip(kept: Boolean) {
 
 /**
  * Blurred real rows behind a lock — shows what PRO holds without giving it away.
- * [reports] is only the weeks *before* last week; last week is drawn open above this.
+ * [reports] is only the weeks *before* the free ones; those are drawn open above this.
  */
 @Composable
 private fun LockedReports(reports: List<WeeklyRecap>, onUnlockPro: () -> Unit) {
@@ -372,7 +374,7 @@ fun ProUpsellSheet(
             )
             Spacer(Modifier.height(20.rdp))
             Column(verticalArrangement = Arrangement.spacedBy(14.rdp)) {
-                Benefit("Every weekly report, saved for 16 weeks — not just last week")
+                Benefit("Every weekly report, saved for 16 weeks — not just the last two")
                 Benefit("Download reports as PDF")
                 Benefit("Weekly rankings in your Zen Circle")
             }

@@ -72,7 +72,7 @@ private val CompareRows = listOf(
     CompareRow(RandomConnect.NAME, cell("Up to 5/week"), cell("Up to 50/week, first priority")),
     CompareRow("Screen time average", cell("Weekly"), cell("Monthly")),
     CompareRow("Edit my promise", cell("Once a week"), cell("Twice a week")),
-    CompareRow("Weekly report history", No, Yes),
+    CompareRow("Weekly report history", cell("Last 2 weeks"), cell("Last 16 weeks")),
     CompareRow("Devices per account", cell("One"), cell("One")),
     CompareRow("Distraction blocker pause", No, cell("30 minutes")),
     CompareRow("Data export", No, Yes),

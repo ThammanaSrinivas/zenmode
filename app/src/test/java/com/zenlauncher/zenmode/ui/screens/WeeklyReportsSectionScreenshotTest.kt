@@ -18,8 +18,8 @@ import java.time.LocalDate
 
 /**
  * Golden coverage for Settings → "Weekly reports", the section that decides what a free
- * account can replay. Last week is open to everyone and the weeks before it are PRO, so the
- * free golden is the one that has to keep showing exactly one live row above the lock.
+ * account can replay. The last two weeks are open to everyone and the weeks before them are
+ * PRO, so the free golden is the one that has to keep showing exactly two live rows above the lock.
  */
 class WeeklyReportsSectionScreenshotTest {
 
@@ -50,7 +50,7 @@ class WeeklyReportsSectionScreenshotTest {
     )
 
     @Test
-    fun `weekly reports - free, last week open`() {
+    fun `weekly reports - free, last two weeks open`() {
         paparazzi.golden {
             ZenTheme(darkTheme = false) {
                 Section(isPro = false)

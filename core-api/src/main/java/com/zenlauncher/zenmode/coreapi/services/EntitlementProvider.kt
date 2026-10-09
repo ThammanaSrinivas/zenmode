@@ -93,6 +93,8 @@ data class Entitlement(
         const val FREE_PARTNER_LIMIT = 1
         const val PRO_PARTNER_LIMIT = 3
         const val FREE_HISTORY_DAYS = 7
+        /** Newest finished weekly reports a free user can replay; older ones are Pro. */
+        const val FREE_WEEKLY_REPORTS = 2
         /** Random Connect weekly caps (buddy or circle) — see FirestoreDataSource.hasRandomConnectQuota. */
         const val RANDOM_CONNECT_FREE_WEEKLY_LIMIT = 5
         const val RANDOM_CONNECT_PRO_WEEKLY_LIMIT = 50
