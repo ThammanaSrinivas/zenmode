@@ -9,8 +9,8 @@ import com.zenlauncher.zenmode.coreapi.Circle
 import com.zenlauncher.zenmode.coreapi.CircleJoinResult
 import com.zenlauncher.zenmode.coreapi.ReactionType
 import com.zenlauncher.zenmode.coreapi.UsageRepository
-import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 data class CircleUiState(
@@ -57,9 +57,10 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         }
         loadCircle()
 
-        // Live-refresh when a circle_react FCM push arrives while the app is open.
+        // Live-refresh when a circle push arrives while the app is open: a reaction, or someone's
+        // Random Connect just putting this user in a circle.
         viewModelScope.launch {
-            ServiceLocator.circleReactedEvents.collect {
+            merge(ServiceLocator.circleReactedEvents, ServiceLocator.circleJoinedEvents).collect {
                 loadCircle()
             }
         }
@@ -299,46 +300,33 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         _uiState.postValue(_uiState.value!!.copy(errorMessage = null))
     }
 
-    /** Random circle connect -- mirrors BuddyConnector.randomConnect()'s cooldown and weekly
-     * quota (shared counter -- a random circle connect and a random buddy connect draw from
-     * the same weekly allowance), since it's the same kind of matchmaking action. Creates a
-     * real 2-person circle atomically (both people are online right now, unlike the
-     * invite-link flow). [isPro] comes from the caller (ProAccess.isPro(context)) -- this
-     * ViewModel has no Context to ask itself. */
+    /** Random Connect into a Zen Circle, no request for the other person to accept: fills an
+     * open seat in my circle, or starts a two-person one. Same cooldown and weekly allowance as
+     * a random Zen Bro (see [RandomConnect]). [isPro] comes from the caller
+     * (ProAccess.isPro(context)) -- this ViewModel has no Context to ask itself. */
     fun findRandomCircle(isPro: Boolean) {
-        val myUid = myUid() ?: return
-        val lastTried = repository.getLastRandomConnectAttemptTime()
-        val remaining = AppConstants.RANDOM_CONNECT_COOLDOWN_MS - (System.currentTimeMillis() - lastTried)
-        if (remaining > 0) {
-            val secs = (remaining / 1000).coerceAtLeast(1)
-            _uiState.postValue(_uiState.value!!.copy(errorMessage = "No one was available last time. Try again in ${secs}s."))
-            return
-        }
+        viewModelScope.launch { randomConnectAwait(isPro) }
+    }
+
+    /** Suspend variant of [findRandomCircle] for callers that act on the outcome themselves
+     * (onboarding). Same side effects. */
+    suspend fun randomConnectAwait(isPro: Boolean): RandomConnectOutcome<Circle> {
+        val myUid = myUid() ?: return RandomConnectOutcome.SignedOut
         _uiState.postValue(_uiState.value!!.copy(loading = true))
-        viewModelScope.launch {
-            val weeklyLimit = if (isPro) Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT else Entitlement.RANDOM_CONNECT_FREE_WEEKLY_LIMIT
-            if (!firestoreDataSource.hasRandomConnectQuota(myUid, weeklyLimit)) {
-                val message = if (isPro) {
-                    "You've used all $weeklyLimit random connects this week. More open up next week."
-                } else {
-                    "You've used all $weeklyLimit random connects this week. Upgrade to Pro for up to ${Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT}/week."
-                }
-                _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = message))
-                return@launch
-            }
-            val displayName = ServiceLocator.authProvider.getDisplayName()
-            val circle = firestoreDataSource.findRandomCircleUser(myUid, displayName)
-            if (circle == null) {
-                repository.saveLastRandomConnectAttemptTime(System.currentTimeMillis())
-                _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = "No one available right now. Try again in 30 seconds!"))
-            } else {
-                firestoreDataSource.recordRandomConnectUsed(myUid)
-                repository.saveCircleId(circle.id)
-                repository.cacheCircle(circle)
-                ServiceLocator.analyticsTracker.trackCircleJoined("random")
-                _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = true))
-            }
+        val displayName = ServiceLocator.authProvider.getDisplayName()
+        val outcome = RandomConnect.attempt(repository, myUid, isPro) {
+            firestoreDataSource.findRandomCircleUser(myUid, displayName)
         }
+        if (outcome is RandomConnectOutcome.Matched) {
+            val circle = outcome.value
+            repository.saveCircleId(circle.id)
+            repository.cacheCircle(circle)
+            ServiceLocator.analyticsTracker.trackCircleJoined("random")
+            _uiState.postValue(_uiState.value!!.copy(circle = circle, loading = false, justEnteredCircle = true))
+        } else {
+            _uiState.postValue(_uiState.value!!.copy(loading = false, errorMessage = outcome.message))
+        }
+        return outcome
     }
 
     private fun formatWaitToast(waitMs: Long): String {

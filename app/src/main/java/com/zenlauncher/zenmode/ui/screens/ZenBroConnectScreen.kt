@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.RandomConnect
 import com.zenlauncher.zenmode.ui.components.BrandedText
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.graphics.graphicsLayer
@@ -492,7 +493,7 @@ private fun UseCodeCard(
 private fun RandomConnectCard(onRandomConnect: () -> Unit) {
     val brandGreen = colorResource(R.color.gold_delta_text)
 
-    StepCard(number = "03", title = "Random connect") {
+    StepCard(number = "03", title = RandomConnect.NAME) {
         StepBody("Meet someone building healthy phone habits.")
         Spacer(Modifier.height(StepSectionGap))
         ZenCirclePillButton(

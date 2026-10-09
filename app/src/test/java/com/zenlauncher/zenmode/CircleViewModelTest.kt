@@ -513,6 +513,55 @@ class CircleViewModelTest {
     }
 
     @Test
+    fun `random connect lands straight in the circle with no invite pending`() = runTest {
+        val repository = repoWithNoCachedCircle()
+        val bro = CircleMember(uid = "bro-uid", displayName = "Bro", zenScore = 50, lastUpdatedEpochMs = 0L, role = CircleRole.MEMBER, joinedAtEpochMs = 0L)
+        val matched = aCircle(id = "random-circle", leaderUid = "my-uid", members = aCircle().members + bro)
+        whenever(firestoreDataSource.hasRandomConnectQuota(any(), any())).thenReturn(true)
+        whenever(firestoreDataSource.findRandomCircleUser("my-uid", "Me")).thenReturn(matched)
+
+        val viewModel = CircleViewModel(repository)
+        val outcome = viewModel.randomConnectAwait(isPro = false)
+
+        assertEquals(RandomConnectOutcome.Matched(matched), outcome)
+        assertEquals(matched, viewModel.uiState.value?.circle)
+        assertEquals(true, viewModel.uiState.value?.justEnteredCircle)
+        verify(repository).saveCircleId("random-circle")
+        verify(repository).cacheCircle(matched)
+        verify(firestoreDataSource).recordRandomConnectUsed("my-uid")
+        verify(ServiceLocator.analyticsTracker).trackCircleJoined("random")
+    }
+
+    @Test
+    fun `random connect with no one free says so and keeps the circle as it was`() = runTest {
+        val repository = repoWithNoCachedCircle()
+        whenever(firestoreDataSource.hasRandomConnectQuota(any(), any())).thenReturn(true)
+        whenever(firestoreDataSource.findRandomCircleUser(any(), any())).thenReturn(null)
+
+        val viewModel = CircleViewModel(repository)
+        viewModel.findRandomCircle(isPro = false)
+
+        assertNull(viewModel.uiState.value?.circle)
+        assertEquals(false, viewModel.uiState.value?.loading)
+        assertEquals(RandomConnectOutcome.NoneAvailable.message, viewModel.uiState.value?.errorMessage)
+        verify(repository, never()).saveCircleId(any())
+        verify(firestoreDataSource, never()).recordRandomConnectUsed(any())
+    }
+
+    @Test
+    fun `a circle_joined push reloads the circle`() = runTest {
+        val repository = repoWithNoCachedCircle()
+        val joined = aCircle(id = "joined-circle")
+        val viewModel = CircleViewModel(repository)
+        whenever(firestoreDataSource.getMyCircleId("my-uid")).thenReturn("joined-circle")
+        whenever(firestoreDataSource.getCircle("joined-circle")).thenReturn(joined)
+
+        ServiceLocator.circleJoinedEvents.emit(Unit)
+
+        assertEquals(joined, viewModel.uiState.value?.circle)
+    }
+
+    @Test
     fun `CircleViewModelFactory creates ViewModel`() {
         val repository = repoWithNoCachedCircle()
         val factory = CircleViewModelFactory(repository)

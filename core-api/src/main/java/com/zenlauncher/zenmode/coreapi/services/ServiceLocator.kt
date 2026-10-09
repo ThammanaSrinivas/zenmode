@@ -39,6 +39,9 @@ object ServiceLocator {
     /** Emitted when FCM delivers a circle-reaction push while app is running. */
     val circleReactedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
 
+    /** Emitted when FCM says someone's Random Connect just put this user in a circle. */
+    val circleJoinedEvents = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 4)
+
     /**
      * Returns true if the ServiceLocator has been fully initialized.
      */

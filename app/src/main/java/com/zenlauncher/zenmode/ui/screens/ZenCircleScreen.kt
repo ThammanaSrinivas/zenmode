@@ -189,7 +189,9 @@ fun ZenCircleScreen(
     onRemoveBuddy: () -> Unit,
     onLeaveCircle: () -> Unit,
     initialSheet: ZenCircleSheet? = null,
-    isPro: Boolean = false
+    isPro: Boolean = false,
+    // Offered in the invite sheet while the circle has an open seat; null hides it.
+    onRandomConnect: (() -> Unit)? = null
 ) {
     require(members.isNotEmpty()) { "A Zen Circle always has at least you in it" }
     BackHandler(onBack = onBackClick)
@@ -266,6 +268,7 @@ fun ZenCircleScreen(
                 userCode = shareCode,
                 onShareInviteLink = onShareInviteLink,
                 onCopyInviteCode = onCopyInviteCode,
+                onRandomConnect = onRandomConnect,
                 settings = ZenCircleSettings(
                     buddyName = members.firstOrNull { !it.isYou }?.name ?: "your Zen Bro",
                     memberCount = members.size,

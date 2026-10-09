@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.RandomConnect
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,7 +69,7 @@ private val CompareRows = listOf(
     CompareRow("Session log", cell("Last 7 events"), cell("The day's events, downloadable")),
     CompareRow("Centralised search", Yes, Yes),
     CompareRow("Home gestures", cell("Swipe up to search"), cell("Margin taps, double-tap to lock")),
-    CompareRow("Random connect", cell("Up to 5/week"), cell("Up to 50/week, first priority")),
+    CompareRow(RandomConnect.NAME, cell("Up to 5/week"), cell("Up to 50/week, first priority")),
     CompareRow("Screen time average", cell("Weekly"), cell("Monthly")),
     CompareRow("Edit my promise", cell("Once a week"), cell("Twice a week")),
     CompareRow("Weekly report history", No, Yes),

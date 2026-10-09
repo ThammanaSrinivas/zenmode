@@ -69,9 +69,10 @@ class OnboardingActivity : ComponentActivity() {
 
     private val viewModel: OnboardingViewModel by viewModels()
     private val signInViewModel: GoogleSignInViewModel by viewModels()
-    private val buddyConnector by lazy {
-        BuddyConnector(this, UsageRepository(applicationContext, ServiceLocator.analyticsManager))
-    }
+    private val repository by lazy { UsageRepository(applicationContext, ServiceLocator.analyticsManager) }
+    private val buddyConnector by lazy { BuddyConnector(this, repository) }
+    // Only created if they tap Random connect on the Circle step.
+    private val circleViewModel: CircleViewModel by viewModels { CircleViewModelFactory(repository) }
 
     private var showAccessibilityDisclosure by mutableStateOf(false)
 
@@ -106,6 +107,21 @@ class OnboardingActivity : ComponentActivity() {
             // so colorResource skips values-night.
             ZenTheme(darkTheme = false) {
                 LightOnly { OnboardingContent() }
+            }
+        }
+    }
+
+    /** Random connect on the Circle step: straight into a Zen Circle with a random bro. */
+    private fun randomCircleConnect() {
+        lifecycleScope.launch {
+            val outcome = circleViewModel.randomConnectAwait(ProAccess.isPro(this@OnboardingActivity))
+            if (outcome is RandomConnectOutcome.Matched) {
+                BuddyFlowPreferences.setDecision(this@OnboardingActivity, BuddyFlow.ZEN_CIRCLE)
+                val myUid = ServiceLocator.authProvider.getCurrentUserId()
+                val bro = outcome.value.members.lastOrNull { it.uid != myUid }?.displayName
+                viewModel.onBuddyConnected(bro?.takeIf { it.isNotBlank() } ?: RandomConnect.UNNAMED_BRO)
+            } else {
+                outcome.message?.let { Toast.makeText(this@OnboardingActivity, it, Toast.LENGTH_LONG).show() }
             }
         }
     }
@@ -196,11 +212,7 @@ class OnboardingActivity : ComponentActivity() {
                             if (result is BuddyAddResult.Success) viewModel.onBuddyConnected(result.buddyName)
                         }
                     },
-                    onRandomConnect = {
-                        lifecycleScope.launch {
-                            buddyConnector.randomConnect()?.let(viewModel::onBuddyConnected)
-                        }
-                    },
+                    onRandomConnect = ::randomCircleConnect,
                     onContinue = viewModel::next
                 )
                 OnboardingStep.PERMISSIONS -> PermissionsStep(

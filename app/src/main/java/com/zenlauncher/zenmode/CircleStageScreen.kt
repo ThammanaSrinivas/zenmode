@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import com.zenlauncher.zenmode.coreapi.Circle
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.coreapi.ReactionType
+import com.zenlauncher.zenmode.coreapi.ZEN_CIRCLE_MAX_MEMBERS
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.ZenCircleScreen
 
@@ -127,6 +128,10 @@ fun CircleStageScreen(
         },
         onLeaveCircle = {
             if (circle != null) circleViewModel.leaveCircle() else onRemoveBuddy()
-        }
+        },
+        // Fills an open seat straight away -- no invite for the other person to accept.
+        onRandomConnect = if ((isCircleMode || circle != null) && (circle?.members?.size ?: 1) < ZEN_CIRCLE_MAX_MEMBERS) {
+            { circleViewModel.findRandomCircle(ProAccess.isPro(context)) }
+        } else null
     )
 }

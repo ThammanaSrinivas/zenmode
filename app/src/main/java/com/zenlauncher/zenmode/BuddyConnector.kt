@@ -10,7 +10,6 @@ import android.net.NetworkCapabilities
 import android.widget.Toast
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.UsageRepository
-import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import kotlinx.coroutines.TimeoutCancellationException
@@ -109,7 +108,7 @@ class BuddyConnector(
     suspend fun randomConnect(): String? {
         val currentUserId = ServiceLocator.authProvider.getCurrentUserId()
         if (currentUserId == null) {
-            toast("Not signed in.")
+            RandomConnectOutcome.SignedOut.message?.let(::toast)
             return null
         }
 
@@ -118,42 +117,21 @@ class BuddyConnector(
             return null
         }
 
-        // Cooldown: only allow retrying after cooldown if last attempt found no buddy
-        val lastTried = repository.getLastRandomConnectAttemptTime()
-        val remaining = AppConstants.RANDOM_CONNECT_COOLDOWN_MS - (System.currentTimeMillis() - lastTried)
-        if (remaining > 0) {
-            val secs = (remaining / 1000).coerceAtLeast(1)
-            toast("No buddies were available last time. Try again in ${secs}s.", Toast.LENGTH_LONG)
-            return null
-        }
-
-        val isPro = ProAccess.isPro(activity)
-        val weeklyLimit = if (isPro) Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT else Entitlement.RANDOM_CONNECT_FREE_WEEKLY_LIMIT
-        if (!ServiceLocator.firestoreDataSource.hasRandomConnectQuota(currentUserId, weeklyLimit)) {
-            if (isPro) {
-                toast("You've used all $weeklyLimit random connects this week. More open up next week.", Toast.LENGTH_LONG)
-            } else {
-                toast("You've used all $weeklyLimit random connects this week. Upgrade to Pro for up to ${Entitlement.RANDOM_CONNECT_PRO_WEEKLY_LIMIT}/week.", Toast.LENGTH_LONG)
-            }
-            return null
-        }
-
         return try {
-            val buddyUid = ServiceLocator.firestoreDataSource.findRandomBuddy(currentUserId)
-            if (buddyUid == null) {
-                repository.saveLastRandomConnectAttemptTime(System.currentTimeMillis())
-                toast("No buddies available right now. Try again in 30 seconds!", Toast.LENGTH_LONG)
-                null
-            } else {
-                ServiceLocator.firestoreDataSource.recordRandomConnectUsed(currentUserId)
-                val buddy = ServiceLocator.firestoreDataSource.getUser(buddyUid)
-                repository.clearCachedBuddy()
-                repository.saveHasBuddy(true)
-                onBuddyChanged()
-                ServiceLocator.analyticsTracker.trackBuddyConnected("random")
-                // No toast on success: the "You're Zen Bros now" screen says it.
-                buddy?.displayName?.takeIf { it.isNotBlank() } ?: "your Zen Bro"
+            val outcome = RandomConnect.attempt(repository, currentUserId, ProAccess.isPro(activity)) {
+                ServiceLocator.firestoreDataSource.findRandomBuddy(currentUserId)
             }
+            if (outcome !is RandomConnectOutcome.Matched) {
+                outcome.message?.let { toast(it, Toast.LENGTH_LONG) }
+                return null
+            }
+            val buddy = ServiceLocator.firestoreDataSource.getUser(outcome.value)
+            repository.clearCachedBuddy()
+            repository.saveHasBuddy(true)
+            onBuddyChanged()
+            ServiceLocator.analyticsTracker.trackBuddyConnected("random")
+            // No toast on success: the "You're Zen Bros now" screen says it.
+            buddy?.displayName?.takeIf { it.isNotBlank() } ?: RandomConnect.UNNAMED_BRO
         } catch (_: TimeoutCancellationException) {
             toast("Connection timed out. Please try again.")
             null

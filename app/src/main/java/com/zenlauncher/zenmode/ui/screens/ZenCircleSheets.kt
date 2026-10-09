@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.RandomConnect
 import com.zenlauncher.zenmode.Sfx
 import com.zenlauncher.zenmode.ZenSound
 import androidx.compose.ui.text.TextStyle
@@ -100,6 +101,8 @@ internal val InviteSheetBlur: Dp = 14.2.dp
 internal val SupportsBlur: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 private val InviteSheetHeight: Dp @Composable get() = 400.1.rdp
+/** One more option row plus the gap above it, for the Random connect option. */
+private val InviteOptionStep: Dp @Composable get() = 73.7.rdp
 internal val ZenSheetRadius: Dp @Composable get() = 24.26.rdp
 
 /** The sheets a Zen Circle page can raise over itself. */
@@ -110,12 +113,14 @@ enum class ZenCircleSheet { Invite, Settings }
  * blurs the page while a sheet is up (apply it to the page's content, not its background)
  * and a lambda that opens a sheet. [settings] is only needed by pages that open
  * [ZenCircleSheet.Settings]. Opening one sheet from another swaps them in place.
+ * [onRandomConnect] adds a Random connect option to the invite sheet; null hides it.
  */
 @Composable
 internal fun ZenCircleSheetHost(
     userCode: String?,
     onShareInviteLink: () -> Unit,
     onCopyInviteCode: () -> Unit,
+    onRandomConnect: (() -> Unit)? = null,
     settings: ZenCircleSettings? = null,
     initialSheet: ZenCircleSheet? = null,
     content: @Composable (pageModifier: Modifier, openSheet: (ZenCircleSheet) -> Unit) -> Unit
@@ -134,11 +139,14 @@ internal fun ZenCircleSheetHost(
         paneTitle = "Invite your people",
         onDismiss = { sheet = null }
     ) {
-        Box(modifier = Modifier.height(InviteSheetHeight)) {
+        val height = if (onRandomConnect != null) InviteSheetHeight + InviteOptionStep else InviteSheetHeight
+        Box(modifier = Modifier.height(height)) {
             SheetContent(
                 userCode = userCode,
                 onShareInviteLink = onShareInviteLink,
-                onCopyInviteCode = onCopyInviteCode
+                onCopyInviteCode = onCopyInviteCode,
+                // Close first: the match lands on the circle page behind the sheet.
+                onRandomConnect = onRandomConnect?.let { connect -> { sheet = null; connect() } }
             )
             CloseButton(onDismiss = { sheet = null })
         }
@@ -261,7 +269,8 @@ private fun ZenSheetSurface(
 private fun SheetContent(
     userCode: String?,
     onShareInviteLink: () -> Unit,
-    onCopyInviteCode: () -> Unit
+    onCopyInviteCode: () -> Unit,
+    onRandomConnect: (() -> Unit)?
 ) {
     val haptics = LocalHapticFeedback.current
     var copied by remember { mutableStateOf(false) }
@@ -335,6 +344,21 @@ private fun SheetContent(
                     copied = true
                 }
             )
+            if (onRandomConnect != null) {
+                Spacer(Modifier.height(34.57.rdp))
+                InviteOption(
+                    iconRes = R.drawable.ic_zen_circle_random,
+                    iconSize = 26.79.rdp,
+                    title = RandomConnect.NAME,
+                    subtitle = "Get a Zen Bro in your circle right now",
+                    enabled = true,
+                    entranceDelay = 280,
+                    onClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onRandomConnect()
+                    }
+                )
+            }
         }
 
         Spacer(Modifier.height(28.rdp))

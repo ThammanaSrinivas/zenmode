@@ -83,8 +83,13 @@ interface FirestoreDataSource {
      */
     suspend fun getTodayCircleReactions(circleId: String, myUid: String): Pair<Long, Long>
 
-    /** Finds a random circle with an open slot and joins [myUid] to it atomically, mirroring [findRandomBuddy].
-     *  Returns the joined circle, or null if none is available. */
+    /**
+     * Random Connect for Zen Circle: puts [myUid] and a random active user (in no circle or
+     * buddy pair) in the same circle at once, with no request for the other person to accept.
+     * Fills an open seat in [myUid]'s circle, or starts a new two-person circle with [myUid]
+     * as leader. The other person is told by push. Returns the circle as it now stands, or
+     * null if no one was available, [myUid]'s circle is full, or [myUid] has a classic buddy.
+     */
     suspend fun findRandomCircleUser(myUid: String, myDisplayName: String?): Circle?
 
     /**
