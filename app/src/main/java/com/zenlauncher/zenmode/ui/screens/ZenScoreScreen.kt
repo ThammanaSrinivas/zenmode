@@ -22,6 +22,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.rememberCoroutineScope
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -111,7 +113,17 @@ private val ScreenMargin: Dp @Composable get() = 30.rdp
 
 data class ZenScoreCategory(val label: String, val percent: Int, val colorRes: Int)
 
-data class ZenSessionLogEntry(val duration: String, val appName: String, val type: SessionEventType)
+/**
+ * One session-log row: when it started ([time], already in the phone's 12/24h format), the app
+ * used most plus how many [otherApps] came along, and the real time spent in them ([duration]).
+ */
+data class ZenSessionLogEntry(
+    val time: String,
+    val appName: String,
+    val otherApps: Int,
+    val duration: String,
+    val type: SessionEventType
+)
 
 @Composable
 fun ZenScoreScreen(
@@ -135,6 +147,7 @@ fun ZenScoreScreen(
 ) {
     val mood = rememberTodayMood()
     var footerHeight by remember { mutableStateOf(0.dp) }
+    val footerBackdrop = remember { HazeState() }
     // "Share Zen Score" opens the shareable card rather than a bare text share — the same
     // sheet Home's Streaks and Gold stats open (share/ShareOverlays.kt), with a card drawn for
     // today's score band.
@@ -151,56 +164,60 @@ fun ZenScoreScreen(
         // apps-picker frosted overlays use. The overlay itself sits outside this Box
         // so it stays sharp.
         Box(modifier = Modifier.fillMaxSize().zenOverlayBlur(showShareOverlay)) {
-            MoodBackdrop(mood)
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Spacer(modifier = Modifier.height(16.rdp))
-
-                GreetingHeader(
-                    userName = userName,
-                    photoUrl = photoUrl,
-                    today = today,
-                    isPro = isPro,
-                    onUpgradeProClick = onUpgradeProClick
-                )
-
-                Spacer(modifier = Modifier.height(16.rdp))
+            // The footer frosts whatever scrolls under it (PinnedPageFooter frostedOver).
+            Box(modifier = Modifier.fillMaxSize().hazeSource(footerBackdrop)) {
+                MoodBackdrop(mood)
 
                 Column(
                     modifier = Modifier
-                        .padding(horizontal = ScreenMargin)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(6.rdp)
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    ZenScoreCard(
-                        score = score,
-                        insight = scoreInsight(score, yesterdayScore),
-                        categories = categories,
-                        isPro = isPro
-                    )
+                    Spacer(modifier = Modifier.height(16.rdp))
 
-                    SessionLogCard(
-                        reclaimedMinutes = reclaimedMinutes,
-                        sessionTotalLabel = sessionTotalLabel,
-                        sessionLog = sessionLog,
+                    GreetingHeader(
+                        userName = userName,
+                        photoUrl = photoUrl,
+                        today = today,
                         isPro = isPro,
                         onUpgradeProClick = onUpgradeProClick
                     )
-                }
 
-                // Room for the sticky footer, so the session log can scroll clear of it.
-                Spacer(modifier = Modifier.height(footerHeight + 8.rdp))
+                    Spacer(modifier = Modifier.height(16.rdp))
+
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = ScreenMargin)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.rdp)
+                    ) {
+                        ZenScoreCard(
+                            score = score,
+                            insight = scoreInsight(score, yesterdayScore),
+                            categories = categories,
+                            isPro = isPro
+                        )
+
+                        SessionLogCard(
+                            reclaimedMinutes = reclaimedMinutes,
+                            sessionTotalLabel = sessionTotalLabel,
+                            sessionLog = sessionLog,
+                            isPro = isPro,
+                            onUpgradeProClick = onUpgradeProClick
+                        )
+                    }
+
+                    // Room for the sticky footer, so the session log can scroll clear of it.
+                    Spacer(modifier = Modifier.height(footerHeight + 8.rdp))
+                }
             }
 
             // Download / Share stay on screen however far the page scrolls.
             PinnedPageFooter(
                 current = HomePage.ZEN_SCORE,
                 fadeTo = moodWashColors(mood).last(),
+                frostedOver = footerBackdrop,
                 onHeightChanged = { footerHeight = it },
                 modifier = Modifier.align(Alignment.BottomCenter),
                 onPageClick = { page ->

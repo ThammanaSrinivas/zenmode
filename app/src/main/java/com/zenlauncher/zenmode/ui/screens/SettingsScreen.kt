@@ -63,6 +63,10 @@ import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
 import com.zenlauncher.zenmode.coreapi.services.ProFeature
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.layout.onSizeChanged
+import com.zenlauncher.zenmode.ui.components.LocalSettingsQuery
+import com.zenlauncher.zenmode.ui.components.SettingsSearchField
 import com.zenlauncher.zenmode.ui.components.GlyphKind
 import com.zenlauncher.zenmode.ui.components.ProTagState
 import com.zenlauncher.zenmode.ui.components.RowTrailing
@@ -136,8 +140,6 @@ fun SettingsScreen(
     onShareClick: () -> Unit,
     /** Opens the public product board (zenmodeos.com/board) in the browser. */
     onFeatureRequestClick: () -> Unit = {},
-    /** No mail app on the phone: the host falls back to the Telegram group. */
-    onBugReportFallback: () -> Unit = {},
     onOpenPro: (ProEntry) -> Unit = {},
     onProGateShown: (ProFeature) -> Unit = {},
     /** Pro: writes the CSV export and opens the share sheet. */
@@ -159,6 +161,9 @@ fun SettingsScreen(
     var soon by remember { mutableStateOf<ProFeature?>(null) }
     var themePicker by remember { mutableStateOf(false) }
     var bugReport by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    val searching = searchQuery.isNotBlank()
+    var resultsHeight by remember { mutableStateOf(1) }
     var checkInTimePicker by remember { mutableStateOf(false) }
     var isCheckInEnabled by remember { mutableStateOf(ZenCheckInPreferences.isEnabled(context)) }
     var checkInTime by remember { mutableStateOf(ZenCheckInPreferences.getEveningTime(context)) }
@@ -204,229 +209,253 @@ fun SettingsScreen(
                 onAccountClick = { showAccountSheet = true }
             )
 
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = Spacing.screenMargin)
-                    .padding(top = 4.rdp, bottom = 40.rdp),
-                verticalArrangement = Arrangement.spacedBy(24.rdp)
-            ) {
-                if (isProAvailable) {
-                    PlanCard(
-                        entitlement = entitlement,
-                        isSimulated = isProSimulated,
-                        isPro = isPro,
-                        offers = offers,
-                        onClick = { onOpenPro(if (isPro) ProEntry.MANAGE else ProEntry.PLAN_CARD) }
-                    )
-                }
+            SettingsSearchField(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                modifier = Modifier.padding(horizontal = Spacing.screenMargin).padding(top = 4.rdp, bottom = 12.rdp)
+            )
 
-                SettingsScreenTimeCard(
-                    weeklyHours = weeklyHours,
-                    showMonthOption = isProAvailable,
-                    isPro = isPro,
-                    loadMonthlyHours = loadMonthlyHours,
-                    onMonthLocked = { openProFeature(ProFeature.FULL_HISTORY) }
-                )
-
-                // ── Weekly reports (PRO) ──
-                weeklyReports?.invoke()
-
-                ZenSettingsGroup(label = "Focus") {
-                    ZenSettingToggleItem(
-                        text = "Resistance screen",
-                        subtitle = "A short pause before a distracting app opens.",
-                        checked = isResistanceEnabled,
-                        onCheckedChange = { enabled ->
-                            isResistanceEnabled = enabled
-                            ResistancePreferences.setEnabled(context, enabled)
-                        }
-                    )
-                    ZenRowDivider()
-                    ZenSettingsRow(
-                        title = "Distraction Blocker",
-                        subtitle = "Quiet reels, shorts and the apps that pull you in.",
-                        value = if (isContentBlockingOn) "On" else "Off",
-                        onClick = onBlockInAppContentClick
-                    )
-                }
-
-                ZenSettingsGroup(label = "Daily check-in") {
-                    ZenSettingToggleItem(
-                        text = "Evening check-in",
-                        subtitle = "A card on home each evening: confetti when you're under " +
-                            "your promise, and where the week stands when you're not.",
-                        checked = isCheckInEnabled,
-                        onCheckedChange = { enabled ->
-                            isCheckInEnabled = enabled
-                            ZenCheckInPreferences.setEnabled(context, enabled)
-                        }
-                    )
-                    if (isCheckInEnabled) {
-                        ZenRowDivider()
-                        ZenSettingsRow(
-                            title = "Check-in time",
-                            subtitle = "When the evening card appears.",
-                            value = checkInTime.format(CheckInTimeFormat),
-                            onClick = { checkInTimePicker = true }
-                        )
-                    }
-                }
-
-                ZenSettingsGroup(label = "Home screen") {
-                    ZenSettingsRow(
-                        title = "Choose home apps",
-                        subtitle = "Pick which apps sit on home, and in what order.",
-                        value = if (homeAppsChosenCount == 0) "A–Z"
-                        else "${homeAppsChosenCount.coerceAtMost(homeAppCount)} of $homeAppCount",
-                        onClick = onChooseHomeAppsClick
-                    )
-                    ZenRowDivider()
-                    ZenSettingToggleItem(
-                        text = "Notification badges",
-                        subtitle = if (isNotificationBadgesEnabled) "Dots show on app icons."
-                        else "Needs notification access in Android settings.",
-                        checked = isNotificationBadgesEnabled,
-                        // Access is granted or revoked in system settings; the switch reflects it on resume.
-                        onCheckedChange = { onNotificationBadgesClick() }
-                    )
-                    if (isProAvailable) {
-                        ZenRowDivider()
-                        ZenSettingsRow(
-                            title = "Home-screen themes",
-                            subtitle = "Keep the mood washes, or pick your own.",
-                            value = if (isPro) homeTheme.label else null,
-                            pro = proTag(),
-                            onClick = { openProFeature(ProFeature.HOME_THEMES) }
-                        )
-                    }
-                }
-
-                ZenSettingsGroup(label = "Gestures") {
-                    GestureToggle(
-                        gesture = HomeGesture.SWIPE_UP_SEARCH,
-                        title = "Swipe up to search",
-                        subtitle = "Opens search from anywhere on home, and takes the search bar " +
-                            "off the screen — the swipe is the way in.",
-                        enabled = enabledGestures,
-                        isPro = isPro,
-                        isProAvailable = isProAvailable,
-                        proTag = proTag(),
-                        onLocked = { openProFeature(ProFeature.GESTURES) }
-                    )
-                    ZenRowDivider()
-                    GestureToggle(
-                        gesture = HomeGesture.MARGIN_TAP_PAGES,
-                        title = "Tap the margins",
-                        subtitle = "Tap the left or right edge of home for Zen Score or Zen Gold, " +
-                            "the same way the swipes go.",
-                        enabled = enabledGestures,
-                        isPro = isPro,
-                        isProAvailable = isProAvailable,
-                        proTag = proTag(),
-                        onLocked = { openProFeature(ProFeature.GESTURES) }
-                    )
-                    ZenRowDivider()
-                    GestureToggle(
-                        gesture = HomeGesture.DOUBLE_TAP_LOCK,
-                        title = "Double-tap to lock",
-                        subtitle = "Double-tap an empty part of home. A long press still locks " +
-                            "either way.",
-                        enabled = enabledGestures,
-                        isPro = isPro,
-                        isProAvailable = isProAvailable,
-                        proTag = proTag(),
-                        onLocked = { openProFeature(ProFeature.GESTURES) }
-                    )
-                }
-
-                ZenSettingsGroup(label = "Look & sound") {
-                    AppearanceRow(
-                        mode = themeMode,
-                        onModeChange = { mode ->
-                            val wasDark = ThemePreferences.isDarkMode(context)
-                            // Let ZenTheme's crossfade play on this screen first; AppCompat then
-                            // recreates every open activity onto colours that already match.
-                            ThemePreferences.setMode(context, mode, applyAfterMillis = ZenMotion.SLOW + 60L)
-                            val nowDark = ThemePreferences.isDarkMode(context)
-                            if (nowDark != wasDark) feedback.theme(nowDark)
-                        }
-                    )
-                    ZenRowDivider()
-                    ZenSettingToggleItem(
-                        text = "Interface sounds",
-                        subtitle = "Soft ticks and chimes. Silent whenever your phone is.",
-                        checked = soundsOn,
-                        onCheckedChange = { on ->
-                            ZenSound.setEnabled(context, on)
-                            // Turning sounds on should prove itself.
-                            if (on) feedback.toggle(true)
-                        }
-                    )
-                }
-
-                ZenSettingsGroup(
-                    label = "Accountability",
-                    trailingLabel = "Zen Circle · beta"
+            CompositionLocalProvider(LocalSettingsQuery provides searchQuery) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = Spacing.screenMargin)
+                        .padding(top = 4.rdp, bottom = if (searching) 0.rdp else 40.rdp)
+                        .onSizeChanged { resultsHeight = it.height },
+                    // Searching: groups that folded away must not leave their gaps behind, so each
+                    // surviving group brings its own (see ZenSettingsGroup).
+                    verticalArrangement = if (searching) Arrangement.spacedBy(0.rdp) else Arrangement.spacedBy(24.rdp)
                 ) {
-                    ZenSettingsRow(
-                        title = "Accountability partner",
-                        subtitle = "They see your score and its direction. Nothing else.",
-                        onClick = onAccountabilityPartnerClick
-                    )
-                    ZenRowDivider()
-                    ZenSettingsRow(
-                        title = "Zen Circle members",
-                        // Everyone shares one cap during beta — see coreapi.ZEN_CIRCLE_MAX_MEMBERS.
-                        // The free/Pro split (Entitlement.FREE_PARTNER_LIMIT / PRO_PARTNER_LIMIT)
-                        // isn't live yet; this line is the honest, current state, not a sales pitch.
-                        subtitle = "Beta: everyone can add up to $ZEN_CIRCLE_MAX_MEMBERS for now. " +
-                            "It'll move to separate free and Pro limits soon.",
-                        onClick = onAccountabilityPartnerClick
-                    )
-                }
-
-                if (isProAvailable) {
-                    ZenSettingsGroup(label = "Your data") {
-                        ZenSettingsRow(
-                            title = "Export data",
-                            subtitle = "A CSV of every day $PRODUCT_NAME remembers.",
-                            pro = proTag(),
-                            onClick = { openProFeature(ProFeature.DATA_EXPORT) }
+                    // Only settings are searched; the plan, chart and report cards step aside.
+                    if (isProAvailable && !searching) {
+                        PlanCard(
+                            entitlement = entitlement,
+                            isSimulated = isProSimulated,
+                            isPro = isPro,
+                            offers = offers,
+                            onClick = { onOpenPro(if (isPro) ProEntry.MANAGE else ProEntry.PLAN_CARD) }
                         )
                     }
+
+                    if (!searching) {
+                        SettingsScreenTimeCard(
+                            weeklyHours = weeklyHours,
+                            showMonthOption = isProAvailable,
+                            isPro = isPro,
+                            loadMonthlyHours = loadMonthlyHours,
+                            onMonthLocked = { openProFeature(ProFeature.FULL_HISTORY) }
+                        )
+
+                        // ── Weekly reports (PRO) ──
+                        weeklyReports?.invoke()
+                    }
+
+                    ZenSettingsGroup(label = "Focus") {
+                        ZenSettingToggleItem(
+                            text = "Resistance screen",
+                            subtitle = "A short pause before a distracting app opens.",
+                            checked = isResistanceEnabled,
+                            onCheckedChange = { enabled ->
+                                isResistanceEnabled = enabled
+                                ResistancePreferences.setEnabled(context, enabled)
+                            }
+                        )
+                        ZenRowDivider()
+                        ZenSettingsRow(
+                            title = "Distraction Blocker",
+                            subtitle = "Quiet reels, shorts and the apps that pull you in.",
+                            value = if (isContentBlockingOn) "On" else "Off",
+                            onClick = onBlockInAppContentClick
+                        )
+                    }
+
+                    ZenSettingsGroup(label = "Daily check-in") {
+                        ZenSettingToggleItem(
+                            text = "Evening check-in",
+                            subtitle = "A card on home each evening: confetti when you're under " +
+                                "your promise, and where the week stands when you're not.",
+                            checked = isCheckInEnabled,
+                            onCheckedChange = { enabled ->
+                                isCheckInEnabled = enabled
+                                ZenCheckInPreferences.setEnabled(context, enabled)
+                            }
+                        )
+                        if (isCheckInEnabled) {
+                            ZenRowDivider()
+                            ZenSettingsRow(
+                                title = "Check-in time",
+                                subtitle = "When the evening card appears.",
+                                value = checkInTime.format(CheckInTimeFormat),
+                                onClick = { checkInTimePicker = true }
+                            )
+                        }
+                    }
+
+                    ZenSettingsGroup(label = "Home screen") {
+                        ZenSettingsRow(
+                            title = "Choose home apps",
+                            subtitle = "Pick which apps sit on home, and in what order.",
+                            value = if (homeAppsChosenCount == 0) "A–Z"
+                            else "${homeAppsChosenCount.coerceAtMost(homeAppCount)} of $homeAppCount",
+                            onClick = onChooseHomeAppsClick
+                        )
+                        ZenRowDivider()
+                        ZenSettingToggleItem(
+                            text = "Notification badges",
+                            subtitle = if (isNotificationBadgesEnabled) "Dots show on app icons."
+                            else "Needs notification access in Android settings.",
+                            checked = isNotificationBadgesEnabled,
+                            // Access is granted or revoked in system settings; the switch reflects it on resume.
+                            onCheckedChange = { onNotificationBadgesClick() }
+                        )
+                        if (isProAvailable) {
+                            ZenRowDivider()
+                            ZenSettingsRow(
+                                title = "Home-screen themes",
+                                subtitle = "Keep the mood washes, or pick your own.",
+                                value = if (isPro) homeTheme.label else null,
+                                pro = proTag(),
+                                onClick = { openProFeature(ProFeature.HOME_THEMES) }
+                            )
+                        }
+                    }
+
+                    ZenSettingsGroup(label = "Gestures") {
+                        GestureToggle(
+                            gesture = HomeGesture.SWIPE_UP_SEARCH,
+                            title = "Swipe up to search",
+                            subtitle = "Opens search from anywhere on home, and takes the search bar " +
+                                "off the screen — the swipe is the way in.",
+                            enabled = enabledGestures,
+                            isPro = isPro,
+                            isProAvailable = isProAvailable,
+                            proTag = proTag(),
+                            onLocked = { openProFeature(ProFeature.GESTURES) }
+                        )
+                        ZenRowDivider()
+                        GestureToggle(
+                            gesture = HomeGesture.MARGIN_TAP_PAGES,
+                            title = "Tap the margins",
+                            subtitle = "Tap the left or right edge of home for Zen Score or Zen Gold, " +
+                                "the same way the swipes go.",
+                            enabled = enabledGestures,
+                            isPro = isPro,
+                            isProAvailable = isProAvailable,
+                            proTag = proTag(),
+                            onLocked = { openProFeature(ProFeature.GESTURES) }
+                        )
+                        ZenRowDivider()
+                        GestureToggle(
+                            gesture = HomeGesture.DOUBLE_TAP_LOCK,
+                            title = "Double-tap to lock",
+                            subtitle = "Double-tap an empty part of home. A long press still locks " +
+                                "either way.",
+                            enabled = enabledGestures,
+                            isPro = isPro,
+                            isProAvailable = isProAvailable,
+                            proTag = proTag(),
+                            onLocked = { openProFeature(ProFeature.GESTURES) }
+                        )
+                    }
+
+                    ZenSettingsGroup(label = "Look & sound") {
+                        AppearanceRow(
+                            mode = themeMode,
+                            onModeChange = { mode ->
+                                val wasDark = ThemePreferences.isDarkMode(context)
+                                // Let ZenTheme's crossfade play on this screen first; AppCompat then
+                                // recreates every open activity onto colours that already match.
+                                ThemePreferences.setMode(context, mode, applyAfterMillis = ZenMotion.SLOW + 60L)
+                                val nowDark = ThemePreferences.isDarkMode(context)
+                                if (nowDark != wasDark) feedback.theme(nowDark)
+                            }
+                        )
+                        ZenRowDivider()
+                        ZenSettingToggleItem(
+                            text = "Interface sounds",
+                            subtitle = "Soft ticks and chimes. Silent whenever your phone is.",
+                            checked = soundsOn,
+                            onCheckedChange = { on ->
+                                ZenSound.setEnabled(context, on)
+                                // Turning sounds on should prove itself.
+                                if (on) feedback.toggle(true)
+                            }
+                        )
+                    }
+
+                    ZenSettingsGroup(
+                        label = "Accountability",
+                        trailingLabel = "Zen Circle · beta"
+                    ) {
+                        ZenSettingsRow(
+                            title = "Accountability partner",
+                            subtitle = "They see your score and its direction. Nothing else.",
+                            onClick = onAccountabilityPartnerClick
+                        )
+                        ZenRowDivider()
+                        ZenSettingsRow(
+                            title = "Zen Circle members",
+                            // Everyone shares one cap during beta — see coreapi.ZEN_CIRCLE_MAX_MEMBERS.
+                            // The free/Pro split (Entitlement.FREE_PARTNER_LIMIT / PRO_PARTNER_LIMIT)
+                            // isn't live yet; this line is the honest, current state, not a sales pitch.
+                            subtitle = "Beta: everyone can add up to $ZEN_CIRCLE_MAX_MEMBERS for now. " +
+                                "It'll move to separate free and Pro limits soon.",
+                            onClick = onAccountabilityPartnerClick
+                        )
+                    }
+
+                    if (isProAvailable) {
+                        ZenSettingsGroup(label = "Your data") {
+                            ZenSettingsRow(
+                                title = "Export data",
+                                subtitle = "A CSV of every day $PRODUCT_NAME remembers.",
+                                pro = proTag(),
+                                onClick = { openProFeature(ProFeature.DATA_EXPORT) }
+                            )
+                        }
+                    }
+
+                    PhoneSettingsGroup()
+
+                    ZenSettingsGroup(label = "Help us build it") {
+                        ZenSettingsRow(
+                            title = "Report a bug",
+                            subtitle = "Tell us what happened. A screenshot helps.",
+                            onClick = { bugReport = true }
+                        )
+                        ZenRowDivider()
+                        ZenSettingsRow(
+                            title = "Feature requests",
+                            subtitle = "The board of what's being built, and what you'd like next.",
+                            trailing = RowTrailing.External,
+                            onClick = onFeatureRequestClick
+                        )
+                    }
+
+                    ZenSettingsGroup(label = PRODUCT_NAME) {
+                        ZenSettingsRow(title = "Rate on Play Store", trailing = RowTrailing.External, onClick = onRateClick)
+                        ZenRowDivider()
+                        ZenSettingsRow(title = "Share $PRODUCT_NAME", trailing = RowTrailing.External, onClick = onShareClick)
+                        ZenRowDivider()
+                        ZenSettingsRow(
+                            title = "Contribute on GitHub",
+                            subtitle = "The whole app is open source.",
+                            trailing = RowTrailing.External,
+                            onClick = onContributeClick
+                        )
+                    }
+
+                    if (!searching) SettingsFooter()
                 }
+            }
 
-                PhoneSettingsGroup()
-
-                ZenSettingsGroup(label = "Help us build it") {
-                    ZenSettingsRow(
-                        title = "Report a bug",
-                        subtitle = "Tell us what happened. A screenshot helps.",
-                        onClick = { bugReport = true }
-                    )
-                    ZenRowDivider()
-                    ZenSettingsRow(
-                        title = "Feature requests",
-                        subtitle = "The board of what's being built, and what you'd like next.",
-                        trailing = RowTrailing.External,
-                        onClick = onFeatureRequestClick
-                    )
-                }
-
-                ZenSettingsGroup(label = PRODUCT_NAME) {
-                    ZenSettingsRow(title = "Rate on Play Store", trailing = RowTrailing.External, onClick = onRateClick)
-                    ZenRowDivider()
-                    ZenSettingsRow(title = "Share $PRODUCT_NAME", trailing = RowTrailing.External, onClick = onShareClick)
-                    ZenRowDivider()
-                    ZenSettingsRow(
-                        title = "Contribute on GitHub",
-                        subtitle = "The whole app is open source.",
-                        trailing = RowTrailing.External,
-                        onClick = onContributeClick
-                    )
-                }
-
-                SettingsFooter()
+            if (searching && resultsHeight == 0) {
+                Text(
+                    text = "No settings match \u201c${searchQuery.trim()}\u201d.",
+                    fontFamily = Geist,
+                    fontSize = 14.rsp,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(horizontal = Spacing.screenMargin, vertical = 24.rdp)
+                )
             }
         }
 
@@ -443,14 +472,7 @@ fun SettingsScreen(
         }
 
         if (bugReport) {
-            BugReportSheet(
-                onDismiss = { bugReport = false },
-                onSent = { bugReport = false },
-                onNoMailApp = {
-                    bugReport = false
-                    onBugReportFallback()
-                }
-            )
+            BugReportSheet(onDismiss = { bugReport = false })
         }
 
         if (showAccountSheet) {

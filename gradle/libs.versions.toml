@@ -25,6 +25,8 @@ androidxTestRules = "1.7.0"
 androidxWorkRuntimeKtx = "2.11.2"
 
 coilCompose = "2.7.0"
+# 1.6.x: the last line built against Compose 1.8 (1.7+ pulls in Compose 1.12 and Kotlin 2.3).
+haze = "1.6.10"
 googleid = "1.2.0"
 junit = "4.13.2"
 kotlinxCoroutinesTest = "1.11.0"
@@ -58,6 +60,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "a
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "androidxWorkRuntimeKtx" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
+haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }

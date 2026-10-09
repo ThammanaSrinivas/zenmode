@@ -11,6 +11,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.rememberCoroutineScope
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -114,9 +116,6 @@ import java.util.Locale
 // not the app-wide Spacing.screenMargin, since it's the same v3 frame width.
 private val ScreenMargin: Dp @Composable get() = 30.rdp
 
-/** Every Zen Gold sub-screen's way back: header label and bottom button alike. */
-internal const val BACK_TO_ZEN_GOLD = "Back to Zen Gold"
-
 @Composable
 fun ZenGoldScreen(
     // Real, on-device Weekly/Monthly promise tracking — see ZenGoldPromise.kt. Gold pay's
@@ -150,6 +149,7 @@ fun ZenGoldScreen(
 ) {
     val mood = rememberTodayMood()
     var footerHeight by remember { mutableStateOf(0.dp) }
+    val footerBackdrop = remember { HazeState() }
 
     Box(
         modifier = Modifier
@@ -157,63 +157,67 @@ fun ZenGoldScreen(
             // Home sits to the left of this page, so swiping right goes back to it.
             .pageSwipe(onSwipeRight = onBackClick)
     ) {
-        MoodBackdrop(mood)
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
-        ) {
-            ZenGoldHeader(onBackClick = onBackClick)
-
-            Spacer(modifier = Modifier.height(14.rdp))
+        // The footer frosts whatever scrolls under it (PinnedPageFooter frostedOver).
+        Box(modifier = Modifier.fillMaxSize().hazeSource(footerBackdrop)) {
+            MoodBackdrop(mood)
 
             Column(
                 modifier = Modifier
-                    .padding(horizontal = ScreenMargin)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.rdp)
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .verticalScroll(rememberScrollState())
             ) {
-                PromiseScreenTimeCard(
-                    weekly = weekly,
-                    monthly = monthly,
-                    isPro = isPro,
-                    displayedWeek = displayedWeek,
-                    weekOffset = weekOffset,
-                    earliestWeekOffset = earliestWeekOffset,
-                    onWeekOffsetChange = onWeekOffsetChange
-                )
+                ZenGoldHeader(onBackClick = onBackClick)
 
-                ForecastCard(
-                    forecastPercent = forecastPercent,
-                    forecastMonthlyAmount = forecastMonthlyAmount
-                )
+                Spacer(modifier = Modifier.height(14.rdp))
 
-                // Full-width variant: ruled top and bottom, with View all inset from the
-                // right edge by the same padding the coin has on the left (node 2026:1530).
-                GoldInvestedRow(
-                    gold = goldInvested,
-                    changePercent = goldChangePercent,
-                    fullWidth = true,
-                    trailing = { ViewAllPillButton(onClick = onViewAllClick) }
-                )
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = ScreenMargin)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.rdp)
+                ) {
+                    PromiseScreenTimeCard(
+                        weekly = weekly,
+                        monthly = monthly,
+                        isPro = isPro,
+                        displayedWeek = displayedWeek,
+                        weekOffset = weekOffset,
+                        earliestWeekOffset = earliestWeekOffset,
+                        onWeekOffsetChange = onWeekOffsetChange
+                    )
 
-                GoldUnlockDisclaimer(
-                    daysUntilUnlock = (AppConstants.PROMISE_DAYS_TO_UNLOCK - weekly.unitsKept).coerceAtLeast(0),
-                    unlocked = weekly.goalMet,
-                    onViewTermsClick = onViewTermsClick
-                )
+                    ForecastCard(
+                        forecastPercent = forecastPercent,
+                        forecastMonthlyAmount = forecastMonthlyAmount
+                    )
+
+                    // Full-width variant: ruled top and bottom, with View all inset from the
+                    // right edge by the same padding the coin has on the left (node 2026:1530).
+                    GoldInvestedRow(
+                        gold = goldInvested,
+                        changePercent = goldChangePercent,
+                        fullWidth = true,
+                        trailing = { ViewAllPillButton(onClick = onViewAllClick) }
+                    )
+
+                    GoldUnlockDisclaimer(
+                        daysUntilUnlock = (AppConstants.PROMISE_DAYS_TO_UNLOCK - weekly.unitsKept).coerceAtLeast(0),
+                        unlocked = weekly.goalMet,
+                        onViewTermsClick = onViewTermsClick
+                    )
+                }
+
+                // Room for the sticky footer, so the last card can scroll clear of it.
+                Spacer(modifier = Modifier.height(footerHeight + 8.rdp))
             }
-
-            // Room for the sticky footer, so the last card can scroll clear of it.
-            Spacer(modifier = Modifier.height(footerHeight + 8.rdp))
         }
 
         // Invest Gold / Edit my promise stay on screen however far the page scrolls.
         PinnedPageFooter(
             current = HomePage.ZEN_GOLD,
             fadeTo = moodWashColors(mood).last(),
+            frostedOver = footerBackdrop,
             onHeightChanged = { footerHeight = it },
             modifier = Modifier.align(Alignment.BottomCenter),
             onPageClick = { page ->

@@ -36,6 +36,9 @@ object AppConstants {
     const val PLACEHOLDER_BUDDY_ZEN_SCORE = 88
     const val PLACEHOLDER_BUDDY_STREAK = 5
 
+    /** The way back from every Zen Gold sub-page: Invest Gold, My Promise, Gold Holdings. */
+    const val BACK_TO_ZEN_GOLD = "Back to Zen Gold"
+
     // Zen Gold screen (Figma node 2026:1648) — the home screen's right-swipe page.
     // Promise-vs-screen-time tracking is real, on-device data now (see ZenGoldPromise.kt);
     // only the gold price forecast still needs a real Gold Streak backend (see

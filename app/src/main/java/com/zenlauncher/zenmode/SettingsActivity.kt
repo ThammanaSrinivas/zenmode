@@ -144,7 +144,6 @@ class SettingsActivity : AppCompatActivity() {
                     },
                     onContributeClick = { openGitHub() },
                     onFeatureRequestClick = { openFeatureBoard() },
-                    onBugReportFallback = { BugReport.openFallback(this@SettingsActivity) },
                     onRateClick = { openPlayStore() },
                     onShareClick = { shareZenMode() },
                     onOpenPro = { entry -> startActivity(ZenProActivity.intent(this, entry)) },

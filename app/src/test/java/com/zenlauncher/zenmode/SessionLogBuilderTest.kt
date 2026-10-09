@@ -143,4 +143,56 @@ class SessionLogBuilderTest {
         // Chunk boundaries are contiguous with no gap or overlap.
         sessions.zipWithNext().forEach { (a, b) -> assertEquals(a.endMillis, b.startMillis) }
     }
+
+    @Test
+    fun `a row's duration is the time in every app it covers, not the dominant app's span`() {
+        val windows = listOf(0L to 20 * minute)
+        val apps = listOf(
+            ForegroundSession("whatsapp", 0L, 4 * minute),
+            ForegroundSession("instagram", 6 * minute, 8 * minute),
+            ForegroundSession("whatsapp", 10 * minute, 13 * minute)
+        )
+        val sessions = build(windows, apps)
+        assertEquals(1, sessions.size)
+        assertEquals("whatsapp", sessions[0].dominantPackage)
+        // 4 + 2 + 3 minutes in apps; the idle gaps on home and the 20-minute window don't count.
+        assertEquals(9 * minute, sessions[0].durationMillis)
+    }
+
+    @Test
+    fun `the rows add up to all the app time Home counts, even outside unlock windows`() {
+        val windows = listOf(10 * minute to 20 * minute)
+        val apps = listOf(
+            ForegroundSession("notion", 0L, 3 * minute), // before any unlock event (no lock screen)
+            ForegroundSession("instagram", 12 * minute, 15 * minute),
+            ForegroundSession("whatsapp", 18 * minute, 25 * minute) // runs past the lock
+        )
+        val sessions = build(windows, apps)
+        val homeTotal = apps.sumOf { it.endMillis - it.startMillis }
+        assertEquals(homeTotal, sessions.sumOf { it.durationMillis })
+    }
+
+    @Test
+    fun `untracked app use with short gaps reads as one pickup`() {
+        val apps = listOf(
+            ForegroundSession("notion", 0L, 2 * minute),
+            ForegroundSession("whatsapp", 2 * minute + 5_000L, 3 * minute)
+        )
+        val sessions = build(emptyList(), apps)
+        assertEquals(1, sessions.size)
+        assertEquals(3 * minute - 5_000L, sessions[0].durationMillis)
+    }
+
+    @Test
+    fun `untracked stretches are never joined across an unlock window`() {
+        val windows = listOf(2 * minute + 10_000L to 2 * minute + 20_000L)
+        val apps = listOf(
+            ForegroundSession("notion", 0L, 2 * minute),
+            ForegroundSession("whatsapp", 2 * minute + 10_000L, 2 * minute + 20_000L),
+            ForegroundSession("notion", 2 * minute + 30_000L, 4 * minute)
+        )
+        val sessions = build(windows, apps)
+        assertEquals(3, sessions.size)
+        assertEquals(apps.sumOf { it.endMillis - it.startMillis }, sessions.sumOf { it.durationMillis })
+    }
 }

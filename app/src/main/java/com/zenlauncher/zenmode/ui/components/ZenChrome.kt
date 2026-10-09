@@ -46,6 +46,10 @@ import com.zenlauncher.zenmode.SettingsActivity
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import androidx.compose.foundation.systemGestureExclusion as foundationSystemGestureExclusion
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
 
 
 // ── Shared v3 chrome ──────────────────────────────────────────────
@@ -186,6 +190,10 @@ val ZenSecondaryCtaSlot: Dp @Composable get() = 42.rdp
 
 private val CtaGap: Dp @Composable get() = 4.rdp
 
+/** The frosted footer (design: layer blur, fill at 60%). */
+private const val FrostedFooterOpacity = 0.6f
+private val FrostedFooterBlur = 20.dp
+
 /**
  * The sticky foot of a home page: the page's [primary] action, a quieter [secondary] under it,
  * and the page dots, held at the bottom over a fade into [fadeTo] so they stay on screen
@@ -206,6 +214,10 @@ fun PinnedPageFooter(
     fadeTo: Color?,
     onHeightChanged: (Dp) -> Unit,
     modifier: Modifier = Modifier,
+    /** The page's content, marked with hazeSource: the footer then frosts it, a blurred
+     *  layer under [fadeTo] at [FrostedFooterOpacity], instead of fading into a solid colour.
+     *  Needs [fadeTo]; Android 11 and older get the tint alone, no blur. */
+    frostedOver: HazeState? = null,
     onPageClick: ((HomePage) -> Unit)? = null,
     horizontalMargin: Dp? = null,
     primary: (@Composable () -> Unit)? = null,
@@ -219,6 +231,15 @@ fun PinnedPageFooter(
             .onSizeChanged { onHeightChanged(with(density) { it.height.toDp() }) }
             .then(
                 if (fadeTo == null) Modifier
+                else if (frostedOver != null) Modifier.hazeEffect(
+                    state = frostedOver,
+                    style = HazeStyle(
+                        backgroundColor = fadeTo,
+                        tint = HazeTint(fadeTo.copy(alpha = FrostedFooterOpacity)),
+                        blurRadius = FrostedFooterBlur,
+                        noiseFactor = 0f
+                    )
+                )
                 else Modifier.background(
                     Brush.verticalGradient(
                         0f to fadeTo.copy(alpha = 0f),

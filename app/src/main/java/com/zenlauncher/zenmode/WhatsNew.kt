@@ -16,7 +16,7 @@ data class WhatsNewItem(
  * set [NOTES_VERSION_CODE] to the release's `versionCode`, and everyone below it sees them once.
  */
 object WhatsNew {
-    const val NOTES_VERSION_CODE = 15
+    const val NOTES_VERSION_CODE = 16
 
     const val HEADLINE = "A fresh look and new ways to stay focused."
 

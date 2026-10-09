@@ -30,7 +30,7 @@ class WhatsNewOverlayScreenshotTest {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 ZenTheme(darkTheme = darkTheme) {
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(ZenTheme.colors.washHappy))) {
-                        WhatsNewOverlay(visible = true, versionName = "3.05", onDismiss = {})
+                        WhatsNewOverlay(visible = true, versionName = "3.06", onDismiss = {})
                     }
                 }
             }

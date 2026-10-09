@@ -31,24 +31,9 @@ class SessionLogRepository(private val context: Context, private val usageReposi
         )
     }
 
-    /**
-     * 0-100: full credit for [SessionEventType.INTENTIONAL] time, half for
-     * [SessionEventType.ENTERTAINING], none for [SessionEventType.DISRUPTED]. Defaults to a
-     * neutral 100 with no sessions yet today, so a fresh day never scores low for lack of data.
-     */
-    fun getSessionQualityPercent(sessions: List<PhoneSession> = getTodaySessions()): Int {
-        val total = sessions.sumOf { it.durationMillis }
-        if (total <= 0L) return 100
-        val credited = sessions.sumOf { session ->
-            val weight = when (session.eventType) {
-                SessionEventType.INTENTIONAL -> 1.0
-                SessionEventType.ENTERTAINING -> 0.5
-                SessionEventType.DISRUPTED -> 0.0
-            }
-            (session.durationMillis * weight).toLong()
-        }
-        return ((credited * 100) / total).toInt().coerceIn(0, 100)
-    }
+    /** Today's relapses ([SessionEventType.DISRUPTED]) — the Zen Score's light distraction texture. */
+    fun getDistractedSessionCount(sessions: List<PhoneSession> = getTodaySessions()): Int =
+        sessions.count { it.eventType == SessionEventType.DISRUPTED }
 
     /** Share of today's tracked foreground time per category, summing to ~100. Empty on a usage-free day. */
     fun getCategoryBreakdownPercent(): List<Pair<AppCategory, Int>> {

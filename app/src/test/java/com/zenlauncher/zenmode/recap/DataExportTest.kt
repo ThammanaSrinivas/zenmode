@@ -26,7 +26,7 @@ class DataExportTest {
     @Test
     fun `a row carries the day's numbers, promise and score`() {
         val row = DataExport.csv(listOf(day(0, 150, apps = listOf(AppMinutes("pkg", "Maps", 40))))).trim().lines()[1]
-        val score = ZenScore.format(ZenScore.compute(150 * 60_000L, 30, 3))
+        val score = ZenScore.format(ZenScore.compute(150 * 60_000L, distractedSessions = 0, promiseHours = 3))
         assertEquals("2026-09-07,150,3,yes,$score,30,12,Maps,40", row)
     }
 

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.format.DateFormat
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +29,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 /**
@@ -58,8 +60,11 @@ class ZenScoreActivity : AppCompatActivity() {
         // Newest first, so the latest session is visible without scrolling
         // (getTodaySessions() itself returns oldest-first).
         val sessionLog = sessions.asReversed().map(::toLogEntry)
-        val totalMins = TimeUnit.MILLISECONDS.toMinutes(sessions.sumOf { it.durationMillis })
-        val sessionTotalLabel = "TODAY, ${formatMinutes(totalMins)}"
+        // Home's number, not the rows' sum: the rows can't itemise a day the OEM only reports
+        // in aggregate, and the total must read the same on every screen.
+        val totalMins = TimeUnit.MILLISECONDS.toMinutes(repository.getTodayUsage().screenTimeInMillis)
+        val sessionTotalLabel =
+            "TODAY · ${formatMinutes(totalMins)} · ${sessions.size} SESSION${if (sessions.size == 1) "" else "S"}"
         val reclaimedMinutes = reclaimedMinutesToday(repository)
 
         ServiceLocator.analyticsTracker.trackDailyScreentimeViewed(totalMins, 0)
@@ -126,16 +131,16 @@ class ZenScoreActivity : AppCompatActivity() {
         }
 
     private fun toLogEntry(session: PhoneSession) = ZenSessionLogEntry(
-        duration = formatSessionDuration(session.durationMillis),
+        time = DateFormat.getTimeFormat(this).format(Date(session.startMillis)),
         appName = session.dominantLabel,
+        otherApps = (session.appCount - 1).coerceAtLeast(0),
+        duration = formatSessionDuration(session.durationMillis),
         type = session.eventType
     )
 
-    /** "HH:MM:SS", matching the session log's existing row format. */
-    private fun formatSessionDuration(millis: Long): String {
-        val totalSeconds = millis / 1000
-        return "%02d:%02d:%02d".format(totalSeconds / 3600, (totalSeconds % 3600) / 60, totalSeconds % 60)
-    }
+    /** "4m", "1h 05m" — plain minutes like the rest of the screen; under a minute reads "<1m". */
+    private fun formatSessionDuration(millis: Long): String =
+        if (millis < 60_000L) "<1m" else formatMinutes(TimeUnit.MILLISECONDS.toMinutes(millis))
 
     /** Minutes won back today vs. yesterday's screen time at this same point, floored at 0. */
     private fun reclaimedMinutesToday(repository: UsageRepository): Int {

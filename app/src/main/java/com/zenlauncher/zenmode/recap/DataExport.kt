@@ -35,9 +35,11 @@ object DataExport {
         appendLine(HEADER.joinToString(","))
         days.sortedBy { it.date }.forEach { day ->
             val top = day.appMinutes.firstOrNull()
-            // The score needs pickups; without them a blank beats a flattering guess.
+            // A past day's session log isn't kept, so its score is the screen-time part alone
+            // (no distraction texture). Without pickups the device withheld usage events that
+            // day, and a blank beats a flattering guess.
             val score = day.pickups?.let {
-                ZenScore.format(ZenScore.compute(day.screenTimeMinutes * 60_000, it, day.promiseHours))
+                ZenScore.format(ZenScore.compute(day.screenTimeMinutes * 60_000, distractedSessions = 0, promiseHours = day.promiseHours))
             }
             appendLine(
                 listOf(
