@@ -56,6 +56,7 @@ import com.zenlauncher.zenmode.ui.screens.AccessibilityDisclosureScreen
 import com.zenlauncher.zenmode.ui.screens.AccountabilityScreen
 import com.zenlauncher.zenmode.ui.screens.BuddyAddResult
 import com.zenlauncher.zenmode.ui.screens.ForceUpdateDialog
+import com.zenlauncher.zenmode.ui.screens.WhatsNewOverlay
 import com.zenlauncher.zenmode.ui.components.zenOverlayBlur
 import com.zenlauncher.zenmode.ui.screens.HomeAppActionsOverlay
 import com.zenlauncher.zenmode.ui.screens.HomeAppsPickerOverlay
@@ -114,6 +115,7 @@ class MainActivity : AppCompatActivity() {
     internal var showBuddyConnect by mutableStateOf(false)
     private var showEnteringZenMode by mutableStateOf(false)
     private var showHomeGuide by mutableStateOf(false)
+    private var showWhatsNew by mutableStateOf(false)
     // Set from a zenmodeos.com/b/{code} App Link tap; consumed once the Connect screen
     // is actually on-screen (see the LaunchedEffect next to ZenBroStage.Connect below).
     internal var pendingInviteCode by mutableStateOf<String?>(null)
@@ -300,6 +302,7 @@ class MainActivity : AppCompatActivity() {
         goldInvested = GoldLedger.balanceLabel(this)
         resolveUnlockReveal()
         A11yPermissionMonitor.check(this)
+        if (::viewModel.isInitialized) checkWhatsNew()
         if (::viewModel.isInitialized) {
             viewModel.onResumeCheck()
             viewModel.refreshBuddyStatsFromCache()
@@ -398,7 +401,8 @@ class MainActivity : AppCompatActivity() {
         showEnteringZenMode = repository.isEnteringCelebrationPending()
         showHomeGuide = HomeGuidePreferences.isPending(this)
         // Don't stack the system prompt over the celebration; it asks once that ends.
-        if (!showEnteringZenMode && !showHomeGuide) requestPostNotificationsIfNeeded()
+        checkWhatsNew()
+        if (!showEnteringZenMode && !showHomeGuide && !showWhatsNew) requestPostNotificationsIfNeeded()
 
         // Disable back button since this is a launcher home screen
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -615,7 +619,7 @@ class MainActivity : AppCompatActivity() {
                     },
                     onAppClick = { appInfo -> launchHomeApp(appInfo) },
                     onAppLongClick = { longPressedApp = it },
-                    modifier = Modifier.zenOverlayBlur(longPressedApp != null || showHomeAppsPicker),
+                    modifier = Modifier.zenOverlayBlur(longPressedApp != null || showHomeAppsPicker || showWhatsNew),
                     reveal = homeRevealCue,
                     showGuide = showHomeGuide && !showEnteringZenMode,
                     onGuideFinished = { HomeGuidePreferences.setPending(this, false); showHomeGuide = false; requestPostNotificationsIfNeeded() },
@@ -664,6 +668,10 @@ class MainActivity : AppCompatActivity() {
                     },
                     onDismiss = { longPressedApp = null }
                 )
+
+                WhatsNewOverlay(visible = showWhatsNew, versionName = BuildConfig.VERSION_NAME, onDismiss = {
+                    WhatsNewPreferences.markSeen(this); showWhatsNew = false; requestPostNotificationsIfNeeded()
+                })
                 HomeAppsPickerOverlay(
                     visible = showHomeAppsPicker,
                     limit = homeAppCount,
@@ -939,6 +947,11 @@ class MainActivity : AppCompatActivity() {
 
     // removeBuddy and connectWithInviteCode live in MainActivityBuddyFlow.kt as extension
     // functions -- split out to keep this file under the 1000-line ceiling.
+
+    /** Release notes once after an update, but never over the celebration or the first-run guide. */
+    private fun checkWhatsNew() {
+        if (!showWhatsNew && !showEnteringZenMode && !showHomeGuide) showWhatsNew = WhatsNewPreferences.shouldShow(this)
+    }
 
     private fun requestPostNotificationsIfNeeded() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
