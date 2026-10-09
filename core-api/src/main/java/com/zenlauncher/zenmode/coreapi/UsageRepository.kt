@@ -16,6 +16,25 @@ class UsageRepository(private val context: Context, private val analyticsManager
 
     private val prefs: SharedPreferences = context.getSharedPreferences("zen_mode_stats", Context.MODE_PRIVATE)
 
+    /**
+     * Past days' totals cached before the counting fix could carry home-screen time; drop them
+     * once so they're recomputed from the system's history (kept ~7-10 days, then the daily
+     * buckets) instead of showing the inflated number for the rest of the 30-day window.
+     */
+    private fun dropInflatedDayCache() {
+        if (prefs.getBoolean(KEY_DAY_CACHE_V2, false)) return
+        val edit = prefs.edit()
+        prefs.all.orEmpty().keys.filter { it.startsWith(DAY_CACHE_PREFIX) }.forEach(edit::remove)
+        edit.putBoolean(KEY_DAY_CACHE_V2, true).apply()
+    }
+
+    /**
+     * The manual fallback for phones without usage access: adds an unlocked stretch to today's
+     * total. With usage access granted it only archives the previous day — the system's own app
+     * history is the one source then (see [getTodayUsage]). Counting unlocked time there as well
+     * folded time on the home screen and in ZenMode itself into screen time, and because the
+     * cached total only ever went up, one such reading stuck for the rest of the day.
+     */
     fun updateScreenTime(duration: Long) {
         if (duration <= 0) return
 
@@ -24,7 +43,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
 
         // Archive previous day's screen time before resetting
         if (savedDate != null && savedDate.isNotEmpty() && savedDate != today) {
-            val archiveKey = "screen_time_$savedDate"
+            val archiveKey = DAY_CACHE_PREFIX + savedDate
             if (!prefs.contains(archiveKey)) {
                 val previousDayTotal = prefs.getLong("daily_screen_time", 0L)
                 if (previousDayTotal > 0) {
@@ -33,29 +52,12 @@ class UsageRepository(private val context: Context, private val analyticsManager
             }
         }
 
-        // Try to get real-time stats first (only meaningful when usage access is granted)
-        val realTimeFn = if (UsageAccess.isGranted(context)) getRealTimeScreenTime() else 0L
-        val currentCachedParams = if (savedDate == today) prefs.getLong("daily_screen_time", 0) else 0
-
-        var totalTime: Long
-        if (realTimeFn > 0) {
-            // System tracking is working and returning valid data.
-            // Use this as the source of truth.
-            totalTime = realTimeFn
-        } else {
-             // Fallback to manual accumulation
-             totalTime = currentCachedParams + duration
-        }
-
-        // CRITICAL: Only update if the new total is greater than what we already have.
-        // This prevents overwriting a high value with a low value (if system stats lag or error),
-        // and ensures strictly increasing semantics.
-        if (totalTime > currentCachedParams) {
-            prefs.edit()
-                .putLong("daily_screen_time", totalTime)
-                .putString("last_date_screentime", today)
-                .apply()
-        }
+        if (UsageAccess.isGranted(context)) return
+        val current = if (savedDate == today) prefs.getLong("daily_screen_time", 0) else 0
+        prefs.edit()
+            .putLong("daily_screen_time", current + duration)
+            .putString("last_date_screentime", today)
+            .apply()
     }
 
     private fun getRealTimeScreenTime(): Long =
@@ -73,14 +75,21 @@ class UsageRepository(private val context: Context, private val analyticsManager
      * implementation summed SCREEN_INTERACTIVE/SCREEN_NON_INTERACTIVE durations, but MIUI/HyperOS
      * frequently withholds those screen on/off events from third-party apps, so the total stayed 0.
      *
-     * Fallback: when event pairing yields 0 (events withheld), aggregate totalTimeInForeground from
-     * queryUsageStats(INTERVAL_DAILY), which is exposed even when raw events are not.
+     * Fallback: only when the OEM withholds raw events altogether (not one activity event in the
+     * range, ZenMode's own included), aggregate totalTimeInForeground from
+     * queryUsageStats(INTERVAL_DAILY), which is exposed even when raw events are not. A day where
+     * nothing but home has been used yet is a real 0 — falling back then pulled in a whole
+     * day-bucket that began yesterday.
      */
     private fun computeForegroundScreenTime(start: Long, end: Long): Long {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE)
             as? android.app.usage.UsageStatsManager ?: return 0L
-        val fromEvents = sumForegroundFromEvents(usm, start, end)
-        return if (fromEvents > 0L) fromEvents else sumForegroundFromStats(usm, start, end)
+        val fromEvents = foregroundEvents(usm, start, end)
+        return if (fromEvents.sawActivity) {
+            fromEvents.sessions.sumOf { it.endMillis - it.startMillis }
+        } else {
+            sumForegroundFromStats(usm, start, end)
+        }
     }
 
     /**
@@ -97,12 +106,6 @@ class UsageRepository(private val context: Context, private val analyticsManager
         return (homes + context.packageName + SYSTEM_PACKAGES).toSet()
     }
 
-    private fun sumForegroundFromEvents(
-        usm: android.app.usage.UsageStatsManager,
-        start: Long,
-        end: Long
-    ): Long = foregroundSessions(usm, start, end).sumOf { it.endMillis - it.startMillis }
-
     /**
      * Every foreground app session in `[start, end)`, from paired resume/pause events.
      * Empty when usage access is missing or the OEM withholds raw events.
@@ -111,53 +114,31 @@ class UsageRepository(private val context: Context, private val analyticsManager
         if (!UsageAccess.isGranted(context)) return emptyList()
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE)
             as? android.app.usage.UsageStatsManager ?: return emptyList()
-        return foregroundSessions(usm, start, end)
+        return foregroundEvents(usm, start, end).sessions
     }
 
-    private fun foregroundSessions(
+    /** Today's raw resume/pause events, paired by [ForegroundPairing]. */
+    private fun foregroundEvents(
         usm: android.app.usage.UsageStatsManager,
         start: Long,
         end: Long
-    ): List<ForegroundSession> {
-        val excluded = excludedPackages()
+    ): ForegroundPairing.Result {
         val events = usm.queryEvents(start, end)
         val event = android.app.usage.UsageEvents.Event()
-
-        // Per-package resume timestamps so interleaved apps (split-screen, quick switches)
-        // are not cross-attributed or double counted.
-        val resumeAt = HashMap<String, Long>()
-        val sessions = mutableListOf<ForegroundSession>()
-
+        val raw = mutableListOf<ForegroundPairing.Event>()
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
             val pkg = event.packageName ?: continue
-            if (pkg in excluded) continue
-            when (event.eventType) {
-                // ACTIVITY_RESUMED (API 29+) and legacy MOVE_TO_FOREGROUND (==1)
-                android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED,
-                android.app.usage.UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-                    // Overwrite any dangling resume (resume without a matching pause): drop the
-                    // stale open session instead of counting it twice.
-                    resumeAt[pkg] = event.timeStamp
-                }
-                // ACTIVITY_PAUSED (API 29+) and legacy MOVE_TO_BACKGROUND (==2)
-                android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED,
-                android.app.usage.UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-                    val started = resumeAt.remove(pkg)
-                    // First event being a pause => started == null => ignored, because the matching
-                    // resume happened before `start` (it belongs to the previous day).
-                    if (started != null && event.timeStamp > started) {
-                        sessions += ForegroundSession(pkg, started, event.timeStamp)
-                    }
-                }
+            val kind = when (event.eventType) {
+                // ACTIVITY_RESUMED (API 29+) is the same constant as legacy MOVE_TO_FOREGROUND,
+                // ACTIVITY_PAUSED the same as MOVE_TO_BACKGROUND.
+                android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED -> ForegroundPairing.Kind.RESUMED
+                android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED -> ForegroundPairing.Kind.PAUSED
+                else -> continue
             }
+            raw += ForegroundPairing.Event(event.timeStamp, pkg, kind)
         }
-
-        // Any app still in the foreground at `end`: close the open session(s) at `end`.
-        for ((pkg, started) in resumeAt) {
-            if (end > started) sessions += ForegroundSession(pkg, started, end)
-        }
-        return sessions
+        return ForegroundPairing.pair(raw, end, excludedPackages())
     }
 
     /** Unlocks (keyguard dismissals) in `[start, end)`. */
@@ -223,6 +204,9 @@ class UsageRepository(private val context: Context, private val analyticsManager
         var total = 0L
         for (s in stats) {
             if (s.packageName in excluded) continue
+            // Daily buckets are returned whole when they merely overlap the range, so a bucket
+            // that began the day before (or after) would add that day's usage to this one.
+            if (s.firstTimeStamp < start || s.firstTimeStamp >= end) continue
             var t = s.totalTimeInForeground
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 // totalTimeVisible covers PiP / visible-but-not-resumed; take the larger,
@@ -258,11 +242,12 @@ class UsageRepository(private val context: Context, private val analyticsManager
     }
 
     fun getYesterdayScreenTimeMillis(): Long {
+        dropInflatedDayCache()
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val yesterdayCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
         val yesterdayDate = dateFormat.format(yesterdayCal.time)
 
-        val cacheKey = "screen_time_$yesterdayDate"
+        val cacheKey = DAY_CACHE_PREFIX + yesterdayDate
         val cached = prefs.getLong(cacheKey, 0L)
         if (cached > 0L) return cached
 
@@ -282,6 +267,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
      */
     fun getDailyScreenTimeMillis(days: Int): List<Long> {
         require(days in 1..CACHE_RETENTION_DAYS) { "days must be in 1..$CACHE_RETENTION_DAYS" }
+        dropInflatedDayCache()
         val today = getTodayDate()
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
@@ -296,7 +282,7 @@ class UsageRepository(private val context: Context, private val analyticsManager
             val millis: Long = if (dateString == today) {
                 getTodayUsage().screenTimeInMillis
             } else {
-                val cacheKey = "screen_time_$dateString"
+                val cacheKey = DAY_CACHE_PREFIX + dateString
                 val cached = prefs.getLong(cacheKey, 0L)
                 if (cached > 0L) {
                     cached
@@ -318,8 +304,8 @@ class UsageRepository(private val context: Context, private val analyticsManager
         val editor = prefs.edit()
         var hasRemovals = false
         for (key in prefs.all.keys) {
-            if (key.startsWith("screen_time_") && key.length == 22) {
-                val dateStr = key.removePrefix("screen_time_")
+            if (key.startsWith(DAY_CACHE_PREFIX) && key.length == 22) {
+                val dateStr = key.removePrefix(DAY_CACHE_PREFIX)
                 if (dateStr < cutoffDate) {
                     editor.remove(key)
                     hasRemovals = true
@@ -345,17 +331,15 @@ class UsageRepository(private val context: Context, private val analyticsManager
         val savedDateScreenTime = prefs.getString("last_date_screentime", "")
         var screenTimeInMillis = if (savedDateScreenTime == today) prefs.getLong("daily_screen_time", 0) else 0
 
-        // Only read real-time stats when usage access is granted; otherwise queryEvents/queryUsageStats
-        // return empty and we keep the last cached value (rather than overwriting with a misleading 0).
+        // With usage access the system's app history is the answer, lower or not: the cache is
+        // only what we show while access is missing (then queryEvents/queryUsageStats return
+        // nothing, and the last value beats a misleading 0). Keeping the higher of the two let
+        // one bad reading pin an inflated number for the rest of the day.
         if (granted) {
             try {
-                val realTimeFn = getRealTimeScreenTime()
-                // If we have valid real-time data that is MORE than our cached data, use it.
-                // This handles the case where the user is actively using the device (so cache is stale/lower).
-                if (realTimeFn > 0 && realTimeFn > screenTimeInMillis) {
-                    screenTimeInMillis = realTimeFn
-
-                    // Sync back to prefs so UI and other components see it
+                val realTime = getRealTimeScreenTime()
+                if (realTime != screenTimeInMillis || savedDateScreenTime != today) {
+                    screenTimeInMillis = realTime
                     prefs.edit()
                         .putLong("daily_screen_time", screenTimeInMillis)
                         .putString("last_date_screentime", today)
@@ -649,9 +633,9 @@ class UsageRepository(private val context: Context, private val analyticsManager
 
     /**
      * The zen_score last written to Firestore. Unlike screen time, the synced score also
-     * depends on the promise and today's session quality — comparing the computed score
-     * itself (rather than its inputs) is what catches a promise edit or a session-quality
-     * shift alone needing a resync.
+     * depends on the promise and today's distracted sessions — comparing the computed score
+     * itself (rather than its inputs) is what catches a promise edit or a new
+     * distracted session alone needing a resync.
      */
     fun getLastSyncedZenScore(): Int {
         return prefs.getInt("last_synced_zen_score", -1)
@@ -791,6 +775,11 @@ class UsageRepository(private val context: Context, private val analyticsManager
     companion object {
         /** Longest range any screen asks for (the Pro 30-day chart). */
         const val CACHE_RETENTION_DAYS = 30
+
+        /** Past days' totals are cached under this prefix plus the `yyyy-MM-dd` date. */
+        private const val DAY_CACHE_PREFIX = "screen_time_"
+        /** Set once the pre-fix day caches are dropped (see dropInflatedDayCache). */
+        private const val KEY_DAY_CACHE_V2 = "day_cache_v2"
 
         /**
          * System UI/chooser surfaces that show up as foreground "apps" in UsageEvents but

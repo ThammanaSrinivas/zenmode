@@ -31,7 +31,7 @@ class ZenScoreStore(
     fun refresh(usage: DailyUsage = repository.getTodayUsage()): Int {
         val score = ZenScore.compute(
             screenTimeMillis = usage.screenTimeInMillis,
-            sessionQualityPercent = sessionLogRepository.getSessionQualityPercent(),
+            distractedSessions = sessionLogRepository.getDistractedSessionCount(),
             promiseHours = PromisePreferences.getDailyHours(context)
         )
         // Only today and yesterday are ever read, so drop the day before as we go.

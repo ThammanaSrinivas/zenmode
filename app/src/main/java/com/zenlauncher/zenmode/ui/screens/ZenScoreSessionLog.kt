@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.coreapi.CoreConstants
 import com.zenlauncher.zenmode.coreapi.SessionEventType
 import com.zenlauncher.zenmode.ui.components.pressScale
 import com.zenlauncher.zenmode.ui.components.taperedBorder
@@ -159,6 +160,8 @@ internal fun SessionLogCard(
                 )
             }
 
+            if (sessionLog.isNotEmpty()) SessionLogExplainer()
+
             if (visibleLog.isEmpty()) {
                 SessionLogEmptyRow()
             } else {
@@ -226,53 +229,76 @@ private fun SessionLogEmptyRow() {
     )
 }
 
+/** What a row's tag says, in plain words; [SessionLogExplainer] names the one that costs points. */
+private val SessionEventType.logLabel: String
+    get() = when (this) {
+        SessionEventType.INTENTIONAL -> "FOCUSED"
+        SessionEventType.ENTERTAINING -> "LEISURE"
+        SessionEventType.DISRUPTED -> "PULLED BACK"
+    }
+
+/** One line on how to read the rows, so the tags don't need a manual. */
+@Composable
+private fun SessionLogExplainer() {
+    val reopenMinutes = CoreConstants.RAPID_REOPEN_GAP_MS / 60_000L
+    Text(
+        text = "Each row is a stretch of phone use, newest first. Only Pulled back rows " +
+            "lower your score: the same kind of app again within $reopenMinutes minutes.",
+        fontFamily = Geist,
+        fontSize = 11.rsp,
+        lineHeight = 15.rsp,
+        color = ZenTheme.colors.textSecondary,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 10.rdp, end = 10.rdp, top = 8.rdp)
+    )
+}
+
 @Composable
 private fun SessionLogRow(entry: ZenSessionLogEntry) {
     val colors = ZenTheme.colors
-    val (statusLabel, statusColor) = when (entry.type) {
-        SessionEventType.INTENTIONAL -> "INTENTIONAL" to colorResource(R.color.gold_delta_text)
-        SessionEventType.ENTERTAINING -> "ENTERTAINING" to colorResource(R.color.score_status_red)
-        SessionEventType.DISRUPTED -> "DISRUPTED" to colorResource(R.color.amber_500)
+    val statusColor = when (entry.type) {
+        SessionEventType.INTENTIONAL -> colorResource(R.color.gold_delta_text)
+        SessionEventType.ENTERTAINING -> colorResource(R.color.score_status_red)
+        SessionEventType.DISRUPTED -> colorResource(R.color.amber_500)
     }
+    val appName = entry.appName.uppercase() + if (entry.otherApps > 0) " +${entry.otherApps}" else ""
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(SessionLogRowHeight)
-            .padding(horizontal = 10.rdp),
+            .padding(horizontal = 10.rdp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "${entry.time}, ${entry.appName}" +
+                    (if (entry.otherApps > 0) " and ${entry.otherApps} more" else "") +
+                    ", ${entry.duration}, ${entry.type.logLabel.lowercase()}"
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = entry.duration,
-            fontFamily = DepartureMono,
-            fontSize = 10.rsp,
-            lineHeight = 10.rsp,
-            letterSpacing = 1.sp,
-            maxLines = 1,
-            color = colors.textSecondary
-        )
+        SessionLogCell(entry.time, colors.textSecondary)
         Spacer(modifier = Modifier.width(10.rdp))
-        // Takes the slack so a long app name ellipsizes instead of shoving the status off-card.
-        Text(
-            text = entry.appName.uppercase(),
-            fontFamily = DepartureMono,
-            fontSize = 10.rsp,
-            lineHeight = 10.rsp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = colors.textPrimary,
-            modifier = Modifier.weight(1f)
-        )
+        // Takes the slack so a long app name ellipsizes instead of shoving the tag off-card.
+        SessionLogCell(appName, colors.textPrimary, Modifier.weight(1f))
         Spacer(modifier = Modifier.width(8.rdp))
-        Text(
-            text = statusLabel,
-            fontFamily = DepartureMono,
-            fontSize = 9.rsp,
-            lineHeight = 9.rsp,
-            maxLines = 1,
-            color = statusColor
-        )
+        SessionLogCell(entry.duration, colors.textSecondary)
+        Spacer(modifier = Modifier.width(8.rdp))
+        SessionLogCell(entry.type.logLabel, statusColor, fontSize = 9)
     }
+}
+
+@Composable
+private fun SessionLogCell(text: String, color: Color, modifier: Modifier = Modifier, fontSize: Int = 10) {
+    Text(
+        text = text,
+        fontFamily = DepartureMono,
+        fontSize = fontSize.rsp,
+        lineHeight = fontSize.rsp,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        color = color,
+        modifier = modifier
+    )
 }
 
 // ── Reclaimed-minutes dial ─────────────────────────────────────────

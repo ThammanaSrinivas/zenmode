@@ -111,7 +111,17 @@ private val ScreenMargin: Dp @Composable get() = 30.rdp
 
 data class ZenScoreCategory(val label: String, val percent: Int, val colorRes: Int)
 
-data class ZenSessionLogEntry(val duration: String, val appName: String, val type: SessionEventType)
+/**
+ * One session-log row: when it started ([time], already in the phone's 12/24h format), the app
+ * used most plus how many [otherApps] came along, and the real time spent in them ([duration]).
+ */
+data class ZenSessionLogEntry(
+    val time: String,
+    val appName: String,
+    val otherApps: Int,
+    val duration: String,
+    val type: SessionEventType
+)
 
 @Composable
 fun ZenScoreScreen(

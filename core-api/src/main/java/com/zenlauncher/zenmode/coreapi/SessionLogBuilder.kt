@@ -13,7 +13,8 @@ object SessionLogBuilder {
     /**
      * @param unlockWindows [start, end) spans from unlock to the next lock (or "now", if still
      *   unlocked), as [com.zenlauncher.zenmode.coreapi.UsageRepository.getUnlockWindows] returns
-     *   them. Assumed sorted and non-overlapping.
+     *   them. Assumed non-overlapping. App time outside all of them still gets logged, in
+     *   windows of its own (see [untrackedWindows]).
      * @param appSessions every foreground app interval in the same overall range.
      * @param excludedPackages ZenMode itself and any launcher/systemui packages — not "apps you used".
      */
@@ -25,7 +26,9 @@ object SessionLogBuilder {
         labelOf: (String) -> String
     ): List<PhoneSession> {
         val sessions = mutableListOf<PhoneSession>()
-        for ((windowStart, windowEnd) in unlockWindows.sortedBy { it.first }) {
+        val windows = (unlockWindows + untrackedWindows(unlockWindows, appSessions, excludedPackages))
+            .sortedBy { it.first }
+        for ((windowStart, windowEnd) in windows) {
             if (windowEnd - windowStart < CoreConstants.MIN_SESSION_DURATION_MS) continue
             for ((chunkStart, chunkEnd) in chunk(windowStart, windowEnd)) {
                 val perApp = appOverlapIn(chunkStart, chunkEnd, appSessions, excludedPackages)
@@ -41,10 +44,60 @@ object SessionLogBuilder {
                 // this chunk, not the chunk's own boundaries — otherwise a few seconds spent in
                 // an app during an otherwise-idle-on-home-screen hour would misreport as an
                 // hour-long session for that app.
-                sessions += PhoneSession(overlap.firstStart, overlap.lastEnd, category, dominant, label, eventType)
+                val activeMillis = perApp.values.sumOf { it.totalMillis }
+                sessions += PhoneSession(
+                    overlap.firstStart, overlap.lastEnd, activeMillis, perApp.size, category, dominant, label, eventType
+                )
             }
         }
         return sessions
+    }
+
+    /**
+     * App time that no unlock window covers — phones with no lock screen, Smart Lock, or an OEM
+     * that withholds keyguard events — grouped into windows of its own, so it still shows up in
+     * the log instead of silently going missing from it while Home counts it. App stretches less
+     * than [CoreConstants.UNTRACKED_JOIN_GAP_MS] apart read as one pickup, unless an unlock
+     * window sits between them.
+     */
+    private fun untrackedWindows(
+        unlockWindows: List<Pair<Long, Long>>,
+        appSessions: List<ForegroundSession>,
+        excludedPackages: Set<String>
+    ): List<Pair<Long, Long>> {
+        val covered = unlockWindows.sortedBy { it.first }
+        val pieces = appSessions
+            .filter { it.packageName !in excludedPackages && it.endMillis > it.startMillis }
+            .flatMap { uncoveredParts(it.startMillis, it.endMillis, covered) }
+            .sortedBy { it.first }
+        val merged = mutableListOf<Pair<Long, Long>>()
+        for (piece in pieces) {
+            val last = merged.lastOrNull()
+            if (last != null &&
+                piece.first - last.second <= CoreConstants.UNTRACKED_JOIN_GAP_MS &&
+                covered.none { it.first >= last.second && it.first < piece.first }
+            ) {
+                merged[merged.lastIndex] = last.first to maxOf(last.second, piece.second)
+            } else {
+                merged += piece
+            }
+        }
+        return merged
+    }
+
+    /** The parts of `[start, end)` outside every window in [covered] (sorted, non-overlapping). */
+    private fun uncoveredParts(start: Long, end: Long, covered: List<Pair<Long, Long>>): List<Pair<Long, Long>> {
+        val parts = mutableListOf<Pair<Long, Long>>()
+        var cursor = start
+        for ((windowStart, windowEnd) in covered) {
+            if (windowEnd <= cursor) continue
+            if (windowStart >= end) break
+            if (windowStart > cursor) parts += cursor to windowStart
+            cursor = maxOf(cursor, windowEnd)
+            if (cursor >= end) break
+        }
+        if (cursor < end) parts += cursor to end
+        return parts
     }
 
     /** Sessions past the max length become same-length display chunks; the last one absorbs the remainder. */
