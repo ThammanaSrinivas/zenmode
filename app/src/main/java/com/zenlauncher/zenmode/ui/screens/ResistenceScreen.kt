@@ -552,6 +552,13 @@ private fun ResistenceMindfulnessBar(
 // Uses resistence_screen_around_time drawable, revealed progressively:
 //   0→2s: 3 lines (stage1), 2→4s: 6 lines (stage2),
 //   4→6s: 8 lines (stage3), 6→7s: all 10 lines (full)
+// The ring fills with elapsed time; the number counts down (7 → 1).
+
+/** The number in the ring: seconds left of [AppConstants.COUNTDOWN_SECONDS], given seconds elapsed (1-based). */
+internal fun countdownSecondsLeft(elapsedSeconds: Int, finished: Boolean): Int {
+    val total = AppConstants.COUNTDOWN_SECONDS
+    return if (finished) 1 else (total + 1 - elapsedSeconds).coerceIn(1, total)
+}
 
 @Composable
 private fun CountdownCircle(
@@ -590,7 +597,7 @@ private fun CountdownCircle(
 
         // Countdown number
         Text(
-            text = if (countdownFinished) AppConstants.COUNTDOWN_SECONDS.toString() else countdownSeconds.toString(),
+            text = countdownSecondsLeft(countdownSeconds, countdownFinished).toString(),
             fontFamily = DepartureMono,
             fontWeight = FontWeight.Bold,
             fontSize = 36.rsp,
