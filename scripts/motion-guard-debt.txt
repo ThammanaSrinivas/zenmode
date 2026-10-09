@@ -1,0 +1,13 @@
+# Files that create a Compose InfiniteTransition without consulting
+# rememberReduceMotion. See scripts/check-motion-guards.sh.
+#
+# All five are transient surfaces - a settings sheet, onboarding steps, the
+# weekly recap story, a one-off overlay - rather than the always-on home
+# backdrop that made this worth checking, so they were left alone rather than
+# retrofitted blind.
+# This list must not grow. Removing an entry (by gating the file) is welcome.
+app/src/main/java/com/zenlauncher/zenmode/onboarding/StoriesStep.kt
+app/src/main/java/com/zenlauncher/zenmode/recap/RecapScreen.kt
+app/src/main/java/com/zenlauncher/zenmode/ui/components/HomeGuideOverlay.kt
+app/src/main/java/com/zenlauncher/zenmode/ui/screens/ResistenceScreen.kt
+app/src/main/java/com/zenlauncher/zenmode/ui/screens/ZenCircleSettingsSheet.kt

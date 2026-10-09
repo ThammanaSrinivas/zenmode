@@ -123,6 +123,31 @@ rm -f "$TEXT_FIXTURE"
 trap - EXIT
 expect_pass "check-duplicate-literals.sh (clean repo)" ./scripts/check-duplicate-literals.sh
 
+# --- check-motion-guards.sh ---
+MOTION_FIXTURE="app/src/main/java/com/zenlauncher/zenmode/__guardrail_fixture_motion.kt"
+trap 'rm -f "$MOTION_FIXTURE"' EXIT
+cat > "$MOTION_FIXTURE" <<'EOF'
+package com.zenlauncher.zenmode
+// An ambient animation with no reduced-motion gate: the transition exists
+// unconditionally, so it pulls a frame every vsync even for a user who sees
+// nothing move.
+val fixture = "rememberInfiniteTransition"
+EOF
+expect_fail "check-motion-guards.sh (ungated infinite transition)" ./scripts/check-motion-guards.sh "$MOTION_FIXTURE"
+cat > "$MOTION_FIXTURE" <<'EOF'
+package com.zenlauncher.zenmode
+// The gated form: rememberReduceMotion decides whether the transition is
+// built at all, so reduced motion costs no frames.
+val fixture = "rememberInfiniteTransition"
+val gate = "rememberReduceMotion"
+EOF
+expect_pass "check-motion-guards.sh (gated by rememberReduceMotion)" ./scripts/check-motion-guards.sh "$MOTION_FIXTURE"
+rm -f "$MOTION_FIXTURE"
+trap - EXIT
+# Also asserts the check still finds files to inspect at all - it fails loudly
+# rather than passing vacuously if its own file discovery ever breaks.
+expect_pass "check-motion-guards.sh (clean repo, debt grandfathered)" ./scripts/check-motion-guards.sh
+
 echo ""
 echo "$pass check(s) passed"
 if [ "$fail" -eq 1 ]; then
