@@ -69,6 +69,19 @@ if [ -n "$staged_src_files" ]; then
   fi
 fi
 
+# One spelling per meaning - see scripts/check-duplicate-literals.sh. Given the staged
+# sources it reports only text those files touch; a debt-file edit alone re-checks it all.
+staged_text_files=$(git diff --cached --name-only --diff-filter=ACM -- ':(glob)app/src/main/**/*.kt' ':(glob)core-api/src/main/**/*.kt' ':(glob)core-mock/src/main/**/*.kt' || true)
+if [ -n "$staged_text_files" ]; then
+  if ! echo "$staged_text_files" | xargs ./scripts/check-duplicate-literals.sh; then
+    fail=1
+  fi
+elif git diff --cached --name-only | grep -qx "scripts/duplicate-literal-debt.txt"; then
+  if ! ./scripts/check-duplicate-literals.sh; then
+    fail=1
+  fi
+fi
+
 if [ "$fail" -eq 1 ]; then
   echo "" >&2
   echo "Commit rejected. If this is a false positive, remove the marker/pattern from the diff" >&2

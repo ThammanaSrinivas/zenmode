@@ -84,6 +84,45 @@ expect_fail "check-line-limit.sh" ./scripts/check-line-limit.sh "$BIG_FIXTURE"
 rm -f "$BIG_FIXTURE"
 expect_pass "check-line-limit.sh (clean repo, HomeScreen.kt grandfathered)" ./scripts/check-line-limit.sh
 
+# --- check-duplicate-literals.sh ---
+TEXT_FIXTURE="app/src/main/java/com/zenlauncher/zenmode/__guardrail_fixture_text.kt"
+trap 'rm -f "$TEXT_FIXTURE"' EXIT
+cat > "$TEXT_FIXTURE" <<'EOF'
+package com.zenlauncher.zenmode
+val welcome = "Welcome to ZenMode OS"
+EOF
+expect_fail "check-duplicate-literals.sh (product name spelled out)" ./scripts/check-duplicate-literals.sh "$TEXT_FIXTURE"
+cat > "$TEXT_FIXTURE" <<'EOF'
+package com.zenlauncher.zenmode
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
+// Comments may say ZenMode OS; only string literals are read as text.
+val greeting = "A guardrail fixture inside $PRODUCT_NAME"
+EOF
+expect_pass "check-duplicate-literals.sh (product name through the constant)" ./scripts/check-duplicate-literals.sh "$TEXT_FIXTURE"
+cat > "$TEXT_FIXTURE" <<'EOF'
+package com.zenlauncher.zenmode
+val a = "Couldn't reach the guardrail fixture"
+val b = "Couldn't reach the guardrail fixture"
+val c = "${if (a.isEmpty()) "Couldn't reach the guardrail fixture" else b}"
+EOF
+expect_fail "check-duplicate-literals.sh (third copy, one inside a template)" ./scripts/check-duplicate-literals.sh "$TEXT_FIXTURE"
+cat > "$TEXT_FIXTURE" <<'EOF'
+package com.zenlauncher.zenmode
+@Suppress("GuardrailFixtureInspection") val a = 1
+@Suppress("GuardrailFixtureInspection") val b = 2
+@Suppress("GuardrailFixtureInspection") val c = 3
+EOF
+expect_pass "check-duplicate-literals.sh (annotation arguments exempt)" ./scripts/check-duplicate-literals.sh "$TEXT_FIXTURE"
+# Ratchet: a grandfathered literal may not gain a copy. Its count comes from the debt file.
+ratchet_line=$(grep -m1 -E '^[0-9]+ "' scripts/duplicate-literal-debt.txt)
+ratchet_text=${ratchet_line#* \"}
+ratchet_text=${ratchet_text%\"}
+printf 'package com.zenlauncher.zenmode\nval extra = "%s"\n' "$ratchet_text" > "$TEXT_FIXTURE"
+expect_fail "check-duplicate-literals.sh (grandfathered repeat grows)" ./scripts/check-duplicate-literals.sh "$TEXT_FIXTURE"
+rm -f "$TEXT_FIXTURE"
+trap - EXIT
+expect_pass "check-duplicate-literals.sh (clean repo)" ./scripts/check-duplicate-literals.sh
+
 echo ""
 echo "$pass check(s) passed"
 if [ "$fail" -eq 1 ]; then

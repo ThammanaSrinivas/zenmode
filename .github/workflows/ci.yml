@@ -61,6 +61,13 @@ jobs:
       - name: Check file line-count ceiling
         run: ./scripts/check-line-limit.sh
 
+      # One spelling per meaning: "ZenMode OS" only as AppConstants.PRODUCT_NAME,
+      # and no third copy of any other long string literal - see
+      # scripts/check_duplicate_literals.py (grandfathered repeats are in
+      # scripts/duplicate-literal-debt.txt).
+      - name: Check duplicate text
+        run: ./scripts/check-duplicate-literals.sh
+
       # Guardrails that test themselves: plants a known-bad fixture, asserts
       # the checks above actually catch it, then asserts a clean pass.
       - name: Test guardrails

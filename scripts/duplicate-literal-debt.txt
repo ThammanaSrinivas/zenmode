@@ -1,0 +1,38 @@
+# Grandfathered repeated text: string literals that already had a third copy when
+# scripts/check-duplicate-literals.sh landed. Each may stay at up to <count> copies; a new
+# copy fails the check, and a lower count is the goal. When you fold one into a constant or
+# a shared function, lower or delete its line here (the check prints a note telling you so).
+# Mostly SharedPreferences keys spelled out on every read and write (UsageRepository,
+# OnboardingViewModel) and the like-reaction cooldown copied across three ViewModels.
+# Format: <count> "<literal exactly as written between its quotes>"
+3 "Back to Zen Gold"
+3 "Back to home"
+3 "Edit my promise"
+3 "Failed to react"
+3 "My Zen Circle"
+3 "Not available"
+3 "Not signed in."
+3 "Open settings"
+3 "Sample review"
+3 "Unknown ViewModel class"
+3 "Wait ${mins}m ${secs}s to react again"
+3 "Wait ${secs}s to react again"
+4 "buddy_connection_date"
+4 "buddy_screen_time"
+3 "circle_cache_json"
+4 "circle_id_cached"
+5 "daily_screen_time"
+3 "daily_skip_count"
+5 "has_buddy_cached"
+3 "is_zen_unlocked"
+4 "last_date_screentime"
+3 "last_date_skips"
+3 "late_night_minutes"
+5 "launcher_set_default"
+3 "onboarding_current_step"
+3 "onboarding_start_time"
+3 "onboarding_started_tracked"
+3 "permissions_granted_list"
+3 "posthog_identified"
+4 "promise_hours"
+3 "recent_reaction_timestamps_$targetUid"
