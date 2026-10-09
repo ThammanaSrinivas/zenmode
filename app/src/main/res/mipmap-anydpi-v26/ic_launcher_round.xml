@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  ZenMode OS launcher icon. Generated from the brand tile in
-  ../../../../../../zenmode-brain/docs/brand/ — the mark sits on 58.6% of the tile, inside
-  the adaptive icon's 61% safe zone, so the layers are the artwork at 1:1 with the
-  background extended to full bleed for the OEM mask to cut.
+  ZenMode OS launcher icon. Rebuilt 2026-10-09 from the brand tile "ZenMode OS Logo.png".
+
+  That source is a *finished* icon, not a full-bleed adaptive tile, so its composition is
+  mapped onto the visible 72dp window rather than onto the 108dp layer: the mark is 44.7dp
+  (62% of the visible icon, 41.4% of the tile) and the gradient ramp spans the window, with
+  its end colours held across the bleed so no OEM mask can expose a hole. The previous icon
+  put the mark at 58.6% of the tile, which pushed 9.6% of it outside circular masks.
 
   The foreground is the mark in flat white, so it doubles as the themed (monochrome) icon
   on Android 13+ without a separate asset.

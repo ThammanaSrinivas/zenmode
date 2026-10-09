@@ -68,6 +68,14 @@ jobs:
       - name: Check duplicate text
         run: ./scripts/check-duplicate-literals.sh
 
+      # A Compose InfiniteTransition pulls a frame every vsync for as long as it
+      # exists, even when reduced motion means nothing visibly moves - the
+      # easiest battery mistake to make in a launcher and the hardest to spot,
+      # since nothing looks wrong. See scripts/check-motion-guards.sh
+      # (grandfathered files are in scripts/motion-guard-debt.txt).
+      - name: Check reduced-motion guards on infinite animations
+        run: ./scripts/check-motion-guards.sh
+
       # Guardrails that test themselves: plants a known-bad fixture, asserts
       # the checks above actually catch it, then asserts a clean pass.
       - name: Test guardrails

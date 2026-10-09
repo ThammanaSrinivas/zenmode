@@ -277,6 +277,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // The notification listener only recounts between these two calls — see its own file.
+    override fun onStart() {
+        super.onStart()
+        ZenNotificationListenerService.setHomeVisible(true)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        ZenNotificationListenerService.setHomeVisible(false)
+    }
+
     override fun onPause() {
         super.onPause()
         // Paused by the screen going off: hide now, while Home can still draw a frame, so the
@@ -297,9 +308,10 @@ class MainActivity : AppCompatActivity() {
         // gives classic buddies (it skips circle users entirely -- see its own comment) and no
         // realtime listener either -- loadCircle() otherwise only runs once at ViewModel init
         // and on a circle_react push, so a member joining/leaving never reaches an already-open
-        // app until this fires. Cheap: a single circle doc read, not the full StatSyncWorker.
+        // app until this fires. Throttled (see loadCircleIfStale) because Home resumes far more
+        // often than a circle changes, and each reload is a radio wakeup.
         if (::circleViewModel.isInitialized) {
-            circleViewModel.loadCircle()
+            circleViewModel.loadCircleIfStale()
         }
         loadInstalledApps()
         homeAppCount = AppGridPreferences.getAppCount(this)
@@ -349,39 +361,14 @@ class MainActivity : AppCompatActivity() {
         null
     }
 
-    private fun loadInstalledApps() {
-        lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                val activities = LauncherActivities.query(packageManager)
-                val homeKeys = repository.getPinnedApps()
-                val homeRank = homeKeys.withIndex().associate { (i, k) -> k to i }
-
-                // ZenMode declares CATEGORY_LAUNCHER (so it's selectable as default home)
-                // alongside CATEGORY_HOME, so it shows up in its own launcher query. Left in,
-                // it lists itself in the drawer and in search; tapping it re-delivers an
-                // intent to this already-running singleTask Activity via onNewIntent, which
-                // resets showSearch/etc — the search overlay just vanishes, looking like the
-                // app crashed. Same exclusion OnboardingViewModel.queryLaunchableApps applies.
-                val allApps = activities
-                    .filter { it.activityInfo.packageName != packageName }
-                    .map { resolveInfo ->
-                        AppInfo(
-                            label = resolveInfo.loadLabel(packageManager),
-                            packageName = resolveInfo.activityInfo.packageName,
-                            icon = resolveInfo.loadIcon(packageManager),
-                            activityClassName = resolveInfo.activityInfo.name,
-                            key = LauncherActivities.selectionKey(resolveInfo, activities)
-                        )
-                    }
-                    .sortedBy { it.label.toString() }
-
-                // The picked home apps lead, in the order chosen; everything else stays A–Z.
-                val (home, rest) = allApps.partition { it.key in homeRank }
-                home.sortedBy { homeRank.getValue(it.key) } + rest
-            }
-            installedApps = result
+    /** The home grid's app list, cached across resumes — see [HomeAppCatalog]. */
+    private val homeAppCatalog by lazy {
+        HomeAppCatalog(this, lifecycleScope, pinnedKeys = { repository.getPinnedApps() }) {
+            installedApps = it
         }
     }
+
+    private fun loadInstalledApps(refresh: Boolean = false) = homeAppCatalog.load(refresh)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -428,6 +415,9 @@ class MainActivity : AppCompatActivity() {
             this, screenReceiver, filter,
             androidx.core.content.ContextCompat.RECEIVER_EXPORTED
         )
+
+        // Watches for installed-app changes, which is what invalidates the cached catalog.
+        homeAppCatalog.attach()
         isReceiverRegistered = true
 
         // Observe delayed unlock navigation (non-Compose, stays as LiveData observer)
@@ -978,6 +968,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         if (isReceiverRegistered) {
             unregisterReceiver(screenReceiver)
+            homeAppCatalog.detach()
         }
     }
 }

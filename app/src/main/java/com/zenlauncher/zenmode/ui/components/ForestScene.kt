@@ -10,6 +10,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -80,6 +82,9 @@ private fun forestPalette() = ForestPalette(
 /** Horizon line, as a fraction of height. Everything else is placed off this one number. */
 private const val HORIZON = 0.63f
 
+/** Where the mist/firefly drift clock is parked when motion is reduced. */
+private const val STILL_DRIFT = 0.2f
+
 /** One conifer, in units of its rank: [x] across the width, the rest multiplying rank size. */
 private class Conifer(
     val x: Float,
@@ -142,20 +147,30 @@ fun ForestScene(modifier: Modifier = Modifier) {
         if (!still) reveal.animateTo(1f, tween(1_900, easing = ZenMotion.EaseOut))
     }
 
-    // Ambient clocks, read only inside the Canvas so each frame redraws without recomposing.
-    val ambient = rememberInfiniteTransition(label = "forest")
-    val breeze = ambient.animateFloat(
-        initialValue = 0f,
-        targetValue = (2 * PI).toFloat(),
-        animationSpec = infiniteRepeatable(tween(11_000, easing = LinearEasing)),
-        label = "breeze"
-    )
-    val rise = ambient.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(26_000, easing = LinearEasing)),
-        label = "rise"
-    )
+    // Ambient clocks, read only inside the Canvas so each frame redraws without recomposing,
+    // and only started when motion is on: an InfiniteTransition requests a frame every vsync
+    // for as long as it exists, even when nothing reads it, so creating one in reduced-motion
+    // mode kept waking the UI thread to animate a scene held on its settled frame.
+    val breeze: State<Float>
+    val rise: State<Float>
+    if (still) {
+        breeze = remember { mutableStateOf(0f) }
+        rise = remember { mutableStateOf(STILL_DRIFT) }
+    } else {
+        val ambient = rememberInfiniteTransition(label = "forest")
+        breeze = ambient.animateFloat(
+            initialValue = 0f,
+            targetValue = (2 * PI).toFloat(),
+            animationSpec = infiniteRepeatable(tween(11_000, easing = LinearEasing)),
+            label = "breeze"
+        )
+        rise = ambient.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(26_000, easing = LinearEasing)),
+            label = "rise"
+        )
+    }
 
     val forest = forestPalette()
     val trees = remember { listOf(rank(11, 26), rank(29, 15), rank(47, 9)) }
@@ -163,8 +178,8 @@ fun ForestScene(modifier: Modifier = Modifier) {
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val r = reveal.value
-        val wind = if (still) 0f else breeze.value
-        val drift = if (still) 0.2f else rise.value
+        val wind = breeze.value
+        val drift = rise.value
         sky(forest, r)
         sun(forest, r, wind)
         rays(forest, r, wind)

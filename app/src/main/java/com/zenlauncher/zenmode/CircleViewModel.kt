@@ -69,8 +69,24 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
     private fun myUid(): String? =
         repository.getUserUid() ?: ServiceLocator.authProvider.getCurrentUserId()
 
+    private var lastLoadAt = 0L
+
+    /**
+     * The resume-time self-heal. Home resumes every time the user comes back to it, and each
+     * full [loadCircle] is two or three Firestore reads — a radio wakeup per visit to the home
+     * screen. A member joining or leaving doesn't need to be noticed faster than
+     * [RESUME_RELOAD_INTERVAL_MS], so anything sooner than that reuses what's already loaded.
+     *
+     * Pushes and explicit opens still call [loadCircle] directly and are never throttled.
+     */
+    fun loadCircleIfStale(now: Long = System.currentTimeMillis()) {
+        if (now - lastLoadAt < RESUME_RELOAD_INTERVAL_MS) return
+        loadCircle()
+    }
+
     fun loadCircle() {
         val myUid = myUid() ?: return
+        lastLoadAt = System.currentTimeMillis()
         _uiState.postValue(_uiState.value!!.copy(loading = true))
         viewModelScope.launch {
             var circleId = repository.getCachedCircleId()?.takeIf { it.isNotEmpty() }
@@ -338,6 +354,9 @@ class CircleViewModel(private val repository: UsageRepository) : ViewModel() {
         else "Wait ${secs}s to react again"
     }
 }
+
+/** How stale the circle may get before a Home resume re-reads it from Firestore. */
+private const val RESUME_RELOAD_INTERVAL_MS = 5 * 60 * 1000L
 
 class CircleViewModelFactory(
     private val repository: UsageRepository
