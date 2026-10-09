@@ -285,7 +285,7 @@ private fun GoldSummaryRow(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         SummaryStat(
-            value = "₹%,d".format(investedSum),
+            value = "₹%,d".format(java.util.Locale.US, investedSum),
             label = "INVESTED SUM",
             valueColor = GoldGreen700,
             valueFontSize = 22
