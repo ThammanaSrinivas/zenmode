@@ -27,8 +27,8 @@ import androidx.core.graphics.ColorUtils
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.Sfx
 import com.zenlauncher.zenmode.ui.components.ZenMotion
-import kotlin.math.abs
-import kotlin.math.cos
+import com.zenlauncher.zenmode.ui.components.brandOsColors
+import com.zenlauncher.zenmode.ui.components.brandOsShader
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
@@ -134,11 +134,7 @@ class ShareKit(context: Context) {
 
     private val markPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val wordPaint = paint(clash, 38f, android.graphics.Color.WHITE, tracking = -0.01f)
-    private val osColors = intArrayOf(
-        color(R.color.score_grad_start),
-        color(R.color.score_grad_mid),
-        color(R.color.score_orange)
-    )
+    private val osColors = brandOsColors(res)
 
     /**
      * Mark + "ZenMode " + gradient "OS" with its baseline at [baseline], starting at [x]. The
@@ -163,7 +159,7 @@ class ShareKit(context: Context) {
         canvas.drawText("ZenMode ", cursor, baseline, word)
         cursor += word.measureText("ZenMode ")
         val osWidth = word.measureText("OS")
-        word.shader = cssGradient(RectF(cursor, baseline - size * 0.75f, cursor + osWidth, baseline), -67.92f, osColors, OsStops)
+        word.shader = brandOsShader(RectF(cursor, baseline - size * 0.75f, cursor + osWidth, baseline), osColors)
         canvas.drawText("OS", cursor, baseline, word)
         word.shader = null
         return cursor + osWidth - x
@@ -235,10 +231,6 @@ class ShareKit(context: Context) {
 
     private fun font(id: Int, fallback: Typeface): Typeface =
         runCatching { ResourcesCompat.getFont(res, id) }.getOrNull() ?: fallback
-
-    private companion object {
-        val OsStops = floatArrayOf(0.23558f, 0.50636f, 0.71412f)
-    }
 }
 
 /** A night sky: seeded so the same card always gets the same stars. */
@@ -304,19 +296,6 @@ internal fun withAlpha(color: Int, alpha: Float): Int =
 internal fun lerp(a: Float, b: Float, f: Float) = a + (b - a) * f
 
 internal fun blend(a: Int, b: Int, f: Float): Int = ColorUtils.blendARGB(a, b, f.coerceIn(0f, 1f))
-
-/** A CSS-style angled linear gradient across [box] — the same maths as Compose's cssLinearGradient. */
-internal fun cssGradient(box: RectF, angleDegrees: Float, colors: IntArray, stops: FloatArray): LinearGradient {
-    val radians = Math.toRadians(angleDegrees.toDouble())
-    val dx = sin(radians).toFloat()
-    val dy = -cos(radians).toFloat()
-    val half = (abs(box.width() * dx) + abs(box.height() * dy)) / 2f
-    return LinearGradient(
-        box.centerX() - dx * half, box.centerY() - dy * half,
-        box.centerX() + dx * half, box.centerY() + dy * half,
-        colors, stops, Shader.TileMode.CLAMP
-    )
-}
 
 /** Same context, light resources: values-night never reaches a card. */
 private fun Context.lightOnly(): Context {

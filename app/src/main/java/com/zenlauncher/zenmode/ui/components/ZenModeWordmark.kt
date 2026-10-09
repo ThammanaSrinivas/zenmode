@@ -1,6 +1,10 @@
 package com.zenlauncher.zenmode.ui.components
 
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import android.content.Context
+import android.graphics.LinearGradient
+import android.graphics.RectF
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,13 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.Shader
 import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -47,42 +50,57 @@ import kotlin.math.sin
 // Every screen that draws the product's name goes through this file; the name itself
 // is AppConstants.PRODUCT_NAME.
 
-/**
- * Figma's "Brand zen gradient" style: a CSS linear-gradient at -67.92deg through
- * score_grad_start / score_grad_mid / score_orange. Brush.linearGradient can't express
- * a CSS angle against an unknown text box, so the line is resolved from the laid-out size.
- */
+// Figma's "Brand zen gradient" style: a CSS linear-gradient at -67.92deg through
+// score_grad_start / score_grad_mid / score_orange - rising from bottom-right to top-left.
+// Defined once here: Compose text uses rememberBrandOsGradient(), android.graphics drawing
+// (share cards, the PDF report) uses brandOsShader().
+private const val BRAND_OS_ANGLE = -67.92291865051479f
+private val BrandOsStops = floatArrayOf(0.23558f, 0.50636f, 0.71412f)
+
+/** The brand "OS" gradient as a Compose brush, resolved against whatever box it fills. */
 @Composable
 fun rememberBrandOsGradient(): Brush {
     val start = colorResource(R.color.score_grad_start)
     val mid = colorResource(R.color.score_grad_mid)
     val end = colorResource(R.color.score_orange)
     return remember(start, mid, end) {
-        cssLinearGradient(
-            angleDegrees = -67.92291865051479f,
-            colors = listOf(start, mid, end),
-            stops = listOf(0.23558f, 0.50636f, 0.71412f)
-        )
-    }
-}
-
-fun cssLinearGradient(angleDegrees: Float, colors: List<Color>, stops: List<Float>): ShaderBrush =
-    object : ShaderBrush() {
-        override fun createShader(size: Size): Shader {
-            val radians = Math.toRadians(angleDegrees.toDouble())
-            val dx = sin(radians).toFloat()
-            val dy = -cos(radians).toFloat()
-            val halfLength = (abs(size.width * dx) + abs(size.height * dy)) / 2f
-            val cx = size.width / 2f
-            val cy = size.height / 2f
-            return LinearGradientShader(
-                from = Offset(cx - dx * halfLength, cy - dy * halfLength),
-                to = Offset(cx + dx * halfLength, cy + dy * halfLength),
-                colors = colors,
-                colorStops = stops
+        object : ShaderBrush() {
+            override fun createShader(size: Size): Shader = cssGradient(
+                RectF(0f, 0f, size.width, size.height),
+                BRAND_OS_ANGLE,
+                intArrayOf(start.toArgb(), mid.toArgb(), end.toArgb()),
+                BrandOsStops
             )
         }
     }
+}
+
+/** The three brand-gradient colours from [context], for [brandOsShader]. */
+fun brandOsColors(context: Context): IntArray = intArrayOf(
+    ContextCompat.getColor(context, R.color.score_grad_start),
+    ContextCompat.getColor(context, R.color.score_grad_mid),
+    ContextCompat.getColor(context, R.color.score_orange)
+)
+
+/** The brand "OS" gradient for android.graphics text, across [box] - the glyphs' bounds. */
+fun brandOsShader(box: RectF, colors: IntArray): LinearGradient = cssGradient(box, BRAND_OS_ANGLE, colors, BrandOsStops)
+
+/**
+ * A CSS-style angled linear gradient across [box]. CSS angles run clockwise from "to top", and
+ * the line is long enough that the box's corners land on the first and last stops - which
+ * Brush.linearGradient can't express against a box it hasn't measured.
+ */
+private fun cssGradient(box: RectF, angleDegrees: Float, colors: IntArray, stops: FloatArray): LinearGradient {
+    val radians = Math.toRadians(angleDegrees.toDouble())
+    val dx = sin(radians).toFloat()
+    val dy = -cos(radians).toFloat()
+    val half = (abs(box.width() * dx) + abs(box.height() * dy)) / 2f
+    return LinearGradient(
+        box.centerX() - dx * half, box.centerY() - dy * half,
+        box.centerX() + dx * half, box.centerY() + dy * half,
+        colors, stops, android.graphics.Shader.TileMode.CLAMP
+    )
+}
 
 /**
  * A [Text] for running copy that names the product: every "ZenMode OS" in [text] gets

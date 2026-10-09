@@ -6,10 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.DashPathEffect
-import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
-import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
@@ -22,6 +21,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ui.components.brandOsColors
+import com.zenlauncher.zenmode.ui.components.brandOsShader
 import com.zenlauncher.zenmode.ui.components.shareableUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -156,14 +157,14 @@ object RecapReport {
             val zen = text(clash, 26f, android.graphics.Color.WHITE)
             c.drawText("ZenMode ", margin, 62f, zen)
             val osX = margin + zen.measureText("ZenMode ")
-            val os = text(clash, 26f, android.graphics.Color.WHITE).apply {
-                shader = LinearGradient(
-                    osX, 62f, osX + measureText("OS"), 40f,
-                    intArrayOf(color(R.color.score_grad_start), color(R.color.score_grad_mid), color(R.color.score_orange)),
-                    floatArrayOf(0.1f, 0.5f, 0.9f), Shader.TileMode.CLAMP
-                )
-            }
-            c.drawText("OS", osX, 62f, os)
+            // A shader on text vanishes from the PDF - pdfium, behind Chrome, Drive and Android's
+            // viewer, drops it - so the gradient fills a rect clipped to the glyphs' outline.
+            val osBox = RectF(osX, 62f - 26f * 0.75f, osX + zen.measureText("OS"), 62f)
+            val osOutline = Path().also { zen.getTextPath("OS", 0, 2, osX, 62f, it) }
+            c.save()
+            c.clipPath(osOutline)
+            c.drawRect(osX - 4f, 62f - 26f, osBox.right + 4f, 62f + 8f, Paint().apply { shader = brandOsShader(osBox, brandOsColors(context)) })
+            c.restore()
             c.drawText(
                 "WEEKLY REPORT  ·  ${recap.rangeLabel().uppercase()}, ${recap.weekEnd.year}",
                 margin, 92f, text(mono, 10f, color(R.color.zen_100)).apply { letterSpacing = 0.12f }
