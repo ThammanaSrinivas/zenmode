@@ -75,7 +75,7 @@ while IFS= read -r file; do
   echo "            t = rememberInfiniteTransition(label = \"…\").animateFloat(…)"
   echo "        }"
   echo
-  echo "    See MoodBackdrop.kt for the pattern. If this surface genuinely has to be"
+  echo "    See BlazingFlame in HomeMotion.kt for the pattern. If this surface genuinely has to be"
   echo "    exempt, add its path to scripts/motion-guard-debt.txt with a reason."
   echo
   failed=1

@@ -3,21 +3,18 @@ package com.zenlauncher.zenmode.ui.components
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.FloatState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
@@ -41,7 +38,9 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.moodWash
 import com.zenlauncher.zenmode.ui.theme.statsCardStroke
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -111,6 +110,47 @@ fun HomeTheme.accent(ink: Boolean): Color = Color(
     }
 )
 
+/** Where the drifting pools are after a given time. Pure, so the motion can be pinned in a test. */
+object BackdropDrift {
+    /**
+     * Redraw interval while drifting. The pools move a few pixels a second under a 64dp blur,
+     * so ten redraws a second look the same as one every vsync; each redraw repaints the whole
+     * window and re-blurs the canvas.
+     */
+    const val TICK_MILLIS = 100L
+    private const val LAP_SECONDS = 28f
+    private const val SWELL_SECONDS = 9f
+
+    /** 0 → 2π once every [LAP_SECONDS], then round again. */
+    fun phase(seconds: Float): Float = (seconds % LAP_SECONDS) / LAP_SECONDS * (2 * PI).toFloat()
+
+    /** 0.92 → 1.08 and back, [SWELL_SECONDS] each way, eased at both ends. */
+    fun swell(seconds: Float): Float {
+        val lap = (seconds / SWELL_SECONDS) % 2f
+        val fraction = if (lap <= 1f) lap else 2f - lap
+        return 0.92f + 0.16f * FastOutSlowInEasing.transform(fraction)
+    }
+}
+
+/**
+ * Seconds of drift so far: advances every [BackdropDrift.TICK_MILLIS] while [running] and holds
+ * its value otherwise, so the pools stop where they are and carry on from there.
+ */
+@Composable
+private fun rememberDriftSeconds(running: Boolean): FloatState {
+    val seconds = remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(running) {
+        if (!running) return@LaunchedEffect
+        val base = seconds.floatValue
+        val start = withFrameNanos { it }
+        while (true) {
+            delay(BackdropDrift.TICK_MILLIS)
+            seconds.floatValue = base + (withFrameNanos { it } - start) / 1_000_000_000f
+        }
+    }
+    return seconds
+}
+
 /** The wash colours for [mood] — [first] is the top edge, [last] the bottom edge. */
 @Composable
 fun moodWashColors(mood: MoodState): List<Color> = ZenTheme.colors.moodWash(mood)
@@ -133,31 +173,11 @@ fun MoodBackdrop(mood: MoodState = rememberTodayMood(), modifier: Modifier = Mod
 
     val still = rememberReduceMotion() || LocalInspectionMode.current
 
-    // Kept as State and read only inside the Canvas, so each drift frame redraws without
-    // recomposing — and only created at all when motion is on. An InfiniteTransition asks the
-    // frame clock for a new frame every vsync for as long as it exists, whether or not anyone
-    // reads its value, so building one in reduced-motion mode kept the UI thread waking ~120x
-    // a second to animate a backdrop that was pinned to its first frame anyway.
-    val t: State<Float>
-    val swell: State<Float>
-    if (still) {
-        t = remember { mutableStateOf(0f) }
-        swell = remember { mutableStateOf(1f) }
-    } else {
-        val drift = rememberInfiniteTransition(label = "wash-drift")
-        t = drift.animateFloat(
-            initialValue = 0f,
-            targetValue = (2 * Math.PI).toFloat(),
-            animationSpec = infiniteRepeatable(tween(28_000, easing = LinearEasing)),
-            label = "wash-drift-t"
-        )
-        swell = drift.animateFloat(
-            initialValue = 0.92f,
-            targetValue = 1.08f,
-            animationSpec = infiniteRepeatable(tween(9_000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-            label = "wash-swell"
-        )
-    }
+    // Read only inside the Canvas, so each drift tick redraws without recomposing. The drift
+    // runs on its own slow clock rather than an InfiniteTransition, which asks the frame clock
+    // for a new frame every vsync for as long as it exists; and only while the page is freshly
+    // arrived at, after which the pools rest where they are and nothing is redrawn.
+    val drift = rememberDriftSeconds(running = rememberAmbientAlive())
     // Real blur exists from API 31; below that the radial falloff alone keeps the pools soft.
     val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
@@ -169,8 +189,8 @@ fun MoodBackdrop(mood: MoodState = rememberTodayMood(), modifier: Modifier = Mod
         ) {
             val w = size.width
             val h = size.height
-            val phase = t.value
-            val scale = swell.value
+            val phase = BackdropDrift.phase(drift.floatValue)
+            val scale = if (still) 1f else BackdropDrift.swell(drift.floatValue)
             fun pool(color: Color, x: Float, y: Float, radius: Float, alpha: Float) {
                 val c = Offset(x, y)
                 drawCircle(

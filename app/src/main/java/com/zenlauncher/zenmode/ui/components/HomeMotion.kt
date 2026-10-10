@@ -19,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.zenlauncher.zenmode.R
@@ -104,6 +107,34 @@ fun rememberResumeCount(): Int {
         onDispose { owner.lifecycle.removeObserver(observer) }
     }
     return count
+}
+
+// ── Ambient motion ────────────────────────────────────────────────
+// Motion that never ends on its own (the streak flame's flicker, the backdrop's drift) redraws
+// the whole window on every frame for as long as it runs, and Home is the one screen a launcher
+// leaves showing. Measured on Home with a lit streak: ~60 frames a second, indefinitely, with
+// nothing else changing. So ambient motion plays for a moment after each arrival and then holds
+// still, and no frame is drawn again until something actually changes.
+
+/** How long ambient motion keeps going after each arrival on a page. */
+const val AMBIENT_ALIVE_MILLIS = 10_000L
+
+/**
+ * True from each arrival on the page (first show, every resume, any change of [key]) until
+ * [AMBIENT_ALIVE_MILLIS] later. Always false under "Remove animations" and in previews.
+ */
+@Composable
+fun rememberAmbientAlive(key: Any? = null): Boolean {
+    val still = rememberReduceMotion() || LocalInspectionMode.current
+    val resumes = rememberResumeCount()
+    var alive by remember { mutableStateOf(!still) }
+    LaunchedEffect(resumes, key, still) {
+        alive = !still
+        if (still) return@LaunchedEffect
+        delay(AMBIENT_ALIVE_MILLIS)
+        alive = false
+    }
+    return alive
 }
 
 /** 0 → 1 progress: hidden at 0 while [cue] is hidden, played after [delayMillis], else 1. */
@@ -204,10 +235,14 @@ fun rememberCountUp(target: Int, cue: HomeRevealCue, delayMillis: Int, durationM
     return value.value.roundToInt()
 }
 
+/** Halo strength of a lit flame that isn't flickering. */
+private const val FlameHaloRest = 0.22f
+
 /**
  * The streak flame, alive: on each unlock it ignites (grows from its base with a flare of glow),
  * then keeps a slow, uneven flicker — a sway and a breathing stretch at slightly different
- * rhythms so it never looks looped — under a warm halo. At a zero streak it stays fully
+ * rhythms so it never looks looped — under a warm halo. The flicker lasts while Home is freshly
+ * arrived at ([rememberAmbientAlive]), then eases to rest. At a zero streak it stays fully
  * visible but still, waiting to be lit.
  */
 @Composable
@@ -238,30 +273,55 @@ fun BlazingFlame(
         flare.animateTo(0f, tween(900, easing = FastOutSlowInEasing))
     }
 
-    val flicker = rememberInfiniteTransition(label = "flame")
-    val sway by flicker.animateFloat(
-        initialValue = -3f,
-        targetValue = 3f,
-        animationSpec = infiniteRepeatable(tween(1_150, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "flame-sway"
-    )
-    val breathe by flicker.animateFloat(
-        initialValue = 0.97f,
-        targetValue = 1.06f,
-        animationSpec = infiniteRepeatable(tween(730, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "flame-breathe"
-    )
-    val halo by flicker.animateFloat(
-        initialValue = 0.18f,
-        targetValue = 0.34f,
-        animationSpec = infiniteRepeatable(tween(1_600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "flame-halo"
-    )
+    // [liveliness] scales the flicker from rest (0) to full (1), so it fades in on arrival and
+    // eases back to rest instead of freezing mid-sway. The transition itself only exists while
+    // [flickering]: an InfiniteTransition asks for a frame every vsync for as long as it exists.
+    val alive = rememberAmbientAlive(cue) && animate && cue.phase != HomeRevealCue.Phase.Hidden
+    val liveliness = remember { Animatable(if (alive) 1f else 0f) }
+    var flickering by remember { mutableStateOf(alive) }
+    LaunchedEffect(alive) {
+        if (alive) {
+            flickering = true
+            liveliness.animateTo(1f, tween(400))
+        } else {
+            liveliness.animateTo(0f, tween(1_200, easing = FastOutSlowInEasing))
+            flickering = false
+        }
+    }
+
+    val sway: State<Float>
+    val breathe: State<Float>
+    val halo: State<Float>
+    if (flickering) {
+        val flicker = rememberInfiniteTransition(label = "flame")
+        sway = flicker.animateFloat(
+            initialValue = -3f,
+            targetValue = 3f,
+            animationSpec = infiniteRepeatable(tween(1_150, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "flame-sway"
+        )
+        breathe = flicker.animateFloat(
+            initialValue = 0.97f,
+            targetValue = 1.06f,
+            animationSpec = infiniteRepeatable(tween(730, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "flame-breathe"
+        )
+        halo = flicker.animateFloat(
+            initialValue = 0.18f,
+            targetValue = 0.34f,
+            animationSpec = infiniteRepeatable(tween(1_600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "flame-halo"
+        )
+    } else {
+        sway = remember { mutableStateOf(0f) }
+        breathe = remember { mutableStateOf(1f) }
+        halo = remember { mutableStateOf(FlameHaloRest) }
+    }
 
     Box(
         modifier = modifier.drawBehind {
             if (!lit) return@drawBehind
-            val strength = (if (animate) halo else 0.22f) + flare.value * 0.45f
+            val strength = lerp(FlameHaloRest, halo.value, liveliness.value) + flare.value * 0.45f
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(glowColor.copy(alpha = strength.coerceIn(0f, 1f)), Color.Transparent),
@@ -281,9 +341,11 @@ fun BlazingFlame(
                 // Flames grow from the base, so every transform pivots at the bottom centre.
                 transformOrigin = TransformOrigin(0.5f, 1f)
                 val grow = ignite.value
-                scaleX = (0.5f + 0.5f * grow) * (if (animate) 2f - breathe else 1f)
-                scaleY = (0.3f + 0.7f * grow) * (if (animate) breathe else 1f)
-                rotationZ = if (animate) sway else 0f
+                val live = liveliness.value
+                val stretch = lerp(1f, breathe.value, live)
+                scaleX = (0.5f + 0.5f * grow) * (2f - stretch)
+                scaleY = (0.3f + 0.7f * grow) * stretch
+                rotationZ = sway.value * live
             }
         )
     }
