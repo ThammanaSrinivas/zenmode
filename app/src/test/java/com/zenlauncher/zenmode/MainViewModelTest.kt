@@ -8,6 +8,7 @@ import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -52,7 +53,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
 
         viewModel.onScreenUnlocked()
 
@@ -64,7 +65,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
 
         viewModel.onScreenUnlocked()
         viewModel.onScreenLocked()
@@ -80,7 +81,7 @@ class MainViewModelTest {
         val expectedUsage = DailyUsage(5000L)
         whenever(repository.getTodayUsage()).thenReturn(expectedUsage)
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
         viewModel.refreshStats()
 
         assertEquals(expectedUsage, viewModel.stats.value)
@@ -92,7 +93,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
         viewModel.onResumeCheck()
 
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -103,7 +104,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
         viewModel.onDelayedUnlockNavigated()
 
         assertEquals(false, viewModel.navigateToDelayedUnlock.value)
@@ -115,7 +116,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
 
         viewModel.onScreenUnlocked()
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -134,7 +135,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
 
         viewModel.onResumeCheck()
         assertEquals(true, viewModel.navigateToDelayedUnlock.value)
@@ -152,7 +153,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
 
         // First unlock cycle
         viewModel.onScreenUnlocked()
@@ -179,7 +180,7 @@ class MainViewModelTest {
         whenever(repository.hasCachedBuddy()).thenReturn(true)
         whenever(repository.getBuddyScreenTime()).thenReturn(45L)
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
         viewModel.refreshBuddyStatsFromCache()
 
         assertEquals(true, viewModel.hasBuddies.value)
@@ -192,7 +193,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.hasCachedBuddy()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { true }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { true }, UnconfinedTestDispatcher())
         viewModel.refreshBuddyStatsFromCache()
 
         assertEquals(false, viewModel.hasBuddies.value)
@@ -204,7 +205,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { false }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { false }, UnconfinedTestDispatcher())
 
         viewModel.onScreenUnlocked()
 
@@ -217,7 +218,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
         whenever(repository.isZenUnlocked()).thenReturn(false)
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { false }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { false }, UnconfinedTestDispatcher())
 
         viewModel.onResumeCheck()
 
@@ -229,7 +230,7 @@ class MainViewModelTest {
         val repository = mock<UsageRepository>()
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { false }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { false }, UnconfinedTestDispatcher())
 
         viewModel.onScreenUnlocked()
         viewModel.onScreenLocked()
@@ -243,7 +244,7 @@ class MainViewModelTest {
         whenever(repository.getTodayUsage()).thenReturn(DailyUsage(0L))
 
         var resistanceEnabled = false
-        val viewModel = MainViewModel(repository, mock<ZenScoreStore>()) { resistanceEnabled }
+        val viewModel = MainViewModel(repository, mock<ZenScoreStore>(), { resistanceEnabled }, UnconfinedTestDispatcher())
 
         viewModel.onScreenUnlocked()
         assertEquals(null, viewModel.navigateToDelayedUnlock.value)

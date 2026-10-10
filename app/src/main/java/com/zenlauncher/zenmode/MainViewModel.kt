@@ -8,6 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +24,9 @@ data class BuddyStats(
 class MainViewModel(
     private val repository: UsageRepository,
     private val scoreStore: ZenScoreStore,
-    private val isResistanceEnabled: () -> Boolean
+    private val isResistanceEnabled: () -> Boolean,
+    /** Where [refreshStats] reads usage history; tests swap in an immediate one. */
+    private val statsDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
     private val firestoreDataSource = ServiceLocator.firestoreDataSource
 
@@ -142,17 +148,31 @@ class MainViewModel(
         _navigateToDelayedUnlock.value = false
     }
 
-    fun refreshStats() {
-        val todayUsage = repository.getTodayUsage()
-        _stats.value = todayUsage
-        _zenScore.value = scoreStore.refresh(todayUsage)
-        _usagePermissionMissing.value = !todayUsage.usagePermissionGranted
+    private var refreshJob: Job? = null
 
-        val yesterdayMillis = repository.getYesterdayScreenTimeMillis()
-        _yesterdayChangePercent.value = if (yesterdayMillis > 0) {
-            (((todayUsage.screenTimeInMillis - yesterdayMillis).toDouble() / yesterdayMillis) * 100).toInt()
-        } else {
-            null
+    /**
+     * Re-reads today's screen time, score and the vs-yesterday change, off the main thread.
+     * It walks the whole day's usage history three times (screen time, then the session log
+     * behind the score) and runs on every resume, unlock and lock. Done on the main thread, a
+     * busy day froze Home for long enough that a tap on an app landed late and the app seemed
+     * slow to open. A newer refresh supersedes one still running.
+     */
+    fun refreshStats() {
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch(statsDispatcher) {
+            val todayUsage = repository.getTodayUsage()
+            val score = scoreStore.refresh(todayUsage)
+            val yesterdayMillis = repository.getYesterdayScreenTimeMillis()
+            val change = if (yesterdayMillis > 0) {
+                (((todayUsage.screenTimeInMillis - yesterdayMillis).toDouble() / yesterdayMillis) * 100).toInt()
+            } else {
+                null
+            }
+            ensureActive()
+            _stats.postValue(todayUsage)
+            _zenScore.postValue(score)
+            _usagePermissionMissing.postValue(!todayUsage.usagePermissionGranted)
+            _yesterdayChangePercent.postValue(change)
         }
     }
 
