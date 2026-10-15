@@ -3,4 +3,95 @@
     <string name="a_mindful_minimalist_launcher">A mindful Minimalist Launcher</string>
     <string name="accessibility_service_description">ZenMode OS uses this Accessibility Service for two things: to lock your screen when you tap the lock button on the home screen, and (only when you turn on in-app content blocking) to detect when a screen you chose to block (such as YouTube Shorts) is open, so it can navigate you away. It checks only which screen is showing; it does not read, store, or share the content itself, and does nothing for apps you have not chosen to block.</string>
     <string name="invest_gold_kite_unavailable">Couldn\'t open Kite. Install it or open kite.zerodha.com in a browser.</string>
+
+    <!-- Home screen (HomeScreen.kt) -->
+    <string name="home_invite_buddy">Add Buddy</string>
+    <string name="home_open_my_circle">Open my circle</string>
+    <string name="home_open_zen_score">Open Zen Score</string>
+    <string name="home_open_gold_invested">Open Gold Invested</string>
+    <string name="home_gold_invested">GOLD INVESTED</string>
+    <string name="home_hide_amount">Hide amount</string>
+    <string name="home_show_amount">Show amount</string>
+    <string name="home_notifications_count">%1$d notifications</string>
+    <string name="home_notification_overflow">99+</string>
+    <string name="home_search">Search</string>
+    <string name="home_search_placeholder">Search apps, files &amp; everything</string>
+    <string name="home_scan_with_lens">Scan with Google Lens</string>
+    <string name="home_scan_with_lens_cd">Scan a QR code or image with Google Lens</string>
+    <string name="home_search_section_files">ON DEVICE FILES</string>
+    <string name="home_search_section_apps">APPS</string>
+    <string name="home_more_files">+%1$d more files</string>
+    <string name="home_more_app_one">+%1$d more app</string>
+    <string name="home_more_apps">+%1$d more apps</string>
+    <string name="home_allow_file_access">Allow file access to search your files</string>
+    <string name="home_google_cd">Google</string>
+    <string name="home_search_google_for">Search Google for “%1$s”</string>
+    <string name="home_clear_search">Clear search</string>
+
+    <!-- Resistence screen (ResistenceScreen.kt) -->
+    <string name="resistance_advice_happy_prefix">"You're in "</string>
+    <string name="resistance_advice_happy_brand">zenmode</string>
+    <string name="resistance_advice_happy_suffix">" &amp; being so mindful"</string>
+    <string name="resistance_advice_happy_emoji">💚</string>
+    <string name="resistance_advice_neutral_prefix">"Free advice: Don't lose your "</string>
+    <string name="resistance_advice_neutral_emphasis">ZEN</string>
+    <string name="resistance_advice_annoyed_prefix">"Put the phone down BRO, Live LIFE "</string>
+    <string name="resistance_advice_annoyed_emoji">❤️</string>
+    <string name="resistance_mood_cd">Mood</string>
+    <string name="resistance_hrs">HRS</string>
+    <string name="resistance_mins">MINS</string>
+    <string name="resistance_trend_cd">Trend</string>
+    <string name="resistance_mindfulness">Mindfulness</string>
+    <string name="resistance_settings_cd">Settings</string>
+    <string name="resistance_skips_left_prefix">"Only "</string>
+    <string name="resistance_skips_left_middle">" skip &amp; open "</string>
+    <string name="resistance_skips_left_suffix">left for Today</string>
+    <string name="resistance_no_skips_left">No skips left for Today</string>
+    <string name="resistance_skip_the_wait">Skip the wait</string>
+    <string name="resistance_phone_cd">Phone</string>
+
+    <!-- Shared stats labels (StatsCards.kt, ResistenceScreen.kt) -->
+    <string name="stats_my_screen_time">My Screen Time</string>
+    <string name="stats_my_weekly_time">My Weekly Time</string>
+
+    <!-- Permission flow (UsageAccessBanner.kt, ZenPermission.kt, PermissionsStep.kt) -->
+    <string name="usage_banner_title">Screen time is paused</string>
+    <string name="usage_banner_body">"Usage access was turned off, so your screen time can't update. Grant it again to keep tracking."</string>
+    <string name="usage_banner_grant">Grant access</string>
+    <string name="permissions_continue">Continue</string>
+    <string name="permissions_allow_more">Allow %1$d more to continue</string>
+    <string name="permissions_eyebrow">Two steps to Zone Zen</string>
+    <string name="permissions_headline">Allow what Zen needs.</string>
+    <string name="permissions_body">Just what powers your features, all processed on this phone. Change them anytime in Settings.</string>
+    <string name="permissions_required_done">"required allowed, you're set"</string>
+    <string name="permissions_required_allowed">required allowed</string>
+    <string name="permissions_required">Required</string>
+    <string name="permissions_optional">Optional</string>
+    <string name="permissions_allow_permission">Allow %1$s</string>
+    <string name="permissions_allow">Allow</string>
+    <string name="permissions_cd">%1$s, %2$s, %3$s</string>
+    <string name="permissions_cd_required">required</string>
+    <string name="permissions_cd_optional">optional</string>
+    <string name="permissions_cd_allowed">allowed</string>
+    <string name="permissions_cd_not_allowed">not allowed</string>
+    <string name="permission_usage_title">Usage access</string>
+    <string name="permission_usage_reason">Powers your Zen Score and screen-time promise.</string>
+    <string name="permission_accessibility_title">Reels &amp; Shorts blocker</string>
+    <string name="permission_accessibility_reason">Hides endless feeds inside apps. Nothing leaves your phone.</string>
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_reason">Hear it when your Zen Bro cheers you on.</string>
+
+    <!-- Accessibility disclosure (AccessibilityDisclosureScreen.kt) -->
+    <string name="a11y_disclosure_title">Accessibility Service Disclosure</string>
+    <string name="a11y_disclosure_why">Why %1$s needs Accessibility Service</string>
+    <string name="a11y_disclosure_why_body">"%1$s uses Android's Accessibility Service API for two features:\n\n1. Lock screen: Android gives a launcher no other way to lock the screen, so this permission is required for the lock button to work.\n\n2. In-app content blocking (optional): when you turn on blocking for a surface such as YouTube Shorts, the service checks whether that screen is currently open and, if so, navigates you away. It runs only for apps you have explicitly chosen to block."</string>
+    <string name="a11y_disclosure_does_title">What this service does</string>
+    <string name="a11y_disclosure_does_body">"• Uses the system lock-screen action (GLOBAL_ACTION_LOCK_SCREEN) when you tap the lock button\n• For apps you chose to block: checks which screen (view IDs) is visible and, on a blocked screen, presses Back\n• Only wakes for apps in your block list (currently YouTube)"</string>
+    <string name="a11y_disclosure_not_does_title">What this service does NOT do</string>
+    <string name="a11y_disclosure_not_does_body">"• Does NOT read, store, or transmit the text, media, or messages inside any app\n• Does NOT monitor apps that are not in your block list\n• Does NOT perform gestures or tap anything inside other apps\n• Does NOT collect, store, transmit, or share any personal data\n• Sends nothing off your device; all checks happen locally"</string>
+    <string name="a11y_disclosure_privacy_title">Privacy</string>
+    <string name="a11y_disclosure_privacy_body">This service enables the lock button and, if you turn it on, in-app content blocking. It reads only which screen of a blocked app is visible, on the device, to decide whether to navigate away. No screen content or personal data is stored, collected, or sent anywhere.</string>
+    <string name="a11y_disclosure_read_policy">Read our Privacy Policy</string>
+    <string name="a11y_disclosure_accept">I Understand and Agree</string>
+    <string name="a11y_disclosure_decline">Decline</string>
 </resources>

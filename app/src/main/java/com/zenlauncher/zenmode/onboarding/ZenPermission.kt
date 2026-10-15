@@ -6,7 +6,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.coreapi.UsageAccess
 
@@ -16,26 +18,26 @@ import com.zenlauncher.zenmode.coreapi.UsageAccess
  */
 enum class ZenPermission(
     val analyticsKey: String,
-    val title: String,
-    val reason: String,
+    @StringRes val titleRes: Int,
+    @StringRes val reasonRes: Int,
     val required: Boolean
 ) {
     USAGE_ACCESS(
         analyticsKey = "usage",
-        title = "Usage access",
-        reason = "Powers your Zen Score and screen-time promise.",
+        titleRes = R.string.permission_usage_title,
+        reasonRes = R.string.permission_usage_reason,
         required = true
     ),
     ACCESSIBILITY(
         analyticsKey = "acc",
-        title = "Reels & Shorts blocker",
-        reason = "Hides endless feeds inside apps. Nothing leaves your phone.",
+        titleRes = R.string.permission_accessibility_title,
+        reasonRes = R.string.permission_accessibility_reason,
         required = false
     ),
     NOTIFICATIONS(
         analyticsKey = "notifications",
-        title = "Notifications",
-        reason = "Hear it when your Zen Bro cheers you on.",
+        titleRes = R.string.permission_notifications_title,
+        reasonRes = R.string.permission_notifications_reason,
         required = false
     );
 

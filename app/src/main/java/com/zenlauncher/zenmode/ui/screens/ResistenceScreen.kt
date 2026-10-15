@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -76,6 +77,16 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.percentageChangeColor
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.ui.theme.rdp
+
+// The four quadrant PNGs each sit in the same 101x172 box, offset 86dp above or below the
+// centre axis; the highlighted quadrant glows through a blurred copy of the same art.
+// Figma reads, named once because the geometry repeats across q1-q4.
+private val QuadrantSizeWidth: Dp @Composable get() = 101.rdp
+private val QuadrantSizeHeight: Dp @Composable get() = 172.rdp
+private val QuadrantOffsetY: Dp @Composable get() = 86.rdp
+private val QuadrantGlowBlur: Dp = 12.dp
+// How long the shuriken holds each quadrant before it steps 90° clockwise.
+private const val QuadrantStepMillis = 2000L
 
 // ── Main Resistence Screen ──────────────────────────────────────────
 
@@ -146,20 +157,29 @@ fun ResistenceScreen(
     }
 
     val emojiSize = 12.rsp
+    // buildAnnotatedString isn't composable, so resolve the copy before building the spans.
+    val adviceHappyPrefix = stringResource(R.string.resistance_advice_happy_prefix)
+    val adviceHappyBrand = stringResource(R.string.resistance_advice_happy_brand)
+    val adviceHappySuffix = stringResource(R.string.resistance_advice_happy_suffix)
+    val adviceHappyEmoji = stringResource(R.string.resistance_advice_happy_emoji)
+    val adviceNeutralPrefix = stringResource(R.string.resistance_advice_neutral_prefix)
+    val adviceNeutralEmphasis = stringResource(R.string.resistance_advice_neutral_emphasis)
+    val adviceAnnoyedPrefix = stringResource(R.string.resistance_advice_annoyed_prefix)
+    val adviceAnnoyedEmoji = stringResource(R.string.resistance_advice_annoyed_emoji)
     val adviceText = when (moodState) {
         MoodState.HAPPY -> buildAnnotatedString {
-            append("You're in ")
-            withStyle(SpanStyle(color = moodColor)) { append("zenmode") }
-            append(" & being so mindful")
-            withStyle(SpanStyle(fontSize = emojiSize)) { append("\uD83D\uDC9A") }
+            append(adviceHappyPrefix)
+            withStyle(SpanStyle(color = moodColor)) { append(adviceHappyBrand) }
+            append(adviceHappySuffix)
+            withStyle(SpanStyle(fontSize = emojiSize)) { append(adviceHappyEmoji) }
         }
         MoodState.NEUTRAL -> buildAnnotatedString {
-            append("Free advice: Don't lose your ")
-            withStyle(SpanStyle(color = moodColor, fontWeight = FontWeight.ExtraBold)) { append("ZEN") }
+            append(adviceNeutralPrefix)
+            withStyle(SpanStyle(color = moodColor, fontWeight = FontWeight.ExtraBold)) { append(adviceNeutralEmphasis) }
         }
         MoodState.ANNOYED -> buildAnnotatedString {
-            append("Put the phone down BRO, Live LIFE ")
-            withStyle(SpanStyle(fontSize = emojiSize)) { append("\u2764\uFE0F") }
+            append(adviceAnnoyedPrefix)
+            withStyle(SpanStyle(fontSize = emojiSize)) { append(adviceAnnoyedEmoji) }
         }
     }
 
@@ -187,7 +207,7 @@ fun ResistenceScreen(
             var rotationSteps by remember { mutableIntStateOf(0) }
             LaunchedEffect(Unit) {
                 while (true) {
-                    delay(2000L)
+                    delay(QuadrantStepMillis)
                     rotationSteps++
                 }
             }
@@ -217,16 +237,16 @@ fun ResistenceScreen(
                 // Q1 - upper left
                 Box(
                     modifier = Modifier
-                        .size(width = 101.rdp, height = 172.rdp)
+                        .size(width = QuadrantSizeWidth, height = QuadrantSizeHeight)
                         .align(Alignment.CenterStart)
-                        .offset(y = (-86).rdp)
+                        .offset(y = -QuadrantOffsetY)
                 ) {
                     if (currentPhase == 3) {
                         Image(
                             painter = painterResource(q1Res),
                             contentDescription = null,
                             colorFilter = glowTint,
-                            modifier = Modifier.matchParentSize().blur(12.dp)
+                            modifier = Modifier.matchParentSize().blur(QuadrantGlowBlur)
                         )
                     }
                     Image(
@@ -238,16 +258,16 @@ fun ResistenceScreen(
                 // Q2 - upper right
                 Box(
                     modifier = Modifier
-                        .size(width = 101.rdp, height = 172.rdp)
+                        .size(width = QuadrantSizeWidth, height = QuadrantSizeHeight)
                         .align(Alignment.CenterEnd)
-                        .offset(y = (-86).rdp)
+                        .offset(y = -QuadrantOffsetY)
                 ) {
                     if (currentPhase == 0) {
                         Image(
                             painter = painterResource(q2Res),
                             contentDescription = null,
                             colorFilter = glowTint,
-                            modifier = Modifier.matchParentSize().blur(12.dp)
+                            modifier = Modifier.matchParentSize().blur(QuadrantGlowBlur)
                         )
                     }
                     Image(
@@ -259,16 +279,16 @@ fun ResistenceScreen(
                 // Q3 - lower right
                 Box(
                     modifier = Modifier
-                        .size(width = 101.rdp, height = 172.rdp)
+                        .size(width = QuadrantSizeWidth, height = QuadrantSizeHeight)
                         .align(Alignment.CenterEnd)
-                        .offset(y = 86.rdp)
+                        .offset(y = QuadrantOffsetY)
                 ) {
                     if (currentPhase == 1) {
                         Image(
                             painter = painterResource(q3Res),
                             contentDescription = null,
                             colorFilter = glowTint,
-                            modifier = Modifier.matchParentSize().blur(12.dp)
+                            modifier = Modifier.matchParentSize().blur(QuadrantGlowBlur)
                         )
                     }
                     Image(
@@ -280,16 +300,16 @@ fun ResistenceScreen(
                 // Q4 - lower left
                 Box(
                     modifier = Modifier
-                        .size(width = 101.rdp, height = 172.rdp)
+                        .size(width = QuadrantSizeWidth, height = QuadrantSizeHeight)
                         .align(Alignment.CenterStart)
-                        .offset(y = 86.rdp)
+                        .offset(y = QuadrantOffsetY)
                 ) {
                     if (currentPhase == 2) {
                         Image(
                             painter = painterResource(q4Res),
                             contentDescription = null,
                             colorFilter = glowTint,
-                            modifier = Modifier.matchParentSize().blur(12.dp)
+                            modifier = Modifier.matchParentSize().blur(QuadrantGlowBlur)
                         )
                     }
                     Image(
@@ -302,7 +322,7 @@ fun ResistenceScreen(
                 // Central shuriken — steps by 90° quarters
                 Image(
                     painter = painterResource(centralImageRes),
-                    contentDescription = "Mood",
+                    contentDescription = stringResource(R.string.resistance_mood_cd),
                     modifier = Modifier
                         .size(260.rdp)
                         .rotate(shurikenRotation)
@@ -325,7 +345,7 @@ fun ResistenceScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "My Screen Time",
+                        text = stringResource(R.string.stats_my_screen_time),
                         fontFamily = Geist,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 20.rsp,
@@ -366,7 +386,7 @@ fun ResistenceScreen(
                             )
                         )
                         Text(
-                            text = "HRS",
+                            text = stringResource(R.string.resistance_hrs),
                             fontFamily = DepartureMono,
                             fontWeight = FontWeight.Normal,
                             fontSize = 10.rsp,
@@ -394,7 +414,7 @@ fun ResistenceScreen(
                             )
                         )
                         Text(
-                            text = "MINS",
+                            text = stringResource(R.string.resistance_mins),
                             fontFamily = DepartureMono,
                             fontWeight = FontWeight.Normal,
                             fontSize = 10.rsp,
@@ -410,7 +430,7 @@ fun ResistenceScreen(
                         // Trend icon
                         Image(
                             painter = painterResource(trendRes),
-                            contentDescription = "Trend",
+                            contentDescription = stringResource(R.string.resistance_trend_cd),
                             modifier = Modifier
                                 .size(width = 60.rdp, height = 56.rdp)
                                 .padding(start = 2.rdp)
@@ -426,7 +446,7 @@ fun ResistenceScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Mindfulness",
+                        text = stringResource(R.string.resistance_mindfulness),
                         fontFamily = Geist,
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.rsp,
@@ -560,6 +580,9 @@ internal fun countdownSecondsLeft(elapsedSeconds: Int, finished: Boolean): Int {
     return if (finished) 1 else (total + 1 - elapsedSeconds).coerceIn(1, total)
 }
 
+// The ring art and its hit-area box are the same square; Figma read, named once.
+private val CountdownRingSize: Dp @Composable get() = 110.rdp
+
 @Composable
 private fun CountdownCircle(
     countdownSeconds: Int,
@@ -587,12 +610,12 @@ private fun CountdownCircle(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(110.rdp)
+        modifier = Modifier.size(CountdownRingSize)
     ) {
         Image(
             painter = painterResource(aroundTimeRes),
             contentDescription = null,
-            modifier = Modifier.size(110.rdp)
+            modifier = Modifier.size(CountdownRingSize)
         )
 
         // Countdown number
@@ -621,6 +644,11 @@ private fun ResistenceBottomDock(
 ) {
     val colors = ZenTheme.colors
     val canSkip = skipsLeft > 0
+    // buildAnnotatedString isn't composable, so resolve the dock copy before building the spans.
+    val skipPrefix = stringResource(R.string.resistance_skips_left_prefix)
+    val skipMiddle = stringResource(R.string.resistance_skips_left_middle)
+    val skipSuffix = stringResource(R.string.resistance_skips_left_suffix)
+    val noSkipsLeft = stringResource(R.string.resistance_no_skips_left)
 
     Row(
         modifier = Modifier
@@ -635,7 +663,7 @@ private fun ResistenceBottomDock(
         // Settings
         Image(
             painter = painterResource(R.drawable.ic_settings),
-            contentDescription = "Settings",
+            contentDescription = stringResource(R.string.resistance_settings_cd),
             modifier = Modifier
                 // 32dp of art inside a 48dp target — the icons were below the minimum.
                 .size(MinTouchTarget)
@@ -649,18 +677,18 @@ private fun ResistenceBottomDock(
         Text(
             text = if (canSkip) {
                 buildAnnotatedString {
-                    append("Only ")
+                    append(skipPrefix)
                     withStyle(SpanStyle(fontFamily = DepartureMono, color = moodColor, fontWeight = FontWeight.Bold)) {
                         append("$skipsLeft")
                     }
                     withStyle(SpanStyle(color = moodColor, fontWeight = FontWeight.Bold)) {
-                        append(" skip & open ")
+                        append(skipMiddle)
                     }
-                    append("left for Today")
+                    append(skipSuffix)
                 }
             } else {
                 buildAnnotatedString {
-                    append("No skips left for Today")
+                    append(noSkipsLeft)
                 }
             },
             fontFamily = Geist,
@@ -676,7 +704,7 @@ private fun ResistenceBottomDock(
                     if (canSkip) Modifier
                         .heightIn(min = MinTouchTarget)
                         .clip(RoundedCornerShape(8.rdp))
-                        .clickable(onClickLabel = "Skip the wait", role = Role.Button) { onSkipClick() }
+                        .clickable(onClickLabel = stringResource(R.string.resistance_skip_the_wait), role = Role.Button) { onSkipClick() }
                         .wrapContentHeight()
                         .padding(horizontal = 8.rdp)
                     else Modifier.padding(horizontal = 8.rdp)
@@ -686,7 +714,7 @@ private fun ResistenceBottomDock(
         // Phone
         Image(
             painter = painterResource(R.drawable.ic_phone),
-            contentDescription = "Phone",
+            contentDescription = stringResource(R.string.resistance_phone_cd),
             modifier = Modifier
                 .size(MinTouchTarget)
                 .clip(CircleShape)

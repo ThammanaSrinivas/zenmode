@@ -142,8 +142,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.annotation.StringRes
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -228,6 +230,12 @@ private val CardsToAppsGap: Dp @Composable get() = 40.rdp
 private val AppRowGap: Dp @Composable get() = 45.rdp
 private val AppsToSearchGap: Dp @Composable get() = 40.rdp
 
+// The home grid is fixed at four columns: rows fill left to right and the last row pads
+// its remainder with blank cells so the icons stay on their columns.
+private const val AppGridColumns = 4
+// The notification badge stops counting at this; above it the badge reads "99+".
+private const val NotificationBadgeOverflow = 99
+
 // Figma node 2001:1504 — header text colours and gradients. Values live in colors.xml
 // (SOURCE OF TRUTH: design tokens) — never inline a Color(0x...) literal here.
 private val ZenScoreGradient: Brush
@@ -281,7 +289,7 @@ fun HomeScreen(
     onPhoneClick: () -> Unit,
     onLockClick: () -> Unit,
     onInviteBuddyClick: () -> Unit,
-    inviteButtonLabel: String = "Add Buddy",
+    inviteButtonLabel: String = stringResource(R.string.home_invite_buddy),
     onSignInClick: () -> Unit,
     onBuddyCardClick: (() -> Unit)? = null,
     // Real values for a Zen Circle-derived buddyStats (see HomeCircleStats.kt) -- null keeps
@@ -608,7 +616,7 @@ fun HomeScreen(
             HomeGuideOverlay(
                 buddyCardBounds = buddyCardBounds,
                 hasBuddies = hasBuddies,
-                buddyLabel = if (hasBuddies) "Open my circle" else inviteButtonLabel,
+                buddyLabel = if (hasBuddies) stringResource(R.string.home_open_my_circle) else inviteButtonLabel,
                 onBuddyAction = { if (hasBuddies) onBuddyCardClick?.invoke() else onInviteBuddyClick() },
                 onFinished = onGuideFinished,
                 onSpotlightChange = { guideSpotlit = it }
@@ -642,7 +650,7 @@ private fun HomeHeader(
         ZenIconMatchedLabel(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.rdp))
-                .clickable(onClickLabel = "Open Zen Score", onClick = onZenScoreClick)
+                .clickable(onClickLabel = stringResource(R.string.home_open_zen_score), onClick = onZenScoreClick)
                 .systemGestureExclusion(),
             icon = {
                 Image(
@@ -720,7 +728,7 @@ fun GoldInvestedRow(
                     if (onClick != null) Modifier.clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() },
-                        onClickLabel = "Open Gold Invested",
+                        onClickLabel = stringResource(R.string.home_open_gold_invested),
                         onClick = onClick
                     ) else Modifier
                 )
@@ -737,7 +745,7 @@ fun GoldInvestedRow(
             Column(horizontalAlignment = Alignment.Start) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "GOLD INVESTED",
+                        text = stringResource(R.string.home_gold_invested),
                         fontFamily = Geist,
                         fontWeight = FontWeight.Medium,
                         fontSize = 9.rsp,
@@ -746,7 +754,7 @@ fun GoldInvestedRow(
                     Spacer(modifier = Modifier.width(6.rdp))
                     Image(
                         painter = painterResource(if (amountVisible) R.drawable.ic_eye else R.drawable.ic_eye_off),
-                        contentDescription = if (amountVisible) "Hide amount" else "Show amount",
+                        contentDescription = stringResource(if (amountVisible) R.string.home_hide_amount else R.string.home_show_amount),
                         modifier = Modifier
                             .width(13.rdp)
                             .height(9.rdp)
@@ -820,7 +828,7 @@ private fun AppGrid(
             .padding(horizontal = ScreenMargin),
         verticalArrangement = Arrangement.spacedBy(AppRowGap)
     ) {
-        apps.chunked(4).forEach { row ->
+        apps.chunked(AppGridColumns).forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -835,7 +843,7 @@ private fun AppGrid(
                         )
                     }
                 }
-                repeat(4 - row.size) {
+                repeat(AppGridColumns - row.size) {
                     Box(modifier = Modifier.weight(1f)) {}
                 }
             }
@@ -903,11 +911,11 @@ private fun AppIconItem(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.notification_circle),
-                        contentDescription = "${appInfo.notificationCount} notifications",
+                        contentDescription = stringResource(R.string.home_notifications_count, appInfo.notificationCount),
                         modifier = Modifier.fillMaxSize()
                     )
                     Text(
-                        text = if (appInfo.notificationCount > 99) "99+" else appInfo.notificationCount.toString(),
+                        text = if (appInfo.notificationCount > NotificationBadgeOverflow) stringResource(R.string.home_notification_overflow) else appInfo.notificationCount.toString(),
                         color = Color.White,
                         fontSize = 9.rsp,
                         fontWeight = FontWeight.Bold,
@@ -942,7 +950,7 @@ private fun SearchPill(
             .fillMaxHeight()
             .clip(RoundedCornerShape(percent = 50))
             .border(3.rdp, colors.textBrand.copy(alpha = 0.45f), RoundedCornerShape(percent = 50))
-            .clickable(onClickLabel = "Search", role = Role.Button) { onClick() }
+            .clickable(onClickLabel = stringResource(R.string.home_search), role = Role.Button) { onClick() }
             .padding(start = 20.rdp, end = if (onLensClick != null) 6.rdp else 20.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -954,7 +962,7 @@ private fun SearchPill(
         )
         Spacer(modifier = Modifier.width(12.rdp))
         Text(
-            text = "Search apps, files & everything",
+            text = stringResource(R.string.home_search_placeholder),
             fontFamily = Geist,
             fontWeight = FontWeight.Normal,
             fontSize = 14.rsp,
@@ -970,12 +978,12 @@ private fun SearchPill(
                 modifier = Modifier
                     .size(SearchLensTarget)
                     .clip(CircleShape)
-                    .clickable(onClickLabel = "Scan with Google Lens", role = Role.Button, onClick = onLensClick),
+                    .clickable(onClickLabel = stringResource(R.string.home_scan_with_lens), role = Role.Button, onClick = onLensClick),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_lens_scan),
-                    contentDescription = "Scan a QR code or image with Google Lens",
+                    contentDescription = stringResource(R.string.home_scan_with_lens_cd),
                     modifier = Modifier.size(20.rdp),
                     colorFilter = ColorFilter.tint(colors.textSecondary)
                 )
@@ -1009,6 +1017,10 @@ private val SearchSectionGap: Dp @Composable get() = 28.rdp
 private val SearchBarGap: Dp @Composable get() = 26.rdp
 private const val SearchCollapsedRows = 3
 private val SearchTopFade: Dp @Composable get() = 48.rdp
+// A downward drag past this many px dismisses search; below it the drag snaps back.
+private const val SearchDismissDragPx = 150f
+// MediaStore is a disk query; give a burst of typing this long to settle before searching.
+private const val FileSearchDebounceMillis = 120L
 
 // One trip of the gradient round the pill. Slow enough to read as calm, quick
 // enough to read as "listening".
@@ -1019,8 +1031,8 @@ private const val StrokeGlowRest = 0.45f
 private sealed interface SearchRow {
     val key: String
 
-    data class Header(val label: String) : SearchRow {
-        override val key = "header:$label"
+    data class Header(@StringRes val labelRes: Int) : SearchRow {
+        override val key = "header:$labelRes"
     }
     data class App(val app: AppInfo) : SearchRow {
         override val key = "app:${app.packageName}"
@@ -1028,7 +1040,7 @@ private sealed interface SearchRow {
     data class File(val file: FileResult) : SearchRow {
         override val key = "file:${file.uri}"
     }
-    data class More(val section: String, val count: Int, val noun: String) : SearchRow {
+    data class More(val section: String, val count: Int, @StringRes val labelRes: Int) : SearchRow {
         override val key = "more:$section"
     }
     data object FilePermission : SearchRow {
@@ -1097,7 +1109,7 @@ private fun SearchOverlay(
         }
         // MediaStore is a disk query — let a burst of typing settle first. A newer
         // keystroke cancels this effect, so only the last query ever hits the provider.
-        delay(120)
+        delay(FileSearchDebounceMillis)
         fileResults = FileSearchRepository.search(context, query)
     }
 
@@ -1110,24 +1122,24 @@ private fun SearchOverlay(
         if (query.isBlank()) return@buildList
 
         if (fileSearchEnabled && (!hasFilePermission || fileResults.isNotEmpty())) {
-            add(SearchRow.Header("ON DEVICE FILES"))
+            add(SearchRow.Header(R.string.home_search_section_files))
             if (!hasFilePermission) {
                 add(SearchRow.FilePermission)
             } else {
                 val shown = if (filesExpanded) fileResults else fileResults.take(SearchCollapsedRows)
                 shown.forEach { add(SearchRow.File(it)) }
                 val hidden = fileResults.size - shown.size
-                if (hidden > 0) add(SearchRow.More("files", hidden, "files"))
+                if (hidden > 0) add(SearchRow.More("files", hidden, R.string.home_more_files))
             }
             add(SearchRow.Gap("files"))
         }
 
         if (filteredApps.isNotEmpty()) {
-            add(SearchRow.Header("APPS"))
+            add(SearchRow.Header(R.string.home_search_section_apps))
             val shown = if (appsExpanded) filteredApps else filteredApps.take(SearchCollapsedRows)
             shown.forEach { add(SearchRow.App(it)) }
             val hidden = filteredApps.size - shown.size
-            if (hidden > 0) add(SearchRow.More("apps", hidden, if (hidden == 1) "app" else "apps"))
+            if (hidden > 0) add(SearchRow.More("apps", hidden, if (hidden == 1) R.string.home_more_app_one else R.string.home_more_apps))
             add(SearchRow.Gap("apps"))
         }
 
@@ -1173,7 +1185,7 @@ private fun SearchOverlay(
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
-                        if (dragY > 150f) onDismiss()
+                        if (dragY > SearchDismissDragPx) onDismiss()
                         dragY = 0f
                     },
                     onVerticalDrag = { _, dragAmount -> dragY += dragAmount }
@@ -1211,7 +1223,7 @@ private fun SearchOverlay(
                         fadeOutSpec = tween(120)
                     )
                     when (row) {
-                        is SearchRow.Header -> SearchSectionHeader(row.label, itemModifier)
+                        is SearchRow.Header -> SearchSectionHeader(stringResource(row.labelRes), itemModifier)
                         is SearchRow.App -> AppResultRow(
                             app = row.app,
                             onClick = {
@@ -1232,7 +1244,7 @@ private fun SearchOverlay(
                             modifier = itemModifier
                         )
                         is SearchRow.More -> SearchMoreRow(
-                            text = "+${row.count} more ${row.noun}",
+                            text = stringResource(row.labelRes, row.count),
                             onClick = {
                                 if (row.section == "apps") appsExpanded = true
                                 else filesExpanded = true
@@ -1426,7 +1438,7 @@ private fun ZenSearchBar(
             decorationBox = { innerTextField ->
                 if (query.isEmpty()) {
                     Text(
-                        text = "Search apps, files & everything",
+                        text = stringResource(R.string.home_search_placeholder),
                         style = textStyle,
                         color = white.copy(alpha = 0.5f),
                         maxLines = 1
@@ -1450,7 +1462,7 @@ private fun ZenSearchBar(
             if (query.isNotEmpty()) {
                 Image(
                     painter = painterResource(R.drawable.ic_search_clear),
-                    contentDescription = "Clear search",
+                    contentDescription = stringResource(R.string.home_clear_search),
                     modifier = Modifier.size(width = 9.5.rdp, height = 9.rdp),
                     colorFilter = ColorFilter.tint(white)
                 )
@@ -1587,7 +1599,7 @@ private fun FilePermissionRow(onGrantClick: () -> Unit, modifier: Modifier = Mod
         tile = { SearchFileTile(tint = glyph) },
         label = {
             Text(
-                text = "Allow file access to search your files",
+                text = stringResource(R.string.home_allow_file_access),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.rsp,
@@ -1612,13 +1624,13 @@ private fun GoogleFallbackRow(query: String, onClick: () -> Unit, modifier: Modi
     ) {
         Image(
             painter = painterResource(R.drawable.ic_search_v3),
-            contentDescription = "Google",
+            contentDescription = stringResource(R.string.home_google_cd),
             modifier = Modifier.size(SearchGlyphSize),
             colorFilter = ColorFilter.tint(colorResource(R.color.white))
         )
         Spacer(modifier = Modifier.width(10.rdp))
         Text(
-            text = "Search Google for “$query”",
+            text = stringResource(R.string.home_search_google_for, query),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 16.rsp,

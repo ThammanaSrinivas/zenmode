@@ -31,6 +31,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -108,7 +109,7 @@ fun StatsCardsRow(
     onInviteBuddyClick: () -> Unit = {},
     // "Add Buddy" for the classic 1:1 flow, "Add Bro" once BuddyFlowPreferences has
     // the user on Zen Circle -- see BuddyInviteCard.
-    inviteButtonLabel: String = "Add Buddy",
+    inviteButtonLabel: String = stringResource(R.string.home_invite_buddy),
     onSignInClick: () -> Unit = {},
     onBuddyCardClick: (() -> Unit)? = null,
     // Opens Settings, same destination as every ☰ in the app — the profile icon on
@@ -460,7 +461,7 @@ fun MyScreenTimeCard(
         MoodCard(
             faceRes = faceFor(moodState),
             faceDescription = "Mood face",
-            label = if (isWeekly) "My Weekly Time" else "My Screen Time",
+            label = stringResource(if (isWeekly) R.string.stats_my_weekly_time else R.string.stats_my_screen_time),
             minutes = minutes,
             mood = moodState,
             zenScore = zenScore,
