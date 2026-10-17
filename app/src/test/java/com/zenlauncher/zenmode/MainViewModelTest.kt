@@ -7,6 +7,8 @@ import com.zenlauncher.zenmode.coreapi.services.FirestoreDataSource
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -269,5 +271,12 @@ class MainViewModelTest {
         val viewModel = factory.create(MainViewModel::class.java)
 
         assert(viewModel is MainViewModel)
+
+        // The factory keeps the real Dispatchers.Default, so init's refreshStats() runs on a
+        // background thread. Wait for it here: if it posts to LiveData after this test's
+        // InstantTaskExecutorRule is gone, it crashes and fails whichever runTest starts next.
+        val field = MainViewModel::class.java.getDeclaredField("refreshJob")
+        field.isAccessible = true
+        runBlocking { (field.get(viewModel) as Job).join() }
     }
 }
