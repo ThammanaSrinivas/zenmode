@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalInspectionMode
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
@@ -23,8 +24,11 @@ import java.util.concurrent.TimeUnit
  */
 class DistractionBlockerScreenScreenshotTest {
 
+    // Tall enough that the six-app list's last item (the debug tools) and its 96dp bottom padding
+    // fit above the frosted foot: the page is a LazyColumn, so anything past the viewport would
+    // be cut off.
     @get:Rule
-    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 2700))
+    val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenHeight = 3200))
 
     /** In-app feeds per package, built the same way DistractionBlockerActivity builds them. */
     private val surfaces = ContentBlockRules.default().apps.mapValues { (_, rule) ->
@@ -88,23 +92,24 @@ class DistractionBlockerScreenScreenshotTest {
 
     @Test
     fun `distraction blocker - paused`() {
-        // isPaused and minutesLeft read System.currentTimeMillis(), not LocalZenClock, so the
-        // pause ends 29m30s after the state is built: the pill reads "Paused 30m" as long as the
-        // render starts within 30s, every run. Paused pill + QuietReelsCard's "Paused." copy;
-        // 40 min saved -> "40 MINS".
-        val pausedUntil = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(29 * 60 + 30)
-        snapshot(
+        // isPaused and minutesLeft read System.currentTimeMillis(), not LocalZenClock. The state
+        // is built inside the composition that renders it (see snapshot), with the pause ending
+        // 1ms short of 30m out: minutesLeft = floor(29m59.999s - elapsed) + 1 reads "Paused 30m"
+        // for any elapsed under 59.999s, and building-to-drawing in one composition takes
+        // milliseconds, however slow the machine is before the render starts. Paused pill +
+        // QuietReelsCard's "Paused." copy; 40 min saved -> "40 MINS".
+        snapshot {
             BlockerState(
                 apps = phoneApps,
                 appsLoaded = true,
                 quieted = setOf(ContentBlockRules.INSTAGRAM),
                 reelsQuieted = true,
-                pausedUntil = pausedUntil,
+                pausedUntil = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30) - 1,
                 stops = 23,
                 minutesSaved = 40,
                 isPro = true
             )
-        )
+        }
     }
 
     @Test
@@ -120,8 +125,12 @@ class DistractionBlockerScreenScreenshotTest {
         )
     }
 
-    private fun snapshot(state: BlockerState) {
+    private fun snapshot(state: BlockerState) = snapshot { state }
+
+    /** Builds the state in the rendering composition, so a clock read in it can't go stale. */
+    private fun snapshot(buildState: () -> BlockerState) {
         paparazzi.golden {
+            val state = remember { buildState() }
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 ZenTheme(darkTheme = false) {
                     DistractionBlockerScreen(
