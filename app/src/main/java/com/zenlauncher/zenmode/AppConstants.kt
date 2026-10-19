@@ -16,9 +16,42 @@ object AppConstants {
     const val MINDFULNESS_HAPPY_MIN_PERCENT = 70
     const val MINDFULNESS_NEUTRAL_MIN_PERCENT = 40
 
+    // Time conversions. Home's gold row and Resistence's screen-time readout both turn
+    // millisecond usage into minutes, so the factors are named once here.
+    const val MILLIS_PER_SECOND = 1000L
+    const val SECONDS_PER_MINUTE = 60L
+
     // Resistence Screen
     const val COUNTDOWN_SECONDS = 7
     const val MAX_DAILY_SKIPS = 7
+    // The four-quadrant rotation: how many quadrants, how long each one holds, how far
+    // the shuriken turns per step, how dim the quadrants that are not lit are, and how
+    // long the turn itself takes.
+    const val RESISTENCE_QUADRANT_COUNT = 4
+    const val RESISTENCE_QUADRANT_STEP_MILLIS = 2000L
+    const val RESISTENCE_QUADRANT_ROTATION_DEGREES = 90f
+    const val RESISTENCE_QUADRANT_DIM_ALPHA = 0.5f
+    const val RESISTENCE_QUADRANT_TURN_MILLIS = 400
+
+    // Home screen. The screen's @Composable dp getters stay in HomeScreen.kt — rdp is a
+    // @Composable getter, so it cannot be read from this plain object — but every plain
+    // number behind them is named here.
+    /** How many app icons sit in one home row. */
+    const val APP_GRID_COLUMNS = 4
+    /** Notification counts above this are shown as "99+". */
+    const val NOTIFICATION_BADGE_OVERFLOW = 99
+    /** How many app rows the search sheet shows before it collapses. */
+    const val SEARCH_COLLAPSED_ROWS = 3
+    /** How far the search sheet has to be dragged down before it dismisses. */
+    const val SEARCH_DISMISS_DRAG_PX = 150f
+    /** Debounce on the file-search query. */
+    const val FILE_SEARCH_DEBOUNCE_MILLIS = 120L
+    /** One full run of the search bar's stroke animation. */
+    const val STROKE_RUN_MILLIS = 2800
+    /** How long the stroke takes to trace itself. */
+    const val STROKE_TRACE_MILLIS = 720
+    /** The glow the stroke rests at between runs. */
+    const val STROKE_GLOW_REST = 0.45f
 
     // Worker
     const val STATS_SYNC_INTERVAL_MINUTES = 10

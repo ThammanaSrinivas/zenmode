@@ -230,11 +230,22 @@ private val CardsToAppsGap: Dp @Composable get() = 40.rdp
 private val AppRowGap: Dp @Composable get() = 45.rdp
 private val AppsToSearchGap: Dp @Composable get() = 40.rdp
 
-// The home grid is fixed at four columns: rows fill left to right and the last row pads
-// its remainder with blank cells so the icons stay on their columns.
-private const val AppGridColumns = 4
-// The notification badge stops counting at this; above it the badge reads "99+".
-private const val NotificationBadgeOverflow = 99
+// Home screen motion. Every fade and tween below is named so the durations can be
+// compared side by side instead of being retyped as bare numbers.
+private const val HomeBlurMillis = 260
+private const val OverlayFadeInMillis = 220
+private const val OverlayFadeOutMillis = 180
+private const val SearchRowFadeInMillis = 200
+private const val SearchRowFadeOutMillis = 120
+// The search bar's stroke: one trip round the pill, how long the trace takes, and the
+// glow it rests at between runs.
+private const val StrokeGlowSettleMillis = 900
+private const val StrokeFlareUpMillis = 90
+private const val StrokeFlareSettleMillis = 650
+
+// Figma's app tile is 47dp across with a 30dp corner radius, so the radius is 30/47 of
+// the tile and scales with it.
+private const val AppTileCornerRadiusRatio = 30f / 47f
 
 // Figma node 2001:1504 — header text colours and gradients. Values live in colors.xml
 // (SOURCE OF TRUTH: design tokens) — never inline a Color(0x...) literal here.
@@ -337,7 +348,7 @@ fun HomeScreen(
 
     // Three variants, picked by today's screen time. The wash covers the whole screen,
     // pooling the mood colour in the middle and fading to cream at both edges.
-    val todayMinutes = ((usage?.screenTimeInMillis ?: 0L) / 1000) / 60
+    val todayMinutes = ((usage?.screenTimeInMillis ?: 0L) / AppConstants.MILLIS_PER_SECOND) / AppConstants.SECONDS_PER_MINUTE
     val mood = AppLogic.getMoodState(todayMinutes)
     // Every other page reads this so it opens already in today's colour.
     MoodSource.lastKnown = mood
@@ -345,7 +356,7 @@ fun HomeScreen(
     // Figma 2026:1207 — home stays behind search, blurred ~7.65px. No-op below API 31.
     val homeBlur by animateDpAsState(
         targetValue = if (showSearch) 8.rdp else 0.dp,
-        animationSpec = tween(260),
+        animationSpec = tween(HomeBlurMillis),
         label = "home-blur"
     )
 
@@ -518,8 +529,8 @@ fun HomeScreen(
         // ignites its stroke in place over the home pill (see ZenSearchBar)
         AnimatedVisibility(
             visible = showSearch,
-            enter = fadeIn(tween(220)),
-            exit = fadeOut(tween(180))
+            enter = fadeIn(tween(OverlayFadeInMillis)),
+            exit = fadeOut(tween(OverlayFadeOutMillis))
         ) {
             SearchOverlay(
                 apps = apps,
@@ -555,7 +566,7 @@ fun HomeScreen(
                 }
                 // The same promise streak as the flame (see PromiseStreak), with the flame's own
                 // count as the hero so the card can never disagree with the number just tapped.
-                val streak = PromiseStreak.of(RecapStore(context).days(), todayMinutes <= promiseHours * 60L, today)
+                val streak = PromiseStreak.of(RecapStore(context).days(), todayMinutes <= promiseHours * AppConstants.SECONDS_PER_MINUTE, today)
                 StreakShare.of(streak.copy(days = streaks), week, today)
             }
             StreakShareSheet(share = share, onDismiss = { showStreakOverlay = false })
@@ -592,8 +603,8 @@ fun HomeScreen(
 
         AnimatedVisibility(
             visible = checkIn != null,
-            enter = fadeIn(tween(220)),
-            exit = fadeOut(tween(180))
+            enter = fadeIn(tween(OverlayFadeInMillis)),
+            exit = fadeOut(tween(OverlayFadeOutMillis))
         ) {
             lastCheckIn?.let { shown ->
                 ZenCheckInOverlay(
@@ -815,6 +826,8 @@ fun GoldInvestedRow(
 
 // ── App Grid ──────────────────────────────────────────────────────
 // One page, no pager. The count is a setting; everything past it lives in search.
+// The grid is fixed at four columns: rows fill left to right and the last row pads
+// its remainder with blank cells so the icons stay on their columns.
 
 @Composable
 private fun AppGrid(
@@ -828,7 +841,7 @@ private fun AppGrid(
             .padding(horizontal = ScreenMargin),
         verticalArrangement = Arrangement.spacedBy(AppRowGap)
     ) {
-        apps.chunked(AppGridColumns).forEach { row ->
+        apps.chunked(AppConstants.APP_GRID_COLUMNS).forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -843,7 +856,7 @@ private fun AppGrid(
                         )
                     }
                 }
-                repeat(AppGridColumns - row.size) {
+                repeat(AppConstants.APP_GRID_COLUMNS - row.size) {
                     Box(modifier = Modifier.weight(1f)) {}
                 }
             }
@@ -915,7 +928,7 @@ private fun AppIconItem(
                         modifier = Modifier.fillMaxSize()
                     )
                     Text(
-                        text = if (appInfo.notificationCount > NotificationBadgeOverflow) stringResource(R.string.home_notification_overflow) else appInfo.notificationCount.toString(),
+                        text = if (appInfo.notificationCount > AppConstants.NOTIFICATION_BADGE_OVERFLOW) stringResource(R.string.home_notification_overflow) else appInfo.notificationCount.toString(),
                         color = Color.White,
                         fontSize = 9.rsp,
                         fontWeight = FontWeight.Bold,
@@ -1015,18 +1028,12 @@ private val SearchRowGap: Dp @Composable get() = 16.rdp
 private val SearchHeaderGap: Dp @Composable get() = 24.rdp
 private val SearchSectionGap: Dp @Composable get() = 28.rdp
 private val SearchBarGap: Dp @Composable get() = 26.rdp
-private const val SearchCollapsedRows = 3
 private val SearchTopFade: Dp @Composable get() = 48.rdp
-// A downward drag past this many px dismisses search; below it the drag snaps back.
-private const val SearchDismissDragPx = 150f
-// MediaStore is a disk query; give a burst of typing this long to settle before searching.
-private const val FileSearchDebounceMillis = 120L
 
-// One trip of the gradient round the pill. Slow enough to read as calm, quick
-// enough to read as "listening".
-private const val StrokeRunMillis = 2800
-private const val StrokeTraceMillis = 720
-private const val StrokeGlowRest = 0.45f
+// Two tunables live in AppConstants with the other app-wide numbers: the debounce on
+// the file search (MediaStore is a disk query, so a burst of typing has to settle
+// first) and the search bar's stroke (one trip round the pill, the trace time and the
+// glow it rests at between runs).
 
 private sealed interface SearchRow {
     val key: String
@@ -1109,7 +1116,7 @@ private fun SearchOverlay(
         }
         // MediaStore is a disk query — let a burst of typing settle first. A newer
         // keystroke cancels this effect, so only the last query ever hits the provider.
-        delay(FileSearchDebounceMillis)
+        delay(AppConstants.FILE_SEARCH_DEBOUNCE_MILLIS)
         fileResults = FileSearchRepository.search(context, query)
     }
 
@@ -1126,7 +1133,7 @@ private fun SearchOverlay(
             if (!hasFilePermission) {
                 add(SearchRow.FilePermission)
             } else {
-                val shown = if (filesExpanded) fileResults else fileResults.take(SearchCollapsedRows)
+                val shown = if (filesExpanded) fileResults else fileResults.take(AppConstants.SEARCH_COLLAPSED_ROWS)
                 shown.forEach { add(SearchRow.File(it)) }
                 val hidden = fileResults.size - shown.size
                 if (hidden > 0) add(SearchRow.More("files", hidden, R.string.home_more_files))
@@ -1136,7 +1143,7 @@ private fun SearchOverlay(
 
         if (filteredApps.isNotEmpty()) {
             add(SearchRow.Header(R.string.home_search_section_apps))
-            val shown = if (appsExpanded) filteredApps else filteredApps.take(SearchCollapsedRows)
+            val shown = if (appsExpanded) filteredApps else filteredApps.take(AppConstants.SEARCH_COLLAPSED_ROWS)
             shown.forEach { add(SearchRow.App(it)) }
             val hidden = filteredApps.size - shown.size
             if (hidden > 0) add(SearchRow.More("apps", hidden, if (hidden == 1) R.string.home_more_app_one else R.string.home_more_apps))
@@ -1185,7 +1192,7 @@ private fun SearchOverlay(
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
-                        if (dragY > SearchDismissDragPx) onDismiss()
+                        if (dragY > AppConstants.SEARCH_DISMISS_DRAG_PX) onDismiss()
                         dragY = 0f
                     },
                     onVerticalDrag = { _, dragAmount -> dragY += dragAmount }
@@ -1219,8 +1226,8 @@ private fun SearchOverlay(
             ) {
                 items(rows.asReversed(), key = { it.key }) { row ->
                     val itemModifier = Modifier.animateItem(
-                        fadeInSpec = tween(200),
-                        fadeOutSpec = tween(120)
+                        fadeInSpec = tween(SearchRowFadeInMillis),
+                        fadeOutSpec = tween(SearchRowFadeOutMillis)
                     )
                     when (row) {
                         is SearchRow.Header -> SearchSectionHeader(stringResource(row.labelRes), itemModifier)
@@ -1359,19 +1366,19 @@ private fun ZenSearchBar(
     val phase by running.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(StrokeRunMillis, easing = LinearEasing)),
+        animationSpec = infiniteRepeatable(tween(AppConstants.STROKE_RUN_MILLIS, easing = LinearEasing)),
         label = "search-stroke-phase"
     )
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
         if (reduceMotion) {
-            glow.snapTo(StrokeGlowRest)
+            glow.snapTo(AppConstants.STROKE_GLOW_REST)
             return@LaunchedEffect
         }
-        launch { trace.animateTo(1f, tween(StrokeTraceMillis, easing = FastOutSlowInEasing)) }
-        glow.animateTo(1f, tween(StrokeTraceMillis, easing = FastOutSlowInEasing))
-        glow.animateTo(StrokeGlowRest, tween(900, easing = FastOutSlowInEasing))
+        launch { trace.animateTo(1f, tween(AppConstants.STROKE_TRACE_MILLIS, easing = FastOutSlowInEasing)) }
+        glow.animateTo(1f, tween(AppConstants.STROKE_TRACE_MILLIS, easing = FastOutSlowInEasing))
+        glow.animateTo(AppConstants.STROKE_GLOW_REST, tween(StrokeGlowSettleMillis, easing = FastOutSlowInEasing))
     }
 
     // Keystroke flare. Skips the initial empty value so opening doesn't double-flare.
@@ -1380,8 +1387,8 @@ private fun ZenSearchBar(
         if (query == lastQuery || reduceMotion) return@LaunchedEffect
         lastQuery = query
         if (trace.value < 1f) return@LaunchedEffect
-        glow.animateTo(1f, tween(90))
-        glow.animateTo(StrokeGlowRest, tween(650, easing = FastOutSlowInEasing))
+        glow.animateTo(1f, tween(StrokeFlareUpMillis))
+        glow.animateTo(AppConstants.STROKE_GLOW_REST, tween(StrokeFlareSettleMillis, easing = FastOutSlowInEasing))
     }
 
     Row(
@@ -1544,7 +1551,7 @@ private fun AppResultRow(app: AppInfo, onClick: () -> Unit, modifier: Modifier =
                 modifier = Modifier
                     .fillMaxSize()
                     // the home grid's tile radius, scaled to the 30dp tile
-                    .clip(RoundedCornerShape(AppTileRadius * (30f / 47f)))
+                    .clip(RoundedCornerShape(AppTileRadius * AppTileCornerRadiusRatio))
             )
         },
         label = { SearchRowLabel(app.label.toString()) }

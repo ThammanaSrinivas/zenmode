@@ -85,8 +85,6 @@ private val QuadrantSizeWidth: Dp @Composable get() = 101.rdp
 private val QuadrantSizeHeight: Dp @Composable get() = 172.rdp
 private val QuadrantOffsetY: Dp @Composable get() = 86.rdp
 private val QuadrantGlowBlur: Dp = 12.dp
-// How long the shuriken holds each quadrant before it steps 90° clockwise.
-private const val QuadrantStepMillis = 2000L
 
 // ── Main Resistence Screen ──────────────────────────────────────────
 
@@ -105,9 +103,9 @@ fun ResistenceScreen(
     val colors = ZenTheme.colors
 
     val totalMillis = usage?.screenTimeInMillis ?: 0L
-    val minutes = (totalMillis / 1000) / 60
-    val hours = minutes / 60
-    val mins = minutes % 60
+    val minutes = (totalMillis / AppConstants.MILLIS_PER_SECOND) / AppConstants.SECONDS_PER_MINUTE
+    val hours = minutes / AppConstants.SECONDS_PER_MINUTE
+    val mins = minutes % AppConstants.SECONDS_PER_MINUTE
     val moodState = AppLogic.getMoodState(minutes)
     val mindfulnessProgress = AppLogic.getMindfulnessPercentage(minutes)
 
@@ -207,21 +205,24 @@ fun ResistenceScreen(
             var rotationSteps by remember { mutableIntStateOf(0) }
             LaunchedEffect(Unit) {
                 while (true) {
-                    delay(QuadrantStepMillis)
+                    delay(AppConstants.RESISTENCE_QUADRANT_STEP_MILLIS)
                     rotationSteps++
                 }
             }
-            val currentPhase = rotationSteps % 4 // 0=q2, 1=q3, 2=q4, 3=q1
+            val currentPhase = rotationSteps % AppConstants.RESISTENCE_QUADRANT_COUNT // 0=q2, 1=q3, 2=q4, 3=q1
 
-            val dimAlpha = 0.5f
+            val dimAlpha = AppConstants.RESISTENCE_QUADRANT_DIM_ALPHA
             val q1Alpha = if (currentPhase == 3) 1f else dimAlpha
             val q2Alpha = if (currentPhase == 0) 1f else dimAlpha
             val q3Alpha = if (currentPhase == 1) 1f else dimAlpha
             val q4Alpha = if (currentPhase == 2) 1f else dimAlpha
 
             val shurikenRotation by animateFloatAsState(
-                targetValue = rotationSteps * 90f,
-                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+                targetValue = rotationSteps * AppConstants.RESISTENCE_QUADRANT_ROTATION_DEGREES,
+                animationSpec = tween(
+                    durationMillis = AppConstants.RESISTENCE_QUADRANT_TURN_MILLIS,
+                    easing = FastOutSlowInEasing
+                ),
                 label = "shuriken_rotation"
             )
 
@@ -595,9 +596,9 @@ private fun CountdownCircle(
     val aroundTimeRes = when {
         countdownFinished -> R.drawable.resistence_screen_around_time
         else -> {
-            val t2 = (totalSeconds * 2.0 / 7).toInt().coerceAtLeast(1)
-            val t4 = (totalSeconds * 4.0 / 7).toInt().coerceAtLeast(2)
-            val t6 = (totalSeconds * 6.0 / 7).toInt().coerceAtLeast(3)
+            val t2 = (totalSeconds * 2.0 / AppConstants.COUNTDOWN_SECONDS).toInt().coerceAtLeast(1)
+            val t4 = (totalSeconds * 4.0 / AppConstants.COUNTDOWN_SECONDS).toInt().coerceAtLeast(2)
+            val t6 = (totalSeconds * 6.0 / AppConstants.COUNTDOWN_SECONDS).toInt().coerceAtLeast(3)
             when {
                 countdownSeconds >= t6 -> R.drawable.resistence_screen_around_time
                 countdownSeconds >= t4 -> R.drawable.resistence_screen_around_time_stage3
@@ -631,8 +632,8 @@ private fun CountdownCircle(
 
 // ── Bottom Dock ─────────────────────────────────────────────────────
 
-/** Android's minimum touch target; the dock's controls were drawn smaller than their art. */
-private val MinTouchTarget: Dp @Composable get() = 48.rdp
+// The dock's controls are drawn smaller than their art, so they sit inside
+// Spacing.touchTarget - Android's minimum touch target.
 
 @Composable
 private fun ResistenceBottomDock(
@@ -666,7 +667,7 @@ private fun ResistenceBottomDock(
             contentDescription = stringResource(R.string.resistance_settings_cd),
             modifier = Modifier
                 // 32dp of art inside a 48dp target — the icons were below the minimum.
-                .size(MinTouchTarget)
+                .size(Spacing.touchTarget)
                 .clip(CircleShape)
                 .clickable { onSettingsClick() }
                 .padding(8.rdp),
@@ -702,7 +703,7 @@ private fun ResistenceBottomDock(
                 .weight(1f)
                 .then(
                     if (canSkip) Modifier
-                        .heightIn(min = MinTouchTarget)
+                        .heightIn(min = Spacing.touchTarget)
                         .clip(RoundedCornerShape(8.rdp))
                         .clickable(onClickLabel = stringResource(R.string.resistance_skip_the_wait), role = Role.Button) { onSkipClick() }
                         .wrapContentHeight()
@@ -716,7 +717,7 @@ private fun ResistenceBottomDock(
             painter = painterResource(R.drawable.ic_phone),
             contentDescription = stringResource(R.string.resistance_phone_cd),
             modifier = Modifier
-                .size(MinTouchTarget)
+                .size(Spacing.touchTarget)
                 .clip(CircleShape)
                 .clickable { onPhoneClick() }
                 .padding(8.rdp),
