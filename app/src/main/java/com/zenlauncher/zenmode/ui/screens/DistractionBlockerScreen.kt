@@ -64,6 +64,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalInspectionMode
 import com.zenlauncher.zenmode.BuildConfig
 import com.zenlauncher.zenmode.ContentBlockPrefs
 import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
@@ -142,6 +143,11 @@ fun DistractionBlockerScreen(
     onClearLastCrash: () -> Unit = {}
 ) {
     val colors = ZenTheme.colors
+    // Previews and the screenshot tests set LocalInspectionMode, and there the debug
+    // tools render in every build variant. The golden PNGs are shared between the
+    // debug and the release test, so the render has to be the same in both - otherwise
+    // one of the two variants always fails.
+    val showDebugTools = BuildConfig.DEBUG || LocalInspectionMode.current
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(AppFilter.ALL) }
 
@@ -243,7 +249,7 @@ fun DistractionBlockerScreen(
                 }
             }
 
-            if (BuildConfig.DEBUG) {
+            if (showDebugTools) {
                 item {
                     DebugTools(
                         debugDump = state.debugDump,
