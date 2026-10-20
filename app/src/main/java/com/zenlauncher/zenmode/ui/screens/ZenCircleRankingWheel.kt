@@ -63,13 +63,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.PI
@@ -113,7 +114,7 @@ fun RankingBand(members: List<ZenCircleMember>, ranks: Map<Int, Int>, selected: 
                     drawRect(rule, topLeft = Offset(0f, size.height - stroke), size = size.copy(height = stroke))
                 }
         ) {
-            BandColumn(label = "Ranking", labelWeight = FontWeight.Medium, selected = selected) { i ->
+            BandColumn(label = stringResource(R.string.circle_wheel_band_ranking_label), labelWeight = FontWeight.Medium, selected = selected) { i ->
                 val rank = ranks.getValue(i)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (rank == 1) {
@@ -134,7 +135,7 @@ fun RankingBand(members: List<ZenCircleMember>, ranks: Map<Int, Int>, selected: 
                     )
                 }
             }
-            BandColumn(label = "Zen Bro’s Name", labelWeight = FontWeight.Medium, selected = selected) { i ->
+            BandColumn(label = stringResource(R.string.circle_wheel_band_name_label), labelWeight = FontWeight.Medium, selected = selected) { i ->
                 Text(
                     text = members[i].name,
                     fontFamily = Geist,
@@ -145,7 +146,7 @@ fun RankingBand(members: List<ZenCircleMember>, ranks: Map<Int, Int>, selected: 
                     maxLines = 1
                 )
             }
-            BandColumn(label = "Zen Score", labelWeight = FontWeight.Normal, selected = selected) { i ->
+            BandColumn(label = stringResource(R.string.common_zen_score), labelWeight = FontWeight.Normal, selected = selected) { i ->
                 Text(
                     text = ZenScore.format(members[i].zenScore),
                     style = TextStyle(
@@ -171,7 +172,7 @@ fun RankingBand(members: List<ZenCircleMember>, ranks: Map<Int, Int>, selected: 
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_crown_v3),
-                contentDescription = "Leading today",
+                contentDescription = stringResource(R.string.circle_wheel_leading_description),
                 modifier = Modifier
                     .width(34.rdp)
                     .height(29.5.rdp)
@@ -337,7 +338,7 @@ fun NameWheel(
         }
 
         Text(
-            text = "Swipe Right or Left",
+            text = stringResource(R.string.circle_wheel_swipe_hint),
             fontFamily = Geist,
             fontWeight = FontWeight.Light,
             fontSize = 16.17.rsp,
@@ -347,8 +348,8 @@ fun NameWheel(
                 .align(Alignment.TopCenter)
                 .offset(y = height - 34.1.rdp)
         )
-        Chevron(mirrored = true, label = "Previous member", nudge = { nudge.value }, onClick = onPrevious, xFromCentre = (-93.5).rdp, y = height - 48.2.rdp)
-        Chevron(mirrored = false, label = "Next member", nudge = { nudge.value }, onClick = onNext, xFromCentre = 95.5.rdp, y = height - 48.2.rdp)
+        Chevron(mirrored = true, label = stringResource(R.string.circle_wheel_previous_member_label), nudge = { nudge.value }, onClick = onPrevious, xFromCentre = (-93.5).rdp, y = height - 48.2.rdp)
+        Chevron(mirrored = false, label = stringResource(R.string.circle_wheel_next_member_label), nudge = { nudge.value }, onClick = onNext, xFromCentre = 95.5.rdp, y = height - 48.2.rdp)
     }
 }
 

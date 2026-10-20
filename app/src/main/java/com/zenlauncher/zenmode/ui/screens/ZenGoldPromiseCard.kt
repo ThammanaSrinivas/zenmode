@@ -44,9 +44,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.GoldPromisePeriod
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.Sfx
 import com.zenlauncher.zenmode.ZenGoldPromiseState
 import com.zenlauncher.zenmode.ZenSound
@@ -64,9 +64,11 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.Locale
+import androidx.compose.ui.text.AnnotatedString
 
 // ── My Screen Time card ───────────────────────────────────────────
 
@@ -121,7 +123,7 @@ internal fun PromiseScreenTimeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "My Screen time",
+                    text = stringResource(R.string.zen_gold_promise_my_screen_time),
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = 16.rsp,
@@ -158,10 +160,10 @@ internal fun PromiseScreenTimeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Daily Average  •  " + when {
-                        isMonthly -> "This Month"
-                        state.isHistoric -> "That Week"
-                        else -> "This Week"
+                    text = stringResource(R.string.zen_gold_promise_daily_average) + when {
+                        isMonthly -> stringResource(R.string.zen_gold_promise_period_this_month)
+                        state.isHistoric -> stringResource(R.string.zen_gold_promise_period_that_week)
+                        else -> stringResource(R.string.zen_gold_promise_period_this_week)
                     },
                     fontFamily = Geist,
                     fontSize = 12.rsp,
@@ -170,13 +172,13 @@ internal fun PromiseScreenTimeCard(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "My promise - ",
+                    text = stringResource(R.string.zen_gold_promise_my_promise_label),
                     fontFamily = Geist,
                     fontSize = 10.rsp,
                     color = colors.textPrimary
                 )
                 Text(
-                    text = "${state.promiseHours}Hrs/day",
+                    text = stringResource(R.string.zen_gold_promise_hrs_per_day, state.promiseHours),
                     fontFamily = Geist,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 10.rsp,
@@ -200,7 +202,7 @@ internal fun PromiseScreenTimeCard(
                         color = colors.textSecondary
                     )
                     Text(
-                        text = " HRS  ",
+                        text = stringResource(R.string.zen_gold_promise_hrs_unit),
                         fontFamily = DepartureMono,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 7.rsp,
@@ -215,7 +217,7 @@ internal fun PromiseScreenTimeCard(
                         color = colors.textSecondary
                     )
                     Text(
-                        text = " MINS",
+                        text = stringResource(R.string.zen_gold_promise_mins_unit),
                         fontFamily = DepartureMono,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 6.rsp,
@@ -282,13 +284,15 @@ private fun WeekNavigator(
     val canGoBack = weekOffset > earliestWeekOffset
     val canGoForward = weekOffset < 0
 
+    val pastWeeksProMessage = stringResource(R.string.zen_gold_promise_past_weeks_pro)
+
     fun refuse() {
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         ZenSound.play(Sfx.ERROR)
         scope.launch {
             for (angle in listOf(-10f, 8f, -5f, 3f, 0f)) wiggle.animateTo(angle, tween(55))
         }
-        Toast.makeText(context, "Past weeks are a Pro thing.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, pastWeeksProMessage, Toast.LENGTH_SHORT).show()
     }
 
     Row(
@@ -298,7 +302,7 @@ private fun WeekNavigator(
         if (hasHistory) {
             WeekNavArrow(
                 kind = GlyphKind.Back,
-                label = "Previous week",
+                label = stringResource(R.string.zen_gold_promise_previous_week),
                 enabled = !isPro || canGoBack,
                 tint = if (isPro && !canGoBack) colors.textMuted else rule,
                 onClick = { if (!isPro) refuse() else onWeekOffsetChange(weekOffset - 1) }
@@ -309,7 +313,7 @@ private fun WeekNavigator(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = String.format(Locale.US, "WEEK %02d", weekNumber),
+                    text = stringResource(R.string.zen_gold_promise_week, weekNumber),
                     fontFamily = DepartureMono,
                     fontSize = 11.rsp,
                     letterSpacing = 0.4.sp,
@@ -324,7 +328,7 @@ private fun WeekNavigator(
                             .padding(horizontal = 3.rdp, vertical = 1.rdp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("PRO", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
+                        Text(stringResource(R.string.common_pro_badge), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
                     }
                 }
             }
@@ -344,7 +348,7 @@ private fun WeekNavigator(
             Spacer(modifier = Modifier.width(2.rdp))
             WeekNavArrow(
                 kind = GlyphKind.Chevron,
-                label = "Next week",
+                label = stringResource(R.string.zen_gold_promise_next_week),
                 enabled = canGoForward,
                 tint = if (canGoForward) rule else colors.textMuted,
                 onClick = { onWeekOffsetChange(weekOffset + 1) }
@@ -383,68 +387,74 @@ private fun WeekNavArrow(
 
 /** The card's bottom line, tailored to the period. Only WEEKLY talks about gold pay —
  * Monthly is a streak and never gates it (see [ZenGoldPromiseState.goalMet]). */
-private fun promiseStatusMessage(state: ZenGoldPromiseState) = when (state.period) {
+@Composable
+private fun promiseStatusMessage(state: ZenGoldPromiseState): AnnotatedString {
+    val keptDays = days(state.unitsKept)
+    val remainingDays = days(state.unitsRemaining)
+    val untilUnlockDays = days((AppConstants.PROMISE_DAYS_TO_UNLOCK - state.unitsKept).coerceAtLeast(0))
+    return when (state.period) {
     GoldPromisePeriod.WEEKLY -> when {
         // A finished week is a result, not a goal: it never talks about what's still
         // possible, and never about gold pay, which is always settled on the live week.
         state.isHistoric && state.goalMet -> buildAnnotatedString {
-            append("You kept ${days(state.unitsKept)} of ${AppConstants.PROMISE_DAYS_PER_WEEK} that week. ")
+            append(stringResource(R.string.zen_gold_promise_kept, keptDays, AppConstants.PROMISE_DAYS_PER_WEEK))
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("The week was yours.")
+                append(stringResource(R.string.zen_gold_promise_week_was_yours))
             }
         }
         state.isHistoric -> buildAnnotatedString {
-            append("${days(state.unitsKept)} under the line that week, ")
-            append("${AppConstants.PROMISE_DAYS_TO_UNLOCK} were needed. ")
+            append(stringResource(R.string.zen_gold_promise_under_line, keptDays))
+            append(stringResource(R.string.zen_gold_promise_were_needed, AppConstants.PROMISE_DAYS_TO_UNLOCK))
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("It's on the record, not on you.")
+                append(stringResource(R.string.zen_gold_promise_on_the_record))
             }
         }
         state.goalMet -> buildAnnotatedString {
-            append("You cleared the line with ${days(state.unitsKept)} under. ")
+            append(stringResource(R.string.zen_gold_promise_cleared_line, keptDays))
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Gold pay stays open until Sunday midnight.")
+                append(stringResource(R.string.zen_gold_promise_open_until_midnight))
             }
         }
         state.goalOutOfReach -> buildAnnotatedString {
-            append("Gold pay can't open this week any more. ")
+            append(stringResource(R.string.zen_gold_promise_cant_open))
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("A fresh week starts Monday.")
+                append(stringResource(R.string.zen_gold_promise_fresh_week))
             }
         }
         else -> {
-            val daysUntilUnlock = (AppConstants.PROMISE_DAYS_TO_UNLOCK - state.unitsKept).coerceAtLeast(0)
             buildAnnotatedString {
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                    append("${days(daysUntilUnlock)} more under ${state.promiseHours} hrs opens gold pay, ")
+                    append(stringResource(R.string.zen_gold_promise_more_needed, untilUnlockDays, state.promiseHours))
                 }
-                append("and you have ${days(state.unitsRemaining)} left this week to do it.")
+                append(stringResource(R.string.zen_gold_promise_left_this_week, remainingDays))
             }
         }
     }
     GoldPromisePeriod.MONTHLY -> when {
         state.goalMet -> buildAnnotatedString {
-            append("Not a single week missed. ")
+            append(stringResource(R.string.zen_gold_promise_no_week_missed))
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Your monthly streak is intact.")
+                append(stringResource(R.string.zen_gold_promise_streak_intact))
             }
         }
         state.unitsMissed > 0 -> buildAnnotatedString {
-            append("Not every week went as planned this month. ")
+            append(stringResource(R.string.zen_gold_promise_month_not_planned))
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Stay under ${state.promiseHours} hrs/day this week to begin again.")
+                append(stringResource(R.string.zen_gold_promise_begin_again, state.promiseHours))
             }
         }
         else -> buildAnnotatedString {
             withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                append("Stay under ${state.promiseHours} hrs/day this week ")
+                append(stringResource(R.string.zen_gold_promise_begin_again_prefix, state.promiseHours))
             }
-            append("to start your monthly streak.")
+            append(stringResource(R.string.zen_gold_promise_start_streak))
         }
     }
 }
+}
 
-private fun days(count: Int) = if (count == 1) "1 day" else "$count days"
+@Composable
+private fun days(count: Int) = if (count == 1) stringResource(R.string.zen_gold_promise_one_day) else stringResource(R.string.zen_gold_promise_days, count)
 
 private val StatusTabHeight: Dp @Composable get() = 22.rdp
 
@@ -464,10 +474,10 @@ private fun StatusTab(unlocked: Boolean, historic: Boolean = false, modifier: Mo
     ) {
         Text(
             text = when {
-                historic && unlocked -> "WEEK KEPT"
-                historic -> "WEEK MISSED"
-                unlocked -> "UNLOCKED"
-                else -> "IN PROGRESS"
+                historic && unlocked -> stringResource(R.string.zen_gold_promise_status_week_kept)
+                historic -> stringResource(R.string.zen_gold_promise_status_week_missed)
+                unlocked -> stringResource(R.string.zen_gold_promise_status_unlocked)
+                else -> stringResource(R.string.zen_gold_promise_status_in_progress)
             },
             fontFamily = DepartureMono,
             fontSize = 9.5.rsp,
@@ -480,9 +490,9 @@ private fun StatusTab(unlocked: Boolean, historic: Boolean = false, modifier: Mo
 @Composable
 private fun WeeklyPromiseLegend() {
     Column(verticalArrangement = Arrangement.spacedBy(3.rdp)) {
-        WeeklyPromiseLegendRow(color = PromiseKeptGreen, label = "Promise within limits")
-        WeeklyPromiseLegendRow(color = PromiseBrokenGray, label = "Promise Broken")
-        WeeklyPromiseLegendRow(color = PromiseUndecidedGray, label = "Not decided yet")
+        WeeklyPromiseLegendRow(color = PromiseKeptGreen, label = stringResource(R.string.zen_gold_promise_legend_within_limits))
+        WeeklyPromiseLegendRow(color = PromiseBrokenGray, label = stringResource(R.string.zen_gold_promise_legend_broken))
+        WeeklyPromiseLegendRow(color = PromiseUndecidedGray, label = stringResource(R.string.zen_gold_promise_legend_undecided))
     }
 }
 
@@ -513,6 +523,7 @@ private fun WeeklyPromiseLegendRow(color: Color, label: String) {
 
 @Composable
 private fun WeeklyMonthlyToggle(isPro: Boolean, isMonthly: Boolean, onToggleChange: (Boolean) -> Unit) {
+    val proRequiredMessage = stringResource(R.string.common_pro_required_toast)
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -534,7 +545,7 @@ private fun WeeklyMonthlyToggle(isPro: Boolean, isMonthly: Boolean, onToggleChan
                 .padding(horizontal = 12.rdp, vertical = 4.rdp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Weekly", fontFamily = Geist, fontWeight = if (!isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
+            Text(stringResource(R.string.common_weekly), fontFamily = Geist, fontWeight = if (!isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
         }
         Box(
             modifier = Modifier
@@ -550,13 +561,13 @@ private fun WeeklyMonthlyToggle(isPro: Boolean, isMonthly: Boolean, onToggleChan
                         scope.launch {
                             for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, androidx.compose.animation.core.tween(55))
                         }
-                        Toast.makeText(context, "You need to be Pro to access this.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, proRequiredMessage, Toast.LENGTH_SHORT).show()
                     }
                 }
                 .padding(horizontal = 14.rdp, vertical = 4.rdp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Monthly", fontFamily = Geist, fontWeight = if (isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
+            Text(stringResource(R.string.common_monthly), fontFamily = Geist, fontWeight = if (isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
             
             Box(
                 modifier = Modifier
@@ -568,7 +579,7 @@ private fun WeeklyMonthlyToggle(isPro: Boolean, isMonthly: Boolean, onToggleChan
                     .padding(horizontal = 3.rdp, vertical = 1.rdp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("PRO", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
+                Text(stringResource(R.string.common_pro_badge), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
             }
         }
     }

@@ -11,7 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
+import com.zenlauncher.zenmode.R
 
 @Composable
 fun ForceUpdateDialog(
@@ -26,14 +28,14 @@ fun ForceUpdateDialog(
         ),
         title = {
             Text(
-                text = "Update Required",
+                text = stringResource(R.string.force_update_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
             Text(
-                text = "A new version of $PRODUCT_NAME is required to continue. Please update to the latest version to enjoy new features and improvements.",
+                text = stringResource(R.string.force_update_message, PRODUCT_NAME),
                 style = MaterialTheme.typography.bodyMedium
             )
         },
@@ -47,14 +49,14 @@ fun ForceUpdateDialog(
                     onClick = onUpdateClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Update Now")
+                    Text(stringResource(R.string.force_update_now_button))
                 }
                 
                 OutlinedButton(
                     onClick = onTomorrowClick,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Tomorrow")
+                    Text(stringResource(R.string.force_update_tomorrow_button))
                 }
             }
         }

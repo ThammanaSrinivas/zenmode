@@ -37,9 +37,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.PromiseUnit
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenCheckInCard
 import com.zenlauncher.zenmode.ZenCheckInKind
 import com.zenlauncher.zenmode.ui.components.PromiseKeptGreen
@@ -56,6 +56,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 
 /**
  * The daily check-in card, drawn over a blurred Home (the caller applies
@@ -128,7 +129,7 @@ fun ZenCheckInOverlay(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = card.kind.eyebrow,
+                    text = stringResource(card.kind.eyebrowRes),
                     fontFamily = DepartureMono,
                     fontSize = 9.5.rsp,
                     letterSpacing = 0.6.sp,
@@ -138,7 +139,7 @@ fun ZenCheckInOverlay(
                 if (onShareClick != null && card.kind == ZenCheckInKind.CELEBRATION) {
                     // A 48dp target that draws as a quiet glyph, so the card's one loud thing
                     // stays the streak.
-                    val label = "Share my streak"
+                    val label = stringResource(R.string.checkin_share_my_streak)
                     Box(
                         modifier = Modifier
                             .size(48.dp)
@@ -207,7 +208,7 @@ fun ZenCheckInOverlay(
                 Spacer(modifier = Modifier.height(4.rdp))
 
                 ZenButton(
-                    text = "See my week",
+                    text = stringResource(R.string.checkin_see_my_week),
                     onClick = onSeeMyWeekClick,
                     style = ZenButtonStyle.Ghost
                 )
@@ -257,7 +258,7 @@ private fun StreakHero(card: ZenCheckInCard) {
             )
             Spacer(modifier = Modifier.width(4.rdp))
             Text(
-                text = if (days == 1) "day kept" else "days kept",
+                text = if (days == 1) stringResource(R.string.checkin_day_kept) else stringResource(R.string.checkin_days_kept),
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.rsp,
@@ -272,7 +273,7 @@ private fun StreakHero(card: ZenCheckInCard) {
         // The time that matters for this card: what's left today, or what was spent.
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = if (card.minutesLeft > 0) "LEFT TODAY" else "OVER BY",
+                text = if (card.minutesLeft > 0) stringResource(R.string.checkin_left_today) else stringResource(R.string.checkin_over_by),
                 fontFamily = DepartureMono,
                 fontSize = 7.rsp,
                 letterSpacing = 0.4.sp,
@@ -302,14 +303,14 @@ private fun WeekStripBlock(card: ZenCheckInCard, weekUnits: List<PromiseUnit>) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "THIS WEEK",
+                text = stringResource(R.string.checkin_this_week),
                 fontFamily = DepartureMono,
                 fontSize = 8.rsp,
                 letterSpacing = 0.5.sp,
                 color = colors.textMuted
             )
             Text(
-                text = "$kept / ${AppConstants.PROMISE_DAYS_TO_UNLOCK} KEPT",
+                text = stringResource(R.string.checkin_kept_count, kept, AppConstants.PROMISE_DAYS_TO_UNLOCK),
                 fontFamily = DepartureMono,
                 fontSize = 8.rsp,
                 letterSpacing = 0.5.sp,
@@ -329,10 +330,10 @@ private fun WeekStripBlock(card: ZenCheckInCard, weekUnits: List<PromiseUnit>) {
     }
 }
 
-private val ZenCheckInKind.eyebrow: String
+private val ZenCheckInKind.eyebrowRes: Int
     get() = when (this) {
-        ZenCheckInKind.CELEBRATION, ZenCheckInKind.ENCOURAGEMENT -> "DAILY CHECK-IN"
-        ZenCheckInKind.LAST_HOUR -> "LAST HOUR"
+        ZenCheckInKind.CELEBRATION, ZenCheckInKind.ENCOURAGEMENT -> R.string.checkin_eyebrow_daily
+        ZenCheckInKind.LAST_HOUR -> R.string.checkin_eyebrow_last_hour
     }
 
 /** "1:05" of promise left, or how far past it the day went. */
@@ -352,17 +353,18 @@ private val ZenCheckInCard.clockValue: String
 private fun BankedCoinsBlock(card: ZenCheckInCard) {
     val colors = ZenTheme.colors
     Column {
+        val checkinDaysBankedContentDescription = stringResource(R.string.checkin_days_banked_content_description, card.streak.days)
         ZenStreakCoins(
             banked = (card.streak.days - 1).coerceAtLeast(0),
             today = TodayCoin.Banked,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(26.rdp)
-                .semantics { contentDescription = "${card.streak.days} days banked, today included" }
+                .semantics { contentDescription = checkinDaysBankedContentDescription }
         )
         Spacer(modifier = Modifier.height(9.rdp))
         Text(
-            text = "Today — banked",
+            text = stringResource(R.string.checkin_today_banked),
             fontFamily = DepartureMono,
             fontSize = 9.rsp,
             letterSpacing = 0.5.sp,

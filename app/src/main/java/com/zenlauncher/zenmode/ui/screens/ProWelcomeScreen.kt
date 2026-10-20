@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.ui.components.ForestGlass
 import com.zenlauncher.zenmode.ui.components.ForestGlassLine
@@ -44,6 +45,7 @@ import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.delay
 
 // ── "You're Pro" ──────────────────────────────────────────────────
@@ -57,11 +59,12 @@ import kotlinx.coroutines.delay
 // the ink one and reads light against the trees.
 
 /** What Pro actually opens today. Features still arriving belong in the changelog, not here. */
-private val ProOpens = listOf(
-    "All-time history, downloadable",
-    "Weekly Zen Score & report history",
-    "50 random connects a week, first priority",
-    "Data export + Telegram community"
+@Composable
+private fun proOpens(): List<String> = listOf(
+    stringResource(R.string.zen_pro_opens_history),
+    stringResource(R.string.zen_pro_opens_zen_score),
+    stringResource(R.string.zen_pro_opens_random_connect),
+    stringResource(R.string.zen_pro_opens_data_export)
 )
 
 @Composable
@@ -103,7 +106,7 @@ fun ProWelcome(
             ZenProTag(unlocked = true, modifier = Modifier.staggeredEntrance(7, stepMillis = 130))
             Spacer(Modifier.height(16.rdp))
             Text(
-                text = "You're Pro.\nThank you.",
+                text = stringResource(R.string.zen_pro_welcome_headline),
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 36.rsp,
@@ -116,8 +119,8 @@ fun ProWelcome(
             )
             Spacer(Modifier.height(12.rdp))
             Text(
-                text = if (isSimulated) "Every Pro feature is yours during early access. Nothing was charged."
-                else "You're keeping the servers on and the app ad-free. We're grateful.",
+                text = if (isSimulated) stringResource(R.string.zen_pro_welcome_early_access_note)
+                else stringResource(R.string.zen_pro_welcome_thanks_note),
                 fontFamily = Geist,
                 fontSize = 15.rsp,
                 lineHeight = 22.rsp,
@@ -135,7 +138,7 @@ fun ProWelcome(
             ProOpensCard()
             Spacer(Modifier.height(20.rdp))
             ZenButton(
-                text = "Back to $PRODUCT_NAME",
+                text = stringResource(R.string.zen_pro_welcome_back_button, PRODUCT_NAME),
                 onClick = onContinue,
                 modifier = Modifier
                     .padding(bottom = 16.rdp)
@@ -163,7 +166,7 @@ private fun ProOpensCard() {
             .padding(18.rdp),
         verticalArrangement = Arrangement.spacedBy(12.rdp)
     ) {
-        ProOpens.forEachIndexed { i, item ->
+        proOpens().forEachIndexed { i, item ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.staggeredEntrance(12 + i, stepMillis = 100)

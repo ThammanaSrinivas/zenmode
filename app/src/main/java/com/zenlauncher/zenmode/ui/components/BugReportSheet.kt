@@ -12,6 +12,8 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 /**
  * Settings → "Report a bug". Says where reports go and opens the mail to send it.
@@ -25,15 +27,13 @@ fun BugReportSheet(onDismiss: () -> Unit) {
     val context = LocalContext.current
 
     ZenSheet(onDismiss = onDismiss) {
-        ZenSheetTitle("Report a bug")
+        ZenSheetTitle(stringResource(R.string.settings_report_bug_title))
         ZenSheetBody(
-            "Email us at ${AppConstants.SUPPORT_EMAIL}. What happened, and the step just before " +
-                "it, is usually the useful part. Attach a screenshot in your mail app if you can."
+            stringResource(R.string.bug_report_email_body, AppConstants.SUPPORT_EMAIL)
         )
 
         Text(
-            text = "Your phone model, Android version and app build are filled in so we can " +
-                "reproduce it. You can read every line before you send.",
+            text = stringResource(R.string.bug_report_device_note),
             fontFamily = Geist,
             fontSize = 12.rsp,
             lineHeight = 17.rsp,
@@ -42,13 +42,13 @@ fun BugReportSheet(onDismiss: () -> Unit) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.rdp)) {
             ZenButton(
-                text = "Cancel",
+                text = stringResource(R.string.common_cancel),
                 onClick = onDismiss,
                 style = ZenButtonStyle.Outline,
                 modifier = Modifier.weight(1f)
             )
             ZenButton(
-                text = "Email us",
+                text = stringResource(R.string.bug_report_email_us),
                 onClick = {
                     BugReport.send(context)
                     onDismiss()

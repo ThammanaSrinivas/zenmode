@@ -99,8 +99,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.BuddyStats
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.coreapi.DailyUsage
@@ -119,6 +119,7 @@ import java.util.Locale
 import java.time.Duration
 import java.time.ZonedDateTime
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
+import com.zenlauncher.zenmode.R
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -126,6 +127,7 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlin.math.sin
+import androidx.annotation.StringRes
 
 // ── My Zen Circle ─────────────────────────────────────────────────
 // The circle dashboard reached from "Maybe later" (Figma node 2026:2493): today's ranking of
@@ -177,7 +179,7 @@ fun ZenCircleScreen(
     shareCodeIsCircle: Boolean = false,
     // "Remind With Share Link" while a real circle still has an invite pending (only you +
     // a placeholder second member); the normal label once someone's actually joined.
-    primaryShareLabel: String = "Share & Invite to Zen Circle",
+    @StringRes primaryShareLabelRes: Int = R.string.circle_primary_share_label,
     onBackClick: () -> Unit,
     onShareInviteLink: () -> Unit,
     onCopyInviteCode: () -> Unit,
@@ -270,7 +272,7 @@ fun ZenCircleScreen(
                 onCopyInviteCode = onCopyInviteCode,
                 onRandomConnect = onRandomConnect,
                 settings = ZenCircleSettings(
-                    buddyName = members.firstOrNull { !it.isYou }?.name ?: "your Zen Bro",
+                    buddyName = members.firstOrNull { !it.isYou }?.name ?: stringResource(R.string.circle_default_buddy_name),
                     memberCount = members.size,
                     removing = removingBuddy,
                     onRemoveBuddy = onRemoveBuddy,
@@ -345,7 +347,7 @@ fun ZenCircleScreen(
                         ) {
                             ZenCirclePillButton(
                                 // The card carries the invite link and code, so sharing it invites too.
-                                text = primaryShareLabel,
+                                text = stringResource(primaryShareLabelRes),
                                 onClick = { showShareCard = true },
                                 container = colorResource(R.color.zen_700),
                                 content = Color.White,
@@ -354,7 +356,7 @@ fun ZenCircleScreen(
                                 letterSpacing = (-0.36).sp
                             )
                             ZenCirclePillButton(
-                                text = "Back to the Home",
+                                text = stringResource(R.string.circle_back_to_home_button),
                                 onClick = onBackToHome,
                                 container = Color.Transparent,
                                 content = ZenTheme.colors.textBrand,
@@ -395,6 +397,7 @@ private fun DailyWeeklyToggle(isPro: Boolean, onWeeklyClick: () -> Unit, modifie
             .border(0.9.dp, colorResource(R.color.toggle_border_green), CircleShape),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val circleDailyRankingSelectedDesc = stringResource(R.string.circle_daily_ranking_selected_desc)
         Box(
             modifier = Modifier
                 .width(134.23.rdp)
@@ -403,11 +406,11 @@ private fun DailyWeeklyToggle(isPro: Boolean, onWeeklyClick: () -> Unit, modifie
                 .background(if (!isWeekly) Color.White else Color.Transparent)
                 .then(if (!isWeekly) Modifier.border(0.9.dp, colorResource(R.color.toggle_pill_border), CircleShape) else Modifier)
                 .clickable { isWeekly = false }
-                .semantics { contentDescription = "Daily ranking, selected" },
+                .semantics { contentDescription = circleDailyRankingSelectedDesc },
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Daily",
+                text = stringResource(R.string.common_daily),
                 fontFamily = Geist,
                 fontWeight = if (!isWeekly) FontWeight.Medium else FontWeight.Normal,
                 fontSize = 15.94.rsp,
@@ -423,7 +426,7 @@ private fun DailyWeeklyToggle(isPro: Boolean, onWeeklyClick: () -> Unit, modifie
                 .clip(CircleShape)
                 .background(if (isWeekly) Color.White else Color.Transparent)
                 .then(if (isWeekly) Modifier.border(0.9.dp, colorResource(R.color.toggle_pill_border), CircleShape) else Modifier)
-                .clickable(onClickLabel = "Weekly ranking (PRO)") {
+                .clickable(onClickLabel = stringResource(R.string.circle_weekly_ranking_pro_label)) {
                     if (isPro) {
                         isWeekly = true
                     } else {
@@ -438,7 +441,7 @@ private fun DailyWeeklyToggle(isPro: Boolean, onWeeklyClick: () -> Unit, modifie
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Weekly",
+                text = stringResource(R.string.common_weekly),
                 fontFamily = Geist,
                 fontWeight = if (isWeekly) FontWeight.Medium else FontWeight.Normal,
                 fontSize = 15.94.rsp,
@@ -456,7 +459,7 @@ private fun DailyWeeklyToggle(isPro: Boolean, onWeeklyClick: () -> Unit, modifie
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "PRO",
+                    text = stringResource(R.string.common_pro_badge),
                     fontFamily = Geist,
                     fontSize = 5.7.rsp,
                     lineHeight = 9.07.rsp,
@@ -503,7 +506,7 @@ private fun CircleSummaryCard(
             MemberAvatars(members)
         }
         Text(
-            text = "RANKS RESET IN ${rememberTimeUntilMidnight()} HRS",
+            text = stringResource(R.string.common_ranks_reset_in, rememberTimeUntilMidnight()),
             fontFamily = DepartureMono,
             fontSize = 10.11.rsp,
             letterSpacing = (-0.61).sp,
@@ -529,7 +532,7 @@ private fun CircleSummaryCard(
             )
             Spacer(Modifier.width(2.37.rdp))
             Text(
-                text = "Invite",
+                text = stringResource(R.string.circle_invite_button),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 11.05.rsp,
@@ -655,7 +658,7 @@ private fun MemberCardStack(
         // "rough day, hang in there" nudge feels as light to send as love.
         ReactionButton(
             emoji = "😔",
-            label = "Send a sad face to ${selectedMember.name}",
+            label = stringResource(R.string.circle_send_sad_face_label, selectedMember.name),
             enabled = canReact,
             flight = ReactionFlight.Float,
             towardsCentre = 1f,
@@ -668,7 +671,7 @@ private fun MemberCardStack(
         )
         ReactionButton(
             emoji = "🤍",
-            label = "Send love to ${selectedMember.name}",
+            label = stringResource(R.string.circle_send_love_label, selectedMember.name),
             enabled = canReact,
             flight = ReactionFlight.Float,
             towardsCentre = -1f,

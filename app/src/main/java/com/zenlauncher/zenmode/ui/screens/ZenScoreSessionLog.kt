@@ -54,19 +54,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.CoreConstants
 import com.zenlauncher.zenmode.coreapi.SessionEventType
 import com.zenlauncher.zenmode.ui.components.pressScale
 import com.zenlauncher.zenmode.ui.components.taperedBorder
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 
 // Zen Score's session-log card and its reclaimed-minutes dial -- split out of
 // ZenScoreScreen.kt to keep both under the line-count ceiling (scripts/check-line-limit.sh).
@@ -115,7 +116,7 @@ internal fun SessionLogCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "TODAY'S SESSION LOG",
+            text = stringResource(R.string.zen_score_log_today_title),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 12.rsp,
@@ -145,7 +146,7 @@ internal fun SessionLogCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "SESSION LOG",
+                    text = stringResource(R.string.zen_score_log_section_title),
                     fontFamily = Geist,
                     fontWeight = FontWeight.Medium,
                     fontSize = 10.rsp,
@@ -189,13 +190,13 @@ private fun UpgradeForMoreSessionsRow(hiddenCount: Int, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .background(ZenTheme.colors.borderSubtle)
-            .pressScale(onClick = onClick, onClickLabel = "Upgrade to Pro to see all sessions")
+            .pressScale(onClick = onClick, onClickLabel = stringResource(R.string.zen_score_log_upgrade_label))
             .padding(horizontal = 10.rdp, vertical = 8.rdp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "+$hiddenCount more session${if (hiddenCount == 1) "" else "s"} today",
+            text = if (hiddenCount == 1) stringResource(R.string.zen_score_log_more_session_one, hiddenCount) else stringResource(R.string.zen_score_log_more_sessions_other, hiddenCount),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 10.rsp,
@@ -203,7 +204,7 @@ private fun UpgradeForMoreSessionsRow(hiddenCount: Int, onClick: () -> Unit) {
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "Upgrade to see all",
+                text = stringResource(R.string.zen_score_log_upgrade_button),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 10.rsp,
@@ -219,7 +220,7 @@ private fun UpgradeForMoreSessionsRow(hiddenCount: Int, onClick: () -> Unit) {
 @Composable
 private fun SessionLogEmptyRow() {
     Text(
-        text = "No sessions yet today",
+        text = stringResource(R.string.zen_score_log_empty_title),
         fontFamily = Geist,
         fontSize = 11.rsp,
         color = ZenTheme.colors.textSecondary,
@@ -230,11 +231,11 @@ private fun SessionLogEmptyRow() {
 }
 
 /** What a row's tag says, in plain words; [SessionLogExplainer] names the one that costs points. */
-private val SessionEventType.logLabel: String
+private val SessionEventType.logLabelRes: Int
     get() = when (this) {
-        SessionEventType.INTENTIONAL -> "FOCUSED"
-        SessionEventType.ENTERTAINING -> "LEISURE"
-        SessionEventType.DISRUPTED -> "PULLED BACK"
+        SessionEventType.INTENTIONAL -> R.string.zen_score_log_label_focused
+        SessionEventType.ENTERTAINING -> R.string.zen_score_log_label_leisure
+        SessionEventType.DISRUPTED -> R.string.zen_score_log_label_pulled_back
     }
 
 /** One line on how to read the rows, so the tags don't need a manual. */
@@ -242,8 +243,8 @@ private val SessionEventType.logLabel: String
 private fun SessionLogExplainer() {
     val reopenMinutes = CoreConstants.RAPID_REOPEN_GAP_MS / 60_000L
     Text(
-        text = "Each row is a stretch of phone use, newest first. Only Pulled back rows " +
-            "lower your score: the same kind of app again within $reopenMinutes minutes.",
+        text = stringResource(R.string.zen_score_log_explainer_part_one) +
+            stringResource(R.string.zen_score_log_explainer_part_two, reopenMinutes),
         fontFamily = Geist,
         fontSize = 11.rsp,
         lineHeight = 15.rsp,
@@ -263,16 +264,28 @@ private fun SessionLogRow(entry: ZenSessionLogEntry) {
         SessionEventType.DISRUPTED -> colorResource(R.color.amber_500)
     }
     val appName = entry.appName.uppercase() + if (entry.otherApps > 0) " +${entry.otherApps}" else ""
+    // Resolved here, not inside the semantics block, where a resource cannot be read.
+    val logType = stringResource(entry.type.logLabelRes).lowercase()
 
+    val zenScoreLogRowCdTimeApp = stringResource(R.string.zen_score_log_row_cd_time_app, entry.time, entry.appName)
+    // The rest of the description is assembled here too: a resource cannot be read
+    // inside a semantics block.
+    val zenScoreLogRowCdOtherApps = if (entry.otherApps > 0) {
+        stringResource(R.string.zen_score_log_row_cd_other_apps, entry.otherApps)
+    } else {
+        ""
+    }
+    val zenScoreLogRowCdDurationType =
+        stringResource(R.string.zen_score_log_row_cd_duration_type, entry.duration, logType)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(SessionLogRowHeight)
             .padding(horizontal = 10.rdp)
             .semantics(mergeDescendants = true) {
-                contentDescription = "${entry.time}, ${entry.appName}" +
-                    (if (entry.otherApps > 0) " and ${entry.otherApps} more" else "") +
-                    ", ${entry.duration}, ${entry.type.logLabel.lowercase()}"
+                contentDescription = zenScoreLogRowCdTimeApp +
+                    zenScoreLogRowCdOtherApps +
+                    zenScoreLogRowCdDurationType
             },
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -283,7 +296,7 @@ private fun SessionLogRow(entry: ZenSessionLogEntry) {
         Spacer(modifier = Modifier.width(8.rdp))
         SessionLogCell(entry.duration, colors.textSecondary)
         Spacer(modifier = Modifier.width(8.rdp))
-        SessionLogCell(entry.type.logLabel, statusColor, fontSize = 9)
+        SessionLogCell(stringResource(entry.type.logLabelRes), statusColor, fontSize = 9)
     }
 }
 
@@ -338,10 +351,11 @@ private fun ReclaimedMinutesDial(minutes: Int, modifier: Modifier = Modifier) {
     val ink = colorResource(R.color.ink_base)
     val shown = (minutes * fill.value / progress.coerceAtLeast(0.0001f)).toInt().coerceAtMost(minutes)
 
+    val zenScoreLogReclaimedCd = stringResource(R.string.zen_score_log_reclaimed_cd, minutes)
     Box(
         modifier = modifier
             .size(168.rdp)
-            .semantics(mergeDescendants = true) { contentDescription = "Reclaimed today: $minutes minutes" },
+            .semantics(mergeDescendants = true) { contentDescription = zenScoreLogReclaimedCd },
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -422,7 +436,7 @@ private fun ReclaimedMinutesDial(minutes: Int, modifier: Modifier = Modifier) {
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Reclaimed Today",
+                text = stringResource(R.string.zen_score_log_reclaimed_title),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 9.rsp,
@@ -438,7 +452,7 @@ private fun ReclaimedMinutesDial(minutes: Int, modifier: Modifier = Modifier) {
                 color = ink
             )
             Text(
-                text = "Minutes",
+                text = stringResource(R.string.zen_score_log_minutes_label),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 9.rsp,

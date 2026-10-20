@@ -27,7 +27,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ThemeMode
 import com.zenlauncher.zenmode.HomeTheme
 import com.zenlauncher.zenmode.ui.components.accent
@@ -49,6 +48,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import kotlin.math.cos
 import kotlin.math.sin
 import com.zenlauncher.zenmode.ui.components.SegmentOption
@@ -63,6 +63,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rememberDarkTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 
 /**
  * Settings → Look & sound: the Pro home-theme picker and the paper/ink Appearance control.
@@ -75,9 +76,9 @@ import com.zenlauncher.zenmode.ui.theme.rsp
 internal fun HomeThemeSheet(current: HomeTheme, onPick: (HomeTheme) -> Unit, onDismiss: () -> Unit) {
     val feedback = rememberZenFeedback()
     ZenSheet(onDismiss = onDismiss) {
-        ZenEyebrow("Included in your Pro")
-        ZenSheetTitle("Home-screen theme")
-        ZenSheetBody("The wash behind Home, your Zen Score and Zen Gold. Mood keeps grading your day; the rest just stay calm.")
+        ZenEyebrow(stringResource(R.string.common_included_in_pro))
+        ZenSheetTitle(stringResource(R.string.settings_appearance_theme_title))
+        ZenSheetBody(stringResource(R.string.settings_appearance_theme_body))
         HomeTheme.entries.chunked(3).forEachIndexed { rowIndex, row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.rdp)) {
                 row.forEachIndexed { i, theme ->
@@ -97,7 +98,7 @@ internal fun HomeThemeSheet(current: HomeTheme, onPick: (HomeTheme) -> Unit, onD
                 }
             }
         }
-        ZenButton(text = "Done", onClick = onDismiss)
+        ZenButton(text = stringResource(R.string.settings_appearance_done_button), onClick = onDismiss)
     }
 }
 
@@ -189,7 +190,7 @@ private fun HomeThemeTile(theme: HomeTheme, selected: Boolean, onClick: () -> Un
 
 @Composable
 internal fun AppearanceRow(mode: ThemeMode, onModeChange: (ThemeMode) -> Unit) {
-    if (!settingsRowVisible("Appearance", "Light dark system theme mode")) return
+    if (!settingsRowVisible(stringResource(R.string.settings_appearance_title), stringResource(R.string.settings_appearance_row_subtitle))) return
     val colors = ZenTheme.colors
     Column(
         modifier = Modifier
@@ -200,7 +201,7 @@ internal fun AppearanceRow(mode: ThemeMode, onModeChange: (ThemeMode) -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Appearance",
+                    text = stringResource(R.string.settings_appearance_title),
                     fontFamily = Geist,
                     fontWeight = FontWeight.Medium,
                     fontSize = 16.rsp,
@@ -217,9 +218,9 @@ internal fun AppearanceRow(mode: ThemeMode, onModeChange: (ThemeMode) -> Unit) {
                 ) { shown ->
                     Text(
                         text = when (shown) {
-                            ThemeMode.SYSTEM -> "Follows your phone, paper by day and ink by night."
-                            ThemeMode.LIGHT -> "Paper. Warm and bright."
-                            ThemeMode.DARK -> "Ink. Easy on the eyes after dark."
+                            ThemeMode.SYSTEM -> stringResource(R.string.settings_appearance_mode_system)
+                            ThemeMode.LIGHT -> stringResource(R.string.settings_appearance_mode_light)
+                            ThemeMode.DARK -> stringResource(R.string.settings_appearance_mode_dark)
                         },
                         fontFamily = Geist,
                         fontSize = 13.rsp,

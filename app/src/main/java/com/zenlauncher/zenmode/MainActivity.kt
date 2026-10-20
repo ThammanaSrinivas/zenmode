@@ -75,6 +75,9 @@ import com.zenlauncher.zenmode.onboarding.EnteringZenModeScreen
 import com.zenlauncher.zenmode.recap.RecapActivity
 import com.zenlauncher.zenmode.recap.RecapStore
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 
 /** Which page of the Zen Bro connect flow is showing. */
 private sealed interface ZenBroStage {
@@ -606,7 +609,7 @@ class MainActivity : AppCompatActivity() {
                         ServiceLocator.analyticsTracker.trackBuddyShareStarted("manual")
                         openBuddyFlow()
                     },
-                    inviteButtonLabel = if (BuddyFlowPreferences.decision(this) == BuddyFlow.ZEN_CIRCLE) "Add Bro" else "Add Buddy",
+                    inviteButtonLabel = if (BuddyFlowPreferences.decision(this) == BuddyFlow.ZEN_CIRCLE) stringResource(R.string.common_add_bro) else stringResource(R.string.common_add_buddy),
                     onBuddyCardClick = if (homeBuddyCard.show) {
                         { openBuddyFlow() }
                     } else null,
@@ -900,7 +903,7 @@ class MainActivity : AppCompatActivity() {
                                             }
                                             is com.zenlauncher.zenmode.coreapi.CircleJoinResult.CircleFull -> CircleCodeResult.CircleFull
                                             is com.zenlauncher.zenmode.coreapi.CircleJoinResult.AlreadyInCircle -> CircleCodeResult.AlreadyInCircle
-                                            null -> CircleCodeResult.Error("Not signed in.")
+                                            null -> CircleCodeResult.Error(R.string.common_not_signed_in)
                                         }
                                     },
                                     onRandomConnect = {

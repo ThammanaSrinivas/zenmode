@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -99,8 +100,10 @@ import java.time.format.TextStyle as JavaTextStyle
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.ZenCheckInPreferences
+import com.zenlauncher.zenmode.R
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -249,10 +252,10 @@ fun SettingsScreen(
                         weeklyReports?.invoke()
                     }
 
-                    ZenSettingsGroup(label = "Focus") {
+                    ZenSettingsGroup(label = stringResource(R.string.settings_focus_section)) {
                         ZenSettingToggleItem(
-                            text = "Resistance screen",
-                            subtitle = "A short pause before a distracting app opens.",
+                            text = stringResource(R.string.settings_resistance_title),
+                            subtitle = stringResource(R.string.settings_resistance_subtitle),
                             checked = isResistanceEnabled,
                             onCheckedChange = { enabled ->
                                 isResistanceEnabled = enabled
@@ -261,18 +264,18 @@ fun SettingsScreen(
                         )
                         ZenRowDivider()
                         ZenSettingsRow(
-                            title = "Distraction Blocker",
-                            subtitle = "Quiet reels, shorts and the apps that pull you in.",
-                            value = if (isContentBlockingOn) "On" else "Off",
+                            title = stringResource(R.string.common_distraction_blocker),
+                            subtitle = stringResource(R.string.settings_distraction_blocker_subtitle),
+                            value = if (isContentBlockingOn) stringResource(R.string.common_state_on) else stringResource(R.string.common_state_off),
                             onClick = onBlockInAppContentClick
                         )
                     }
 
-                    ZenSettingsGroup(label = "Daily check-in") {
+                    ZenSettingsGroup(label = stringResource(R.string.settings_daily_checkin_section)) {
                         ZenSettingToggleItem(
-                            text = "Evening check-in",
-                            subtitle = "A card on home each evening: confetti when you're under " +
-                                "your promise, and where the week stands when you're not.",
+                            text = stringResource(R.string.settings_evening_checkin_title),
+                            subtitle = stringResource(R.string.settings_evening_checkin_subtitle_1) +
+                                stringResource(R.string.settings_evening_checkin_subtitle_2),
                             checked = isCheckInEnabled,
                             onCheckedChange = { enabled ->
                                 isCheckInEnabled = enabled
@@ -282,27 +285,27 @@ fun SettingsScreen(
                         if (isCheckInEnabled) {
                             ZenRowDivider()
                             ZenSettingsRow(
-                                title = "Check-in time",
-                                subtitle = "When the evening card appears.",
+                                title = stringResource(R.string.settings_checkin_time_title),
+                                subtitle = stringResource(R.string.settings_checkin_time_subtitle),
                                 value = checkInTime.format(CheckInTimeFormat),
                                 onClick = { checkInTimePicker = true }
                             )
                         }
                     }
 
-                    ZenSettingsGroup(label = "Home screen") {
+                    ZenSettingsGroup(label = stringResource(R.string.settings_home_screen_section)) {
                         ZenSettingsRow(
-                            title = "Choose home apps",
-                            subtitle = "Pick which apps sit on home, and in what order.",
-                            value = if (homeAppsChosenCount == 0) "A–Z"
-                            else "${homeAppsChosenCount.coerceAtMost(homeAppCount)} of $homeAppCount",
+                            title = stringResource(R.string.settings_choose_home_apps_title),
+                            subtitle = stringResource(R.string.settings_choose_home_apps_subtitle),
+                            value = if (homeAppsChosenCount == 0) stringResource(R.string.settings_home_apps_sort_az)
+                            else stringResource(R.string.settings_home_apps_chosen, homeAppsChosenCount.coerceAtMost(homeAppCount), homeAppCount),
                             onClick = onChooseHomeAppsClick
                         )
                         ZenRowDivider()
                         ZenSettingToggleItem(
-                            text = "Notification badges",
-                            subtitle = if (isNotificationBadgesEnabled) "Dots show on app icons."
-                            else "Needs notification access in Android settings.",
+                            text = stringResource(R.string.settings_notification_badges_title),
+                            subtitle = if (isNotificationBadgesEnabled) stringResource(R.string.settings_notification_badges_on)
+                            else stringResource(R.string.settings_notification_access_needed),
                             checked = isNotificationBadgesEnabled,
                             // Access is granted or revoked in system settings; the switch reflects it on resume.
                             onCheckedChange = { onNotificationBadgesClick() }
@@ -310,8 +313,8 @@ fun SettingsScreen(
                         if (isProAvailable) {
                             ZenRowDivider()
                             ZenSettingsRow(
-                                title = "Home-screen themes",
-                                subtitle = "Keep the mood washes, or pick your own.",
+                                title = stringResource(R.string.settings_home_themes_title),
+                                subtitle = stringResource(R.string.settings_home_themes_subtitle),
                                 value = if (isPro) homeTheme.label else null,
                                 pro = proTag(),
                                 onClick = { openProFeature(ProFeature.HOME_THEMES) }
@@ -319,12 +322,12 @@ fun SettingsScreen(
                         }
                     }
 
-                    ZenSettingsGroup(label = "Gestures") {
+                    ZenSettingsGroup(label = stringResource(R.string.settings_gestures_section)) {
                         GestureToggle(
                             gesture = HomeGesture.SWIPE_UP_SEARCH,
-                            title = "Swipe up to search",
-                            subtitle = "Opens search from anywhere on home, and takes the search bar " +
-                                "off the screen — the swipe is the way in.",
+                            title = stringResource(R.string.settings_swipe_up_search_title),
+                            subtitle = stringResource(R.string.settings_swipe_up_search_subtitle_1) +
+                                stringResource(R.string.settings_swipe_up_search_subtitle_2),
                             enabled = enabledGestures,
                             isPro = isPro,
                             isProAvailable = isProAvailable,
@@ -334,9 +337,9 @@ fun SettingsScreen(
                         ZenRowDivider()
                         GestureToggle(
                             gesture = HomeGesture.MARGIN_TAP_PAGES,
-                            title = "Tap the margins",
-                            subtitle = "Tap the left or right edge of home for Zen Score or Zen Gold, " +
-                                "the same way the swipes go.",
+                            title = stringResource(R.string.settings_tap_margins_title),
+                            subtitle = stringResource(R.string.settings_tap_margins_subtitle_1) +
+                                stringResource(R.string.settings_tap_margins_subtitle_2),
                             enabled = enabledGestures,
                             isPro = isPro,
                             isProAvailable = isProAvailable,
@@ -346,9 +349,9 @@ fun SettingsScreen(
                         ZenRowDivider()
                         GestureToggle(
                             gesture = HomeGesture.DOUBLE_TAP_LOCK,
-                            title = "Double-tap to lock",
-                            subtitle = "Double-tap an empty part of home. A long press still locks " +
-                                "either way.",
+                            title = stringResource(R.string.settings_double_tap_lock_title),
+                            subtitle = stringResource(R.string.settings_double_tap_lock_subtitle_1) +
+                                stringResource(R.string.settings_double_tap_lock_subtitle_2),
                             enabled = enabledGestures,
                             isPro = isPro,
                             isProAvailable = isProAvailable,
@@ -357,7 +360,7 @@ fun SettingsScreen(
                         )
                     }
 
-                    ZenSettingsGroup(label = "Look & sound") {
+                    ZenSettingsGroup(label = stringResource(R.string.settings_look_sound_section)) {
                         AppearanceRow(
                             mode = themeMode,
                             onModeChange = { mode ->
@@ -371,8 +374,8 @@ fun SettingsScreen(
                         )
                         ZenRowDivider()
                         ZenSettingToggleItem(
-                            text = "Interface sounds",
-                            subtitle = "Soft ticks and chimes. Silent whenever your phone is.",
+                            text = stringResource(R.string.settings_interface_sounds_title),
+                            subtitle = stringResource(R.string.settings_interface_sounds_subtitle),
                             checked = soundsOn,
                             onCheckedChange = { on ->
                                 ZenSound.setEnabled(context, on)
@@ -383,31 +386,31 @@ fun SettingsScreen(
                     }
 
                     ZenSettingsGroup(
-                        label = "Accountability",
-                        trailingLabel = "Zen Circle · beta"
+                        label = stringResource(R.string.settings_accountability_section),
+                        trailingLabel = stringResource(R.string.settings_zen_circle_beta_label)
                     ) {
                         ZenSettingsRow(
-                            title = "Accountability partner",
-                            subtitle = "They see your score and its direction. Nothing else.",
+                            title = stringResource(R.string.settings_accountability_partner_title),
+                            subtitle = stringResource(R.string.settings_accountability_partner_subtitle),
                             onClick = onAccountabilityPartnerClick
                         )
                         ZenRowDivider()
                         ZenSettingsRow(
-                            title = "Zen Circle members",
+                            title = stringResource(R.string.settings_zen_circle_members_title),
                             // Everyone shares one cap during beta — see coreapi.ZEN_CIRCLE_MAX_MEMBERS.
                             // The free/Pro split (Entitlement.FREE_PARTNER_LIMIT / PRO_PARTNER_LIMIT)
                             // isn't live yet; this line is the honest, current state, not a sales pitch.
-                            subtitle = "Beta: everyone can add up to $ZEN_CIRCLE_MAX_MEMBERS for now. " +
-                                "It'll move to separate free and Pro limits soon.",
+                            subtitle = stringResource(R.string.settings_zen_circle_members_beta_1, ZEN_CIRCLE_MAX_MEMBERS) +
+                                stringResource(R.string.settings_zen_circle_members_beta_2),
                             onClick = onAccountabilityPartnerClick
                         )
                     }
 
                     if (isProAvailable) {
-                        ZenSettingsGroup(label = "Your data") {
+                        ZenSettingsGroup(label = stringResource(R.string.settings_your_data_section)) {
                             ZenSettingsRow(
-                                title = "Export data",
-                                subtitle = "A CSV of every day $PRODUCT_NAME remembers.",
+                                title = stringResource(R.string.settings_export_data_title),
+                                subtitle = stringResource(R.string.settings_export_data_subtitle, PRODUCT_NAME),
                                 pro = proTag(),
                                 onClick = { openProFeature(ProFeature.DATA_EXPORT) }
                             )
@@ -416,29 +419,29 @@ fun SettingsScreen(
 
                     PhoneSettingsGroup()
 
-                    ZenSettingsGroup(label = "Help us build it") {
+                    ZenSettingsGroup(label = stringResource(R.string.settings_help_build_section)) {
                         ZenSettingsRow(
-                            title = "Report a bug",
-                            subtitle = "Tell us what happened. A screenshot helps.",
+                            title = stringResource(R.string.settings_report_bug_title),
+                            subtitle = stringResource(R.string.settings_report_bug_subtitle),
                             onClick = { bugReport = true }
                         )
                         ZenRowDivider()
                         ZenSettingsRow(
-                            title = "Feature requests",
-                            subtitle = "The board of what's being built, and what you'd like next.",
+                            title = stringResource(R.string.settings_feature_requests_title),
+                            subtitle = stringResource(R.string.settings_feature_requests_subtitle),
                             trailing = RowTrailing.External,
                             onClick = onFeatureRequestClick
                         )
                     }
 
                     ZenSettingsGroup(label = PRODUCT_NAME) {
-                        ZenSettingsRow(title = "Rate on Play Store", trailing = RowTrailing.External, onClick = onRateClick)
+                        ZenSettingsRow(title = stringResource(R.string.settings_rate_on_play_store), trailing = RowTrailing.External, onClick = onRateClick)
                         ZenRowDivider()
-                        ZenSettingsRow(title = "Share $PRODUCT_NAME", trailing = RowTrailing.External, onClick = onShareClick)
+                        ZenSettingsRow(title = stringResource(R.string.settings_share_app_title, PRODUCT_NAME), trailing = RowTrailing.External, onClick = onShareClick)
                         ZenRowDivider()
                         ZenSettingsRow(
-                            title = "Contribute on GitHub",
-                            subtitle = "The whole app is open source.",
+                            title = stringResource(R.string.settings_contribute_github_title),
+                            subtitle = stringResource(R.string.settings_contribute_github_subtitle),
                             trailing = RowTrailing.External,
                             onClick = onContributeClick
                         )
@@ -450,7 +453,7 @@ fun SettingsScreen(
 
             if (searching && resultsHeight == 0) {
                 Text(
-                    text = "No settings match \u201c${searchQuery.trim()}\u201d.",
+                    text = stringResource(R.string.settings_no_match_message, searchQuery.trim()),
                     fontFamily = Geist,
                     fontSize = 14.rsp,
                     color = colors.textSecondary,
@@ -513,10 +516,10 @@ fun SettingsScreen(
 
         soon?.let { feature ->
             ZenSheet(onDismiss = { soon = null }) {
-                ZenEyebrow("Included in your Pro")
-                ZenSheetTitle(feature.gateCopy().first)
-                ZenSheetBody("This arrives in the next update. It'll be in the changelog, not a notification.")
-                ZenButton(text = "Got it", onClick = { soon = null }, style = ZenButtonStyle.Outline)
+                ZenEyebrow(stringResource(R.string.common_included_in_pro))
+                ZenSheetTitle(stringResource(feature.gateCopy().title))
+                ZenSheetBody(stringResource(R.string.settings_soon_sheet_body))
+                ZenButton(text = stringResource(R.string.settings_got_it_button), onClick = { soon = null }, style = ZenButtonStyle.Outline)
             }
         }
     }
@@ -541,12 +544,13 @@ private fun SettingsTopBar(
             .padding(horizontal = Spacing.screenMargin - touchInset, vertical = 8.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val commonBack = stringResource(R.string.common_back)
         Box(
             modifier = Modifier
                 .size(Spacing.touchTarget)
                 .clip(CircleShape)
                 .clickable(role = Role.Button, onClick = onBackClick)
-                .semantics { contentDescription = "Back" },
+                .semantics { contentDescription = commonBack },
             contentAlignment = Alignment.Center
         ) {
             Box(
@@ -564,12 +568,13 @@ private fun SettingsTopBar(
         Box(modifier = Modifier.weight(1f).semantics { heading() }) {
             ZenModeOsSettingsTitle(fontSize = 22.rsp, color = colors.textPrimary)
         }
+        val settingsAccountContentDescription = stringResource(R.string.settings_account_content_description)
         Box(
             modifier = Modifier
                 .size(Spacing.touchTarget)
                 .clip(CircleShape)
                 .clickable(role = Role.Button, onClick = onAccountClick)
-                .semantics { contentDescription = "Account" },
+                .semantics { contentDescription = settingsAccountContentDescription },
             contentAlignment = Alignment.Center
         ) {
             if (profilePhotoUrl != null) {
@@ -589,7 +594,7 @@ private fun SettingsTopBar(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = displayName?.trim()?.firstOrNull()?.uppercase() ?: "Z",
+                        text = displayName?.trim()?.firstOrNull()?.uppercase() ?: stringResource(R.string.common_avatar_fallback_initial),
                         fontFamily = Geist,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 15.rsp,
@@ -624,15 +629,15 @@ private fun PlanCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             ZenEyebrow(
                 text = if (isPro) {
-                    "Supporter" + (entitlement.since?.let { " since ${it.asZenMonth()}" } ?: "")
-                } else "Your plan",
+                    stringResource(R.string.settings_supporter_eyebrow) + (entitlement.since?.let { stringResource(R.string.settings_supporter_since, it.asZenMonth()) } ?: "")
+                } else stringResource(R.string.settings_your_plan_eyebrow),
                 modifier = Modifier.weight(1f)
             )
             if (isPro) {
                 ZenProTag(unlocked = true)
             } else {
                 Text(
-                    text = "FREE",
+                    text = stringResource(R.string.common_free_badge),
                     style = ZenTypography.monoLabel,
                     color = colors.textSecondary,
                     modifier = Modifier
@@ -644,7 +649,7 @@ private fun PlanCard(
             }
         }
         Text(
-            text = "$PRODUCT_NAME Pro",
+            text = stringResource(R.string.settings_product_pro, PRODUCT_NAME),
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 20.rsp,
@@ -661,7 +666,7 @@ private fun PlanCard(
             )
         } else {
             Text(
-                text = "Adds range, not access. The whole loop stays free.",
+                text = stringResource(R.string.settings_free_plan_description),
                 fontFamily = Geist,
                 fontSize = 14.rsp,
                 lineHeight = 20.rsp,
@@ -673,7 +678,7 @@ private fun PlanCard(
             }
             if (isSimulated) {
                 Text(
-                    text = "Free during early access. Nothing is charged.",
+                    text = stringResource(R.string.settings_early_access_note),
                     fontFamily = Geist,
                     fontSize = 13.rsp,
                     color = colors.textBrand
@@ -683,7 +688,7 @@ private fun PlanCard(
         HorizontalDivider(thickness = 1.dp, color = colors.borderSubtle, modifier = Modifier.padding(top = 4.rdp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = if (isPro) "Manage" else "See what it adds",
+                text = if (isPro) stringResource(R.string.settings_manage_plan) else stringResource(R.string.settings_see_what_it_adds),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.rsp,
@@ -723,56 +728,64 @@ private fun GestureToggle(
 // ── Sheets ─────────────────────────────────────────────────────────
 
 /** Title, what free keeps, what Pro adds. Free's promise is always named before the price. */
-private fun ProFeature.gateCopy(): Triple<String, String, String> = when (this) {
-    ProFeature.FULL_HISTORY -> Triple(
-        "Full history",
-        "Free shows the last 7 days.",
-        "Pro opens everything since you installed. None of it is deleted on free, it just isn't shown."
+private data class GateCopy(
+    @StringRes val title: Int,
+    @StringRes val free: Int,
+    @StringRes val pro: Int,
+    val proArg: Any? = null
+)
+
+private fun ProFeature.gateCopy(): GateCopy = when (this) {
+    ProFeature.FULL_HISTORY -> GateCopy(
+        R.string.settings_pro_full_history_title,
+        R.string.settings_pro_full_history_free,
+        R.string.settings_pro_full_history_pro
     )
-    ProFeature.EXTRA_PARTNERS -> Triple(
-        "Add a second partner",
-        "One partner is enough for the loop to work. Free keeps one partner, forever.",
-        "Pro lets you keep up to three: a friend, a sibling, and the person who actually notices."
+    ProFeature.EXTRA_PARTNERS -> GateCopy(
+        R.string.settings_pro_second_partner_title,
+        R.string.settings_pro_second_partner_free,
+        R.string.settings_pro_second_partner_pro
     )
-    ProFeature.HOME_THEMES -> Triple(
-        "Home-screen themes",
-        "The mood washes still follow your day on free.",
-        "Pro lets you pick the wash yourself and keep it."
+    ProFeature.HOME_THEMES -> GateCopy(
+        R.string.settings_home_themes_title,
+        R.string.settings_pro_home_themes_free,
+        R.string.settings_pro_home_themes_pro
     )
-    ProFeature.DATA_EXPORT -> Triple(
-        "Export your data",
-        "Everything already stays on your phone.",
-        "Pro lets you take it with you: a CSV of your days, promises and scores."
+    ProFeature.DATA_EXPORT -> GateCopy(
+        R.string.settings_pro_data_export_title,
+        R.string.settings_pro_data_export_free,
+        R.string.settings_pro_data_export_pro
     )
-    ProFeature.PERIOD_REPORTS -> Triple(
-        "Weekly and monthly reports",
-        "Your daily Zen Report stays free, every item and every minute.",
-        "Pro adds the week and the month, so you can see the direction and not just the day."
+    ProFeature.PERIOD_REPORTS -> GateCopy(
+        R.string.settings_pro_period_reports_title,
+        R.string.settings_pro_period_reports_free,
+        R.string.settings_pro_period_reports_pro
     )
-    ProFeature.CUSTOM_SESSION_LENGTHS -> Triple(
-        "Custom session lengths",
-        "Free keeps four lengths: 5, 15, 25 and 45 minutes.",
-        "Pro lets you set your own, down to the minute."
+    ProFeature.CUSTOM_SESSION_LENGTHS -> GateCopy(
+        R.string.settings_pro_session_lengths_title,
+        R.string.settings_pro_session_lengths_free,
+        R.string.settings_pro_session_lengths_pro
     )
-    ProFeature.RANDOM_CONNECT -> Triple(
-        "Random Connect",
-        "Free keeps the partner you already have.",
-        "Pro pairs you with one other $PRODUCT_NAME user. No feed, no profile."
+    ProFeature.RANDOM_CONNECT -> GateCopy(
+        R.string.settings_pro_random_connect_title,
+        R.string.settings_pro_random_connect_free,
+        R.string.settings_pro_random_connect_pro,
+        PRODUCT_NAME
     )
-    ProFeature.SUPPORTERS_LIST -> Triple(
-        "Supporters list",
-        "The app is the same either way.",
-        "Pro puts your name, if you want it there, in the list of people who keep it running."
+    ProFeature.SUPPORTERS_LIST -> GateCopy(
+        R.string.settings_pro_supporters_list_title,
+        R.string.settings_pro_supporters_list_free,
+        R.string.settings_pro_supporters_list_pro
     )
-    ProFeature.PROMISE_EDIT_FLEXIBILITY -> Triple(
-        "Edit my promise",
-        "Free edits the promise once a week, on Sundays.",
-        "Pro edits twice a week, any day."
+    ProFeature.PROMISE_EDIT_FLEXIBILITY -> GateCopy(
+        R.string.settings_pro_edit_promise_title,
+        R.string.settings_pro_edit_promise_free,
+        R.string.settings_pro_edit_promise_pro
     )
-    ProFeature.GESTURES -> Triple(
-        "Home gestures",
-        "Swipe up for search is free, and so is the long press that locks your phone.",
-        "Pro adds the rest: tap either margin to move between pages, and double-tap to lock."
+    ProFeature.GESTURES -> GateCopy(
+        R.string.settings_pro_home_gestures_title,
+        R.string.settings_pro_home_gestures_free,
+        R.string.settings_pro_home_gestures_pro
     )
 }
 
@@ -784,9 +797,12 @@ private fun ProGateSheet(
     onDismiss: () -> Unit
 ) {
     val colors = ZenTheme.colors
-    val (title, free, pro) = feature.gateCopy()
+    val copy = feature.gateCopy()
+    val title = stringResource(copy.title)
+    val free = stringResource(copy.free)
+    val pro = copy.proArg?.let { stringResource(copy.pro, it) } ?: stringResource(copy.pro)
     ZenSheet(onDismiss = onDismiss) {
-        ZenEyebrow("Part of Pro")
+        ZenEyebrow(stringResource(R.string.settings_part_of_pro_eyebrow))
         ZenSheetTitle(title)
         ZenSheetBody(free)
         ZenSheetBody(pro)
@@ -800,9 +816,9 @@ private fun ProGateSheet(
                     .border(1.dp, colors.borderSubtle, RoundedCornerShape(16.rdp))
                     .padding(horizontal = 14.rdp, vertical = 12.rdp)
             ) {
-                ZenEyebrow("What it costs")
+                ZenEyebrow(stringResource(R.string.settings_what_it_costs_eyebrow))
                 Text(
-                    text = price + if (trial) ". The first month of the annual plan is free." else ".",
+                    text = price + if (trial) stringResource(R.string.settings_annual_first_month_free) else ".",
                     fontFamily = Geist,
                     fontSize = 15.rsp,
                     lineHeight = 22.rsp,
@@ -811,8 +827,8 @@ private fun ProGateSheet(
                 )
             }
         }
-        ZenButton(text = "See what Pro adds", onClick = onSeePro)
-        ZenButton(text = "Not now", onClick = onDismiss, style = ZenButtonStyle.Ghost)
+        ZenButton(text = stringResource(R.string.settings_see_what_pro_adds_button), onClick = onSeePro)
+        ZenButton(text = stringResource(R.string.settings_not_now_button), onClick = onDismiss, style = ZenButtonStyle.Ghost)
     }
 }
 
@@ -828,30 +844,30 @@ private fun AccountSheet(
     var confirmDelete by remember { mutableStateOf(false) }
     ZenSheet(onDismiss = onDismiss) {
         if (!confirmDelete) {
-            ZenSheetTitle(displayName?.let { "Signed in as $it" } ?: "Your account")
-            ZenSheetBody("You're about to break our heart a little. We'll be right here if you come back.")
-            ZenButton(text = "Log out", onClick = onLogoutClick, style = ZenButtonStyle.Outline)
+            ZenSheetTitle(displayName?.let { stringResource(R.string.settings_signed_in_as_title, it) } ?: stringResource(R.string.settings_your_account_title))
+            ZenSheetBody(stringResource(R.string.settings_logout_sheet_body))
+            ZenButton(text = stringResource(R.string.settings_log_out_button), onClick = onLogoutClick, style = ZenButtonStyle.Outline)
             ZenButton(
-                text = "Delete account",
+                text = stringResource(R.string.settings_delete_account_button),
                 onClick = { confirmDelete = true },
                 style = ZenButtonStyle.Ghost,
                 contentColor = colors.accentDeduct
             )
         } else {
-            ZenEyebrow("Permanent", color = colors.accentDeduct)
-            ZenSheetTitle("Delete your account?")
+            ZenEyebrow(stringResource(R.string.settings_permanent_eyebrow), color = colors.accentDeduct)
+            ZenSheetTitle(stringResource(R.string.settings_delete_account_title))
             ZenSheetBody(
-                "This removes your account, your partner link and your scores from our servers, " +
-                    "and clears usage history on this phone. It can't be undone."
+                stringResource(R.string.settings_delete_account_body_1) +
+                    stringResource(R.string.settings_delete_account_body_2)
             )
             if (isPro) {
                 ZenSheetBody(
-                    "Pro is billed by Google Play. Deleting your account doesn't cancel it, so cancel Pro first.",
+                    stringResource(R.string.settings_delete_account_pro_note),
                     emphasis = true
                 )
             }
-            ZenButton(text = "Delete my account", onClick = onDeleteAccountClick, style = ZenButtonStyle.Danger)
-            ZenButton(text = "Keep my account", onClick = { confirmDelete = false }, style = ZenButtonStyle.Outline)
+            ZenButton(text = stringResource(R.string.settings_delete_my_account_button), onClick = onDeleteAccountClick, style = ZenButtonStyle.Danger)
+            ZenButton(text = stringResource(R.string.settings_keep_my_account_button), onClick = { confirmDelete = false }, style = ZenButtonStyle.Outline)
         }
     }
 }

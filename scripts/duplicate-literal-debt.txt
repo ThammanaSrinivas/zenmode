@@ -5,13 +5,7 @@
 # Mostly SharedPreferences keys spelled out on every read and write (UsageRepository,
 # OnboardingViewModel) and the like-reaction cooldown copied across three ViewModels.
 # Format: <count> "<literal exactly as written between its quotes>"
-3 "Back to home"
-3 "Edit my promise"
 3 "Failed to react"
-3 "My Zen Circle"
-3 "Not available"
-3 "Not signed in."
-3 "Open settings"
 3 "Sample review"
 3 "Unknown ViewModel class"
 3 "Wait ${mins}m ${secs}s to react again"

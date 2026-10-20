@@ -66,6 +66,7 @@ import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import androidx.compose.ui.res.stringResource
 
 private enum class GuideStep { SWIPE_RIGHT, SWIPE_LEFT, BUDDY }
 
@@ -174,7 +175,7 @@ fun HomeGuideOverlay(
                 .padding(horizontal = 30.rdp, vertical = 20.rdp)
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                GuideTextButton(text = "Skip", onClick = onFinished)
+                GuideTextButton(text = stringResource(R.string.home_guide_skip), onClick = onFinished)
             }
 
             // Swipe steps sit mid-screen; the buddy step sits at the bottom, clear of the card.
@@ -194,23 +195,23 @@ fun HomeGuideOverlay(
                         GuideStep.SWIPE_RIGHT -> {
                             SwipeHint(toRight = true)
                             GuideCopy(
-                                title = "Swipe right",
-                                body = "Your Zen Score lives one swipe to the right. See how mindful today has been."
+                                title = stringResource(R.string.home_guide_swipe_right),
+                                body = stringResource(R.string.home_guide_swipe_right_body)
                             )
                         }
                         GuideStep.SWIPE_LEFT -> {
                             SwipeHint(toRight = false)
                             GuideCopy(
-                                title = "Swipe left",
-                                body = "Zen Gold is one swipe to the left. Keep your promise and watch your gold grow."
+                                title = stringResource(R.string.home_guide_swipe_left),
+                                body = stringResource(R.string.home_guide_swipe_left_body)
                             )
                         }
                         GuideStep.BUDDY -> GuideCopy(
-                            title = if (hasBuddies) "Your circle" else "Bring a buddy",
+                            title = if (hasBuddies) stringResource(R.string.home_guide_your_circle) else stringResource(R.string.home_guide_bring_a_buddy),
                             body = if (hasBuddies) {
-                                "Swipe this card to flip through your circle. Tap it to see how everyone's doing."
+                                stringResource(R.string.home_guide_circle_body)
                             } else {
-                                "Quitting doomscrolling is easier together. Add a friend and keep each other honest."
+                                stringResource(R.string.home_guide_buddy_body)
                             }
                         )
                     }
@@ -231,10 +232,10 @@ fun HomeGuideOverlay(
                 )
                 Spacer(modifier = Modifier.height(8.rdp))
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    GuideTextButton(text = "Maybe later", onClick = onFinished)
+                    GuideTextButton(text = stringResource(R.string.home_guide_maybe_later), onClick = onFinished)
                 }
             } else {
-                V3PrimaryPillButton(text = "Next", onClick = ::next)
+                V3PrimaryPillButton(text = stringResource(R.string.home_guide_next), onClick = ::next)
             }
         }
     }

@@ -51,13 +51,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ui.components.pressScale
 import com.zenlauncher.zenmode.ui.components.staggeredEntrance
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 
 /**
  * 06 · Device permissions, as one checklist instead of four screens. Rows refresh when
@@ -80,7 +81,8 @@ internal fun PermissionsStep(
         topBar = { progress.TopBar(onBack = onBack) },
         bottomBar = {
             OnboardingButton(
-                text = if (requiredDone) "Continue" else "Allow ${requiredCount - requiredGranted} more to continue",
+                text = if (requiredDone) stringResource(R.string.permissions_continue)
+                    else stringResource(R.string.permissions_allow_more, requiredCount - requiredGranted),
                 onClick = onContinue,
                 enabled = requiredDone,
                 style = if (requiredDone) OnboardingButtonStyle.Brand else OnboardingButtonStyle.Ink
@@ -94,12 +96,12 @@ internal fun PermissionsStep(
                 .padding(horizontal = OnboardingMargin)
         ) {
             Spacer(Modifier.height(20.rdp))
-            OnboardingEyebrow("Two steps to Zone Zen", modifier = Modifier.staggeredEntrance(0))
+            OnboardingEyebrow(stringResource(R.string.permissions_eyebrow), modifier = Modifier.staggeredEntrance(0))
             Spacer(Modifier.height(10.rdp))
-            OnboardingHeadline("Allow what Zen needs.", modifier = Modifier.staggeredEntrance(1))
+            OnboardingHeadline(stringResource(R.string.permissions_headline), modifier = Modifier.staggeredEntrance(1))
             Spacer(Modifier.height(12.rdp))
             OnboardingBody(
-                "Just what powers your features, all processed on this phone. Change them anytime in Settings.",
+                stringResource(R.string.permissions_body),
                 modifier = Modifier.staggeredEntrance(2)
             )
 
@@ -116,7 +118,8 @@ internal fun PermissionsStep(
                 )
                 Spacer(Modifier.width(8.rdp))
                 Text(
-                    text = if (requiredDone) "required allowed, you're set" else "required allowed",
+                    text = if (requiredDone) stringResource(R.string.permissions_required_done)
+                        else stringResource(R.string.permissions_required_allowed),
                     fontFamily = Geist,
                     fontSize = 14.rsp,
                     color = ZenTheme.colors.textSecondary
@@ -145,6 +148,14 @@ internal fun PermissionsStep(
 private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: () -> Unit) {
     val border = if (granted) ZenTheme.colors.surfaceTintLine else ZenTheme.colors.borderSubtle
     val feedback = rememberZenFeedback()
+    val title = stringResource(permission.titleRes)
+    val allowLabel = stringResource(R.string.permissions_allow_permission, title)
+    val semanticsLabel = stringResource(
+        R.string.permissions_cd,
+        title,
+        stringResource(if (permission.required) R.string.permissions_cd_required else R.string.permissions_cd_optional),
+        stringResource(if (granted) R.string.permissions_cd_allowed else R.string.permissions_cd_not_allowed)
+    )
     // Grants happen in system Settings; the chime plays when the user comes back and it's done.
     var wasGranted by remember { mutableStateOf(granted) }
     LaunchedEffect(granted) {
@@ -157,11 +168,10 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
             .clip(RoundedCornerShape(20.rdp))
             .background(if (granted) ZenTheme.colors.surfaceTint else ZenTheme.colors.surfaceElevated)
             .border(1.dp, border, RoundedCornerShape(20.rdp))
-            .pressScale(onClick = onAllow, enabled = !granted, onClickLabel = "Allow ${permission.title}", pressedScale = 0.98f)
+            .pressScale(onClick = onAllow, enabled = !granted, onClickLabel = allowLabel, pressedScale = 0.98f)
             .semantics(mergeDescendants = true) {
                 role = Role.Button
-                contentDescription = "${permission.title}, ${if (permission.required) "required" else "optional"}, " +
-                    if (granted) "allowed" else "not allowed"
+                contentDescription = semanticsLabel
             }
             .padding(14.rdp),
         verticalAlignment = Alignment.CenterVertically
@@ -183,14 +193,14 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
         Spacer(Modifier.width(12.rdp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (permission.required) "Required" else "Optional",
+                text = stringResource(if (permission.required) R.string.permissions_required else R.string.permissions_optional),
                 fontFamily = DepartureMono,
                 fontSize = 10.rsp,
                 letterSpacing = 0.8.sp,
                 color = (if (permission.required) ZenTheme.colors.accentDeduct else ZenTheme.colors.textTertiary)
             )
             Text(
-                text = permission.title,
+                text = title,
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.rsp,
@@ -198,7 +208,7 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
             )
             Spacer(Modifier.height(2.rdp))
             Text(
-                text = permission.reason,
+                text = stringResource(permission.reasonRes),
                 fontFamily = Geist,
                 fontSize = 13.rsp,
                 lineHeight = 18.rsp,
@@ -229,7 +239,7 @@ private fun PermissionRow(permission: ZenPermission, granted: Boolean, onAllow: 
                         .padding(horizontal = 14.rdp, vertical = 8.rdp)
                 ) {
                     Text(
-                        text = "Allow",
+                        text = stringResource(R.string.permissions_allow),
                         fontFamily = Geist,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.rsp,
