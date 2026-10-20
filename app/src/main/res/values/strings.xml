@@ -157,6 +157,7 @@
     <string name="buddy_flow_title">We rebuilt Zen Buddy into Zen Circle</string>
     <string name="buddy_flow_try_circle_button">Try Zen Circle</string>
     <string name="checkin_kept_count">%1$s / %2$s KEPT</string>
+    <string name="zen_bro_open_circle_label">Open Zen Circle</string>
     <!-- checkin  -->
     <string name="checkin_day_kept">day kept</string>
     <string name="checkin_days_banked_content_description">%1$s days banked, today included</string>
@@ -271,6 +272,7 @@
     <string name="common_pro_required_toast">You need to be Pro to access this.</string>
     <string name="common_add_bro">Add Bro</string>
     <string name="common_add_buddy">Add Buddy</string>
+    <string name="common_cancel">Cancel</string>
     <!-- force  -->
     <string name="force_update_message">A new version of %1$s is required to continue. Please update to the latest version to enjoy new features and improvements.</string>
     <string name="force_update_now_button">Update Now</string>
@@ -288,6 +290,17 @@
     <string name="gold_holdings_since_label">SINCE MARCH</string>
     <string name="gold_holdings_ticker_label">GOLDBEES</string>
     <string name="gold_holdings_title">GOLD HOLDINGS</string>
+    <string name="home_guide_bring_a_buddy">Bring a buddy</string>
+    <string name="home_guide_buddy_body">Quitting doomscrolling is easier together. Add a friend and keep each other honest.</string>
+    <string name="home_guide_circle_body">Swipe this card to flip through your circle. Tap it to see how everyone\'s doing.</string>
+    <string name="home_guide_maybe_later">Maybe later</string>
+    <string name="home_guide_next">Next</string>
+    <string name="home_guide_skip">Skip</string>
+    <string name="home_guide_swipe_left">Swipe left</string>
+    <string name="home_guide_swipe_left_body">Zen Gold is one swipe to the left. Keep your promise and watch your gold grow.</string>
+    <string name="home_guide_swipe_right">Swipe right</string>
+    <string name="home_guide_swipe_right_body">Your Zen Score lives one swipe to the right. See how mindful today has been.</string>
+    <string name="home_guide_your_circle">Your circle</string>
     <!-- home  -->
     <string name="home_app_actions_app_info_subtitle">Storage, permissions and notifications</string>
     <string name="home_app_actions_app_info_title">App info</string>
@@ -396,6 +409,7 @@
     <string name="my_promise_screen_title">My Promise</string>
     <string name="my_promise_see_all_holdings">See all holdings</string>
     <string name="my_promise_set_weekly_promise">Set your weekly promise</string>
+    <string name="settings_search_placeholder">Search settings</string>
     <!-- settings  -->
     <string name="settings_account_content_description">Account</string>
     <string name="settings_accountability_partner_subtitle">They see your score and its direction. Nothing else.</string>
@@ -547,6 +561,27 @@
     <string name="whats_new_eyebrow">What\'s new · v%1$s</string>
     <string name="whats_new_lets_go_button">Let\'s go</string>
     <string name="whats_new_thanks_footnote">Thanks for using %1$s 🤍</string>
+    <string name="bug_report_device_note">Your phone model, Android version and app build are filled in so we can reproduce it. You can read every line before you send.</string>
+    <string name="bug_report_email_body">Email us at %1$s. What happened, and the step just before it, is usually the useful part. Attach a screenshot in your mail app if you can.</string>
+    <string name="bug_report_email_us">Email us</string>
+    <string name="stats_add_buddy_label">Add buddy</string>
+    <string name="stats_buddy_mood_face_cd">Buddy mood face</string>
+    <string name="stats_get_zen_bro">Get your Zen Bro!</string>
+    <string name="stats_lowest_screen_time_cd">Lowest screen time</string>
+    <string name="stats_mood_face_cd">Mood face</string>
+    <string name="stats_my_buddy_stats_label">My Buddy\'s Stats</string>
+    <string name="stats_sign_in_face_cd">Sign in face</string>
+    <string name="stats_sign_in_subtitle">to track &amp; sync stats</string>
+    <string name="stats_sign_in_title">Sign In</string>
+    <string name="stats_sign_in_with_google_cd">Sign in with Google</string>
+    <string name="zen_chrome_go_to_label">Go to %1$s</string>
+    <string name="zen_chrome_page_cd">Page %1$s of %2$s</string>
+    <string name="zen_chrome_settings_cd">Settings</string>
+    <string name="zen_mode_os_settings_suffix">" Settings"</string>
+    <string name="zen_mode_os_settings_title">%1$s Settings</string>
+    <string name="zen_stat_open_streaks_label">Open streaks</string>
+    <string name="zen_stat_streak_day">day</string>
+    <string name="zen_stat_streak_days">days</string>
     <!-- zen  -->
     <string name="zen_bro_already_connected_error">You\'re already connected with %1$s.</string>
     <string name="zen_bro_already_in_circle_error">You\'re already in a circle.</string>

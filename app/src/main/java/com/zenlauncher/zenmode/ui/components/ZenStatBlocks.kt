@@ -26,6 +26,8 @@ import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 // ── v3 header stat blocks ─────────────────────────────────────────
 // SOURCE OF TRUTH for the v3 "icon + label over value" header stat (Figma node 2001:1504).
@@ -104,7 +106,7 @@ fun StreakStat(
             if (onClick != null) {
                 Modifier
                     .clip(RoundedCornerShape(8.rdp))
-                    .clickable(onClickLabel = "Open streaks", onClick = onClick)
+                    .clickable(onClickLabel = stringResource(R.string.zen_stat_open_streaks_label), onClick = onClick)
                     .systemGestureExclusion()
             } else Modifier
         ),
@@ -117,7 +119,7 @@ fun StreakStat(
         }
     ) {
         Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
-            ZenStatLabel("Streaks")
+            ZenStatLabel(stringResource(R.string.zen_bro_stat_streaks))
             Spacer(modifier = Modifier.height(ZenStatLineGap))
             Row(verticalAlignment = Alignment.Bottom) {
                 // Solid ink, not the brand gradient: the gradient's yellow-green washed out
@@ -133,7 +135,7 @@ fun StreakStat(
                 )
                 Spacer(modifier = Modifier.width(3.rdp))
                 Text(
-                    text = if (streaks == 1) "day" else "days",
+                    text = if (streaks == 1) stringResource(R.string.zen_stat_streak_day) else stringResource(R.string.zen_stat_streak_days),
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = ZenStatUnitSize,

@@ -57,6 +57,8 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 // Frosted overlay: the screen underneath goes soft, a translucent paper panel rises from the
 // bottom. Eyebrow + close on top, display title, green tagline, icon rows, hairline, footnote.
@@ -106,7 +108,7 @@ fun ZenFrostedOverlay(
                     .padding(start = 12.rdp, top = 8.rdp)
                     .size(48.rdp)
                     .clip(CircleShape)
-                    .clickable(onClickLabel = "Back", role = Role.Button, onClick = onBack),
+                    .clickable(onClickLabel = stringResource(R.string.common_back), role = Role.Button, onClick = onBack),
                 contentAlignment = Alignment.Center
             ) {
                 BackArrowGlyph(colors.textBrand)
@@ -153,7 +155,7 @@ fun ZenFrostedOverlay(
                         modifier = Modifier
                             .size(40.rdp)
                             .clip(CircleShape)
-                            .clickable(onClickLabel = "Close", role = Role.Button, onClick = onDismiss),
+                            .clickable(onClickLabel = stringResource(R.string.common_close), role = Role.Button, onClick = onDismiss),
                         contentAlignment = Alignment.Center
                     ) {
                         CloseGlyph(colors.textSecondary)

@@ -214,7 +214,7 @@ fun StatsCardsRow(
                 stage = if (contested) DpOffset((maxWidth - CrownWidth) / 2, restY - 8.dp) else rest,
                 contested = contested,
                 towardRight = kingOnBuddy,
-                contentDescription = "Lowest screen time",
+                contentDescription = stringResource(R.string.stats_lowest_screen_time_cd),
                 modifier = Modifier
                     .zIndex(2f)
                     .width(CrownWidth)
@@ -390,7 +390,7 @@ private fun MoodCard(
         if (isWinner) {
             Image(
                 painter = painterResource(R.drawable.ic_crown_v3),
-                contentDescription = "Lowest screen time",
+                contentDescription = stringResource(R.string.stats_lowest_screen_time_cd),
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = CrownOffset.x, y = CrownOffset.y)
@@ -455,12 +455,12 @@ fun MyScreenTimeCard(
 
     Box(
         modifier = modifier.then(
-            if (onCardClick != null) Modifier.clickable(onClickLabel = "Open settings", onClick = onCardClick) else Modifier
+            if (onCardClick != null) Modifier.clickable(onClickLabel = stringResource(R.string.zen_score_open_settings_label), onClick = onCardClick) else Modifier
         )
     ) {
         MoodCard(
             faceRes = faceFor(moodState),
-            faceDescription = "Mood face",
+            faceDescription = stringResource(R.string.stats_mood_face_cd),
             label = stringResource(if (isWeekly) R.string.stats_my_weekly_time else R.string.stats_my_screen_time),
             minutes = minutes,
             mood = moodState,
@@ -500,7 +500,7 @@ fun CircleMemberCard(
     val moodState = AppLogic.getMoodState(screenTimeMinutes)
     MoodCard(
         faceRes = faceFor(moodState),
-        faceDescription = "Mood face",
+        faceDescription = stringResource(R.string.stats_mood_face_cd),
         label = label,
         minutes = screenTimeMinutes,
         mood = moodState,
@@ -535,8 +535,8 @@ fun BuddyStatsCard(
     ) {
         MoodCard(
             faceRes = faceFor(moodState),
-            faceDescription = "Buddy mood face",
-            label = "My Buddy's Stats",
+            faceDescription = stringResource(R.string.stats_buddy_mood_face_cd),
+            label = stringResource(R.string.stats_my_buddy_stats_label),
             minutes = minutes,
             mood = moodState,
             zenScore = zenScore,
@@ -706,7 +706,7 @@ private fun DashedCard(
 @Composable
 fun BuddyInviteCard(
     onInviteBuddyClick: () -> Unit,
-    buttonLabel: String = "Add Buddy",
+    buttonLabel: String = stringResource(R.string.common_add_buddy),
     modifier: Modifier = Modifier
 ) {
     val cardRadius = CardRadius
@@ -726,7 +726,7 @@ fun BuddyInviteCard(
                 knockout = true
             )
             .clip(cardShape)
-            .clickable(onClickLabel = "Add buddy", onClick = onInviteBuddyClick)
+            .clickable(onClickLabel = stringResource(R.string.stats_add_buddy_label), onClick = onInviteBuddyClick)
             .background(colorResource(R.color.zen_bro_card_fill))
             // Ghost of the score chip (Figma blurs it 15.7px) — a radial wash rather
             // than Modifier.blur, which is a no-op below API 31 and would leave a
@@ -777,7 +777,7 @@ fun BuddyInviteCard(
             )
 
             Text(
-                text = "Get your Zen Bro!",
+                text = stringResource(R.string.stats_get_zen_bro),
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.rsp,
@@ -818,11 +818,11 @@ fun SignInCard(
     onSignInClick: () -> Unit,
     modifier: Modifier = Modifier
 ) = DashedCard(
-    faceDescription = "Sign in face",
-    title = "Sign In",
-    subtitle = "to track & sync stats",
+    faceDescription = stringResource(R.string.stats_sign_in_face_cd),
+    title = stringResource(R.string.stats_sign_in_title),
+    subtitle = stringResource(R.string.stats_sign_in_subtitle),
     buttonRes = R.drawable.button_sign_in,
-    buttonDescription = "Sign in with Google",
+    buttonDescription = stringResource(R.string.stats_sign_in_with_google_cd),
     onClick = onSignInClick,
     modifier = modifier
 )
