@@ -25,7 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ZenCheckIn
 import com.zenlauncher.zenmode.ZenCheckInCard
 import com.zenlauncher.zenmode.ui.components.TodayCoin
@@ -39,7 +39,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
-import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 /**
  * The last-hour card: **the win first, the hour second.**

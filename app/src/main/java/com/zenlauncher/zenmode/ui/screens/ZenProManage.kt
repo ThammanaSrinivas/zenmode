@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
@@ -34,7 +35,6 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.R
-import androidx.compose.ui.res.stringResource
 
 // ZenMode Pro -- the manage page (a real subscription) and the granted page (invite-only,
 // nothing to manage). Split out of ZenProScreen.kt, which hosts both; the sales rules at the
@@ -114,10 +114,10 @@ internal fun ManagePro(
             when (entitlement.status) {
                 ProStatus.TRIAL -> ZenReceiptLine(
                     if (isSimulated) stringResource(R.string.zen_pro_manage_trial_ends_label) else stringResource(R.string.zen_pro_manage_first_charge_label),
-                    entitlement.trialEndsOn?.asZenDate() ?: "-"
+                    entitlement.trialEndsOn?.asZenDate() ?: stringResource(R.string.common_dash_placeholder)
                 )
                 ProStatus.ENDING -> ZenReceiptLine(stringResource(R.string.zen_pro_manage_pro_until_label), entitlement.endsOn?.asZenDate() ?: stringResource(R.string.common_dash_placeholder))
-                else -> ZenReceiptLine(stringResource(R.string.zen_pro_manage_renews_label), entitlement.renewsOn?.asZenDate() ?: "-")
+                else -> ZenReceiptLine(stringResource(R.string.zen_pro_manage_renews_label), entitlement.renewsOn?.asZenDate() ?: stringResource(R.string.common_dash_placeholder))
             }
             ZenReceiptLine(
                 stringResource(R.string.common_then),

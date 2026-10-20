@@ -1,7 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
 import androidx.annotation.StringRes
-import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -67,7 +66,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.BuildConfig
 import com.zenlauncher.zenmode.ContentBlockPrefs
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
 import com.zenlauncher.zenmode.ui.components.ZenSwitch
 import com.zenlauncher.zenmode.ui.components.zenToggleable
@@ -84,8 +82,10 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.core.graphics.drawable.toBitmap
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale

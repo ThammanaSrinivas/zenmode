@@ -48,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.AppGridPreferences
 import com.zenlauncher.zenmode.GesturePreferences
 import com.zenlauncher.zenmode.HomeGesture
@@ -101,12 +100,13 @@ import java.time.format.TextStyle as JavaTextStyle
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.ZenCheckInPreferences
+import com.zenlauncher.zenmode.R
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.compose.ui.res.stringResource
 
 // ZenMode OS v3 settings.
 //
@@ -732,7 +732,7 @@ private data class GateCopy(
     @StringRes val title: Int,
     @StringRes val free: Int,
     @StringRes val pro: Int,
-    val proArgs: List<Any> = emptyList()
+    val proArg: Any? = null
 )
 
 private fun ProFeature.gateCopy(): GateCopy = when (this) {
@@ -770,7 +770,7 @@ private fun ProFeature.gateCopy(): GateCopy = when (this) {
         R.string.settings_pro_random_connect_title,
         R.string.settings_pro_random_connect_free,
         R.string.settings_pro_random_connect_pro,
-        listOf(PRODUCT_NAME)
+        PRODUCT_NAME
     )
     ProFeature.SUPPORTERS_LIST -> GateCopy(
         R.string.settings_pro_supporters_list_title,
@@ -800,11 +800,7 @@ private fun ProGateSheet(
     val copy = feature.gateCopy()
     val title = stringResource(copy.title)
     val free = stringResource(copy.free)
-    val pro = if (copy.proArgs.isEmpty()) {
-        stringResource(copy.pro)
-    } else {
-        stringResource(copy.pro, *copy.proArgs.toTypedArray())
-    }
+    val pro = copy.proArg?.let { stringResource(copy.pro, it) } ?: stringResource(copy.pro)
     ZenSheet(onDismiss = onDismiss) {
         ZenEyebrow(stringResource(R.string.settings_part_of_pro_eyebrow))
         ZenSheetTitle(title)

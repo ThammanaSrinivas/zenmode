@@ -66,9 +66,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.core.graphics.drawable.toBitmap
 import com.zenlauncher.zenmode.LauncherActivities
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.ZenFrostedOverlay
 import com.zenlauncher.zenmode.ui.components.ZenOverlayTagline
 import com.zenlauncher.zenmode.ui.components.ZenOverlayTitle
@@ -77,9 +77,9 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import androidx.compose.ui.res.stringResource
 
 data class HomeAppPickerItem(
     val label: String,

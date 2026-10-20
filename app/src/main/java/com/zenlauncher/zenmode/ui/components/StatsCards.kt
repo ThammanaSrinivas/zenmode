@@ -31,7 +31,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -44,11 +43,11 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.BuddyStats
 import com.zenlauncher.zenmode.HomeStackMember
 import com.zenlauncher.zenmode.MoodState
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.DailyUsage
 import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
@@ -59,6 +58,7 @@ import com.zenlauncher.zenmode.ui.theme.cardGradient
 import com.zenlauncher.zenmode.ui.theme.statsCardStroke
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.ui.theme.rdp
+import com.zenlauncher.zenmode.R
 
 // ── Constants ─────────────────────────────────────────────────────
 // The v3 card: one rounded square, a mood gradient, the face filling the top.

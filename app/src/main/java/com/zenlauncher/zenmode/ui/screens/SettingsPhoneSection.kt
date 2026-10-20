@@ -41,9 +41,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.BuildConfig
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.coreapi.UsageAccess
 import com.zenlauncher.zenmode.ui.components.RowTrailing
@@ -59,9 +59,9 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ZenTypography
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlin.math.PI
 import kotlin.math.sin
-import androidx.compose.ui.res.stringResource
 
 // ── Settings → Phone ──────────────────────────────────────────────
 // The Android settings ZenMode depends on, each with its live state (re-read every time

@@ -62,15 +62,15 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.launch
-import androidx.compose.ui.res.stringResource
 
 // ── Zen Circle settings sheet ─────────────────────────────────────
 // Behind the ☰ on "My Zen Circle" (Figma node 2026:2939; the sheet is a flattened image there,

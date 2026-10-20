@@ -1,6 +1,5 @@
 package com.zenlauncher.zenmode.ui.screens
 
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.RandomConnect
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -33,8 +32,8 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ui.components.ZenEyebrow
 import com.zenlauncher.zenmode.ui.components.zenCard
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -42,6 +41,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ZenTypography
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 
 // ZenMode Pro -- the plan page's full free-vs-pro comparison table and the coming-soon
 // roadmap chips. Split out of ZenProScreen.kt; the sales rules at the top of that file apply

@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ZenCheckInPreferences
 import com.zenlauncher.zenmode.ui.components.ZenSheet
 import com.zenlauncher.zenmode.ui.components.ZenSheetBody
@@ -26,11 +27,10 @@ import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import com.zenlauncher.zenmode.R
-import androidx.compose.ui.res.stringResource
 
 /** 12-hour, no leading zero -- "8:00 pm", matching how the rest of the app writes times. */
 internal val CheckInTimeFormat: DateTimeFormatter =

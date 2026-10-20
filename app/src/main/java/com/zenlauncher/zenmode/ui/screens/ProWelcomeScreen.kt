@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.ui.components.ForestGlass
 import com.zenlauncher.zenmode.ui.components.ForestGlassLine
@@ -44,9 +45,8 @@ import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
-import kotlinx.coroutines.delay
 import com.zenlauncher.zenmode.R
-import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.delay
 
 // ── "You're Pro" ──────────────────────────────────────────────────
 //

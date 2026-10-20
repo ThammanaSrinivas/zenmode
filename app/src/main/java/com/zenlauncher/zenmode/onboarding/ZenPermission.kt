@@ -8,9 +8,9 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.coreapi.UsageAccess
+import com.zenlauncher.zenmode.R
 
 /**
  * The device grants ZenMode asks for, with the one place that checks each. [analyticsKey]

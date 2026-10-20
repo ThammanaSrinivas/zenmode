@@ -1,6 +1,5 @@
 package com.zenlauncher.zenmode.ui.screens
 
-import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -47,15 +46,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.BACK_TO_ZEN_GOLD
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.dropShadow
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.*
 import com.zenlauncher.zenmode.ui.theme.rsp
-import com.zenlauncher.zenmode.AppConstants
+import com.zenlauncher.zenmode.R
 
 // ── Data model ───────────────────────────────────────────────────
 
@@ -76,16 +75,24 @@ private fun keptStatus(daysKept: Int) = stringResource(R.string.gold_holdings_ke
 private fun deniedStatus(daysKept: Int) =
     stringResource(R.string.gold_holdings_access_denied_status, keptStatus(daysKept))
 
+/** The demo weeks the screen opens with. The strings are read once and the list is
+ *  remembered, so the entries are not rebuilt on every recomposition. */
 @Composable
-private fun defaultGoldHoldings() = listOf(
-    GoldHoldingEntry("Sep 01-07, 2026", keptStatus(6), "₹180", "3 Units"),
-    GoldHoldingEntry("Oct 12-18, 2026", deniedStatus(3), isAccessDenied = true),
-    GoldHoldingEntry("Nov 03-09, 2026", keptStatus(6), "₹320", "5 Units"),
-    GoldHoldingEntry("Dec 07-13, 2026", keptStatus(6), "₹320", "5 Units"),
-    GoldHoldingEntry("Jan 15-21, 2027", deniedStatus(3), isAccessDenied = true),
-    GoldHoldingEntry("Feb 01-07, 2027", keptStatus(6), "₹265", "4 Units"),
-    GoldHoldingEntry("Mar 08-14, 2027", keptStatus(6), "₹265", "4 Units")
-)
+private fun defaultGoldHoldings(): List<GoldHoldingEntry> {
+    val keptSix = keptStatus(6)
+    val deniedThree = deniedStatus(3)
+    return remember(keptSix, deniedThree) {
+        listOf(
+            GoldHoldingEntry("Sep 01-07, 2026", keptSix, "₹180", "3 Units"),
+            GoldHoldingEntry("Oct 12-18, 2026", deniedThree, isAccessDenied = true),
+            GoldHoldingEntry("Nov 03-09, 2026", keptSix, "₹320", "5 Units"),
+            GoldHoldingEntry("Dec 07-13, 2026", keptSix, "₹320", "5 Units"),
+            GoldHoldingEntry("Jan 15-21, 2027", deniedThree, isAccessDenied = true),
+            GoldHoldingEntry("Feb 01-07, 2027", keptSix, "₹265", "4 Units"),
+            GoldHoldingEntry("Mar 08-14, 2027", keptSix, "₹265", "4 Units")
+        )
+    }
+}
 
 // ── Main Gold Holdings Screen ───────────────────────────────────────
 //

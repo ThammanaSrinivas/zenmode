@@ -27,7 +27,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ThemeMode
 import com.zenlauncher.zenmode.HomeTheme
 import com.zenlauncher.zenmode.ui.components.accent
@@ -49,6 +48,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import kotlin.math.cos
 import kotlin.math.sin
 import com.zenlauncher.zenmode.ui.components.SegmentOption
@@ -63,7 +63,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rememberDarkTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
-import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 /**
  * Settings → Look & sound: the Pro home-theme picker and the paper/ink Appearance control.

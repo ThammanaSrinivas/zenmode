@@ -95,12 +95,12 @@ import java.time.format.TextStyle as JavaTextStyle
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ZenCheckInPreferences
+import com.zenlauncher.zenmode.R
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.compose.ui.res.stringResource
-import com.zenlauncher.zenmode.R
 
 /** The range the settings screen-time chart is showing. */
 internal enum class ScreenTimeRange { WEEK, MONTH }

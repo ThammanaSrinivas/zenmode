@@ -499,7 +499,6 @@
     <string name="zen_bro_already_connected_error">You\'re already connected with %1$s.</string>
     <string name="zen_bro_already_in_circle_error">You\'re already in a circle.</string>
     <string name="zen_bro_beta_badge">Beta</string>
-    <string name="zen_bro_beta_tag">Beta</string>
     <string name="zen_bro_circle_full_error">That circle is full.</string>
     <string name="zen_bro_circle_join_not_available">Not available</string>
     <string name="zen_bro_circle_wordmark">My Zen Circle</string>
@@ -618,7 +617,6 @@
     <string name="zen_pro_manage_title">Manage Pro</string>
     <string name="zen_pro_manage_trial_ends_label">Trial ends</string>
     <string name="zen_pro_one_moment">One moment…</string>
-    <string name="zen_pro_one_moment_button">One moment…</string>
     <string name="zen_pro_pick_a_plan">Pick a plan</string>
     <string name="zen_pro_plan_annual">Annual</string>
     <string name="zen_pro_product_title">%1$s Pro</string>
@@ -651,7 +649,6 @@
     <string name="zen_pro_trial_phrase_days">%1$s days</string>
     <string name="zen_pro_trial_phrase_month">a month</string>
     <string name="zen_pro_trust_eyebrow">What Pro never does</string>
-    <string name="zen_pro_unlocking_button">Unlocking Pro…</string>
     <string name="zen_pro_unlocking_pro">Unlocking Pro…</string>
     <string name="zen_pro_welcome_back_button">Back to %1$s</string>
     <string name="zen_pro_welcome_early_access_note">Every Pro feature is yours during early access. Nothing was charged.</string>

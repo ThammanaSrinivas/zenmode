@@ -145,7 +145,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -165,7 +164,6 @@ import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.FileResult
 import com.zenlauncher.zenmode.FileSearchRepository
 import com.zenlauncher.zenmode.HomeStackMember
-import com.zenlauncher.zenmode.R
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.draw.drawWithContent
@@ -198,9 +196,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.coreapi.PromisePreferences
 import com.zenlauncher.zenmode.recap.RecapStore
 import com.zenlauncher.zenmode.ui.components.openSettings
+import com.zenlauncher.zenmode.R
 import android.util.Log
 
 

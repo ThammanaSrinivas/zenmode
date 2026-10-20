@@ -63,13 +63,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.PI
@@ -78,7 +79,6 @@ import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import androidx.compose.ui.res.stringResource
 
 // Split out of ZenCircleScreen.kt to stay under the line-count ceiling. The ranking band and
 // name wheel are the circle dashboard's rank/name/score readout and the clock-dial carousel

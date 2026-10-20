@@ -1,6 +1,5 @@
 package com.zenlauncher.zenmode.ui.screens
 
-import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -65,8 +64,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.Sfx
 import com.zenlauncher.zenmode.ZenSound
 import com.zenlauncher.zenmode.coreapi.ZenScore
@@ -84,6 +83,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.LightOnly
 import kotlinx.coroutines.launch
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
+import com.zenlauncher.zenmode.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale

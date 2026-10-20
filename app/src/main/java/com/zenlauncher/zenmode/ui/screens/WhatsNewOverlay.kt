@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.WhatsNew
 import com.zenlauncher.zenmode.WhatsNewItem
@@ -36,7 +37,6 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import com.zenlauncher.zenmode.R
-import androidx.compose.ui.res.stringResource
 
 /**
  * The release notes, once, after an update: the same frosted panel as every other Home

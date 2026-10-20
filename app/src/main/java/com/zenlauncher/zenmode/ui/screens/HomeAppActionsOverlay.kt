@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppInfo
 import com.zenlauncher.zenmode.ui.components.HomeGridGlyph
 import com.zenlauncher.zenmode.ui.components.InfoGlyph
@@ -23,7 +24,6 @@ import com.zenlauncher.zenmode.ui.components.ZenOverlayTagline
 import com.zenlauncher.zenmode.ui.components.ZenOverlayTitle
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.R
-import androidx.compose.ui.res.stringResource
 
 /**
  * What a long-press on a home app opens: a frosted overlay with the app's two actions.

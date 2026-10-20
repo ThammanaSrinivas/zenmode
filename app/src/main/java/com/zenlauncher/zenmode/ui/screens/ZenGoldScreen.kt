@@ -66,7 +66,6 @@ import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.GoldPromisePeriod
 import com.zenlauncher.zenmode.PromiseUnit
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenGoldPromiseState
 import com.zenlauncher.zenmode.ui.components.HomePage
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
@@ -89,6 +88,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ui.components.SettingsMenuButton
 import com.zenlauncher.zenmode.ui.components.pageSwipe
 import com.zenlauncher.zenmode.ui.components.pressScale
@@ -99,9 +99,9 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import java.time.LocalDate
 import java.util.Locale
-import androidx.compose.ui.res.stringResource
 
 // ── ZM_OS v3: Zen Gold (Home left-swipe page) ───────────────────────
 // Figma nodes 2026:1648 / 2026:1435. The right-hand home page: reached by swiping left on

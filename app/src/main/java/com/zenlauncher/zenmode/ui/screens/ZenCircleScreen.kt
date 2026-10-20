@@ -1,6 +1,5 @@
 package com.zenlauncher.zenmode.ui.screens
 
-import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.BuddyConnector
 import com.zenlauncher.zenmode.Sfx
 import com.zenlauncher.zenmode.ZenSound
@@ -100,8 +99,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.BuddyStats
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.coreapi.DailyUsage
@@ -120,6 +119,7 @@ import java.util.Locale
 import java.time.Duration
 import java.time.ZonedDateTime
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
+import com.zenlauncher.zenmode.R
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -178,7 +178,7 @@ fun ZenCircleScreen(
     shareCodeIsCircle: Boolean = false,
     // "Remind With Share Link" while a real circle still has an invite pending (only you +
     // a placeholder second member); the normal label once someone's actually joined.
-    primaryShareLabelRes: Int = R.string.circle_primary_share_label,
+    primaryShareLabelRes: @StringRes Int = R.string.circle_primary_share_label,
     onBackClick: () -> Unit,
     onShareInviteLink: () -> Unit,
     onCopyInviteCode: () -> Unit,

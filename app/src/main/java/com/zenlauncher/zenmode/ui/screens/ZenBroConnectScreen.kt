@@ -1,7 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
 import androidx.annotation.StringRes
-import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.RandomConnect
 import com.zenlauncher.zenmode.ui.components.BrandedText
 import androidx.activity.compose.BackHandler
@@ -69,8 +68,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.components.taperedBorder
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
@@ -79,6 +78,7 @@ import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.launch
 
 sealed class BuddyAddResult {
@@ -88,7 +88,6 @@ sealed class BuddyAddResult {
     data object SelfAdd : BuddyAddResult()
 }
 
-/** Result of pasting a code into [UseCodeCard] while [ZenBroConnectScreen.circleMode] is on. */
 /** The line under the code field. It is built inside a coroutine, where a resource
  *  cannot be resolved, so a resource id is carried and resolved where it is shown. */
 private sealed interface ConnectStatus {
@@ -101,6 +100,10 @@ private sealed interface ConnectStatus {
     data class Plain(val message: String, override val success: Boolean = false) : ConnectStatus
 }
 
+/** Result of pasting a code into [UseCodeCard] while [ZenBroConnectScreen.circleMode] is on. */
+/** Result of pasting a code into [UseCodeCard] while [ZenBroConnectScreen.circleMode] is on. */
+/** Result of pasting a code into [UseCodeCard] while [ZenBroConnectScreen.circleMode] is on. */
+/** Result of pasting a code into [UseCodeCard] while [ZenBroConnectScreen.circleMode] is on. */
 sealed class CircleCodeResult {
     data object Success : CircleCodeResult()
     data object CircleFull : CircleCodeResult()

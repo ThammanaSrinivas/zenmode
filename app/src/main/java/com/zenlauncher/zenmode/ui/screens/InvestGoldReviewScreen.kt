@@ -37,10 +37,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.GoldOrder
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.SettingsMenuButton
 import com.zenlauncher.zenmode.ui.components.BrandedText
 import com.zenlauncher.zenmode.ui.components.ClashLineHeight
@@ -60,7 +60,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
-import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 // ── ZM_OS v3: Invest Gold · Step 02 (review) ────────────────────────
 // The order the user picked on step 01, read back before handing off to Kite.
