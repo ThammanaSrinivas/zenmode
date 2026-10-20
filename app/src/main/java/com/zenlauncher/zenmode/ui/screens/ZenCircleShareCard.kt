@@ -180,7 +180,7 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = String.format(Locale.US, "%02d MEMBERS", members.size),
+                    text = stringResource(R.string.circle_share_members_count, members.size),
                     fontFamily = DepartureMono,
                     fontSize = 15.sp,
                     color = green
@@ -272,8 +272,8 @@ private fun LeaderStrip(leader: ZenCircleMember, green: Color, rule: Color) {
                 .padding(vertical = 8.dp)
         ) {
             listOf(
-                "Ranking" to "▲ #01",
-                "Zen Bro's name" to arcName(leader)
+                stringResource(R.string.circle_share_ranking_label) to stringResource(R.string.circle_share_first_place),
+                stringResource(R.string.circle_share_buddy_name_label) to arcName(leader)
             ).forEach { (title, text) ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(title, style = label, maxLines = 1)

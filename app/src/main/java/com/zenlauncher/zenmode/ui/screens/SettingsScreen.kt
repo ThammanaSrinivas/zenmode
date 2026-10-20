@@ -298,7 +298,7 @@ fun SettingsScreen(
                             title = stringResource(R.string.settings_choose_home_apps_title),
                             subtitle = stringResource(R.string.settings_choose_home_apps_subtitle),
                             value = if (homeAppsChosenCount == 0) stringResource(R.string.settings_home_apps_sort_az)
-                            else "${homeAppsChosenCount.coerceAtMost(homeAppCount)} of $homeAppCount",
+                            else stringResource(R.string.settings_home_apps_chosen, homeAppsChosenCount.coerceAtMost(homeAppCount), homeAppCount),
                             onClick = onChooseHomeAppsClick
                         )
                         ZenRowDivider()
@@ -649,7 +649,7 @@ private fun PlanCard(
             }
         }
         Text(
-            text = "$PRODUCT_NAME Pro",
+            text = stringResource(R.string.settings_product_pro, PRODUCT_NAME),
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 20.rsp,
@@ -818,7 +818,7 @@ private fun ProGateSheet(
             ) {
                 ZenEyebrow(stringResource(R.string.settings_what_it_costs_eyebrow))
                 Text(
-                    text = price + if (trial) ". The first month of the annual plan is free." else ".",
+                    text = price + if (trial) stringResource(R.string.settings_annual_first_month_free) else ".",
                     fontFamily = Geist,
                     fontSize = 15.rsp,
                     lineHeight = 22.rsp,

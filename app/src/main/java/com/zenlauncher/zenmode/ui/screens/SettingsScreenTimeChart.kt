@@ -146,7 +146,7 @@ internal fun SettingsScreenTimeCard(
                     modifier = Modifier.padding(top = 4.rdp)
                 )
                 Text(
-                    text = "${formatHours(average)} a day on average",
+                    text = stringResource(R.string.settings_chart_average, formatHours(average)),
                     fontFamily = Geist,
                     fontSize = 13.rsp,
                     color = colors.textSecondary
@@ -155,8 +155,8 @@ internal fun SettingsScreenTimeCard(
             if (showMonthOption) {
                 ZenSegmented(
                     options = listOf(
-                        SegmentOption(ScreenTimeRange.WEEK, "7D"),
-                        SegmentOption(ScreenTimeRange.MONTH, "30D", locked = !isPro)
+                        SegmentOption(ScreenTimeRange.WEEK, stringResource(R.string.settings_chart_range_week)),
+                        SegmentOption(ScreenTimeRange.MONTH, stringResource(R.string.settings_chart_range_month), locked = !isPro)
                     ),
                     selected = if (showingMonth) ScreenTimeRange.MONTH else ScreenTimeRange.WEEK,
                     onSelect = { option ->
@@ -267,7 +267,7 @@ private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
                 }
             } else {
                 Row(Modifier.fillMaxWidth()) {
-                    Text("30 DAYS AGO", style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_chart_30_days_ago), style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
                     Text(stringResource(R.string.settings_chart_today_label), style = ZenTypography.monoLabel, color = colors.textPrimary)
                 }
             }

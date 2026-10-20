@@ -238,7 +238,7 @@ private fun OrderCard(
     modifier: Modifier = Modifier
 ) {
     val total = GoldOrder.formatInr(GoldOrder.totalPaise(units, unitPricePaise))
-    val unitsLabel = if (units == 1) "1 unit" else "$units units"
+    val unitsLabel = if (units == 1) stringResource(R.string.invest_gold_review_units_one) else stringResource(R.string.invest_gold_review_units_other, units)
 
     Column(
         modifier = modifier
@@ -252,7 +252,7 @@ private fun OrderCard(
         ) {
             OrderEyebrow(stringResource(R.string.invest_gold_review_order_eyebrow))
             V3BulletDot(slotWidth = 18.rdp, dotSize = 3.5.rdp, color = ReviewAmountText)
-            OrderEyebrow("1 ITEM")
+            OrderEyebrow(stringResource(R.string.invest_gold_review_item_count))
         }
         Spacer(modifier = Modifier.height(16.rdp))
         Column(
@@ -354,13 +354,13 @@ private fun OrderRow(label: String, value: String) {
 
 @Composable
 private fun HandOffNotes(units: Int, symbol: String, modifier: Modifier = Modifier) {
-    val unitsLabel = if (units == 1) "1 unit" else "$units units"
+    val unitsLabel = if (units == 1) stringResource(R.string.invest_gold_review_units_one) else stringResource(R.string.invest_gold_review_units_other, units)
     val lines = listOf(
-        "In Kite, buy $symbol, $unitsLabel. Nothing else goes with it.",
-        "No money moves through $PRODUCT_NAME. We never see your funds or your login.",
-        "We can't cancel, modify or exit the position for you. Kite handles everything and is solely responsible.",
+        stringResource(R.string.invest_gold_review_kite_disclaimer, symbol, unitsLabel),
+        stringResource(R.string.invest_gold_review_no_money_moves, PRODUCT_NAME),
+        stringResource(R.string.invest_gold_review_no_control),
         // GoldLedger records the order on the tap below; say so before it happens.
-        "Opening Kite adds this order to your Zen Gold total. We can't see whether it went through, so the total is what you set out to buy."
+        stringResource(R.string.invest_gold_review_total_note)
     )
     val noteStyle = FullLineBox.copy(
         fontFamily = Geist,

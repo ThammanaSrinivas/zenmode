@@ -6,9 +6,6 @@
 # OnboardingViewModel) and the like-reaction cooldown copied across three ViewModels.
 # Format: <count> "<literal exactly as written between its quotes>"
 3 "Failed to react"
-2 "My Zen Circle"
-2 "Not signed in."
-2 "Open settings"
 3 "Sample review"
 3 "Unknown ViewModel class"
 3 "Wait ${mins}m ${secs}s to react again"

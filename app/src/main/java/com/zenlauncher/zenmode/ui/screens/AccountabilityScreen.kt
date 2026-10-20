@@ -252,7 +252,7 @@ fun AccountabilityScreen(
 @Composable
 private fun UserCodeRow(code: String, onCopyCode: () -> Unit) {
     val colors = ZenTheme.colors
-    val displayCode = if (code.length > 8) "${code.take(8)}..." else code
+    val displayCode = if (code.length > 8) stringResource(R.string.accountability_code_truncated, code.take(8)) else code
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -306,11 +306,11 @@ private fun LeadText(myUsage: DailyUsage?, buddyStats: BuddyStats?) {
         when {
             myMinutes < buddyMinutes -> {
                 leadText = stringResource(R.string.accountability_lead_you_lead)
-                highlightText = "$timeStr Hours"
+                highlightText = stringResource(R.string.accountability_hours, timeStr)
             }
             myMinutes > buddyMinutes -> {
                 leadText = stringResource(R.string.accountability_lead_buddy_leads)
-                highlightText = "$timeStr Hours"
+                highlightText = stringResource(R.string.accountability_hours, timeStr)
             }
             else -> {
                 leadText = stringResource(R.string.accountability_lead_tied)

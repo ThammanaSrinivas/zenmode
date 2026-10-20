@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -123,31 +124,59 @@ enum class ProEntry(val analyticsName: String) {
     MANAGE("manage")
 }
 
-/** Short, card-sized highlights — the at-a-glance read. The full row-by-row diff is [CompareRows]. */
-private val FreeHighlights = listOf(
-    "The launcher, free forever",
-    "Zen Score, daily average",
-    "Zen Circle (beta)",
-    "7 days of history",
-    "Centralised search"
+/**
+ * A line of copy: the resource that holds the words and the arguments it needs.
+ *
+ * The screen resolves it with [CopyLine.resolve]; the copy test resolves the same
+ * resource from res/values/strings.xml, so the sentence stays pinned by a test.
+ */
+data class CopyLine(@StringRes val res: Int, val args: List<Any> = emptyList())
+
+/** Short, card-sized highlights — the at-a-glance read. The full row-by-row diff is
+ *  on the compare table further down the page. */
+@Composable
+private fun freeHighlights(): List<String> = listOf(
+    stringResource(R.string.zen_pro_highlight_free_launcher),
+    stringResource(R.string.zen_pro_highlight_free_zen_score),
+    stringResource(R.string.zen_pro_highlight_free_zen_circle),
+    stringResource(R.string.zen_pro_highlight_free_history),
+    stringResource(R.string.zen_pro_highlight_free_search)
 )
 
-private val ProHighlights = listOf(
-    "Everything in Free, plus",
-    "All-time history, downloadable",
-    "50 random connects a week, first priority",
-    "30-minute distraction-blocker pause",
-    "Data export + Telegram community"
+/** What the extra money buys, in the same card-sized lines. */
+@Composable
+private fun proHighlights(): List<String> = listOf(
+    stringResource(R.string.zen_pro_highlight_pro_intro),
+    stringResource(R.string.zen_pro_highlight_pro_history),
+    stringResource(R.string.zen_pro_highlight_pro_random_connect),
+    stringResource(R.string.zen_pro_highlight_pro_blocker),
+    stringResource(R.string.zen_pro_highlight_pro_export)
 )
 
 fun List<PlanOffer>.offer(period: BillingPeriod): PlanOffer? = firstOrNull { it.period == period }
 
 /** "₹699/year, or ₹75/month" — null until the store has answered. */
-fun List<PlanOffer>.priceSummary(): String? {
+fun List<PlanOffer>.priceSummaryCopy(): CopyLine? {
     val annual = offer(BillingPeriod.ANNUAL) ?: return null
-    val monthly = offer(BillingPeriod.MONTHLY) ?: return "${annual.formattedPrice}/year"
-    return "${annual.formattedPrice}/year, or ${monthly.formattedPrice}/month"
+    val monthly = offer(BillingPeriod.MONTHLY)
+        ?: return CopyLine(R.string.zen_pro_price_annual, listOf(annual.formattedPrice))
+    return CopyLine(
+        R.string.zen_pro_price_summary_both,
+        listOf(annual.formattedPrice, monthly.formattedPrice)
+    )
 }
+
+/** The same line, resolved for the screen. */
+@Composable
+fun List<PlanOffer>.priceSummary(): String? = priceSummaryCopy()?.resolve()
+
+/** The price as the screen shows it: "₹699/year" or "₹75/month". */
+private fun PlanOffer.priceCopy(): CopyLine =
+    if (period == BillingPeriod.ANNUAL) {
+        CopyLine(R.string.zen_pro_price_annual, listOf(formattedPrice))
+    } else {
+        CopyLine(R.string.zen_pro_price_monthly, listOf(formattedPrice))
+    }
 
 /** First numeric run in a store-formatted price string, e.g. "₹2,499" → 2499.0. Never hardcoded. */
 private fun String.storeNumber(): Double? =
@@ -180,24 +209,45 @@ fun Long.asZenMonth(): String = MonthFormat.format(Instant.ofEpochMilli(this).at
  * One line under the plan card / manage header, e.g. "Renews 17 Oct 2027". With [isSimulated]
  * no price is ever quoted as upcoming, since nothing will be charged.
  */
-fun Entitlement.statusLine(offers: List<PlanOffer>, isSimulated: Boolean = false): String {
-    val price = period?.takeUnless { isSimulated }?.let { offers.offer(it) }
-        ?.let { if (it.period == BillingPeriod.ANNUAL) "${it.formattedPrice}/year" else "${it.formattedPrice}/month" }
+fun Entitlement.statusLineCopy(offers: List<PlanOffer>, isSimulated: Boolean = false): CopyLine {
+    val price = period?.takeUnless { isSimulated }?.let { offers.offer(it) }?.priceCopy()
+    val trialEnd = trialEndsOn?.asZenDate()
+    val renews = renewsOn?.asZenDate()
+    val ends = endsOn?.asZenDate()
     return when (status) {
         // Server-granted Pro has no subscription behind it.
-        ProStatus.FREE -> "Early access, nothing to manage."
-        ProStatus.TRIAL -> buildString {
-            append("Free trial ends ${trialEndsOn?.asZenDate() ?: "soon"}")
-            if (price != null) append(", then $price")
-            append(".")
+        ProStatus.FREE -> CopyLine(R.string.zen_pro_status_free)
+        ProStatus.TRIAL -> when {
+            trialEnd == null && price == null -> CopyLine(R.string.zen_pro_status_trial_soon)
+            trialEnd == null -> CopyLine(R.string.zen_pro_status_trial_soon_then_price, listOf(price!!))
+            price == null -> CopyLine(R.string.zen_pro_status_trial, listOf(trialEnd))
+            else -> CopyLine(R.string.zen_pro_status_trial_then_price, listOf(trialEnd, price))
         }
-        ProStatus.ACTIVE -> if (isSimulated) "Early access. Nothing is charged." else buildString {
-            append("Renews ${renewsOn?.asZenDate() ?: "automatically"}")
-            if (price != null) append(" · $price")
-            append(".")
+        ProStatus.ACTIVE -> when {
+            isSimulated -> CopyLine(R.string.zen_pro_status_active_simulated)
+            renews == null && price == null -> CopyLine(R.string.zen_pro_status_active_auto)
+            renews == null -> CopyLine(R.string.zen_pro_status_active_auto_then_price, listOf(price!!))
+            price == null -> CopyLine(R.string.zen_pro_status_active, listOf(renews))
+            else -> CopyLine(R.string.zen_pro_status_active_then_price, listOf(renews, price))
         }
-        ProStatus.ENDING -> "Pro until ${endsOn?.asZenDate() ?: "the end of this period"}. It won't renew."
+        ProStatus.ENDING -> if (ends == null) {
+            CopyLine(R.string.zen_pro_status_ending_period)
+        } else {
+            CopyLine(R.string.zen_pro_status_ending, listOf(ends))
+        }
     }
+}
+
+/** The same line, resolved for the screen. */
+@Composable
+fun Entitlement.statusLine(offers: List<PlanOffer>, isSimulated: Boolean = false): String =
+    statusLineCopy(offers, isSimulated).resolve()
+
+/** Resolve the line into the words the user reads. */
+@Composable
+fun CopyLine.resolve(): String {
+    val resolved = args.map { if (it is CopyLine) it.resolve() else it }
+    return if (resolved.isEmpty()) stringResource(res) else stringResource(res, *resolved.toTypedArray())
 }
 
 @Composable
@@ -272,43 +322,6 @@ fun ZenProScreen(
 }
 
 @Composable
-internal fun ProTopBar(title: String, onBackClick: () -> Unit) {
-    val colors = ZenTheme.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.rdp, vertical = 6.rdp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(Spacing.touchTarget)
-                .clip(CircleShape)
-                .clickable(onClickLabel = stringResource(R.string.common_back), role = Role.Button, onClick = onBackClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(38.rdp)
-                    .clip(CircleShape)
-                    .background(colors.bgSecondary)
-                    .border(1.dp, colors.borderOutline, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                ZenGlyph(GlyphKind.Back, colors.textPrimary, Modifier.size(18.rdp))
-            }
-        }
-        Spacer(Modifier.width(8.rdp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = colors.textPrimary,
-            modifier = Modifier.semantics { heading() }
-        )
-    }
-}
-
-@Composable
 private fun PlanPage(
     offers: List<PlanOffer>,
     isWorking: Boolean,
@@ -353,21 +366,21 @@ private fun PlanPage(
                 if (annual != null) {
                     PlanOption(
                         title = stringResource(R.string.zen_pro_plan_annual),
-                        originalPrice = annual.originalPrice?.let { "$it/year" },
-                        price = "${annual.formattedPrice}/year",
-                        detail = "${annual.formattedPerMonth} a month, billed annually." +
-                            if (annual.freeTrialDays > 0) " First month free." else "",
+                        originalPrice = annual.originalPrice?.let { stringResource(R.string.zen_pro_price_annual, it) },
+                        price = stringResource(R.string.zen_pro_price_annual, annual.formattedPrice),
+                        detail = stringResource(R.string.zen_pro_detail_annual, annual.formattedPerMonth) +
+                            if (annual.freeTrialDays > 0) stringResource(R.string.zen_pro_detail_first_month_free) else "",
                         selected = picked == BillingPeriod.ANNUAL,
-                        badge = annual.discountPercent()?.let { "$it% off" },
+                        badge = annual.discountPercent()?.let { stringResource(R.string.zen_pro_badge_percent_off, it) },
                         onSelect = { picked = BillingPeriod.ANNUAL }
                     )
                 }
                 if (monthly != null) {
                     PlanOption(
                         title = stringResource(R.string.common_monthly),
-                        price = "${monthly.formattedPrice}/month",
-                        detail = "≈ ${monthly.formattedYearTotal}/year — flexible billing, cancel anytime." +
-                            if (monthly.freeTrialDays > 0) " ${monthly.freeTrialDays}-day free trial." else "",
+                        price = stringResource(R.string.zen_pro_price_monthly, monthly.formattedPrice),
+                        detail = stringResource(R.string.zen_pro_detail_monthly, monthly.formattedYearTotal) +
+                            if (monthly.freeTrialDays > 0) stringResource(R.string.zen_pro_detail_free_trial, monthly.freeTrialDays) else "",
                         selected = picked == BillingPeriod.MONTHLY,
                         onSelect = { picked = BillingPeriod.MONTHLY }
                     )
@@ -451,7 +464,7 @@ private fun TierSummaryRow(annual: PlanOffer?, modifier: Modifier = Modifier) {
             label = stringResource(R.string.common_free),
             amount = annual?.formattedPrice?.let { zeroLike(it) } ?: stringResource(R.string.common_free),
             caption = stringResource(R.string.zen_pro_tier_free_caption),
-            items = FreeHighlights,
+            items = freeHighlights(),
             highlighted = false,
             icon = { TierGlyphBadge(pro = false, modifier = Modifier.padding(bottom = 6.rdp)) },
             modifier = Modifier.weight(1f).fillMaxHeight()
@@ -461,7 +474,7 @@ private fun TierSummaryRow(annual: PlanOffer?, modifier: Modifier = Modifier) {
             amount = annual?.formattedPrice ?: "…",
             originalAmount = annual?.originalPrice,
             caption = stringResource(R.string.zen_pro_tier_pro_caption),
-            items = ProHighlights,
+            items = proHighlights(),
             highlighted = true,
             badge = if (annual?.originalPrice != null) stringResource(R.string.zen_pro_launching_price_badge) else null,
             icon = { TierGlyphBadge(pro = true, modifier = Modifier.padding(bottom = 6.rdp)) },
@@ -519,21 +532,53 @@ private fun zeroLike(formatted: String): String {
     return "${prefix}0"
 }
 
+@Composable
 private fun PlanOffer.priceLine(): String {
-    val unit = if (period == BillingPeriod.ANNUAL) "year" else "month"
+    val unit = if (period == BillingPeriod.ANNUAL) {
+        stringResource(R.string.common_unit_year)
+    } else {
+        stringResource(R.string.common_unit_month)
+    }
     return when {
-        freeTrialDays >= 28 -> "$formattedPrice/$unit, free for the first month. You'll get a reminder before it charges."
-        freeTrialDays > 0 -> "$formattedPrice/$unit, free for $freeTrialDays days. You'll get a reminder before it charges."
-        period == BillingPeriod.ANNUAL -> "$formattedPrice/year, charged today."
-        else -> "$formattedPrice/month, charged today. $formattedYearTotal over a year."
+        freeTrialDays >= 28 -> stringResource(
+            R.string.zen_pro_price_line_free_month,
+            formattedPrice,
+            unit
+        )
+        freeTrialDays > 0 -> stringResource(
+            R.string.zen_pro_price_line_free_days,
+            formattedPrice,
+            unit,
+            freeTrialDays
+        )
+        period == BillingPeriod.ANNUAL ->
+            stringResource(R.string.zen_pro_price_line_annual_today, formattedPrice)
+        else -> stringResource(
+            R.string.zen_pro_price_line_monthly_today,
+            formattedPrice,
+            formattedYearTotal
+        )
     }
 }
 
 /** "Annual · ₹699/year, 30-day trial" — the plan's facts with no claim about charging. */
+@Composable
 private fun PlanOffer.planLine(): String {
-    val unit = if (period == BillingPeriod.ANNUAL) "year" else "month"
-    val name = if (period == BillingPeriod.ANNUAL) "Annual" else "Monthly"
-    return "$name · $formattedPrice/$unit" + if (freeTrialDays > 0) ", $freeTrialDays-day trial" else ""
+    val unit = if (period == BillingPeriod.ANNUAL) {
+        stringResource(R.string.common_unit_year)
+    } else {
+        stringResource(R.string.common_unit_month)
+    }
+    val name = if (period == BillingPeriod.ANNUAL) {
+        stringResource(R.string.zen_pro_plan_annual)
+    } else {
+        stringResource(R.string.common_monthly)
+    }
+    return if (freeTrialDays > 0) {
+        stringResource(R.string.zen_pro_plan_line_trial, name, formattedPrice, unit, freeTrialDays)
+    } else {
+        stringResource(R.string.zen_pro_plan_line, name, formattedPrice, unit)
+    }
 }
 
 @Composable
@@ -748,6 +793,15 @@ private fun RedeemCodeCard(modifier: Modifier = Modifier) {
     }
 }
 
+/** The promises the Pro page makes. Each one is a rule the app keeps. */
+@Composable
+private fun trustRules(): List<String> = listOf(
+    stringResource(R.string.zen_pro_trust_rule_score),
+    stringResource(R.string.zen_pro_trust_rule_upsell),
+    stringResource(R.string.zen_pro_trust_rule_session),
+    stringResource(R.string.zen_pro_trust_rule_money)
+)
+
 @Composable
 private fun TrustSection(modifier: Modifier = Modifier) {
     val colors = ZenTheme.colors
@@ -758,12 +812,7 @@ private fun TrustSection(modifier: Modifier = Modifier) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
         Spacer(Modifier.height(8.rdp))
         ZenEyebrow(stringResource(R.string.zen_pro_trust_eyebrow))
-        listOf(
-            "Your Zen Score is never a sales lever.",
-            "No upsell on a low day.",
-            "Nothing interrupts a declared session. Not even this.",
-            "Pro is paid for with money, not attention."
-        ).forEach { rule ->
+        trustRules().forEach { rule ->
             Row {
                 Text("×", fontFamily = DepartureMono, fontSize = 14.rsp, color = colors.textMuted)
                 Spacer(Modifier.width(10.rdp))
@@ -899,43 +948,4 @@ private fun ConfirmSheet(
         )
         ZenButton(text = stringResource(R.string.common_back), onClick = onDismiss, style = ZenButtonStyle.Ghost, enabled = !isWorking)
     }
-}
-
-/**
- * The OS gradient as a 3dp rule. A reward mark on Pro surfaces only — never a background.
- * The colours drift slowly along it (one pass every 6s) so it reads as alive, not as a border.
- */
-@Composable
-internal fun OsRule(modifier: Modifier = Modifier) {
-    val stops = listOf(
-        colorResource(R.color.ember_500),
-        colorResource(R.color.amber_500),
-        colorResource(R.color.zen_700)
-    )
-    val still = rememberReduceMotion() || LocalInspectionMode.current
-    val drift = rememberInfiniteTransition(label = "osRule")
-    val shift = drift.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(6_000, easing = LinearEasing)),
-        label = "osRuleShift"
-    )
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(3.rdp)
-            .clip(RoundedCornerShape(3.rdp))
-            .drawBehind {
-                val w = size.width
-                val offset = if (still) 0f else shift.value * w * 2f
-                drawRect(
-                    Brush.linearGradient(
-                        colors = stops,
-                        start = Offset(offset - w, 0f),
-                        end = Offset(offset, 0f),
-                        tileMode = TileMode.Mirror
-                    )
-                )
-            }
-    )
 }

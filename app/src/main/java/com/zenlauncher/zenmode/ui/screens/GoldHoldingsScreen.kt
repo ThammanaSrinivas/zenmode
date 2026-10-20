@@ -81,15 +81,21 @@ private fun deniedStatus(daysKept: Int) =
 private fun defaultGoldHoldings(): List<GoldHoldingEntry> {
     val keptSix = keptStatus(6)
     val deniedThree = deniedStatus(3)
-    return remember(keptSix, deniedThree) {
+    val amount180 = stringResource(R.string.gold_holdings_amount, 180)
+    val amount320 = stringResource(R.string.gold_holdings_amount, 320)
+    val amount265 = stringResource(R.string.gold_holdings_amount, 265)
+    val units3 = stringResource(R.string.gold_holdings_units, 3)
+    val units5 = stringResource(R.string.gold_holdings_units, 5)
+    val units4 = stringResource(R.string.gold_holdings_units, 4)
+    return remember(keptSix, deniedThree, amount180, amount320, amount265, units3, units5, units4) {
         listOf(
-            GoldHoldingEntry("Sep 01-07, 2026", keptSix, "₹180", "3 Units"),
+            GoldHoldingEntry("Sep 01-07, 2026", keptSix, amount180, units3),
             GoldHoldingEntry("Oct 12-18, 2026", deniedThree, isAccessDenied = true),
-            GoldHoldingEntry("Nov 03-09, 2026", keptSix, "₹320", "5 Units"),
-            GoldHoldingEntry("Dec 07-13, 2026", keptSix, "₹320", "5 Units"),
+            GoldHoldingEntry("Nov 03-09, 2026", keptSix, amount320, units5),
+            GoldHoldingEntry("Dec 07-13, 2026", keptSix, amount320, units5),
             GoldHoldingEntry("Jan 15-21, 2027", deniedThree, isAccessDenied = true),
-            GoldHoldingEntry("Feb 01-07, 2027", keptSix, "₹265", "4 Units"),
-            GoldHoldingEntry("Mar 08-14, 2027", keptSix, "₹265", "4 Units")
+            GoldHoldingEntry("Feb 01-07, 2027", keptSix, amount265, units4),
+            GoldHoldingEntry("Mar 08-14, 2027", keptSix, amount265, units4)
         )
     }
 }

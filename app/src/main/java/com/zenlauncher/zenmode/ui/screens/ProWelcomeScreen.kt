@@ -59,11 +59,12 @@ import kotlinx.coroutines.delay
 // the ink one and reads light against the trees.
 
 /** What Pro actually opens today. Features still arriving belong in the changelog, not here. */
-private val ProOpens = listOf(
-    "All-time history, downloadable",
-    "Weekly Zen Score & report history",
-    "50 random connects a week, first priority",
-    "Data export + Telegram community"
+@Composable
+private fun proOpens(): List<String> = listOf(
+    stringResource(R.string.zen_pro_opens_history),
+    stringResource(R.string.zen_pro_opens_zen_score),
+    stringResource(R.string.zen_pro_opens_random_connect),
+    stringResource(R.string.zen_pro_opens_data_export)
 )
 
 @Composable
@@ -165,7 +166,7 @@ private fun ProOpensCard() {
             .padding(18.rdp),
         verticalArrangement = Arrangement.spacedBy(12.rdp)
     ) {
-        ProOpens.forEachIndexed { i, item ->
+        proOpens().forEachIndexed { i, item ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.staggeredEntrance(12 + i, stepMillis = 100)

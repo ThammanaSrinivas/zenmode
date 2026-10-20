@@ -321,7 +321,7 @@ private fun WeeklyHoursStepper(dailyHours: Int, rollUp: Boolean, canEdit: Boolea
         caption = stringResource(R.string.my_promise_hrs_per_week),
         captionLetterSpacing = 0.5362.sp,
         captionGap = 6.rdp,
-        valueDescription = "$weeklyHours hours per week",
+        valueDescription = stringResource(R.string.my_promise_hours_per_week, weeklyHours),
         decreaseLabel = stringResource(R.string.my_promise_decrease_weekly_promise),
         increaseLabel = stringResource(R.string.my_promise_increase_weekly_promise),
         canDecrease = canEdit && dailyHours > AppConstants.PROMISE_MIN_DAILY_HOURS,
@@ -360,9 +360,9 @@ private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
             style = bold,
             modifier = Modifier.alignBy { (it.measuredHeight * GeistAscentRatio).roundToInt() }
         )
-        Text(text = " $unit a day ", style = bold, maxLines = 1, modifier = Modifier.alignByBaseline())
+        Text(text = stringResource(R.string.my_promise_unit_a_day, unit), style = bold, maxLines = 1, modifier = Modifier.alignByBaseline())
         Text(text = "·", style = mono, maxLines = 1, modifier = Modifier.alignByBaseline())
-        Text(text = " your daily promise", style = regular, maxLines = 1, modifier = Modifier.alignByBaseline())
+        Text(text = stringResource(R.string.my_promise_daily_promise), style = regular, maxLines = 1, modifier = Modifier.alignByBaseline())
     }
 }
 
@@ -389,21 +389,21 @@ internal fun PromiseRulesNote(dailyHours: Int) {
         Text(
             text = buildAnnotatedString {
                 withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
-                    append("Keep your screen time under")
+                    append(stringResource(R.string.my_promise_keep_under))
                 }
                 append(" ")
                 withStyle(SpanStyle(fontWeight = FontWeight.Medium, color = green)) {
                     append(
-                        "$dailyHours $hrs on ${AppConstants.PROMISE_DAYS_TO_UNLOCK} of " +
-                            "${AppConstants.PROMISE_DAYS_PER_WEEK} days"
+                        stringResource(R.string.my_promise_daily_summary, dailyHours, hrs, AppConstants.PROMISE_DAYS_TO_UNLOCK) +
+                            stringResource(R.string.my_promise_days, AppConstants.PROMISE_DAYS_PER_WEEK)
                     )
                 }
                 withStyle(SpanStyle(color = green)) { append(",") }
                 append(" ")
                 withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
                     append(
-                        "and Invest unlocks for the week. Miss your promise? Nothing is taken away. " +
-                            "Invest simply stays locked. Monday starts a new week."
+                        stringResource(R.string.my_promise_unlock_note) +
+                            stringResource(R.string.my_promise_stays_locked)
                     )
                 }
             },

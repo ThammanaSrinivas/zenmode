@@ -142,7 +142,7 @@ internal fun ZenCircleSettingsContent(
             index = 0,
             icon = Icons.Outlined.AddCircleOutline,
             title = stringResource(R.string.common_invite_people),
-            subtitle = if (seatsLeft == 1) "1 seat left" else "$seatsLeft seats left",
+            subtitle = if (seatsLeft == 1) stringResource(R.string.circle_seats_left_one) else stringResource(R.string.circle_seats_left_other, seatsLeft),
             enabled = seatsLeft > 0,
             onClick = onInvitePeople
         )
@@ -170,7 +170,7 @@ internal fun ZenCircleSettingsContent(
             onClick = { pending = if (pending == PendingAction.Remove) null else PendingAction.Remove }
         ) {
             ConfirmStrip(
-                message = "${settings.buddyName} won’t see your stats anymore, and you won’t see theirs.",
+                message = stringResource(R.string.circle_remove_buddy_warning, settings.buddyName),
                 confirmLabel = stringResource(R.string.circle_settings_remove_confirm),
                 busyLabel = stringResource(R.string.circle_settings_remove_busy),
                 busy = settings.removing,

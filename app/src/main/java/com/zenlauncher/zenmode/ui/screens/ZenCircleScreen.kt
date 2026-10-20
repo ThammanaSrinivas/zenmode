@@ -127,6 +127,7 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlin.math.sin
+import androidx.annotation.StringRes
 
 // ── My Zen Circle ─────────────────────────────────────────────────
 // The circle dashboard reached from "Maybe later" (Figma node 2026:2493): today's ranking of
@@ -178,7 +179,7 @@ fun ZenCircleScreen(
     shareCodeIsCircle: Boolean = false,
     // "Remind With Share Link" while a real circle still has an invite pending (only you +
     // a placeholder second member); the normal label once someone's actually joined.
-    primaryShareLabelRes: @StringRes Int = R.string.circle_primary_share_label,
+    @StringRes primaryShareLabelRes: Int = R.string.circle_primary_share_label,
     onBackClick: () -> Unit,
     onShareInviteLink: () -> Unit,
     onCopyInviteCode: () -> Unit,

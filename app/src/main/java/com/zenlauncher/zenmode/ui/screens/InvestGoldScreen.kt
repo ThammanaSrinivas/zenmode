@@ -446,7 +446,7 @@ private fun QuantityCard(
             caption = stringResource(R.string.common_units),
             captionLetterSpacing = (-0.4021).sp,
             captionGap = 0.dp,
-            valueDescription = "$units ${if (units == 1) "unit" else "units"}, ${GoldOrder.formatInr(total)}",
+            valueDescription = stringResource(R.string.invest_gold_order_value, units, if (units == 1) stringResource(R.string.invest_gold_unit_one) else stringResource(R.string.invest_gold_unit_many), GoldOrder.formatInr(total)),
             decreaseLabel = stringResource(R.string.invest_gold_decrease_quantity),
             increaseLabel = stringResource(R.string.invest_gold_increase_quantity),
             canDecrease = units > AppConstants.INVEST_GOLD_MIN_UNITS,
@@ -559,7 +559,7 @@ private fun QuickPickChip(units: Int, selected: Boolean, onClick: () -> Unit) {
         colorSpec,
         label = "ChipText"
     )
-    val label = if (units == 1) "1 unit" else "$units units"
+    val label = if (units == 1) stringResource(R.string.invest_gold_units_one) else stringResource(R.string.invest_gold_units_other, units)
 
     Box(
         modifier = Modifier
@@ -667,18 +667,18 @@ private fun DematNote(dematMaskedId: String, onViewTermsClick: () -> Unit, modif
         InvestGoldNoteCheck(popDelayMillis = Entrance.NOTE * Entrance.STEP_MILLIS + 180L)
         Text(
             text = buildAnnotatedString {
-                append("Demat linked • ")
+                append(stringResource(R.string.invest_gold_demat_linked))
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = zen900)) {
-                    append("$dematMaskedId.")
+                    append(stringResource(R.string.invest_gold_demat_id, dematMaskedId))
                 }
-                append(" $PRODUCT_NAME never holds, moves or advises on your money the order is placed by you in Kite. ")
+                append(stringResource(R.string.invest_gold_never_holds, PRODUCT_NAME))
                 withLink(
                     LinkAnnotation.Clickable(
                         tag = "terms",
                         styles = TextLinkStyles(SpanStyle(fontWeight = FontWeight.SemiBold, color = link))
                     ) { onViewTermsClick() }
                 ) {
-                    append("Read the terms & conditions")
+                    append(stringResource(R.string.invest_gold_read_terms))
                 }
             },
             style = FullLineBox.copy(

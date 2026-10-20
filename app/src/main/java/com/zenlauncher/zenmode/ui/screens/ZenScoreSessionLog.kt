@@ -196,7 +196,7 @@ private fun UpgradeForMoreSessionsRow(hiddenCount: Int, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "+$hiddenCount more session${if (hiddenCount == 1) "" else "s"} today",
+            text = if (hiddenCount == 1) stringResource(R.string.zen_score_log_more_session_one, hiddenCount) else stringResource(R.string.zen_score_log_more_sessions_other, hiddenCount),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 10.rsp,

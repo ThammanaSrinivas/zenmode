@@ -310,7 +310,7 @@ private fun WeekStripBlock(card: ZenCheckInCard, weekUnits: List<PromiseUnit>) {
                 color = colors.textMuted
             )
             Text(
-                text = "$kept / ${AppConstants.PROMISE_DAYS_TO_UNLOCK} KEPT",
+                text = stringResource(R.string.checkin_kept_count, kept, AppConstants.PROMISE_DAYS_TO_UNLOCK),
                 fontFamily = DepartureMono,
                 fontSize = 8.rsp,
                 letterSpacing = 0.5.sp,

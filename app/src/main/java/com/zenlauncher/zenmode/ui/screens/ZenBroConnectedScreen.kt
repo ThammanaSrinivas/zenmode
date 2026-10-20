@@ -251,7 +251,7 @@ private fun Headline(buddyName: String) {
         Spacer(Modifier.height(10.rdp))
         // The caption becomes three tags that pop in one by one — each is a thing you now share.
         Row(horizontalArrangement = Arrangement.spacedBy(6.rdp)) {
-            listOf("Screen time", "Zen Score", "Streaks").forEachIndexed { i, label ->
+            listOf(stringResource(R.string.zen_bro_stat_screen_time), stringResource(R.string.common_zen_score), stringResource(R.string.zen_bro_stat_streaks)).forEachIndexed { i, label ->
                 SharedStatTag(label = label, delayMillis = 430 + i * 80)
             }
         }

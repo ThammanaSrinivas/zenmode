@@ -91,10 +91,12 @@ internal fun ManagePro(
         OsRule()
         Spacer(Modifier.height(6.rdp))
         ZenEyebrow(stringResource(R.string.common_pro_supporter) + (entitlement.since?.let { stringResource(R.string.zen_pro_manage_supporter_since, it.asZenMonth()) } ?: ""))
+        val periodName = stringResource(if (entitlement.period == BillingPeriod.MONTHLY) R.string.common_monthly else R.string.zen_pro_manage_annual)
+        val priceSuffix = if (offer != null) stringResource(R.string.zen_pro_manage_price_suffix, offer.formattedPrice, unit) else ""
         Text(
             text = buildString {
-                append(if (entitlement.period == BillingPeriod.MONTHLY) "Monthly" else "Annual")
-                if (offer != null) append(" · ${offer.formattedPrice}/$unit")
+                append(periodName)
+                append(priceSuffix)
             },
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
@@ -124,7 +126,7 @@ internal fun ManagePro(
                 when {
                     ending -> stringResource(R.string.zen_pro_manage_back_to_free)
                     isSimulated -> stringResource(R.string.zen_pro_manage_no_charge_early_access)
-                    else -> offer?.let { "${it.formattedPrice} a $unit" } ?: "-"
+                    else -> offer?.let { stringResource(R.string.zen_pro_manage_price_a_unit, it.formattedPrice, unit) } ?: stringResource(R.string.common_dash_placeholder)
                 },
                 showDivider = false
             )

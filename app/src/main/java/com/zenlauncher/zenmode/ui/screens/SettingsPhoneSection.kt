@@ -112,7 +112,7 @@ internal fun PhoneSettingsGroup() {
     ZenSettingsGroup(label = stringResource(R.string.settings_phone_section)) {
         ZenSettingsRow(
             title = stringResource(R.string.settings_phone_default_home_title),
-            subtitle = "$PRODUCT_NAME only works as your home screen.",
+            subtitle = stringResource(R.string.settings_phone_home_screen_only, PRODUCT_NAME),
             value = if (state.isDefaultHome) PRODUCT_NAME else stringResource(R.string.settings_phone_default_home_not_set),
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_HOME_SETTINGS)) }
@@ -152,7 +152,7 @@ internal fun PhoneSettingsGroup() {
         )
         ZenRowDivider()
         ZenSettingsRow(
-            title = "$PRODUCT_NAME notifications",
+            title = stringResource(R.string.settings_phone_notifications, PRODUCT_NAME),
             subtitle = stringResource(R.string.settings_phone_notifications_subtitle),
             trailing = RowTrailing.External,
             onClick = {
@@ -228,7 +228,7 @@ internal fun SettingsFooter() {
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.rdp)) {
             Text(
-                text = "#ZenMode #IMZ #InMyZone",
+                text = stringResource(R.string.settings_phone_hashtags),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.rsp,

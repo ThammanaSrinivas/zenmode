@@ -366,7 +366,7 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
             horizontalAlignment = Alignment.Start
         ) {
             Text(stringResource(R.string.zen_gold_forecast_legend_label), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, letterSpacing = (-0.28).sp, color = colors.textPrimary)
-            Text("₹$forecastMonthlyAmount/mo avg", fontFamily = DepartureMono, fontSize = 9.5.rsp, letterSpacing = (-0.19).sp, color = colors.textPrimary)
+            Text(stringResource(R.string.zen_gold_forecast_monthly_avg, forecastMonthlyAmount), fontFamily = DepartureMono, fontSize = 9.5.rsp, letterSpacing = (-0.19).sp, color = colors.textPrimary)
         }
 
         Spacer(modifier = Modifier.height(6.rdp))
@@ -526,11 +526,11 @@ private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onView
         text = if (unlocked) {
             buildAnnotatedString {
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                    append("Gold pay is open.")
+                    append(stringResource(R.string.zen_gold_pay_is_open))
                 }
-                append(" You pick the quantity, we never pick it for you, and we take nothing from it. ")
+                append(stringResource(R.string.zen_gold_you_pick_quantity))
                 withLink(termsLink) {
-                    append("View T&C")
+                    append(stringResource(R.string.zen_gold_view_terms))
                 }
             }
         } else {
@@ -540,9 +540,9 @@ private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onView
                 } else {
                     stringResource(R.string.zen_gold_stay_under_more_days, daysUntilUnlock)
                 }
-                append("Invest gold opens at $unlockAt of $unlockOutOf days under your Promise. $staySentence ")
+                append(stringResource(R.string.zen_gold_invest_opens_at, unlockAt, unlockOutOf, staySentence))
                 withLink(termsLink) {
-                    append("View T&C")
+                    append(stringResource(R.string.zen_gold_view_terms))
                 }
             }
         },

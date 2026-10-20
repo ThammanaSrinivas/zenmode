@@ -514,6 +514,7 @@ private fun PeriodToggle(isPro: Boolean) {
     val wiggle = remember { androidx.compose.animation.core.Animatable(0f) }
     var isWeekly by remember { mutableStateOf(false) }
     val colors = ZenTheme.colors
+    val proRequiredMessage = stringResource(R.string.common_pro_required_toast)
 
     Row(
         modifier = Modifier
@@ -547,7 +548,7 @@ private fun PeriodToggle(isPro: Boolean) {
                         scope.launch {
                             for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, androidx.compose.animation.core.tween(55))
                         }
-                        Toast.makeText(context, "You need to be Pro to access this.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, proRequiredMessage, Toast.LENGTH_SHORT).show()
                     }
                 }
                 .padding(horizontal = 14.rdp, vertical = 4.rdp),

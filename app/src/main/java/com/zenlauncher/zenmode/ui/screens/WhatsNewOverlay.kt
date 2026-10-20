@@ -62,7 +62,7 @@ fun WhatsNewOverlay(
             ) {
                 ZenModeOsWordmark(fontSize = 26.rsp)
                 Text(
-                    text = " is here",
+                    text = stringResource(R.string.whats_new_is_here),
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = 26.rsp,

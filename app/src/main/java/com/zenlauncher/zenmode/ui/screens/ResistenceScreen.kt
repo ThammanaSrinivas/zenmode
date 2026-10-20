@@ -155,7 +155,7 @@ fun ResistenceScreen(
     }
 
     val emojiSize = 12.rsp
-    // buildAnnotatedString isn't composable, so resolve the copy before building the spans.
+    // The advice is read here so the spans below stay simple.
     val adviceHappyPrefix = stringResource(R.string.resistance_advice_happy_prefix)
     val adviceHappyBrand = stringResource(R.string.resistance_advice_happy_brand)
     val adviceHappySuffix = stringResource(R.string.resistance_advice_happy_suffix)
@@ -645,7 +645,7 @@ private fun ResistenceBottomDock(
 ) {
     val colors = ZenTheme.colors
     val canSkip = skipsLeft > 0
-    // buildAnnotatedString isn't composable, so resolve the dock copy before building the spans.
+    // The dock copy is read here so the spans below stay simple.
     val skipPrefix = stringResource(R.string.resistance_skips_left_prefix)
     val skipMiddle = stringResource(R.string.resistance_skips_left_middle)
     val skipSuffix = stringResource(R.string.resistance_skips_left_suffix)
