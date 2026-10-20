@@ -1,5 +1,7 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.RandomConnect
 import com.zenlauncher.zenmode.ui.components.BrandedText
 import androidx.activity.compose.BackHandler
@@ -87,11 +89,23 @@ sealed class BuddyAddResult {
 }
 
 /** Result of pasting a code into [UseCodeCard] while [ZenBroConnectScreen.circleMode] is on. */
+/** The line under the code field. It is built inside a coroutine, where a resource
+ *  cannot be resolved, so a resource id is carried and resolved where it is shown. */
+private sealed interface ConnectStatus {
+    val success: Boolean
+    data class Copy(
+        @StringRes val res: Int,
+        override val success: Boolean = false,
+        val args: List<Any> = emptyList()
+    ) : ConnectStatus
+    data class Plain(val message: String, override val success: Boolean = false) : ConnectStatus
+}
+
 sealed class CircleCodeResult {
     data object Success : CircleCodeResult()
     data object CircleFull : CircleCodeResult()
     data object AlreadyInCircle : CircleCodeResult()
-    data class Error(val message: String) : CircleCodeResult()
+    data class Error(@StringRes val messageRes: Int) : CircleCodeResult()
 }
 
 // ── Zen Bro connect, screen 2 ─────────────────────────────────────
@@ -126,7 +140,7 @@ fun ZenBroConnectScreen(
     onShareLink: () -> Unit,
     onCopyCode: () -> Unit,
     onAddBuddy: suspend (String) -> BuddyAddResult,
-    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error("Not available") },
+    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error(R.string.zen_bro_circle_join_not_available) },
     onRandomConnect: () -> Unit
 ) {
     BackHandler(onBack = onBackClick)
@@ -153,7 +167,7 @@ fun ZenBroConnectScreen(
             Spacer(Modifier.height(28.rdp))
             Column(modifier = Modifier.padding(horizontal = 30.rdp)) {
                 Text(
-                    text = "Connect with your Zen Bro",
+                    text = stringResource(R.string.zen_bro_connect_title),
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = 24.rsp,
@@ -163,7 +177,7 @@ fun ZenBroConnectScreen(
                     modifier = Modifier.semantics { heading() }
                 )
                 Text(
-                    text = "Choose how you want to connect",
+                    text = stringResource(R.string.zen_bro_connect_subtitle),
                     fontFamily = Geist,
                     fontWeight = FontWeight.Medium,
                     fontSize = 15.rsp,
@@ -198,7 +212,7 @@ internal fun ZenCircleConnectOptions(
     onShareLink: () -> Unit,
     onCopyCode: () -> Unit,
     onAddBuddy: suspend (String) -> BuddyAddResult,
-    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error("Not available") },
+    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error(R.string.zen_bro_circle_join_not_available) },
     onRandomConnect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -245,12 +259,12 @@ internal fun ZenCircleHeader(onBackClick: () -> Unit, onMenuClick: (() -> Unit)?
                 .offset(x = 32.rdp - (48.dp - 29.6.rdp) / 2)
                 .requiredSize(48.dp)
                 .clip(CircleShape)
-                .clickable(onClickLabel = "Back to home", onClick = onBackClick),
+                .clickable(onClickLabel = stringResource(R.string.common_back_to_home), onClick = onBackClick),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_zen_circle_back),
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.common_back),
                 modifier = Modifier
                     .width(29.6.rdp)
                     .height(20.3.rdp)
@@ -273,7 +287,7 @@ internal fun ZenCircleHeader(onBackClick: () -> Unit, onMenuClick: (() -> Unit)?
             )
             Box {
                 Text(
-                    text = "My Zen Circle",
+                    text = stringResource(R.string.zen_bro_circle_wordmark),
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = 30.2.rsp,
@@ -281,7 +295,7 @@ internal fun ZenCircleHeader(onBackClick: () -> Unit, onMenuClick: (() -> Unit)?
                     color = ZenTheme.colors.textBrandStrong,
                     maxLines = 1
                 )
-                // "Beta" tag hangs off the title's top-right corner (node 2026:2453).
+                // The "Beta" tag hangs off the title's top-right corner (node 2026:2453).
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -294,7 +308,7 @@ internal fun ZenCircleHeader(onBackClick: () -> Unit, onMenuClick: (() -> Unit)?
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Beta",
+                        text = stringResource(R.string.zen_bro_beta_badge),
                         fontFamily = Geist,
                         fontSize = 7.rsp,
                         lineHeight = 7.rsp,
@@ -317,7 +331,7 @@ private fun MenuButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .requiredSize(48.dp)
             .clip(CircleShape)
-            .clickable(onClickLabel = "Zen Circle settings") {
+            .clickable(onClickLabel = stringResource(R.string.common_zen_circle_settings)) {
                 scope.launch {
                     squeeze.animateTo(0.45f, tween(90))
                     squeeze.animateTo(1f, spring(dampingRatio = 0.35f, stiffness = Spring.StiffnessMedium))
@@ -328,7 +342,7 @@ private fun MenuButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Image(
             painter = painterResource(R.drawable.ic_zen_circle_menu),
-            contentDescription = "Menu",
+            contentDescription = stringResource(R.string.zen_bro_menu_content_description),
             modifier = Modifier
                 .width(29.3.rdp)
                 .height(16.68.rdp)
@@ -344,7 +358,7 @@ private fun ShareLinkCard(enabled: Boolean, onShareLink: () -> Unit) {
     val brandGreen = colorResource(R.color.gold_delta_text)
 
     // The recommended option carries the green top rule (node 2026:2459).
-    StepCard(number = "01", title = "Share a link", topAccent = brandGreen, trailing = {
+    StepCard(number = "01", title = stringResource(R.string.zen_bro_share_a_link), topAccent = brandGreen, trailing = {
         Box(
             modifier = Modifier
                 .height(18.rdp)
@@ -354,7 +368,7 @@ private fun ShareLinkCard(enabled: Boolean, onShareLink: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Easiest",
+                text = stringResource(R.string.zen_bro_easiest_badge),
                 fontFamily = DepartureMono,
                 fontSize = 11.rsp,
                 lineHeight = 11.rsp,
@@ -364,10 +378,10 @@ private fun ShareLinkCard(enabled: Boolean, onShareLink: () -> Unit) {
             )
         }
     }) {
-        StepBody("Anyone can join even without having $PRODUCT_NAME installed.")
+        StepBody(stringResource(R.string.zen_bro_share_link_body, PRODUCT_NAME))
         Spacer(Modifier.height(StepSectionGap))
         ZenCirclePillButton(
-            text = "Share link",
+            text = stringResource(R.string.zen_bro_share_link_button),
             onClick = onShareLink,
             enabled = enabled,
             container = colorResource(R.color.zen_700),
@@ -385,14 +399,14 @@ private fun UseCodeCard(
     circleMode: Boolean = false,
     onCopyCode: () -> Unit,
     onAddBuddy: suspend (String) -> BuddyAddResult,
-    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error("Not available") }
+    onJoinCircleCode: suspend (String) -> CircleCodeResult = { CircleCodeResult.Error(R.string.zen_bro_circle_join_not_available) }
 ) {
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
     var buddyCode by rememberSaveable { mutableStateOf("") }
     var isConnecting by remember { mutableStateOf(false) }
-    var status by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var status by remember { mutableStateOf<ConnectStatus?>(null) }
 
     val canConnect = buddyCode.isNotBlank() && !isConnecting
     val connect: () -> Unit = connect@{
@@ -404,29 +418,29 @@ private fun UseCodeCard(
             status = if (circleMode) {
                 when (val result = onJoinCircleCode(buddyCode.trim())) {
                     is CircleCodeResult.Success -> null // navigates to the circle dashboard, nothing to show inline
-                    is CircleCodeResult.CircleFull -> "That circle is full." to false
-                    is CircleCodeResult.AlreadyInCircle -> "You're already in a circle." to false
-                    is CircleCodeResult.Error -> result.message to false
+                    is CircleCodeResult.CircleFull -> ConnectStatus.Copy(R.string.zen_bro_circle_full_error)
+                    is CircleCodeResult.AlreadyInCircle -> ConnectStatus.Copy(R.string.zen_bro_already_in_circle_error)
+                    is CircleCodeResult.Error -> ConnectStatus.Copy(result.messageRes)
                 }
             } else {
                 when (val result = onAddBuddy(buddyCode.trim())) {
-                    is BuddyAddResult.Success -> "Connected with ${result.buddyName}!" to true
-                    is BuddyAddResult.AlreadyBuddies -> "You're already connected with ${result.buddyName}." to false
-                    is BuddyAddResult.SelfAdd -> "That's your own code — paste your Zen Bro's." to false
-                    is BuddyAddResult.Error -> result.message to false
+                    is BuddyAddResult.Success -> ConnectStatus.Copy(R.string.zen_bro_connected_with_buddy, success = true, args = listOf(result.buddyName))
+                    is BuddyAddResult.AlreadyBuddies -> ConnectStatus.Copy(R.string.zen_bro_already_connected_error, args = listOf(result.buddyName))
+                    is BuddyAddResult.SelfAdd -> ConnectStatus.Copy(R.string.zen_bro_self_add_error)
+                    is BuddyAddResult.Error -> ConnectStatus.Plain(result.message)
                 }
             }
             isConnecting = false
         }
     }
 
-    StepCard(number = "02", title = "Use a code") {
-        StepBody("Paste theirs or share yours.")
+    StepCard(number = "02", title = stringResource(R.string.zen_bro_use_a_code)) {
+        StepBody(stringResource(R.string.zen_bro_use_code_body))
         Spacer(Modifier.height(StepSectionGap))
 
         Column(modifier = Modifier.stepContentPadding()) {
             Text(
-                text = "PASTE ZEN-CODE",
+                text = stringResource(R.string.zen_bro_paste_zen_code_label),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 11.rsp,
@@ -450,7 +464,7 @@ private fun UseCodeCard(
                     modifier = Modifier.weight(162f)
                 )
                 ZenCirclePillButton(
-                    text = if (isConnecting) "Connecting…" else "Connect",
+                    text = if (isConnecting) stringResource(R.string.zen_bro_connecting_button) else stringResource(R.string.zen_bro_connect_button),
                     onClick = connect,
                     enabled = canConnect,
                     // Figma shows Connect solid even before a code is typed.
@@ -463,7 +477,12 @@ private fun UseCodeCard(
                 )
             }
 
-            status?.let { (message, success) ->
+            status?.let { st ->
+                val message = when (st) {
+                    is ConnectStatus.Copy -> stringResource(st.res, *st.args.toTypedArray())
+                    is ConnectStatus.Plain -> st.message
+                }
+                val success = st.success
                 Spacer(Modifier.height(8.rdp))
                 Text(
                     text = message,
@@ -494,10 +513,10 @@ private fun RandomConnectCard(onRandomConnect: () -> Unit) {
     val brandGreen = colorResource(R.color.gold_delta_text)
 
     StepCard(number = "03", title = RandomConnect.NAME) {
-        StepBody("Meet someone building healthy phone habits.")
+        StepBody(stringResource(R.string.zen_bro_random_connect_body))
         Spacer(Modifier.height(StepSectionGap))
         ZenCirclePillButton(
-            text = "Find a buddy",
+            text = stringResource(R.string.zen_bro_find_buddy_button),
             onClick = onRandomConnect,
             container = Color.Transparent,
             content = brandGreen,
@@ -663,7 +682,7 @@ private fun CodeInput(
                 if (value.isEmpty()) {
                     // Codes are long (raw UIDs) and can't be retyped from memory, so the hint
                     // points at pasting rather than implying a short fixed-format code.
-                    Text(text = "Paste code here", style = codeStyle.copy(color = hintColor), maxLines = 1)
+                    Text(text = stringResource(R.string.zen_bro_paste_code_hint), style = codeStyle.copy(color = hintColor), maxLines = 1)
                 }
                 inner()
             }
@@ -680,13 +699,13 @@ private fun MyCodeRow(userCode: String?, onCopyCode: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.rdp))
-            .clickable(enabled = canCopy, onClickLabel = "Copy my code", onClick = onCopyCode)
+            .clickable(enabled = canCopy, onClickLabel = stringResource(R.string.common_copy_my_code), onClick = onCopyCode)
             .padding(top = 4.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             // Codes are long; the row shows a prefix and "Copy my code" copies all of it.
-            text = userCode?.let { if (it.length > 8) "${it.take(8)}…" else it } ?: "Sign in first",
+            text = userCode?.let { if (it.length > 8) "${it.take(8)}…" else it } ?: stringResource(R.string.zen_bro_sign_in_first),
             style = monoCodeStyle(14.rsp, colorResource(R.color.zen_circle_code_text)),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -701,7 +720,7 @@ private fun MyCodeRow(userCode: String?, onCopyCode: () -> Unit) {
         )
         Spacer(Modifier.weight(1f))
         Text(
-            text = "Copy my code",
+            text = stringResource(R.string.common_copy_my_code),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 14.rsp,

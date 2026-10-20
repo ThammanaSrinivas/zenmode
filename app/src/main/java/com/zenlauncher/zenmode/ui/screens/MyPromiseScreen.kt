@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -138,7 +139,7 @@ fun MyPromiseScreen(
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(34.rdp))
-                    V3ScreenHeader(title = "My Promise", backLabel = BACK_TO_ZEN_GOLD, onBackClick = onBackClick)
+                    V3ScreenHeader(title = stringResource(R.string.my_promise_screen_title), backLabel = BACK_TO_ZEN_GOLD, onBackClick = onBackClick)
                     Spacer(modifier = Modifier.height(45.rdp))
                     IntroText()
                     Spacer(modifier = Modifier.height(13.86.rdp))
@@ -169,7 +170,7 @@ fun MyPromiseScreen(
                         verticalArrangement = Arrangement.spacedBy(8.rdp)
                     ) {
                         V3PrimaryPillButton(text = BACK_TO_ZEN_GOLD, onClick = onBackClick)
-                        OutlinedPillButton(text = "See all holdings", onClick = onSeeAllHoldingsClick)
+                        OutlinedPillButton(text = stringResource(R.string.my_promise_see_all_holdings), onClick = onSeeAllHoldingsClick)
                     }
                     Spacer(modifier = Modifier.height(45.rdp))
                 }
@@ -181,7 +182,7 @@ fun MyPromiseScreen(
 @Composable
 private fun IntroText() {
     Text(
-        text = "Set your weekly promise",
+        text = stringResource(R.string.my_promise_set_weekly_promise),
         fontFamily = ClashDisplay,
         fontWeight = FontWeight.Medium,
         fontSize = 28.rsp,
@@ -197,7 +198,7 @@ private fun IntroText() {
     Spacer(modifier = Modifier.height(10.56.rdp))
 
     Text(
-        text = "Choose the amount of screen time you want to stay within each week.",
+        text = stringResource(R.string.my_promise_choose_amount_subtitle),
         fontFamily = Geist,
         fontWeight = FontWeight.Medium,
         fontSize = 13.128.rsp,
@@ -236,9 +237,9 @@ internal fun PromiseCard(
             modifier = Modifier.padding(start = 28.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CardLabel("SCREEN TIME")
+            CardLabel(stringResource(R.string.my_promise_card_screen_time))
             V3BulletDot(slotWidth = 19.rdp, dotSize = 3.5.rdp, color = ZenTheme.colors.textPrimary)
-            CardLabel("PER WEEK")
+            CardLabel(stringResource(R.string.my_promise_card_per_week))
         }
 
         Spacer(modifier = Modifier.height(23.9.rdp))
@@ -277,20 +278,21 @@ internal fun PromiseCard(
 }
 
 /** Footer line under the stepper: what the edit quota is, and why it's locked right now, if it is. */
+@Composable
 private fun promiseEditCopy(editLock: PromiseEditLock, isPro: Boolean): String = when (editLock) {
     PromiseEditLock.SUNDAY_ONLY ->
-        "Promise edits open again on Sunday. Go Pro to edit any day, twice a week."
+        stringResource(R.string.my_promise_edit_copy_sunday_only)
     PromiseEditLock.WEEKLY_LIMIT_REACHED ->
         if (isPro) {
-            "You've used both promise edits for this week. More open Monday."
+            stringResource(R.string.my_promise_edit_copy_both_used)
         } else {
-            "You've used this week's promise edit. More open Monday."
+            stringResource(R.string.my_promise_edit_copy_one_used)
         }
     PromiseEditLock.NONE ->
         if (isPro) {
-            "Pro edits the promise twice a week, any day. Your existing gold stays exactly where it is."
+            stringResource(R.string.my_promise_edit_copy_pro)
         } else {
-            "You can change your promise once a week, on Sundays. Your existing gold stays exactly where it is."
+            stringResource(R.string.my_promise_edit_copy_free)
         }
 }
 
@@ -316,12 +318,12 @@ private fun WeeklyHoursStepper(dailyHours: Int, rollUp: Boolean, canEdit: Boolea
         value = weeklyHours,
         maxValue = AppConstants.PROMISE_MAX_DAILY_HOURS * AppConstants.PROMISE_DAYS_PER_WEEK,
         rollUp = rollUp,
-        caption = "HRS/WEEK",
+        caption = stringResource(R.string.my_promise_hrs_per_week),
         captionLetterSpacing = 0.5362.sp,
         captionGap = 6.rdp,
         valueDescription = "$weeklyHours hours per week",
-        decreaseLabel = "Decrease weekly promise",
-        increaseLabel = "Increase weekly promise",
+        decreaseLabel = stringResource(R.string.my_promise_decrease_weekly_promise),
+        increaseLabel = stringResource(R.string.my_promise_increase_weekly_promise),
         canDecrease = canEdit && dailyHours > AppConstants.PROMISE_MIN_DAILY_HOURS,
         canIncrease = canEdit && dailyHours < AppConstants.PROMISE_MAX_DAILY_HOURS,
         onStep = onStep
@@ -330,7 +332,7 @@ private fun WeeklyHoursStepper(dailyHours: Int, rollUp: Boolean, canEdit: Boolea
 
 @Composable
 private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
-    val unit = if (dailyHours == 1) "hour" else "hours"
+    val unit = if (dailyHours == 1) stringResource(R.string.my_promise_hour_unit) else stringResource(R.string.my_promise_hours_unit)
     val base = FullLineBox.copy(
         fontSize = 15.rsp,
         lineHeight = (15 * GeistLineHeight).rsp,
@@ -341,10 +343,11 @@ private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
     val bold = base.copy(fontFamily = Geist, fontWeight = FontWeight.Bold)
     val regular = base.copy(fontFamily = Geist, fontWeight = FontWeight.Normal)
 
+    val myPromiseDailyPromiseDescription = stringResource(R.string.my_promise_daily_promise_description, dailyHours, unit)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = "About $dailyHours $unit a day, your daily promise" },
+            .clearAndSetSemantics { contentDescription = myPromiseDailyPromiseDescription },
         horizontalArrangement = Arrangement.Center
     ) {
         Text(text = "≈ ", style = mono, maxLines = 1, modifier = Modifier.alignByBaseline())
@@ -368,7 +371,7 @@ private fun DailyEquivalentLine(dailyHours: Int, rollUp: Boolean) {
 @Composable
 internal fun PromiseRulesNote(dailyHours: Int) {
     val green = ZenTheme.colors.textBrand
-    val hrs = if (dailyHours == 1) "hr" else "hrs"
+    val hrs = if (dailyHours == 1) stringResource(R.string.my_promise_hr_unit) else stringResource(R.string.my_promise_hrs_unit)
     Row(
         modifier = Modifier
             .fillMaxWidth()

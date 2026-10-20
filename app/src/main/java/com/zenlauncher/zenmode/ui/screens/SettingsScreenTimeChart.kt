@@ -99,6 +99,8 @@ import com.zenlauncher.zenmode.ZenCheckInPreferences
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 /** The range the settings screen-time chart is showing. */
 internal enum class ScreenTimeRange { WEEK, MONTH }
@@ -134,7 +136,7 @@ internal fun SettingsScreenTimeCard(
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
-                ZenEyebrow(if (showingMonth) "Last 30 days" else "This week")
+                ZenEyebrow(if (showingMonth) stringResource(R.string.settings_chart_last_30_days) else stringResource(R.string.settings_chart_this_week))
                 Text(
                     text = formatHours(total),
                     fontFamily = DepartureMono,
@@ -171,13 +173,13 @@ internal fun SettingsScreenTimeCard(
         Spacer(Modifier.height(16.rdp))
         if (showingMonth && monthlyHours == null) {
             Box(Modifier.fillMaxWidth().height(150.rdp), contentAlignment = Alignment.Center) {
-                Text("Counting the month…", fontFamily = Geist, fontSize = 13.rsp, color = colors.textSecondary)
+                Text(stringResource(R.string.settings_chart_counting_month), fontFamily = Geist, fontSize = 13.rsp, color = colors.textSecondary)
             }
         } else {
             ScreenTimeBars(data, labelDays = !showingMonth)
         }
         Text(
-            text = "Counted on this phone. Your partner sees your Zen Score, never these hours.",
+            text = stringResource(R.string.settings_chart_privacy_note),
             fontFamily = Geist,
             fontSize = 13.rsp,
             lineHeight = 18.rsp,
@@ -223,12 +225,13 @@ private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
         }
         Spacer(Modifier.width(6.rdp))
         Column(Modifier.weight(1f)) {
+            val settingsChartDescription = stringResource(R.string.settings_chart_description, hours.size, axisHourLabel(max), formatHours(hours.lastOrNull() ?: 0f))
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(130.rdp)
                     .semantics {
-                        contentDescription = "Screen time per day, ${hours.size} days, up to ${axisHourLabel(max)}. Today ${formatHours(hours.lastOrNull() ?: 0f)}."
+                        contentDescription = settingsChartDescription
                     }
             ) {
                 val n = hours.size.coerceAtLeast(1)
@@ -265,7 +268,7 @@ private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
             } else {
                 Row(Modifier.fillMaxWidth()) {
                     Text("30 DAYS AGO", style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
-                    Text("TODAY", style = ZenTypography.monoLabel, color = colors.textPrimary)
+                    Text(stringResource(R.string.settings_chart_today_label), style = ZenTypography.monoLabel, color = colors.textPrimary)
                 }
             }
         }

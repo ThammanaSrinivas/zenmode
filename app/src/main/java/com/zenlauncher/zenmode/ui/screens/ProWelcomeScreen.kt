@@ -45,6 +45,8 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.delay
+import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 
 // ── "You're Pro" ──────────────────────────────────────────────────
 //
@@ -103,7 +105,7 @@ fun ProWelcome(
             ZenProTag(unlocked = true, modifier = Modifier.staggeredEntrance(7, stepMillis = 130))
             Spacer(Modifier.height(16.rdp))
             Text(
-                text = "You're Pro.\nThank you.",
+                text = stringResource(R.string.zen_pro_welcome_headline),
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 36.rsp,
@@ -116,8 +118,8 @@ fun ProWelcome(
             )
             Spacer(Modifier.height(12.rdp))
             Text(
-                text = if (isSimulated) "Every Pro feature is yours during early access. Nothing was charged."
-                else "You're keeping the servers on and the app ad-free. We're grateful.",
+                text = if (isSimulated) stringResource(R.string.zen_pro_welcome_early_access_note)
+                else stringResource(R.string.zen_pro_welcome_thanks_note),
                 fontFamily = Geist,
                 fontSize = 15.rsp,
                 lineHeight = 22.rsp,
@@ -135,7 +137,7 @@ fun ProWelcome(
             ProOpensCard()
             Spacer(Modifier.height(20.rdp))
             ZenButton(
-                text = "Back to $PRODUCT_NAME",
+                text = stringResource(R.string.zen_pro_welcome_back_button, PRODUCT_NAME),
                 onClick = onContinue,
                 modifier = Modifier
                     .padding(bottom = 16.rdp)

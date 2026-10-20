@@ -672,7 +672,7 @@ private fun HomeHeader(
             }
         ) {
             Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
-                ZenStatLabel("Zen Score")
+                ZenStatLabel(stringResource(R.string.common_zen_score))
                 Spacer(modifier = Modifier.height(ZenStatLineGap))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(

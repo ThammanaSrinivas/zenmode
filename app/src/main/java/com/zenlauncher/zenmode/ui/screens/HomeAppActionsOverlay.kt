@@ -22,6 +22,8 @@ import com.zenlauncher.zenmode.ui.components.ZenOverlayFootnote
 import com.zenlauncher.zenmode.ui.components.ZenOverlayTagline
 import com.zenlauncher.zenmode.ui.components.ZenOverlayTitle
 import com.zenlauncher.zenmode.ui.theme.rdp
+import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * What a long-press on a home app opens: a frosted overlay with the app's two actions.
@@ -41,7 +43,7 @@ fun HomeAppActionsOverlay(
     if (app != null) lastApp[0] = app
     val current = lastApp[0] ?: return
 
-    ZenFrostedOverlay(visible = app != null, eyebrow = "Home screen settings", onDismiss = onDismiss) {
+    ZenFrostedOverlay(visible = app != null, eyebrow = stringResource(R.string.common_home_screen_settings), onDismiss = onDismiss) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AndroidView(
                 factory = { ImageView(it).apply { scaleType = ImageView.ScaleType.FIT_CENTER } },
@@ -54,25 +56,25 @@ fun HomeAppActionsOverlay(
             ZenOverlayTitle(text = current.label.toString())
         }
         ZenOverlayTagline(
-            text = if (position in 1..appCount) "Spot $position of your $appCount home apps."
-            else "One of your $appCount home apps."
+            text = if (position in 1..appCount) stringResource(R.string.home_app_actions_tagline_spot, position, appCount)
+            else stringResource(R.string.home_app_actions_tagline_one_of, appCount)
         )
 
         Spacer(Modifier.padding(top = 10.rdp))
 
         ZenOverlayAction(
-            title = "Change home apps",
-            subtitle = "Pick your $appCount and the order they sit in",
+            title = stringResource(R.string.home_app_actions_change_apps_title),
+            subtitle = stringResource(R.string.home_app_actions_change_apps_subtitle, appCount),
             onClick = onChangeHomeApps,
             icon = { HomeGridGlyph() }
         )
         ZenOverlayAction(
-            title = "App info",
-            subtitle = "Storage, permissions and notifications",
+            title = stringResource(R.string.home_app_actions_app_info_title),
+            subtitle = stringResource(R.string.home_app_actions_app_info_subtitle),
             onClick = { onAppInfo(current) },
             icon = { InfoGlyph() }
         )
 
-        ZenOverlayFootnote(text = "Anything not on home is still one search away.")
+        ZenOverlayFootnote(text = stringResource(R.string.home_app_actions_footnote))
     }
 }

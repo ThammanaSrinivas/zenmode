@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -141,7 +142,7 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "Zencircle daily leaderboard",
+                text = stringResource(R.string.circle_share_leaderboard_title),
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
@@ -171,7 +172,7 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "RANKS RESET IN ${rememberTimeUntilMidnight()} HRS",
+                    text = stringResource(R.string.common_ranks_reset_in, rememberTimeUntilMidnight()),
                     fontFamily = DepartureMono,
                     fontSize = 9.5.sp,
                     color = colorResource(R.color.zen_circle_reset_text)
@@ -184,7 +185,7 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
                     fontSize = 15.sp,
                     color = green
                 )
-                Text(text = "Member count", fontFamily = Geist, fontSize = 12.sp, color = ink)
+                Text(text = stringResource(R.string.circle_share_member_count_label), fontFamily = Geist, fontSize = 12.sp, color = ink)
             }
         }
 
@@ -222,7 +223,7 @@ private fun ShareCardContent(members: List<ZenCircleMember>, ranks: Map<Int, Int
         )
 
         Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = "FROM", fontFamily = Geist, fontSize = 11.sp, letterSpacing = 1.sp, color = colorResource(R.color.stone_600))
+            Text(text = stringResource(R.string.circle_share_from_label), fontFamily = Geist, fontSize = 11.sp, letterSpacing = 1.sp, color = colorResource(R.color.stone_600))
             Spacer(Modifier.height(4.dp))
             // The card is always paper, whatever the app theme — so its ink is fixed too.
             ZenModeOsWordmark(fontSize = 20.sp, markSize = 22.dp, markGap = 6.dp, zenModeColor = colorResource(R.color.ink_surface))
@@ -250,10 +251,11 @@ internal fun circleMoment(ranked: List<ZenCircleMember>): CircleMoment = when {
 }
 
 /** The card's closing line, in the sharer's own voice. */
+@Composable
 internal fun circleTagline(ranked: List<ZenCircleMember>): String = when (circleMoment(ranked)) {
-    CircleMoment.SOLO -> "Building my Zen Circle. Come and be in it! #ZenTogether"
-    CircleMoment.LEADING -> "Leading my Zen Circle today. Come and take it! #ZenTogether"
-    CircleMoment.CHASING -> "Chasing ${arcName(ranked.first())} for #01 in my Zen Circle. #ZenTogether"
+    CircleMoment.SOLO -> stringResource(R.string.circle_share_tagline_solo)
+    CircleMoment.LEADING -> stringResource(R.string.circle_share_tagline_leading)
+    CircleMoment.CHASING -> stringResource(R.string.circle_share_tagline_chasing, arcName(ranked.first()))
 }
 
 /** "Ranking ▲#01 · Zen Bro's name · Zen Score 9.1" for today's leader. */
@@ -279,7 +281,7 @@ private fun LeaderStrip(leader: ZenCircleMember, green: Color, rule: Color) {
                 }
             }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Zen Score", style = label, maxLines = 1)
+                Text(stringResource(R.string.common_zen_score), style = label, maxLines = 1)
                 Text(
                     ZenScore.format(leader.zenScore),
                     style = TextStyle(fontFamily = DepartureMono, fontSize = 17.sp, brush = rememberBrandOsGradient())
@@ -291,8 +293,9 @@ private fun LeaderStrip(leader: ZenCircleMember, green: Color, rule: Color) {
 }
 
 /** First name only, capped, so a long name can't run off the arc into the footer. */
+@Composable
 private fun arcName(member: ZenCircleMember): String {
-    if (member.isYou) return "You"
+    if (member.isYou) return stringResource(R.string.circle_share_you_label)
     val first = member.name.trim().substringBefore(' ').lowercase().replaceFirstChar { it.titlecase() }
     return if (first.length > 10) first.take(9) + "…" else first
 }
@@ -302,7 +305,8 @@ private fun arcName(member: ZenCircleMember): String {
 private fun NameArc(names: List<String>, green: Color, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
     val muted = colorResource(R.color.zen_circle_reset_text)
-    Canvas(modifier = modifier.semantics { contentDescription = "Circle members: ${names.joinToString()}" }) {
+    val circleShareMembersDescription = stringResource(R.string.circle_share_members_description, names.joinToString())
+    Canvas(modifier = modifier.semantics { contentDescription = circleShareMembersDescription }) {
         val radius = size.width * 0.62f
         val center = Offset(size.width / 2, radius + 14.dp.toPx())
         drawArc(
@@ -381,7 +385,10 @@ fun ZenCircleSharePreview(
         val scope = rememberCoroutineScope()
         val layer = rememberGraphicsLayer()
         var cardSize by remember { mutableStateOf(IntSize.Zero) }
-        val shareText = shareText ?: "Join my Zen Circle on $PRODUCT_NAME. #ZenTogether"
+        val shareText = shareText ?: stringResource(R.string.circle_share_default_text, PRODUCT_NAME)
+        // The share sheet's chooser title is read on the Android share sheet, so it has to
+        // be resolved here - the share call itself runs in a coroutine, not a composable.
+        val chooserTitle = stringResource(R.string.common_share_my_zen_circle)
         val feedback = rememberZenFeedback()
         val moment = remember(members, ranks) {
             circleMoment(members.indices.sortedBy { ranks[it] ?: Int.MAX_VALUE }.map { members[it] })
@@ -433,7 +440,7 @@ fun ZenCircleSharePreview(
             Spacer(Modifier.height(16.dp))
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 ZenCirclePillButton(
-                    text = "Share my Zen Circle",
+                    text = stringResource(R.string.common_share_my_zen_circle),
                     onClick = {
                         feedback.shared()
                         trackShare("share_image", analyticsKey)
@@ -443,7 +450,7 @@ fun ZenCircleSharePreview(
                                 bitmap = layer.toImageBitmap().asAndroidBitmap(),
                                 fileName = "zenmode_circle.png",
                                 text = shareText,
-                                chooserTitle = "Share my Zen Circle"
+                                chooserTitle = chooserTitle
                             )
                         }
                     },
@@ -451,7 +458,7 @@ fun ZenCircleSharePreview(
                     content = Color.White
                 )
                 ZenCirclePillButton(
-                    text = "Save as image",
+                    text = stringResource(R.string.circle_share_save_button),
                     onClick = {
                         feedback.saved()
                         trackShare("save_image", analyticsKey)

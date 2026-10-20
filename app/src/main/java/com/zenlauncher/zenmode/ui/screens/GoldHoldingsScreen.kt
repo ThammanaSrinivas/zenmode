@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -54,6 +55,7 @@ import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.*
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.AppConstants
 
 // ── Data model ───────────────────────────────────────────────────
 
@@ -66,11 +68,15 @@ data class GoldHoldingEntry(
 )
 
 /** "6 of 7 days promise kept", the one spelling of a week's status line. */
-private fun keptStatus(daysKept: Int) = "$daysKept of 7 days promise kept"
+@Composable
+private fun keptStatus(daysKept: Int) = stringResource(R.string.gold_holdings_kept_status, daysKept)
 
 /** A week that fell short: the status line with Gold access denied. */
-private fun deniedStatus(daysKept: Int) = "Only ${keptStatus(daysKept)}, access denied"
+@Composable
+private fun deniedStatus(daysKept: Int) =
+    stringResource(R.string.gold_holdings_access_denied_status, keptStatus(daysKept))
 
+@Composable
 private fun defaultGoldHoldings() = listOf(
     GoldHoldingEntry("Sep 01-07, 2026", keptStatus(6), "₹180", "3 Units"),
     GoldHoldingEntry("Oct 12-18, 2026", deniedStatus(3), isAccessDenied = true),
@@ -92,10 +98,10 @@ fun GoldHoldingsScreen(
     investedSum: Int = 20543,
     unitsHeld: Int = 164,
     sincePercent: Int = 25,
-    sinceLabel: String = "SINCE MARCH",
-    tickerLabel: String = "GOLDBEES",
-    headline: String = "Quiet Weeks & Earned Gold",
-    holdings: List<GoldHoldingEntry> = remember { defaultGoldHoldings() },
+    sinceLabel: String? = null,
+    tickerLabel: String? = null,
+    headline: String? = null,
+    holdings: List<GoldHoldingEntry> = defaultGoldHoldings(),
     isPro: Boolean = false,
     onBack: () -> Unit = {},
     onBackToZenGold: () -> Unit = {},
@@ -133,14 +139,18 @@ fun GoldHoldingsScreen(
 
             GoldHoldingsTopBar(onBack = onBack)
 
+            val sinceLabelText = sinceLabel ?: stringResource(R.string.gold_holdings_since_label)
+            val tickerLabelText = tickerLabel ?: stringResource(R.string.gold_holdings_ticker_label)
+            val headlineText = headline ?: stringResource(R.string.gold_holdings_headline)
+
             Spacer(modifier = Modifier.height(28.dp))
 
-            BreadcrumbRow(tickerLabel = tickerLabel)
+            BreadcrumbRow(tickerLabel = tickerLabelText)
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = headline,
+                text = headlineText,
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 26.rsp,
@@ -154,7 +164,7 @@ fun GoldHoldingsScreen(
                 investedSum = investedSum,
                 unitsHeld = unitsHeld,
                 sincePercent = sincePercent,
-                sinceLabel = sinceLabel
+                sinceLabel = sinceLabelText
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -204,7 +214,7 @@ private fun GoldHoldingsTopBar(onBack: () -> Unit) {
                 modifier = Modifier.size(26.dp)
             )
             Text(
-                text = "GOLD HOLDINGS",
+                text = stringResource(R.string.gold_holdings_title),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.rsp,
@@ -252,7 +262,7 @@ private fun BackArrow(onClick: () -> Unit, modifier: Modifier = Modifier) {
 private fun BreadcrumbRow(tickerLabel: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = "HOLDINGS",
+            text = stringResource(R.string.gold_holdings_breadcrumb),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 12.rsp,
@@ -293,13 +303,13 @@ private fun GoldSummaryRow(
     ) {
         SummaryStat(
             value = "₹%,d".format(java.util.Locale.US, investedSum),
-            label = "INVESTED SUM",
+            label = stringResource(R.string.gold_holdings_invested_sum_label),
             valueColor = GoldGreen700,
             valueFontSize = 22
         )
         SummaryStat(
             value = "$unitsHeld",
-            label = "UNITS",
+            label = stringResource(R.string.common_units),
             valueColor = GoldGreenDeep,
             valueFontSize = 26
         )
@@ -518,7 +528,7 @@ private fun DownloadPdfLink(isPro: Boolean, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Download PDF",
+            text = stringResource(R.string.gold_holdings_download_pdf),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 15.rsp,
@@ -540,7 +550,7 @@ private fun GoldProBadge() {
             .padding(horizontal = 5.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "PRO",
+            text = stringResource(R.string.common_pro_badge),
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 7.rsp,

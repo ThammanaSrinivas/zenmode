@@ -52,6 +52,7 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun AccountabilityScreen(
@@ -132,7 +133,7 @@ fun AccountabilityScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Zen Buddy Summary",
+                    text = stringResource(R.string.accountability_summary_title),
                     fontFamily = Geist,
                     fontWeight = FontWeight.Bold,
                     fontSize = 26.rsp,
@@ -157,7 +158,7 @@ fun AccountabilityScreen(
 
             // Weekly Battle Heading
             Text(
-                text = "Zenmode Weekly Battle:",
+                text = stringResource(R.string.accountability_weekly_battle_title),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.rsp,
@@ -191,7 +192,7 @@ fun AccountabilityScreen(
             // Connection date
             uiState.connectionDateMillis?.let { millis ->
                 Text(
-                    text = "Buddy connection active since ${formatConnectionDate(millis)}",
+                    text = stringResource(R.string.accountability_buddy_connected_since, formatConnectionDate(millis)),
                     fontFamily = Geist,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.rsp,
@@ -205,7 +206,7 @@ fun AccountabilityScreen(
             // Back to Home Button
             Image(
                 painter = painterResource(R.drawable.button_back_to_home),
-                contentDescription = "Back to home",
+                contentDescription = stringResource(R.string.common_back_to_home),
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -217,7 +218,7 @@ fun AccountabilityScreen(
 
             // Change My Buddy
             Text(
-                text = "Change my buddy",
+                text = stringResource(R.string.accountability_change_my_buddy),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.rsp,
@@ -231,7 +232,7 @@ fun AccountabilityScreen(
 
             // Standing escape hatch into the new flow - always available, one-way once tapped.
             Text(
-                text = "Switch to Zen Circle",
+                text = stringResource(R.string.accountability_switch_to_zen_circle),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.rsp,
@@ -258,7 +259,7 @@ private fun UserCodeRow(code: String, onCopyCode: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "My zenmode code: ",
+            text = stringResource(R.string.accountability_my_code_label),
             fontFamily = Geist,
             fontWeight = FontWeight.Normal,
             fontSize = 14.rsp,
@@ -274,7 +275,7 @@ private fun UserCodeRow(code: String, onCopyCode: () -> Unit) {
         Spacer(modifier = Modifier.width(8.rdp))
         Image(
             painter = painterResource(R.drawable.ic_content_copy),
-            contentDescription = "Copy code",
+            contentDescription = stringResource(R.string.accountability_copy_code_description),
             colorFilter = ColorFilter.tint(colors.textBrand),
             modifier = Modifier
                 .size(20.rdp)
@@ -295,7 +296,7 @@ private fun LeadText(myUsage: DailyUsage?, buddyStats: BuddyStats?) {
     val highlightText: String
 
     if (buddyStats == null) {
-        leadText = "Connect a buddy to start the battle!"
+        leadText = stringResource(R.string.accountability_lead_connect_buddy)
         highlightText = ""
     } else {
         val diffMins = kotlin.math.abs(myMinutes - buddyMinutes)
@@ -304,15 +305,15 @@ private fun LeadText(myUsage: DailyUsage?, buddyStats: BuddyStats?) {
         val timeStr = String.format("%02d:%02d", hh, mm)
         when {
             myMinutes < buddyMinutes -> {
-                leadText = "You lead the battle by "
+                leadText = stringResource(R.string.accountability_lead_you_lead)
                 highlightText = "$timeStr Hours"
             }
             myMinutes > buddyMinutes -> {
-                leadText = "Your buddy leads by "
+                leadText = stringResource(R.string.accountability_lead_buddy_leads)
                 highlightText = "$timeStr Hours"
             }
             else -> {
-                leadText = "You're tied!"
+                leadText = stringResource(R.string.accountability_lead_tied)
                 highlightText = ""
             }
         }
@@ -354,7 +355,7 @@ private fun ChangeBuddyConfirmDialog(
         containerColor = colors.bgSecondary,
         title = {
             Text(
-                text = "Change buddy?",
+                text = stringResource(R.string.accountability_change_buddy_title),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.rsp,
@@ -363,7 +364,7 @@ private fun ChangeBuddyConfirmDialog(
         },
         text = {
             Text(
-                text = "Are you sure you want to disconnect with current buddy?",
+                text = stringResource(R.string.accountability_change_buddy_message),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.rsp,
@@ -372,7 +373,7 @@ private fun ChangeBuddyConfirmDialog(
         },
         confirmButton = {
             Text(
-                text = "Yes, disconnect",
+                text = stringResource(R.string.accountability_change_buddy_confirm),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.rsp,
@@ -384,7 +385,7 @@ private fun ChangeBuddyConfirmDialog(
         },
         dismissButton = {
             Text(
-                text = "Cancel",
+                text = stringResource(R.string.accountability_change_buddy_cancel),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.rsp,

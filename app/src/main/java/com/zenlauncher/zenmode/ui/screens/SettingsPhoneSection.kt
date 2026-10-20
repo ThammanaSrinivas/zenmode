@@ -61,6 +61,7 @@ import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlin.math.PI
 import kotlin.math.sin
+import androidx.compose.ui.res.stringResource
 
 // ── Settings → Phone ──────────────────────────────────────────────
 // The Android settings ZenMode depends on, each with its live state (re-read every time
@@ -108,35 +109,35 @@ internal fun PhoneSettingsGroup() {
     val state = remember(resumes) { readPhoneState(context) }
     val pkgUri = Uri.parse("package:${context.packageName}")
 
-    ZenSettingsGroup(label = "Phone") {
+    ZenSettingsGroup(label = stringResource(R.string.settings_phone_section)) {
         ZenSettingsRow(
-            title = "Default home app",
+            title = stringResource(R.string.settings_phone_default_home_title),
             subtitle = "$PRODUCT_NAME only works as your home screen.",
-            value = if (state.isDefaultHome) PRODUCT_NAME else "Not set",
+            value = if (state.isDefaultHome) PRODUCT_NAME else stringResource(R.string.settings_phone_default_home_not_set),
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_HOME_SETTINGS)) }
         )
         ZenRowDivider()
         ZenSettingsRow(
-            title = "Usage access",
-            subtitle = "Lets $PRODUCT_NAME read your screen time. It never leaves the phone.",
-            value = if (state.usageAccess) "Allowed" else "Needed",
+            title = stringResource(R.string.settings_phone_usage_access_title),
+            subtitle = stringResource(R.string.settings_phone_usage_access_subtitle, PRODUCT_NAME),
+            value = if (state.usageAccess) stringResource(R.string.settings_phone_usage_access_allowed) else stringResource(R.string.settings_phone_usage_access_needed),
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
         )
         ZenRowDivider()
         ZenSettingsRow(
-            title = "Accessibility",
-            subtitle = "Powers the Distraction Blocker.",
-            value = if (state.accessibility) "On" else "Off",
+            title = stringResource(R.string.settings_phone_accessibility_title),
+            subtitle = stringResource(R.string.settings_phone_accessibility_subtitle),
+            value = if (state.accessibility) stringResource(R.string.common_state_on) else stringResource(R.string.common_state_off),
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
         )
         ZenRowDivider()
         ZenSettingsRow(
-            title = "Battery",
-            subtitle = "Unrestricted keeps streaks and reports counting in the background.",
-            value = if (state.batteryUnrestricted) "Unrestricted" else "Optimised",
+            title = stringResource(R.string.settings_phone_battery_title),
+            subtitle = stringResource(R.string.settings_phone_battery_subtitle),
+            value = if (state.batteryUnrestricted) stringResource(R.string.settings_phone_battery_unrestricted) else stringResource(R.string.settings_phone_battery_optimised),
             trailing = RowTrailing.External,
             onClick = {
                 openSystemSetting(context, Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkgUri))
@@ -144,15 +145,15 @@ internal fun PhoneSettingsGroup() {
         )
         ZenRowDivider()
         ZenSettingsRow(
-            title = "Do Not Disturb",
-            subtitle = "Silence the phone itself while you focus.",
+            title = stringResource(R.string.settings_phone_dnd_title),
+            subtitle = stringResource(R.string.settings_phone_dnd_subtitle),
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent("android.settings.ZEN_MODE_SETTINGS")) }
         )
         ZenRowDivider()
         ZenSettingsRow(
             title = "$PRODUCT_NAME notifications",
-            subtitle = "Weekly reports and your Zen Bro's nudges.",
+            subtitle = stringResource(R.string.settings_phone_notifications_subtitle),
             trailing = RowTrailing.External,
             onClick = {
                 openSystemSetting(
@@ -164,7 +165,7 @@ internal fun PhoneSettingsGroup() {
         )
         ZenRowDivider()
         ZenSettingsRow(
-            title = "All phone settings",
+            title = stringResource(R.string.settings_phone_all_settings_title),
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_SETTINGS)) }
         )
@@ -196,7 +197,7 @@ internal fun SettingsFooter() {
             modifier = Modifier.semantics(mergeDescendants = true) {}
         ) {
             Text(
-                text = "Quiet the noise,",
+                text = stringResource(R.string.settings_phone_footer_headline_one),
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 26.rsp,
@@ -205,7 +206,7 @@ internal fun SettingsFooter() {
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Together.",
+                text = stringResource(R.string.settings_phone_footer_headline_two),
                 style = TextStyle(
                     brush = gradient,
                     fontFamily = ClashDisplay,
@@ -217,7 +218,7 @@ internal fun SettingsFooter() {
             )
         }
         Text(
-            text = "You could be anywhere, and you chose a calmer phone. Thanks for being here.",
+            text = stringResource(R.string.settings_phone_footer_note),
             fontFamily = Geist,
             fontSize = 13.rsp,
             lineHeight = 18.rsp,
@@ -235,7 +236,7 @@ internal fun SettingsFooter() {
             )
         }
         Text(
-            text = "ZENMODE OS ${BuildConfig.VERSION_NAME} · © 2026 · OPEN SOURCE",
+            text = stringResource(R.string.settings_phone_footer_version, BuildConfig.VERSION_NAME),
             style = ZenTypography.monoLabel,
             color = colors.textMuted
         )
@@ -259,7 +260,8 @@ private fun QuietTogetherGraphic(modifier: Modifier = Modifier) {
     // Fixed pseudo-random jitter so the "noise" end looks busy but doesn't flicker.
     val jitter = remember { FloatArray(64) { i -> sin(i * 12.9898f).let { (it * 43758.547f) % 1f } } }
 
-    Canvas(modifier = modifier.clearAndSetSemantics { contentDescription = "Noise settling into a calm line, two friends together" }) {
+    val settingsPhoneGraphicDescription = stringResource(R.string.settings_phone_graphic_description)
+    Canvas(modifier = modifier.clearAndSetSemantics { contentDescription = settingsPhoneGraphicDescription }) {
         val w = size.width
         val mid = size.height * 0.62f
         val amp = size.height * 0.32f

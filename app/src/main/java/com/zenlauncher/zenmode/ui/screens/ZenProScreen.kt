@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -162,10 +163,11 @@ private fun PlanOffer.discountPercent(): Int? {
 }
 
 /** What the subscribe button should say for this offer's actual trial length. */
+@Composable
 private fun PlanOffer.startLabel(): String = when {
-    freeTrialDays <= 0 -> "Subscribe"
-    freeTrialDays >= 28 -> "Start the free month"
-    else -> "Start your $freeTrialDays-day free trial"
+    freeTrialDays <= 0 -> stringResource(R.string.zen_pro_subscribe_button)
+    freeTrialDays >= 28 -> stringResource(R.string.zen_pro_start_free_month)
+    else -> stringResource(R.string.zen_pro_start_free_trial, freeTrialDays)
 }
 
 private val DateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH)
@@ -230,7 +232,7 @@ fun ZenProScreen(
             .then(if (onPlanPage) Modifier else Modifier.navigationBarsPadding())
     ) {
         ProTopBar(
-            title = if (isPro) "Manage Pro" else "$PRODUCT_NAME Pro",
+            title = if (isPro) stringResource(R.string.zen_pro_manage_title) else stringResource(R.string.zen_pro_product_title, PRODUCT_NAME),
             onBackClick = onBackClick
         )
         if (onPlanPage) {
@@ -282,7 +284,7 @@ internal fun ProTopBar(title: String, onBackClick: () -> Unit) {
             modifier = Modifier
                 .size(Spacing.touchTarget)
                 .clip(CircleShape)
-                .clickable(onClickLabel = "Back", role = Role.Button, onClick = onBackClick),
+                .clickable(onClickLabel = stringResource(R.string.common_back), role = Role.Button, onClick = onBackClick),
             contentAlignment = Alignment.Center
         ) {
             Box(
@@ -347,10 +349,10 @@ private fun PlanPage(
                 modifier = Modifier.selectableGroup().staggeredEntrance(2),
                 verticalArrangement = Arrangement.spacedBy(8.rdp)
             ) {
-                ZenEyebrow("Pick a plan")
+                ZenEyebrow(stringResource(R.string.zen_pro_pick_a_plan))
                 if (annual != null) {
                     PlanOption(
-                        title = "Annual",
+                        title = stringResource(R.string.zen_pro_plan_annual),
                         originalPrice = annual.originalPrice?.let { "$it/year" },
                         price = "${annual.formattedPrice}/year",
                         detail = "${annual.formattedPerMonth} a month, billed annually." +
@@ -362,7 +364,7 @@ private fun PlanPage(
                 }
                 if (monthly != null) {
                     PlanOption(
-                        title = "Monthly",
+                        title = stringResource(R.string.common_monthly),
                         price = "${monthly.formattedPrice}/month",
                         detail = "≈ ${monthly.formattedYearTotal}/year — flexible billing, cancel anytime." +
                             if (monthly.freeTrialDays > 0) " ${monthly.freeTrialDays}-day free trial." else "",
@@ -372,7 +374,7 @@ private fun PlanPage(
                 }
                 if (offers.isEmpty()) {
                     Text(
-                        text = "Loading prices from Google Play…",
+                        text = stringResource(R.string.zen_pro_loading_prices),
                         fontFamily = Geist,
                         fontSize = 14.rsp,
                         color = ZenTheme.colors.textSecondary
@@ -422,7 +424,7 @@ private fun HeroSection(modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.rdp)) {
         OsRule(Modifier.width(48.rdp))
         Text(
-            text = "Welcome in. A generous free plan to find your Zen.",
+            text = stringResource(R.string.zen_pro_hero_headline),
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 28.rsp,
@@ -430,7 +432,7 @@ private fun HeroSection(modifier: Modifier = Modifier) {
             color = colors.textPrimary
         )
         Text(
-            text = "Free, forever — no ads, ever. We hold your data to a stricter ethic than most apps bother with. Pro simply takes it one step further.",
+            text = stringResource(R.string.zen_pro_hero_subtext),
             fontFamily = Geist,
             fontSize = 15.rsp,
             lineHeight = 22.rsp,
@@ -446,22 +448,22 @@ private fun TierSummaryRow(annual: PlanOffer?, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(10.rdp)
     ) {
         TierColumn(
-            label = "Free",
-            amount = annual?.formattedPrice?.let { zeroLike(it) } ?: "Free",
-            caption = "Forever",
+            label = stringResource(R.string.common_free),
+            amount = annual?.formattedPrice?.let { zeroLike(it) } ?: stringResource(R.string.common_free),
+            caption = stringResource(R.string.zen_pro_tier_free_caption),
             items = FreeHighlights,
             highlighted = false,
             icon = { TierGlyphBadge(pro = false, modifier = Modifier.padding(bottom = 6.rdp)) },
             modifier = Modifier.weight(1f).fillMaxHeight()
         )
         TierColumn(
-            label = "Pro",
+            label = stringResource(R.string.zen_pro_tier_pro_label),
             amount = annual?.formattedPrice ?: "…",
             originalAmount = annual?.originalPrice,
-            caption = "Per year",
+            caption = stringResource(R.string.zen_pro_tier_pro_caption),
             items = ProHighlights,
             highlighted = true,
-            badge = if (annual?.originalPrice != null) "Launching price" else null,
+            badge = if (annual?.originalPrice != null) stringResource(R.string.zen_pro_launching_price_badge) else null,
             icon = { TierGlyphBadge(pro = true, modifier = Modifier.padding(bottom = 6.rdp)) },
             modifier = Modifier.weight(1f).fillMaxHeight()
         )
@@ -722,7 +724,7 @@ private fun RedeemCodeCard(modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .heightIn(min = Spacing.touchTarget)
             .zenCard(shape)
-            .clickable(onClickLabel = "How to redeem a code", role = Role.Button) {
+            .clickable(onClickLabel = stringResource(R.string.zen_pro_redeem_code_action_label), role = Role.Button) {
                 uriHandler.openUri(AppConstants.REDEEM_CODE_URL)
             }
             .padding(horizontal = 16.rdp, vertical = 14.rdp),
@@ -731,9 +733,9 @@ private fun RedeemCodeCard(modifier: Modifier = Modifier) {
         Box(Modifier.size(8.rdp).clip(CircleShape).background(colors.accentReward))
         Spacer(Modifier.width(12.rdp))
         Column(Modifier.weight(1f)) {
-            Text("Got a code for free months?", fontFamily = Geist, fontWeight = FontWeight.SemiBold, fontSize = 14.rsp, color = colors.textPrimary)
+            Text(stringResource(R.string.zen_pro_redeem_code_title), fontFamily = Geist, fontWeight = FontWeight.SemiBold, fontSize = 14.rsp, color = colors.textPrimary)
             Text(
-                "Redeem it at Google Play checkout. Here's where to tap.",
+                stringResource(R.string.zen_pro_redeem_code_body),
                 fontFamily = Geist,
                 fontSize = 13.rsp,
                 lineHeight = 18.rsp,
@@ -742,7 +744,7 @@ private fun RedeemCodeCard(modifier: Modifier = Modifier) {
             )
         }
         Spacer(Modifier.width(10.rdp))
-        Text("HOW TO →", style = ZenTypography.monoLabel, color = colors.textBrand)
+        Text(stringResource(R.string.zen_pro_redeem_code_cta), style = ZenTypography.monoLabel, color = colors.textBrand)
     }
 }
 
@@ -755,7 +757,7 @@ private fun TrustSection(modifier: Modifier = Modifier) {
     ) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
         Spacer(Modifier.height(8.rdp))
-        ZenEyebrow("What Pro never does")
+        ZenEyebrow(stringResource(R.string.zen_pro_trust_eyebrow))
         listOf(
             "Your Zen Score is never a sales lever.",
             "No upsell on a low day.",
@@ -826,13 +828,15 @@ private fun PlanFooter(
             ) { line -> PriceLine(line) }
         }
         ZenButton(
-            text = if (isSimulated) "Unlock Pro" else chosen?.startLabel() ?: "Subscribe",
+            text = if (isSimulated) stringResource(R.string.common_unlock_pro)
+            else if (chosen != null) chosen.startLabel()
+            else stringResource(R.string.zen_pro_subscribe_button),
             onClick = onSubscribe,
             enabled = chosen != null && !isWorking
         )
         Text(
-            text = if (isSimulated) "Early access: Pro unlocks on this device and nothing is charged."
-            else "Cancelling takes the same two taps as starting.",
+            text = if (isSimulated) stringResource(R.string.zen_pro_footer_early_access_note)
+            else stringResource(R.string.zen_pro_footer_cancel_note),
             fontFamily = Geist,
             fontSize = 12.rsp,
             color = colors.textMuted,
@@ -851,49 +855,49 @@ private fun ConfirmSheet(
     onDismiss: () -> Unit
 ) {
     val trial = offer.freeTrialDays > 0
-    val trialPhrase = if (offer.freeTrialDays >= 28) "a month" else "${offer.freeTrialDays} days"
-    val unit = if (offer.period == BillingPeriod.ANNUAL) "year" else "month"
+    val trialPhrase = if (offer.freeTrialDays >= 28) stringResource(R.string.zen_pro_trial_phrase_month) else stringResource(R.string.zen_pro_trial_phrase_days, offer.freeTrialDays)
+    val unit = if (offer.period == BillingPeriod.ANNUAL) stringResource(R.string.common_unit_year) else stringResource(R.string.common_unit_month)
     ZenSheet(onDismiss = onDismiss) {
-        ZenEyebrow(if (isSimulated) "Early access" else "Confirm")
+        ZenEyebrow(if (isSimulated) stringResource(R.string.common_early_access) else stringResource(R.string.zen_pro_confirm_eyebrow_confirm))
         if (isSimulated) {
             // No store behind this build: say plainly that nothing is charged, so the receipt
             // below can't be read as a bill.
-            ZenSheetTitle("Pro, free during early access")
+            ZenSheetTitle(stringResource(R.string.zen_pro_sheet_title_early_access))
             Column {
-                ZenReceiptLine("Plan", "${offer.formattedPrice}/$unit")
-                if (trial) ZenReceiptLine("Free trial", trialPhrase.replaceFirstChar { it.uppercase() })
-                ZenReceiptLine("Charged", "Nothing", showDivider = false)
+                ZenReceiptLine(stringResource(R.string.zen_pro_receipt_plan_label), stringResource(R.string.zen_pro_receipt_plan_value, offer.formattedPrice, unit))
+                if (trial) ZenReceiptLine(stringResource(R.string.common_free_trial), trialPhrase.replaceFirstChar { it.uppercase() })
+                ZenReceiptLine(stringResource(R.string.zen_pro_receipt_charged_label), stringResource(R.string.zen_pro_receipt_nothing_value), showDivider = false)
             }
             ZenSheetBody(
-                "Pro unlocks on this device right away. No payment details, no charge. " +
-                    "When paid plans open we'll ask first; nothing moves to a paid plan on its own."
+                stringResource(R.string.zen_pro_sheet_body_unlocks) +
+                    stringResource(R.string.zen_pro_sheet_body_paid_plans)
             )
         } else {
             ZenSheetTitle(
-                if (trial) "Free for $trialPhrase, then ${offer.formattedPrice}/$unit"
-                else "${offer.formattedPrice}/$unit, starting today"
+                if (trial) stringResource(R.string.zen_pro_sheet_title_free_trial, trialPhrase, offer.formattedPrice, unit)
+                else stringResource(R.string.zen_pro_sheet_title_starting_today, offer.formattedPrice, unit)
             )
             Column {
-                ZenReceiptLine("Today", if (trial) zeroLike(offer.formattedPrice) else offer.formattedPrice)
-                ZenReceiptLine(if (trial) "After the trial" else "Next charge", offer.formattedPrice)
-                ZenReceiptLine("Then", if (offer.period == BillingPeriod.ANNUAL) "Once a year" else "Every month", showDivider = false)
+                ZenReceiptLine(stringResource(R.string.zen_pro_receipt_today_label), if (trial) zeroLike(offer.formattedPrice) else offer.formattedPrice)
+                ZenReceiptLine(if (trial) stringResource(R.string.zen_pro_receipt_after_trial_label) else stringResource(R.string.zen_pro_receipt_next_charge_label), offer.formattedPrice)
+                ZenReceiptLine(stringResource(R.string.common_then), if (offer.period == BillingPeriod.ANNUAL) stringResource(R.string.zen_pro_receipt_once_a_year) else stringResource(R.string.zen_pro_receipt_every_month), showDivider = false)
             }
             ZenSheetBody(
-                (if (trial) "A notice arrives before the trial ends. No silent charge. " else "") +
-                    "Cancel any time: Settings → $PRODUCT_NAME Pro → Cancel. Two taps, the same two as this."
+                (if (trial) stringResource(R.string.zen_pro_sheet_body_trial_notice) else "") +
+                    stringResource(R.string.zen_pro_sheet_body_cancel_anytime, PRODUCT_NAME)
             )
             PriceLine(offer.priceLine())
         }
         ZenButton(
             text = when {
-                isWorking -> if (isSimulated) "Unlocking Pro…" else "One moment…"
-                isSimulated -> "Unlock Pro"
+                isWorking -> if (isSimulated) stringResource(R.string.zen_pro_unlocking_pro) else stringResource(R.string.zen_pro_one_moment)
+                isSimulated -> stringResource(R.string.common_unlock_pro)
                 else -> offer.startLabel()
             },
             onClick = onConfirm,
             enabled = !isWorking
         )
-        ZenButton(text = "Back", onClick = onDismiss, style = ZenButtonStyle.Ghost, enabled = !isWorking)
+        ZenButton(text = stringResource(R.string.common_back), onClick = onDismiss, style = ZenButtonStyle.Ghost, enabled = !isWorking)
     }
 }
 

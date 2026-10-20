@@ -70,6 +70,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 // ── Zen Circle settings sheet ─────────────────────────────────────
 // Behind the ☰ on "My Zen Circle" (Figma node 2026:2939; the sheet is a flattened image there,
@@ -117,7 +118,7 @@ internal fun ZenCircleSettingsContent(
 
         Spacer(Modifier.height(19.5.rdp))
         Text(
-            text = "ZEN CIRCLE SETTINGS",
+            text = stringResource(R.string.common_zen_circle_settings_header),
             fontFamily = DepartureMono,
             fontSize = 11.5.rsp,
             letterSpacing = 1.2.sp,
@@ -126,7 +127,7 @@ internal fun ZenCircleSettingsContent(
         )
         Spacer(Modifier.height(14.rdp))
         Text(
-            text = "Circle",
+            text = stringResource(R.string.circle_settings_title),
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 24.rsp,
@@ -140,7 +141,7 @@ internal fun ZenCircleSettingsContent(
         SettingsRow(
             index = 0,
             icon = Icons.Outlined.AddCircleOutline,
-            title = "Invite people",
+            title = stringResource(R.string.common_invite_people),
             subtitle = if (seatsLeft == 1) "1 seat left" else "$seatsLeft seats left",
             enabled = seatsLeft > 0,
             onClick = onInvitePeople
@@ -148,30 +149,30 @@ internal fun ZenCircleSettingsContent(
         SettingsRow(
             index = 1,
             icon = Icons.Outlined.LightMode,
-            title = "Edit Circle",
-            subtitle = "Name and icon",
+            title = stringResource(R.string.circle_settings_edit_title),
+            subtitle = stringResource(R.string.circle_settings_edit_subtitle),
             comingSoon = true
         )
         SettingsRow(
             index = 2,
             icon = Icons.Outlined.AccessibilityNew,
-            title = "Manage members",
-            subtitle = "Remove, or hand over ownership",
+            title = stringResource(R.string.circle_settings_manage_members_title),
+            subtitle = stringResource(R.string.circle_settings_manage_members_subtitle),
             comingSoon = true
         )
         SettingsRow(
             index = 3,
             icon = Icons.Outlined.PersonRemove,
-            title = "Remove buddy",
-            subtitle = "End your Zen Bro connection with ${settings.buddyName}",
+            title = stringResource(R.string.circle_settings_remove_buddy_title),
+            subtitle = stringResource(R.string.circle_settings_remove_buddy_subtitle, settings.buddyName),
             destructive = true,
             confirming = pending == PendingAction.Remove,
             onClick = { pending = if (pending == PendingAction.Remove) null else PendingAction.Remove }
         ) {
             ConfirmStrip(
                 message = "${settings.buddyName} won’t see your stats anymore, and you won’t see theirs.",
-                confirmLabel = "Remove",
-                busyLabel = "Removing…",
+                confirmLabel = stringResource(R.string.circle_settings_remove_confirm),
+                busyLabel = stringResource(R.string.circle_settings_remove_busy),
                 busy = settings.removing,
                 onCancel = { pending = null },
                 onConfirm = settings.onRemoveBuddy
@@ -180,16 +181,16 @@ internal fun ZenCircleSettingsContent(
         SettingsRow(
             index = 4,
             icon = Icons.Outlined.Close,
-            title = "Leave Circle",
-            subtitle = "Your own history stays yours",
+            title = stringResource(R.string.circle_settings_leave_title),
+            subtitle = stringResource(R.string.circle_settings_leave_subtitle),
             destructive = true,
             confirming = pending == PendingAction.Leave,
             onClick = { pending = if (pending == PendingAction.Leave) null else PendingAction.Leave }
         ) {
             ConfirmStrip(
-                message = "You’ll leave this circle. Your screen time history stays with you.",
-                confirmLabel = "Leave",
-                busyLabel = "Leaving…",
+                message = stringResource(R.string.circle_settings_leave_confirm_message),
+                confirmLabel = stringResource(R.string.circle_settings_leave_confirm),
+                busyLabel = stringResource(R.string.circle_settings_leave_busy),
                 busy = settings.removing,
                 onCancel = { pending = null },
                 onConfirm = settings.onLeaveCircle
@@ -207,7 +208,7 @@ internal fun ZenCircleSettingsContent(
         )
         Spacer(Modifier.height(16.4.rdp))
         Text(
-            text = "You started it, so you can hand it over.",
+            text = stringResource(R.string.circle_settings_handover_note),
             fontFamily = Geist,
             fontSize = 14.5.rsp,
             letterSpacing = (-0.1).sp,
@@ -244,6 +245,7 @@ private fun SettingsRow(
             .fillMaxWidth()
             .riseIn(delayMillis = 90 + index * 55, rise = 22.dp)
     ) {
+        val circleSettingsComingSoonState = stringResource(R.string.circle_settings_coming_soon_state)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -259,7 +261,7 @@ private fun SettingsRow(
                         onClick()
                     }
                 }
-                .semantics { if (comingSoon) stateDescription = "Coming soon" }
+                .semantics { if (comingSoon) stateDescription = circleSettingsComingSoonState }
                 .padding(top = 20.rdp, bottom = 20.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -288,7 +290,7 @@ private fun SettingsRow(
                     if (comingSoon) {
                         Spacer(Modifier.width(7.rdp))
                         Text(
-                            text = "SOON",
+                            text = stringResource(R.string.circle_settings_soon_badge),
                             fontFamily = DepartureMono,
                             fontSize = 9.rsp,
                             letterSpacing = 0.6.sp,
@@ -364,7 +366,7 @@ private fun ConfirmStrip(
                     .padding(horizontal = 18.rdp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Keep", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = ZenTheme.colors.textPrimary)
+                Text(stringResource(R.string.circle_settings_keep_button), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 15.rsp, color = ZenTheme.colors.textPrimary)
             }
             Box(
                 modifier = Modifier

@@ -67,6 +67,7 @@ import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
 
 // ── My Screen Time card ───────────────────────────────────────────
 
@@ -121,7 +122,7 @@ internal fun PromiseScreenTimeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "My Screen time",
+                    text = stringResource(R.string.zen_gold_promise_my_screen_time),
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = 16.rsp,
@@ -158,10 +159,10 @@ internal fun PromiseScreenTimeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Daily Average  •  " + when {
-                        isMonthly -> "This Month"
-                        state.isHistoric -> "That Week"
-                        else -> "This Week"
+                    text = stringResource(R.string.zen_gold_promise_daily_average) + when {
+                        isMonthly -> stringResource(R.string.zen_gold_promise_period_this_month)
+                        state.isHistoric -> stringResource(R.string.zen_gold_promise_period_that_week)
+                        else -> stringResource(R.string.zen_gold_promise_period_this_week)
                     },
                     fontFamily = Geist,
                     fontSize = 12.rsp,
@@ -170,7 +171,7 @@ internal fun PromiseScreenTimeCard(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "My promise - ",
+                    text = stringResource(R.string.zen_gold_promise_my_promise_label),
                     fontFamily = Geist,
                     fontSize = 10.rsp,
                     color = colors.textPrimary
@@ -298,7 +299,7 @@ private fun WeekNavigator(
         if (hasHistory) {
             WeekNavArrow(
                 kind = GlyphKind.Back,
-                label = "Previous week",
+                label = stringResource(R.string.zen_gold_promise_previous_week),
                 enabled = !isPro || canGoBack,
                 tint = if (isPro && !canGoBack) colors.textMuted else rule,
                 onClick = { if (!isPro) refuse() else onWeekOffsetChange(weekOffset - 1) }
@@ -324,7 +325,7 @@ private fun WeekNavigator(
                             .padding(horizontal = 3.rdp, vertical = 1.rdp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("PRO", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
+                        Text(stringResource(R.string.common_pro_badge), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
                     }
                 }
             }
@@ -344,7 +345,7 @@ private fun WeekNavigator(
             Spacer(modifier = Modifier.width(2.rdp))
             WeekNavArrow(
                 kind = GlyphKind.Chevron,
-                label = "Next week",
+                label = stringResource(R.string.zen_gold_promise_next_week),
                 enabled = canGoForward,
                 tint = if (canGoForward) rule else colors.textMuted,
                 onClick = { onWeekOffsetChange(weekOffset + 1) }
@@ -464,10 +465,10 @@ private fun StatusTab(unlocked: Boolean, historic: Boolean = false, modifier: Mo
     ) {
         Text(
             text = when {
-                historic && unlocked -> "WEEK KEPT"
-                historic -> "WEEK MISSED"
-                unlocked -> "UNLOCKED"
-                else -> "IN PROGRESS"
+                historic && unlocked -> stringResource(R.string.zen_gold_promise_status_week_kept)
+                historic -> stringResource(R.string.zen_gold_promise_status_week_missed)
+                unlocked -> stringResource(R.string.zen_gold_promise_status_unlocked)
+                else -> stringResource(R.string.zen_gold_promise_status_in_progress)
             },
             fontFamily = DepartureMono,
             fontSize = 9.5.rsp,
@@ -480,9 +481,9 @@ private fun StatusTab(unlocked: Boolean, historic: Boolean = false, modifier: Mo
 @Composable
 private fun WeeklyPromiseLegend() {
     Column(verticalArrangement = Arrangement.spacedBy(3.rdp)) {
-        WeeklyPromiseLegendRow(color = PromiseKeptGreen, label = "Promise within limits")
-        WeeklyPromiseLegendRow(color = PromiseBrokenGray, label = "Promise Broken")
-        WeeklyPromiseLegendRow(color = PromiseUndecidedGray, label = "Not decided yet")
+        WeeklyPromiseLegendRow(color = PromiseKeptGreen, label = stringResource(R.string.zen_gold_promise_legend_within_limits))
+        WeeklyPromiseLegendRow(color = PromiseBrokenGray, label = stringResource(R.string.zen_gold_promise_legend_broken))
+        WeeklyPromiseLegendRow(color = PromiseUndecidedGray, label = stringResource(R.string.zen_gold_promise_legend_undecided))
     }
 }
 
@@ -534,7 +535,7 @@ private fun WeeklyMonthlyToggle(isPro: Boolean, isMonthly: Boolean, onToggleChan
                 .padding(horizontal = 12.rdp, vertical = 4.rdp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Weekly", fontFamily = Geist, fontWeight = if (!isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
+            Text(stringResource(R.string.common_weekly), fontFamily = Geist, fontWeight = if (!isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
         }
         Box(
             modifier = Modifier
@@ -556,7 +557,7 @@ private fun WeeklyMonthlyToggle(isPro: Boolean, isMonthly: Boolean, onToggleChan
                 .padding(horizontal = 14.rdp, vertical = 4.rdp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Monthly", fontFamily = Geist, fontWeight = if (isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
+            Text(stringResource(R.string.common_monthly), fontFamily = Geist, fontWeight = if (isMonthly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isMonthly) Color.Black else colorResource(R.color.toggle_inactive_text))
             
             Box(
                 modifier = Modifier
@@ -568,7 +569,7 @@ private fun WeeklyMonthlyToggle(isPro: Boolean, isMonthly: Boolean, onToggleChan
                     .padding(horizontal = 3.rdp, vertical = 1.rdp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("PRO", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
+                Text(stringResource(R.string.common_pro_badge), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
             }
         }
     }

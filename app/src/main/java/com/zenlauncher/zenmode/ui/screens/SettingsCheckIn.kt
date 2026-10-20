@@ -29,6 +29,8 @@ import com.zenlauncher.zenmode.ui.theme.rsp
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 
 /** 12-hour, no leading zero -- "8:00 pm", matching how the rest of the app writes times. */
 internal val CheckInTimeFormat: DateTimeFormatter =
@@ -62,9 +64,9 @@ internal fun CheckInTimeSheet(
     }
 
     ZenSheet(onDismiss = onDismiss) {
-        ZenSheetTitle("Check-in time")
+        ZenSheetTitle(stringResource(R.string.settings_checkin_time_title))
         ZenSheetBody(
-            "Your evening card appears at this time, once a day, the next time you're on home."
+            stringResource(R.string.settings_checkin_sheet_body)
         )
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.rdp),
@@ -82,7 +84,7 @@ internal fun CheckInTimeSheet(
                             RoundedCornerShape(percent = 50)
                         )
                         .clickable(
-                            onClickLabel = "Check in at ${slot.format(CheckInTimeFormat)}",
+                            onClickLabel = stringResource(R.string.settings_checkin_slot_label, slot.format(CheckInTimeFormat)),
                             role = Role.Button
                         ) { onPick(slot) }
                         .padding(horizontal = 14.rdp, vertical = 10.rdp),

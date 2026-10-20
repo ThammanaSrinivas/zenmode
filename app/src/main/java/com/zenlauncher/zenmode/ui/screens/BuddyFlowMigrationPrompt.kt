@@ -11,6 +11,8 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * One-time prompt for a user who already had a Zen Buddy relationship before Zen Circle
@@ -29,7 +31,7 @@ fun BuddyFlowMigrationPrompt(
         containerColor = colors.bgSecondary,
         title = {
             Text(
-                text = "We rebuilt Zen Buddy into Zen Circle",
+                text = stringResource(R.string.buddy_flow_title),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.rsp,
@@ -38,8 +40,8 @@ fun BuddyFlowMigrationPrompt(
         },
         text = {
             Text(
-                text = "Same buddy, a fresh dashboard. You can always switch later from your " +
-                    "Zen Buddy summary.",
+                text = stringResource(R.string.buddy_flow_message_part_one) +
+                    stringResource(R.string.buddy_flow_message_part_two),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.rsp,
@@ -48,7 +50,7 @@ fun BuddyFlowMigrationPrompt(
         },
         confirmButton = {
             Text(
-                text = "Try Zen Circle",
+                text = stringResource(R.string.buddy_flow_try_circle_button),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.rsp,
@@ -60,7 +62,7 @@ fun BuddyFlowMigrationPrompt(
         },
         dismissButton = {
             Text(
-                text = "Keep Zen Buddy",
+                text = stringResource(R.string.buddy_flow_keep_buddy_button),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.rsp,

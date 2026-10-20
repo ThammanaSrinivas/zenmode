@@ -35,6 +35,8 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * The release notes, once, after an update: the same frosted panel as every other Home
@@ -49,7 +51,7 @@ fun WhatsNewOverlay(
     versionName: String,
     items: List<WhatsNewItem> = WhatsNew.items
 ) {
-    ZenFrostedOverlay(visible = visible, eyebrow = "What's new · v$versionName", onDismiss = onDismiss) {
+    ZenFrostedOverlay(visible = visible, eyebrow = stringResource(R.string.whats_new_eyebrow, versionName), onDismiss = onDismiss) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -74,12 +76,12 @@ fun WhatsNewOverlay(
             }
             Spacer(Modifier.height(18.rdp))
             ZenButton(
-                text = "Let's go",
+                text = stringResource(R.string.whats_new_lets_go_button),
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth().staggeredEntrance(3 + items.size)
             )
             Spacer(Modifier.height(8.rdp))
-            ZenOverlayFootnote(text = "Thanks for using $PRODUCT_NAME 🤍")
+            ZenOverlayFootnote(text = stringResource(R.string.whats_new_thanks_footnote, PRODUCT_NAME))
         }
     }
 }

@@ -33,6 +33,8 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
+import androidx.compose.ui.res.stringResource
 
 // ZenMode Pro -- the manage page (a real subscription) and the granted page (invite-only,
 // nothing to manage). Split out of ZenProScreen.kt, which hosts both; the sales rules at the
@@ -48,9 +50,9 @@ internal fun GrantedPro(entitlement: Entitlement) {
     ) {
         OsRule()
         Spacer(Modifier.height(6.rdp))
-        ZenEyebrow("Pro supporter" + (entitlement.since?.let { " · since ${it.asZenMonth()}" } ?: ""))
+        ZenEyebrow(stringResource(R.string.common_pro_supporter) + (entitlement.since?.let { stringResource(R.string.zen_pro_manage_supporter_since, it.asZenMonth()) } ?: ""))
         Text(
-            text = "Early access",
+            text = stringResource(R.string.common_early_access),
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 20.rsp,
@@ -58,7 +60,7 @@ internal fun GrantedPro(entitlement: Entitlement) {
             color = colors.textPrimary
         )
         Text(
-            text = "You're in on invite-only early access — nothing to manage or pay here.",
+            text = stringResource(R.string.zen_pro_manage_granted_body),
             fontFamily = Geist,
             fontSize = 14.rsp,
             lineHeight = 20.rsp,
@@ -80,7 +82,7 @@ internal fun ManagePro(
     var confirmCancel by remember { mutableStateOf(false) }
     val ending = entitlement.status == ProStatus.ENDING
     val offer = entitlement.period?.let { offers.offer(it) }
-    val unit = if (entitlement.period == BillingPeriod.MONTHLY) "month" else "year"
+    val unit = if (entitlement.period == BillingPeriod.MONTHLY) stringResource(R.string.common_unit_month) else stringResource(R.string.common_unit_year)
 
     Column(
         modifier = Modifier.fillMaxWidth().staggeredEntrance(0).zenCard().padding(16.rdp),
@@ -88,7 +90,7 @@ internal fun ManagePro(
     ) {
         OsRule()
         Spacer(Modifier.height(6.rdp))
-        ZenEyebrow("Pro supporter" + (entitlement.since?.let { " · since ${it.asZenMonth()}" } ?: ""))
+        ZenEyebrow(stringResource(R.string.common_pro_supporter) + (entitlement.since?.let { stringResource(R.string.zen_pro_manage_supporter_since, it.asZenMonth()) } ?: ""))
         Text(
             text = buildString {
                 append(if (entitlement.period == BillingPeriod.MONTHLY) "Monthly" else "Annual")
@@ -102,26 +104,26 @@ internal fun ManagePro(
         )
         Column {
             ZenReceiptLine(
-                "Status",
+                stringResource(R.string.zen_pro_manage_status_label),
                 when (entitlement.status) {
-                    ProStatus.TRIAL -> "Free trial"
-                    ProStatus.ENDING -> "Ending"
-                    else -> "Active"
+                    ProStatus.TRIAL -> stringResource(R.string.common_free_trial)
+                    ProStatus.ENDING -> stringResource(R.string.zen_pro_manage_status_ending)
+                    else -> stringResource(R.string.zen_pro_manage_status_active)
                 }
             )
             when (entitlement.status) {
                 ProStatus.TRIAL -> ZenReceiptLine(
-                    if (isSimulated) "Trial ends" else "First charge",
+                    if (isSimulated) stringResource(R.string.zen_pro_manage_trial_ends_label) else stringResource(R.string.zen_pro_manage_first_charge_label),
                     entitlement.trialEndsOn?.asZenDate() ?: "-"
                 )
-                ProStatus.ENDING -> ZenReceiptLine("Pro until", entitlement.endsOn?.asZenDate() ?: "-")
-                else -> ZenReceiptLine("Renews", entitlement.renewsOn?.asZenDate() ?: "-")
+                ProStatus.ENDING -> ZenReceiptLine(stringResource(R.string.zen_pro_manage_pro_until_label), entitlement.endsOn?.asZenDate() ?: stringResource(R.string.common_dash_placeholder))
+                else -> ZenReceiptLine(stringResource(R.string.zen_pro_manage_renews_label), entitlement.renewsOn?.asZenDate() ?: "-")
             }
             ZenReceiptLine(
-                "Then",
+                stringResource(R.string.common_then),
                 when {
-                    ending -> "Back to free"
-                    isSimulated -> "No charge, early access"
+                    ending -> stringResource(R.string.zen_pro_manage_back_to_free)
+                    isSimulated -> stringResource(R.string.zen_pro_manage_no_charge_early_access)
                     else -> offer?.let { "${it.formattedPrice} a $unit" } ?: "-"
                 },
                 showDivider = false
@@ -132,15 +134,15 @@ internal fun ManagePro(
     Text(
         text = when {
             isSimulated && ending ->
-                "You're on early access, so nothing was charged. Resume any time before Pro ends."
+                stringResource(R.string.zen_pro_manage_ending_note)
             isSimulated ->
-                "You're on early access: nothing is charged. When paid plans open we'll ask " +
-                    "first, and your Pro carries on until then."
+                stringResource(R.string.zen_pro_manage_early_note_part_one) +
+                    stringResource(R.string.zen_pro_manage_early_note_part_two)
             // Real billing: Play, not this screen, is the source of truth for cancel/resume --
             // no app can act on a subscription on the user's behalf, only Play's own UI can.
             else ->
-                "Renewals, cancellations and refunds are all managed in the Play Store, not " +
-                    "here. Changes made there can take a few minutes to show up in $PRODUCT_NAME."
+                stringResource(R.string.zen_pro_manage_play_store_note_one) +
+                    stringResource(R.string.zen_pro_manage_play_store_note_two, PRODUCT_NAME)
         },
         fontFamily = Geist,
         fontSize = 15.rsp,
@@ -150,10 +152,10 @@ internal fun ManagePro(
 
     if (isSimulated) {
         if (ending) {
-            ZenButton(text = if (isWorking) "Resuming…" else "Resume Pro", onClick = onResume, enabled = !isWorking)
+            ZenButton(text = if (isWorking) stringResource(R.string.zen_pro_manage_resuming_button) else stringResource(R.string.zen_pro_manage_resume_button), onClick = onResume, enabled = !isWorking)
         } else {
             ZenButton(
-                text = if (isWorking) "Cancelling…" else "Cancel Pro",
+                text = if (isWorking) stringResource(R.string.zen_pro_manage_cancelling_button) else stringResource(R.string.common_cancel_pro),
                 onClick = { confirmCancel = true },
                 style = ZenButtonStyle.Outline,
                 enabled = !isWorking
@@ -163,7 +165,7 @@ internal fun ManagePro(
         // One button either way: cancel and resume are the same Play Store screen, and we
         // can't promise the tap did anything until Play's own RTDN reconciles state back to us.
         ZenButton(
-            text = "Manage in Play Store",
+            text = stringResource(R.string.zen_pro_manage_play_store_button),
             onClick = if (ending) onResume else onCancel,
             style = ZenButtonStyle.Outline,
             enabled = !isWorking
@@ -174,16 +176,16 @@ internal fun ManagePro(
         val until = (if (entitlement.status == ProStatus.TRIAL) entitlement.trialEndsOn else entitlement.renewsOn)
             ?.asZenDate()
         ZenSheet(onDismiss = { confirmCancel = false }) {
-            ZenSheetTitle("Cancel Pro?")
+            ZenSheetTitle(stringResource(R.string.zen_pro_manage_cancel_sheet_title))
             ZenSheetBody(
-                "Pro runs until ${until ?: "the end of this period"}, then the app goes back to free. " +
-                    "The launcher, intent, sessions, Zen Score, your daily report and Zen Circle all stay."
+                stringResource(R.string.zen_pro_manage_cancel_sheet_body_one, until ?: stringResource(R.string.zen_pro_manage_end_of_period)) +
+                    stringResource(R.string.zen_pro_manage_cancel_sheet_body_two)
             )
-            ZenSheetBody("History past 7 days stops showing. None of it is deleted.")
+            ZenSheetBody(stringResource(R.string.zen_pro_manage_cancel_sheet_history))
             // Same weight on purpose: no retention offer, no "are you sure" chain.
             Row(horizontalArrangement = Arrangement.spacedBy(8.rdp)) {
                 ZenButton(
-                    text = "Cancel Pro",
+                    text = stringResource(R.string.common_cancel_pro),
                     onClick = {
                         confirmCancel = false
                         onCancel()
@@ -192,7 +194,7 @@ internal fun ManagePro(
                     modifier = Modifier.weight(1f)
                 )
                 ZenButton(
-                    text = "Keep Pro",
+                    text = stringResource(R.string.zen_pro_manage_keep_pro_button),
                     onClick = { confirmCancel = false },
                     style = ZenButtonStyle.Outline,
                     modifier = Modifier.weight(1f)

@@ -39,6 +39,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import androidx.compose.ui.res.stringResource
 
 /**
  * The last-hour card: **the win first, the hour second.**
@@ -98,7 +99,7 @@ internal fun ColumnScope.LastHourCheckInContent(
 
     Spacer(modifier = Modifier.height(4.rdp))
 
-    ZenButton(text = "See my week", onClick = onSeeMyWeekClick, style = ZenButtonStyle.Ghost)
+    ZenButton(text = stringResource(R.string.checkin_see_my_week), onClick = onSeeMyWeekClick, style = ZenButtonStyle.Ghost)
 }
 
 /** The win, first and loudest. */
@@ -166,7 +167,7 @@ private fun BufferStatus(card: ZenCheckInCard) {
                 color = colors.accentDeduct
             )
             Text(
-                text = "of buffer left today",
+                text = stringResource(R.string.checkin_last_hour_buffer_left),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 12.5.rsp,
@@ -201,7 +202,7 @@ private fun StreakCoinsBlock(card: ZenCheckInCard) {
         Spacer(modifier = Modifier.height(9.rdp))
 
         Text(
-            text = "Today — almost banked",
+            text = stringResource(R.string.checkin_last_hour_today_almost_banked),
             fontFamily = DepartureMono,
             fontSize = 9.rsp,
             letterSpacing = 0.5.sp,

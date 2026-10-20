@@ -92,6 +92,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
 
 // ── ZM_OS v3: Invest Gold · Step 01 (quantity) ──────────────────────
 // Figma node 2026:1250. Opened from Zen Gold's "Invest Gold" once the week's promise
@@ -163,7 +164,7 @@ fun InvestGoldScreen(
                 Column {
                     Spacer(modifier = Modifier.height(34.rdp))
                     V3ScreenHeader(
-                        title = "Invest Gold",
+                        title = stringResource(R.string.common_invest_gold),
                         backLabel = BACK_TO_ZEN_GOLD,
                         onBackClick = onBackClick,
                         dotGap = 3.5.rdp,
@@ -175,12 +176,12 @@ fun InvestGoldScreen(
                     Spacer(modifier = Modifier.height(20.rdp))
                     InvestGoldStepIndicator(
                         step = 1,
-                        label = "Choose The Quantity & Amount",
+                        label = stringResource(R.string.invest_gold_step_choose_quantity),
                         modifier = Modifier.staggeredEntrance(Entrance.STEP)
                     )
                     Spacer(modifier = Modifier.height(40.2.rdp))
                     Text(
-                        text = "How much gold?",
+                        text = stringResource(R.string.invest_gold_how_much_title),
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.Medium,
                         fontSize = 32.rsp,
@@ -224,7 +225,7 @@ fun InvestGoldScreen(
                 Column {
                     Spacer(modifier = Modifier.height(29.rdp))
                     V3PrimaryPillButton(
-                        text = "Review in Kite",
+                        text = stringResource(R.string.invest_gold_review_in_kite),
                         onClick = onReviewInKiteClick,
                         modifier = Modifier
                             .padding(horizontal = 31.rdp)
@@ -242,15 +243,16 @@ fun InvestGoldScreen(
 /** "Step 0N • label" under the header; shared by both Invest Gold steps. */
 @Composable
 internal fun InvestGoldStepIndicator(step: Int, label: String, modifier: Modifier = Modifier) {
+    val investGoldStepDescription = stringResource(R.string.invest_gold_step_description, step, label.lowercase())
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = "Step $step: ${label.lowercase()}" },
+            .clearAndSetSemantics { contentDescription = investGoldStepDescription },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Step ${step.toString().padStart(2, '0')}",
+            text = stringResource(R.string.invest_gold_step_number, step.toString().padStart(2, '0')),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 14.rsp,
@@ -287,13 +289,14 @@ private fun InstrumentRow(
 ) {
     val price = GoldOrder.formatInr(unitPricePaise)
 
+    val investGoldInstrumentDescription = stringResource(R.string.invest_gold_instrument_description, symbol, fundName, exchange, price)
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(62.rdp)
             .clip(RoundedCornerShape(4.rdp))
             .background(colorResource(R.color.invest_gold_instrument_bg))
-            .clearAndSetSemantics { contentDescription = "$symbol, $fundName on $exchange, $price per unit" }
+            .clearAndSetSemantics { contentDescription = investGoldInstrumentDescription }
     ) {
         Row(
             modifier = Modifier
@@ -343,7 +346,7 @@ private fun InstrumentRow(
                 style = FullLineBox
             )
             Text(
-                text = "PER UNIT",
+                text = stringResource(R.string.invest_gold_per_unit),
                 fontFamily = DepartureMono,
                 fontSize = 10.rsp,
                 lineHeight = (10 * DepartureMonoLineHeight).rsp,
@@ -426,9 +429,9 @@ private fun QuantityCard(
                 .padding(horizontal = 18.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CardLabel("QUANTITY")
+            CardLabel(stringResource(R.string.invest_gold_card_quantity))
             V3BulletDot(slotWidth = 18.rdp, dotSize = 3.5.rdp, color = ZenTheme.colors.textPrimary)
-            CardLabel("WHOLE  UNITS")
+            CardLabel(stringResource(R.string.invest_gold_card_whole_units))
             Spacer(modifier = Modifier.weight(1f))
             WeeklyCapLabel(atCap = units == maxUnits)
         }
@@ -440,12 +443,12 @@ private fun QuantityCard(
             maxValue = maxUnits,
             rollUp = rollUp,
             minDigits = 2,
-            caption = "UNITS",
+            caption = stringResource(R.string.common_units),
             captionLetterSpacing = (-0.4021).sp,
             captionGap = 0.dp,
             valueDescription = "$units ${if (units == 1) "unit" else "units"}, ${GoldOrder.formatInr(total)}",
-            decreaseLabel = "Decrease quantity",
-            increaseLabel = "Increase quantity",
+            decreaseLabel = stringResource(R.string.invest_gold_decrease_quantity),
+            increaseLabel = stringResource(R.string.invest_gold_increase_quantity),
             canDecrease = units > AppConstants.INVEST_GOLD_MIN_UNITS,
             canIncrease = units < maxUnits,
             onStep = { delta -> select(units + delta) }
@@ -482,9 +485,9 @@ private fun QuantityCard(
         Spacer(modifier = Modifier.height(8.rdp))
 
         Text(
-            text = "The weekly Maximum cap is $maxUnits units, about " +
+            text = stringResource(R.string.invest_gold_weekly_cap_prefix, maxUnits) +
                 "${GoldOrder.formatInr(GoldOrder.weeklyCapPaise(unitPricePaise))}. " +
-                "It is our limit on this screen, not on you.",
+                stringResource(R.string.invest_gold_limit_note),
             fontFamily = Geist,
             fontSize = 12.rsp,
             lineHeight = 18.72.rsp,
@@ -525,7 +528,7 @@ private fun WeeklyCapLabel(atCap: Boolean) {
         }
     }
     Text(
-        text = "MAX: ${AppConstants.INVEST_GOLD_MAX_UNITS_PER_WEEK} UNITS/WEEK",
+        text = stringResource(R.string.invest_gold_max_units_per_week, AppConstants.INVEST_GOLD_MAX_UNITS_PER_WEEK),
         fontFamily = Geist,
         fontWeight = FontWeight.SemiBold,
         fontSize = 12.rsp,
@@ -562,7 +565,7 @@ private fun QuickPickChip(units: Int, selected: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .width(60.444.rdp)
             .height(34.rdp)
-            .pressScale(onClick = onClick, onClickLabel = "Choose $label")
+            .pressScale(onClick = onClick, onClickLabel = stringResource(R.string.invest_gold_choose_units_label, label))
             .semantics { this.selected = selected }
             .clip(shape)
             .background(background)
@@ -600,12 +603,13 @@ private fun OrderBreakdown(units: Int, unitPricePaise: Long, totalPaise: Long, r
         color = ZenTheme.colors.textPrimary
     )
 
+    val investGoldOrderTotalDescription = stringResource(R.string.invest_gold_order_total_description, units, GoldOrder.formatInr(unitPricePaise), GoldOrder.formatInr(totalPaise))
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 28.rdp)
             .clearAndSetSemantics {
-                contentDescription = "$units × ${GoldOrder.formatInr(unitPricePaise)} = ${GoldOrder.formatInr(totalPaise)}"
+                contentDescription = investGoldOrderTotalDescription
             },
         verticalAlignment = Alignment.Bottom
     ) {

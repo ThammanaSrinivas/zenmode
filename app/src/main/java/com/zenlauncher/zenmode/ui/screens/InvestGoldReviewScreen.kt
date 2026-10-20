@@ -60,6 +60,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import androidx.compose.ui.res.stringResource
 
 // ── ZM_OS v3: Invest Gold · Step 02 (review) ────────────────────────
 // The order the user picked on step 01, read back before handing off to Kite.
@@ -126,8 +127,8 @@ fun InvestGoldReviewScreen(
                 Column {
                     Spacer(modifier = Modifier.height(34.rdp))
                     V3ScreenHeader(
-                        title = "Review",
-                        backLabel = "Back to quantity",
+                        title = stringResource(R.string.invest_gold_review_title),
+                        backLabel = stringResource(R.string.invest_gold_review_back_label),
                         onBackClick = onBackClick,
                         dotGap = 3.5.rdp,
                         centerOnTitle = true,
@@ -138,7 +139,7 @@ fun InvestGoldReviewScreen(
                     Spacer(modifier = Modifier.height(20.rdp))
                     InvestGoldStepIndicator(
                         step = 2,
-                        label = "Complete the payment",
+                        label = stringResource(R.string.invest_gold_review_step_payment),
                         modifier = Modifier.staggeredEntrance(ReviewEntrance.STEP)
                     )
                     Spacer(modifier = Modifier.height(40.2.rdp))
@@ -148,7 +149,7 @@ fun InvestGoldReviewScreen(
                             .staggeredEntrance(ReviewEntrance.TITLE)
                     ) {
                         Text(
-                            text = "Complete with Kite",
+                            text = stringResource(R.string.invest_gold_review_complete_with_kite),
                             fontFamily = ClashDisplay,
                             fontWeight = FontWeight.Medium,
                             fontSize = 32.rsp,
@@ -160,7 +161,7 @@ fun InvestGoldReviewScreen(
                         )
                         Spacer(modifier = Modifier.height(8.rdp))
                         Text(
-                            text = "Kite opens next. You place and authorise this order inside Zerodha Kite.",
+                            text = stringResource(R.string.invest_gold_review_kite_explainer),
                             fontFamily = Geist,
                             fontSize = 12.rsp,
                             lineHeight = (12 * GeistLineHeight).rsp,
@@ -198,7 +199,7 @@ fun InvestGoldReviewScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(29.rdp))
-                    V3PrimaryPillButton(text = "Open Kite to authorise", onClick = onOpenKiteClick)
+                    V3PrimaryPillButton(text = stringResource(R.string.invest_gold_review_open_kite), onClick = onOpenKiteClick)
                     Spacer(modifier = Modifier.height(8.rdp))
                     Box(
                         modifier = Modifier
@@ -208,7 +209,7 @@ fun InvestGoldReviewScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Change the quantity",
+                            text = stringResource(R.string.invest_gold_review_change_quantity),
                             fontFamily = Geist,
                             fontWeight = FontWeight.Medium,
                             fontSize = 16.rsp,
@@ -249,7 +250,7 @@ private fun OrderCard(
             modifier = Modifier.padding(horizontal = 18.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            OrderEyebrow("ORDER")
+            OrderEyebrow(stringResource(R.string.invest_gold_review_order_eyebrow))
             V3BulletDot(slotWidth = 18.rdp, dotSize = 3.5.rdp, color = ReviewAmountText)
             OrderEyebrow("1 ITEM")
         }
@@ -258,23 +259,24 @@ private fun OrderCard(
             modifier = Modifier.padding(horizontal = 18.rdp),
             verticalArrangement = Arrangement.spacedBy(12.rdp)
         ) {
-            OrderRow(label = "Instrument", value = "$symbol • $exchange")
-            OrderRow(label = "Quantity", value = "× $unitsLabel")
-            OrderRow(label = "Order type", value = "Market • delivery")
-            OrderRow(label = "Rate", value = "${GoldOrder.formatInr(unitPricePaise)}/ unit")
+            OrderRow(label = stringResource(R.string.invest_gold_review_order_instrument), value = stringResource(R.string.invest_gold_review_order_instrument_value, symbol, exchange))
+            OrderRow(label = stringResource(R.string.invest_gold_review_order_quantity), value = stringResource(R.string.invest_gold_review_order_quantity_value, unitsLabel))
+            OrderRow(label = stringResource(R.string.invest_gold_review_order_type), value = stringResource(R.string.invest_gold_review_order_type_value))
+            OrderRow(label = stringResource(R.string.invest_gold_review_order_rate), value = stringResource(R.string.invest_gold_review_order_rate_value, GoldOrder.formatInr(unitPricePaise)))
         }
         Spacer(modifier = Modifier.height(18.rdp))
         V3CardDivider()
         Spacer(modifier = Modifier.height(14.rdp))
+        val investGoldReviewOrderSumDescription = stringResource(R.string.invest_gold_review_order_sum_description, total)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 18.rdp)
-                .clearAndSetSemantics { contentDescription = "Order sum $total" },
+                .clearAndSetSemantics { contentDescription = investGoldReviewOrderSumDescription },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "ORDER SUM",
+                text = stringResource(R.string.invest_gold_review_order_sum_label),
                 fontFamily = DepartureMono,
                 fontSize = 12.rsp,
                 lineHeight = (12 * DepartureMonoLineHeight).rsp,
@@ -316,10 +318,11 @@ private fun OrderEyebrow(text: String) {
 
 @Composable
 private fun OrderRow(label: String, value: String) {
+    val investGoldReviewRowDescription = stringResource(R.string.invest_gold_review_row_description, label, value)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = "$label: $value" },
+            .clearAndSetSemantics { contentDescription = investGoldReviewRowDescription },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
