@@ -98,7 +98,7 @@ internal fun ColumnScope.LastHourCheckInContent(
 
     Spacer(modifier = Modifier.height(4.rdp))
 
-    ZenButton(text = "See my week", onClick = onSeeMyWeekClick, style = ZenButtonStyle.Ghost)
+    ZenButton(text = ZenCheckIn.SEE_MY_WEEK, onClick = onSeeMyWeekClick, style = ZenButtonStyle.Ghost)
 }
 
 /** The win, first and loudest. */

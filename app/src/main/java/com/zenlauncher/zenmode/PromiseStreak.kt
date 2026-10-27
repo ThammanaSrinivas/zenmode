@@ -40,7 +40,9 @@ object PromiseStreak {
      *   the milestone card's date range, which must not be guessed from [days] — kept days
      *   inside a run aren't contiguous.
      * @param daysKeptThisWeek / [daysLeftThisWeek] this week's progress toward the 5-of-7
-     *   verdict, for the check-in overlay's "you still have N days" line.
+     *   verdict, for the check-in overlay's "you still have N days" line. A today still under
+     *   the promise is in [daysKeptThisWeek] only, never in both: the days left are the ones
+     *   after today, so the two always add up to what the week can still reach.
      * @param weekAtRisk this week can no longer reach 5 of 7, so the run *will* break at
      *   Sunday midnight. Nothing has broken yet — that's the point of the weekly rule — but
      *   the check-in overlay says so plainly rather than cheering a lost week.
@@ -87,11 +89,14 @@ object PromiseStreak {
             .count { date ->
                 if (date.isEqual(today)) todayKept else days[date]?.keptPromise == true
             }
-        // Today can still be won when it's under the promise right now, so it counts as open
-        // alongside the days after it.
+        // The days still to come. A today under the promise is already in keptThisWeek, so it
+        // isn't open as well: counting it twice made a week that can only reach 4 of 7 look
+        // safe (Mon–Wed over, Thursday kept so far: 1 kept + 4 open = 5 "reachable", when only
+        // Thursday to Sunday, 4 days, can still be kept). An over-the-promise today is lost
+        // either way.
         val openThisWeek = (0 until WEEK_LENGTH)
             .map { thisWeekStart.plusDays(it.toLong()) }
-            .count { date -> date.isAfter(today) || (date.isEqual(today) && todayKept) }
+            .count { date -> date.isAfter(today) }
 
         return State(
             days = keptDays,

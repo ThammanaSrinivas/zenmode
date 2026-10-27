@@ -67,6 +67,16 @@ object AppConstants {
     const val CHECK_IN_LAST_HOUR_MIN_PROMISE_HOURS = 2
     /** How much promise counts as "the last hour". */
     const val CHECK_IN_LAST_HOUR_WINDOW_MINUTES = 60L
+    /**
+     * The evening check-in's time, in minutes past midnight: when it arrives by default, and the
+     * range the picker offers. "Evening" is the promise of the feature, so the range runs from late
+     * afternoon to just before midnight; a check-in at 06:00 would report on a day that hasn't
+     * happened. Here rather than in ZenCheckInPreferences (which needs a Context) so the desktop app,
+     * which compiles this file, offers the same range and default.
+     */
+    const val CHECK_IN_EVENING_DEFAULT_MINUTE = 20 * 60 // 20:00
+    const val CHECK_IN_EVENING_EARLIEST_MINUTE = 16 * 60 // 16:00
+    const val CHECK_IN_EVENING_LATEST_MINUTE = 23 * 60 + 30 // 23:30
 
     // Invest Gold screen (Figma node 2026:1250), opened from Zen Gold's "Invest Gold".
     // Whole units only, capped per week by ZenMode (not by the broker). The instrument,

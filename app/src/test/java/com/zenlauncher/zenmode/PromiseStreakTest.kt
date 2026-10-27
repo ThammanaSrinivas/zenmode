@@ -136,15 +136,42 @@ class PromiseStreakTest {
     }
 
     @Test
-    fun `this week's progress counts today as open while it is still being kept`() {
-        // Tuesday, Monday kept, today under: Tue-Sun is six days still winnable.
+    fun `this week's progress counts a kept today once, as kept, not as open too`() {
+        // Tuesday, Monday kept, today under: Mon and today kept, Wed-Sun still to come.
         val today = monday.plusDays(1)
         val days = mapOf(monday to day(monday, underPromise))
 
         val state = PromiseStreak.of(days, todayKept = true, today = today)
 
         assertEquals(2, state.daysKeptThisWeek) // Mon + today
-        assertEquals(6, state.daysLeftThisWeek) // today + Wed..Sun
+        assertEquals(5, state.daysLeftThisWeek) // Wed..Sun
+        assertFalse(state.weekAtRisk)
+    }
+
+    @Test
+    fun `a week that can only reach four is at risk even while today is being kept`() {
+        // Thursday: Mon-Wed over, today under so far. Thu-Sun is four days, one short of five.
+        // Counting today as kept and as open too used to make this 1 + 4 = 5, "safe".
+        val today = monday.plusDays(3)
+        val days = (0..2).associate { i -> monday.plusDays(i.toLong()).let { it to day(it, overPromise) } }
+
+        val state = PromiseStreak.of(days, todayKept = true, today = today)
+
+        assertEquals(1, state.daysKeptThisWeek) // today
+        assertEquals(3, state.daysLeftThisWeek) // Fri..Sun
+        assertTrue(state.weekAtRisk)
+    }
+
+    @Test
+    fun `a week that needs every remaining day is not yet at risk`() {
+        // Wednesday: Mon-Tue over, today under. Wed-Sun is exactly five.
+        val today = monday.plusDays(2)
+        val days = (0..1).associate { i -> monday.plusDays(i.toLong()).let { it to day(it, overPromise) } }
+
+        val state = PromiseStreak.of(days, todayKept = true, today = today)
+
+        assertEquals(1, state.daysKeptThisWeek)
+        assertEquals(4, state.daysLeftThisWeek)
         assertFalse(state.weekAtRisk)
     }
 

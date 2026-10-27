@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.PromiseUnit
 import com.zenlauncher.zenmode.R
+import com.zenlauncher.zenmode.ZenCheckIn
 import com.zenlauncher.zenmode.ZenCheckInCard
 import com.zenlauncher.zenmode.ZenCheckInKind
 import com.zenlauncher.zenmode.ui.components.PromiseKeptGreen
@@ -63,7 +64,7 @@ import com.zenlauncher.zenmode.ui.theme.rsp
  *
  * One card, three readings — see [ZenCheckInKind]:
  *  · **Celebration** (evening, still under the promise) — confetti in the brand's own
- *    gradient stops, and the plain statement that the screen limit is under promise.
+ *    gradient stops, and the plain statement that today is inside the promise.
  *  · **Encouragement** (evening, already over) — no confetti, and the week-not-the-day rule
  *    said out loud, because that's exactly the moment a user assumes they've lost the streak.
  *  · **Last hour** — the nudge while there's still a promise left to keep.
@@ -128,7 +129,7 @@ fun ZenCheckInOverlay(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = card.kind.eyebrow,
+                    text = ZenCheckIn.eyebrow(card.kind),
                     fontFamily = DepartureMono,
                     fontSize = 9.5.rsp,
                     letterSpacing = 0.6.sp,
@@ -207,7 +208,7 @@ fun ZenCheckInOverlay(
                 Spacer(modifier = Modifier.height(4.rdp))
 
                 ZenButton(
-                    text = "See my week",
+                    text = ZenCheckIn.SEE_MY_WEEK,
                     onClick = onSeeMyWeekClick,
                     style = ZenButtonStyle.Ghost
                 )
@@ -329,12 +330,6 @@ private fun WeekStripBlock(card: ZenCheckInCard, weekUnits: List<PromiseUnit>) {
     }
 }
 
-private val ZenCheckInKind.eyebrow: String
-    get() = when (this) {
-        ZenCheckInKind.CELEBRATION, ZenCheckInKind.ENCOURAGEMENT -> "DAILY CHECK-IN"
-        ZenCheckInKind.LAST_HOUR -> "LAST HOUR"
-    }
-
 /** "1:05" of promise left, or how far past it the day went. */
 private val ZenCheckInCard.clockValue: String
     get() {
@@ -362,7 +357,7 @@ private fun BankedCoinsBlock(card: ZenCheckInCard) {
         )
         Spacer(modifier = Modifier.height(9.rdp))
         Text(
-            text = "Today — banked",
+            text = ZenCheckIn.TODAY_BANKED,
             fontFamily = DepartureMono,
             fontSize = 9.rsp,
             letterSpacing = 0.5.sp,

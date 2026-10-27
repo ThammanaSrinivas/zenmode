@@ -59,7 +59,8 @@ data class ZenCheckInCard(
  *     "an hour left" lands almost as soon as the phone is picked up, which is noise, not help.
  *
  * Pure functions, like [PromiseStreak] and [ZenGoldPromise] — the caller reads prefs, usage
- * and history and passes them in.
+ * and history and passes them in. The desktop app compiles this file as it is and draws the
+ * same card inside its own window, so the copy here has to read true on a computer too.
  */
 object ZenCheckIn {
 
@@ -70,6 +71,11 @@ object ZenCheckIn {
      * waiting afterwards (different slot, so showing one never consumes the other).
      *
      * @param lastShown the date that [slot]'s card last appeared, or null if never.
+     * @param streakIncludesToday whether [streak] already counts today. Android's [PromiseStreak]
+     *   does while today is under the promise (the flame shows the day you're having), so the
+     *   last-hour card's "you bank day N" is the streak itself. The desktop's This week pill counts
+     *   finished days only, and passes false so its card states the pill's number and banks the
+     *   day after it.
      */
     fun due(
         now: LocalDateTime,
@@ -77,7 +83,8 @@ object ZenCheckIn {
         promiseHours: Int,
         todayMinutes: Long,
         streak: PromiseStreak.State,
-        lastShown: (ZenCheckInSlot) -> LocalDate?
+        lastShown: (ZenCheckInSlot) -> LocalDate?,
+        streakIncludesToday: Boolean = true
     ): ZenCheckInCard? {
         val today = now.toLocalDate()
         fun alreadyShown(slot: ZenCheckInSlot) = lastShown(slot) == today
@@ -86,12 +93,12 @@ object ZenCheckIn {
         val minutesLeft = (promiseMinutes - todayMinutes).coerceAtLeast(0)
 
         if (!alreadyShown(ZenCheckInSlot.LAST_HOUR) && isLastHour(promiseHours, minutesLeft)) {
-            return card(ZenCheckInKind.LAST_HOUR, streak, promiseHours, todayMinutes, minutesLeft)
+            return card(ZenCheckInKind.LAST_HOUR, streak, promiseHours, todayMinutes, minutesLeft, streakIncludesToday)
         }
 
         if (!alreadyShown(ZenCheckInSlot.EVENING) && !now.toLocalTime().isBefore(eveningAt)) {
             val kind = if (minutesLeft > 0) ZenCheckInKind.CELEBRATION else ZenCheckInKind.ENCOURAGEMENT
-            return card(kind, streak, promiseHours, todayMinutes, minutesLeft)
+            return card(kind, streak, promiseHours, todayMinutes, minutesLeft, streakIncludesToday)
         }
 
         return null
@@ -106,13 +113,17 @@ object ZenCheckIn {
         promiseHours > AppConstants.CHECK_IN_LAST_HOUR_MIN_PROMISE_HOURS &&
             minutesLeft in 1..AppConstants.CHECK_IN_LAST_HOUR_WINDOW_MINUTES
 
-    /** Exposed for the overlay's own preview/debug paths, which name a kind directly. */
+    /**
+     * Exposed for the overlay's own preview/debug paths, which name a kind directly, and for the
+     * desktop, which keeps a raised card on screen and redraws it as the day's numbers move.
+     */
     fun card(
         kind: ZenCheckInKind,
         streak: PromiseStreak.State,
         promiseHours: Int,
         todayMinutes: Long,
-        minutesLeft: Long = (promiseHours * 60L - todayMinutes).coerceAtLeast(0)
+        minutesLeft: Long = (promiseHours * 60L - todayMinutes).coerceAtLeast(0),
+        streakIncludesToday: Boolean = true
     ): ZenCheckInCard = ZenCheckInCard(
         kind = kind,
         streak = streak,
@@ -120,9 +131,30 @@ object ZenCheckIn {
         todayMinutes = todayMinutes,
         minutesLeft = minutesLeft,
         headline = headline(kind, streak),
-        body = body(kind, streak, promiseHours, minutesLeft),
+        body = body(kind, streak, promiseHours, minutesLeft, streakIncludesToday),
         actionLabel = actionLabel(kind)
     )
+
+    // ── Words the check-in card shows on both apps ───────────────────
+    // Android's overlay and the desktop's in-window card read these, so each has one spelling.
+
+    /** The ghost button under every card: it opens the week the card is talking about. */
+    const val SEE_MY_WEEK = "See my week"
+
+    /** The evening card's label, above the streak. */
+    const val EYEBROW_DAILY = "DAILY CHECK-IN"
+
+    /** The last-hour card's label. */
+    const val EYEBROW_LAST_HOUR = "LAST HOUR"
+
+    /** Under the celebration's coins: the day is secured. */
+    const val TODAY_BANKED = "Today \u2014 banked"
+
+    /** The small label above a card of [kind]. */
+    fun eyebrow(kind: ZenCheckInKind): String = when (kind) {
+        ZenCheckInKind.CELEBRATION, ZenCheckInKind.ENCOURAGEMENT -> EYEBROW_DAILY
+        ZenCheckInKind.LAST_HOUR -> EYEBROW_LAST_HOUR
+    }
 
     // ── Copy ──────────────────────────────────────────────────────
     // Written per streak length rather than one line for everyone: a first day and a
@@ -167,12 +199,15 @@ object ZenCheckIn {
         kind: ZenCheckInKind,
         streak: PromiseStreak.State,
         promiseHours: Int,
-        minutesLeft: Long
+        minutesLeft: Long,
+        streakIncludesToday: Boolean = true
     ): String = when (kind) {
-        // The requested line, verbatim in spirit: the user is told plainly where they stand.
+        // The user is told plainly where they stand, in words that are true on a phone and on a
+        // computer alike: the desktop has no "screen limit" (only distracting time counts there),
+        // and a promise is hours, not "an N-hour day".
         ZenCheckInKind.CELEBRATION ->
-            "Your screen limit is under promise — ${durationPhrase(minutesLeft)} of your " +
-                "$promiseHours-hour day still unspent. " + weekLine(streak)
+            "Inside your promise, with ${durationPhrase(minutesLeft)} of your " +
+                "${hoursPhrase(promiseHours)} to spare. " + weekLine(streak)
 
         ZenCheckInKind.ENCOURAGEMENT -> if (streak.weekAtRisk) {
             "This week can't reach ${AppConstants.PROMISE_DAYS_TO_UNLOCK} of " +
@@ -184,19 +219,21 @@ object ZenCheckIn {
 
         // One ask, achievable today, and never a threat. The weekly quota is not argued
         // here — it has its own quiet line on the card.
+        // The day banked is the streak's own number when it already counts today (Android),
+        // or the one after it when it counts finished days only (the desktop).
         ZenCheckInKind.LAST_HOUR ->
             if (streak.days <= 0) "Stay under it and you bank your first day."
-            else "Stay under it and you bank day ${streak.days}."
+            else "Stay under it and you bank day ${streak.days + if (streakIncludesToday) 0 else 1}."
     }
 
     /**
      * Every day left this week, today included, now has to be kept for the week to reach
      * [AppConstants.PROMISE_DAYS_TO_UNLOCK] — so losing today loses the week, and the week
-     * is what breaks the streak.
+     * is what breaks the streak. For a today still under the promise, which [PromiseStreak]
+     * counts in [PromiseStreak.State.daysKeptThisWeek] and not among the days left.
      */
     internal fun mustWinToday(streak: PromiseStreak.State): Boolean =
-        streak.daysLeftThisWeek > 0 &&
-            streak.daysKeptThisWeek + streak.daysLeftThisWeek == AppConstants.PROMISE_DAYS_TO_UNLOCK
+        streak.daysKeptThisWeek + streak.daysLeftThisWeek == AppConstants.PROMISE_DAYS_TO_UNLOCK
 
     /** Where this week stands against the 5-of-7 verdict that actually decides the streak. */
     private fun weekLine(streak: PromiseStreak.State): String {
@@ -239,7 +276,7 @@ object ZenCheckIn {
      * quota are banked and how many are still needed. Never how many days remain as well —
      * that is a third number doing no work.
      */
-    internal fun weekQuotaLine(streak: PromiseStreak.State): String {
+    fun weekQuotaLine(streak: PromiseStreak.State): String {
         val needed = AppConstants.PROMISE_DAYS_TO_UNLOCK
         val banked = streak.daysKeptThisWeek.coerceAtMost(needed)
         val toGo = (needed - banked).coerceAtLeast(0)
@@ -248,6 +285,9 @@ object ZenCheckIn {
             else -> "This week: $banked of $needed banked \u00B7 $toGo to go"
         }
     }
+
+    /** "1 hour" / "4 hours": the promise, inside a sentence. */
+    internal fun hoursPhrase(hours: Int): String = "$hours ${if (hours == 1) "hour" else "hours"}"
 
     /** "45 minutes" / "1 hr 05 mins" / "no time" — DepartureMono renders the digits. */
     internal fun durationPhrase(minutes: Long): String {

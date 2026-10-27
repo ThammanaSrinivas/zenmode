@@ -53,14 +53,14 @@ object ZenCheckInPreferences {
     /**
      * Picker bounds. "Evening" is the promise of the feature, so the window runs from late
      * afternoon to just before midnight — a check-in at 06:00 would report on a day that
-     * hasn't happened.
+     * hasn't happened. The numbers live in [AppConstants], shared with the desktop app.
      */
     val earliest: LocalTime get() = LocalTime.of(EARLIEST_MINUTE_OF_DAY / 60, 0)
     val latest: LocalTime get() = LocalTime.of(LATEST_MINUTE_OF_DAY / 60, LATEST_MINUTE_OF_DAY % 60)
 
-    private const val DEFAULT_MINUTE_OF_DAY = 20 * 60 // 20:00
-    private const val EARLIEST_MINUTE_OF_DAY = 16 * 60 // 16:00
-    private const val LATEST_MINUTE_OF_DAY = 23 * 60 + 30 // 23:30
+    private const val DEFAULT_MINUTE_OF_DAY = AppConstants.CHECK_IN_EVENING_DEFAULT_MINUTE
+    private const val EARLIEST_MINUTE_OF_DAY = AppConstants.CHECK_IN_EVENING_EARLIEST_MINUTE
+    private const val LATEST_MINUTE_OF_DAY = AppConstants.CHECK_IN_EVENING_LATEST_MINUTE
 
     private fun prefs(context: Context) =
         context.zenPrefs()
