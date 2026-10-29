@@ -130,7 +130,9 @@ class DistractionBlockerScreenScreenshotTest {
     /** Builds the state in the rendering composition, so a clock read in it can't go stale. */
     private fun snapshot(buildState: () -> BlockerState) {
         paparazzi.golden {
-            val state = remember { buildState() }
+            // The goldens include the debug tools; pin them so `testReleaseUnitTest` (where
+            // BuildConfig.DEBUG is false) renders the same page as `testDebugUnitTest`.
+            val state = remember { buildState().copy(showDebugTools = true) }
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 ZenTheme(darkTheme = false) {
                     DistractionBlockerScreen(

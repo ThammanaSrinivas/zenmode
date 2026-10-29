@@ -114,7 +114,10 @@ data class BlockerState(
     val accessibilityOn: Boolean = true,
     val isPro: Boolean = false,
     val debugDump: Boolean = false,
-    val lastCrash: String? = null
+    val lastCrash: String? = null,
+    /** The debug-build tools at the foot of the list. State, not a read of [BuildConfig.DEBUG] in
+     *  the composable, so a snapshot renders the same page under the debug and release tests. */
+    val showDebugTools: Boolean = BuildConfig.DEBUG
 ) {
     val isPaused: Boolean get() = pausedUntil > System.currentTimeMillis()
 }
@@ -237,7 +240,7 @@ fun DistractionBlockerScreen(
                 }
             }
 
-            if (BuildConfig.DEBUG) {
+            if (state.showDebugTools) {
                 item {
                     DebugTools(
                         debugDump = state.debugDump,
