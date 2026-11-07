@@ -159,6 +159,7 @@ import com.zenlauncher.zenmode.HomeGesture
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.AppInfo
+import com.zenlauncher.zenmode.ContentBlockPrefs
 import com.zenlauncher.zenmode.AppLogic
 import com.zenlauncher.zenmode.FileResult
 import com.zenlauncher.zenmode.FileSearchRepository
@@ -172,6 +173,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.zenlauncher.zenmode.AppSearchRanking
+import com.zenlauncher.zenmode.DistractingApps
+import com.zenlauncher.zenmode.RecentApps
 import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.ui.components.saveImageToPictures
 import com.zenlauncher.zenmode.ui.components.shareImage
@@ -1022,8 +1025,11 @@ private sealed interface SearchRow {
     data class Header(val label: String) : SearchRow {
         override val key = "header:$label"
     }
-    data class App(val app: AppInfo) : SearchRow {
-        override val key = "app:${app.packageName}"
+    /** [suggested]: offered before typing (see [RecentApps]), not matched to a query. */
+    data class App(val app: AppInfo, val suggested: Boolean = false) : SearchRow {
+        // app.key, not packageName: one package can ship two launcher icons (MIUI's Phone
+        // and Contacts), and two rows sharing a LazyColumn key crash the list.
+        override val key = "app:${app.key}"
     }
     data class File(val file: FileResult) : SearchRow {
         override val key = "file:${file.uri}"
@@ -1090,6 +1096,22 @@ private fun SearchOverlay(
         }
     }
 
+    // Before the first keystroke: the few calm apps opened most recently. Read once per
+    // opening; the package manager lookups behind isDistracting are cheap for a dozen keys.
+    val suggestedApps = remember(apps) {
+        val pm = context.packageManager
+        RecentApps.suggest(
+            recentKeys = RecentApps.keys(context),
+            apps = apps,
+            key = { it.key },
+            packageName = { it.packageName.toString() },
+            isCalm = { app ->
+                val pkg = app.packageName.toString()
+                !DistractingApps.isDistracting(pm, pkg) && !ContentBlockPrefs.shouldQuietApp(context, pkg)
+            }
+        )
+    }
+
     LaunchedEffect(query, hasFilePermission) {
         if (!fileSearchEnabled || !hasFilePermission || query.isBlank()) {
             fileResults = emptyList()
@@ -1107,7 +1129,13 @@ private fun SearchOverlay(
 
     // Top-to-bottom, as Figma draws it.
     val rows = buildList {
-        if (query.isBlank()) return@buildList
+        if (query.isBlank()) {
+            if (suggestedApps.isNotEmpty()) {
+                add(SearchRow.Header("SUGGESTED"))
+                suggestedApps.forEach { add(SearchRow.App(it, suggested = true)) }
+            }
+            return@buildList
+        }
 
         if (fileSearchEnabled && (!hasFilePermission || fileResults.isNotEmpty())) {
             add(SearchRow.Header("ON DEVICE FILES"))
@@ -1216,7 +1244,10 @@ private fun SearchOverlay(
                             app = row.app,
                             onClick = {
                                 hasClicked = true
-                                ServiceLocator.analyticsTracker.trackHomeSearchResultClicked("app", rows.indexOf(row))
+                                ServiceLocator.analyticsTracker.trackHomeSearchResultClicked(
+                                    if (row.suggested) "suggested_app" else "app",
+                                    rows.indexOf(row)
+                                )
                                 onAppClick(row.app)
                             },
                             modifier = itemModifier

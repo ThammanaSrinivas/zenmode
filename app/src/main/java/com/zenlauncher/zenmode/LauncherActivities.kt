@@ -90,5 +90,8 @@ internal fun Activity.launchHomeApp(appInfo: AppInfo) {
     }
     // RESET_TASK_IF_NEEDED: bring an app that's already running back as it was left, like the
     // system launcher does, instead of stacking a second copy of its launch screen.
-    launchIntent?.inOwnTask()?.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)?.let(::startActivity)
+    launchIntent?.inOwnTask()?.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)?.let {
+        startActivity(it)
+        RecentApps.record(this, appInfo.key)
+    }
 }
