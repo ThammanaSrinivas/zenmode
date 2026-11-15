@@ -64,7 +64,7 @@ import com.zenlauncher.zenmode.R
  *
  * One card, three readings — see [ZenCheckInKind]:
  *  · **Celebration** (evening, still under the promise) — confetti in the brand's own
- *    gradient stops, and the plain statement that the screen limit is under promise.
+ *    gradient stops, and the plain statement that today is inside the promise.
  *  · **Encouragement** (evening, already over) — no confetti, and the week-not-the-day rule
  *    said out loud, because that's exactly the moment a user assumes they've lost the streak.
  *  · **Last hour** — the nudge while there's still a promise left to keep.

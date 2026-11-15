@@ -97,8 +97,34 @@ class ZenCheckInTest {
 
         assertEquals(ZenCheckInKind.CELEBRATION, card?.kind)
         assertTrue(card!!.kind.confetti)
-        // The requested line, said plainly.
-        assertTrue(card.body.contains("Your screen limit is under promise"))
+        // Where the day stands, said plainly, in words true on a phone and a computer alike.
+        assertTrue(card.body.startsWith("Inside your promise, with 2 hours of your 4 hours to spare."))
+        assertFalse(card.body.contains("screen limit"))
+    }
+
+    @Test
+    fun `a one-hour promise is one hour, not one hours`() {
+        val card = ZenCheckIn.card(ZenCheckInKind.CELEBRATION, streak, promiseHours = 1, todayMinutes = 15)
+        assertTrue(card.body.startsWith("Inside your promise, with 45 minutes of your 1 hour to spare."))
+    }
+
+    @Test
+    fun `a streak of finished days banks the day after it`() {
+        // The desktop's This week pill counts finished days, so its card says the pill's number and
+        // asks for the next one; Android's streak already counts today.
+        val desktop = ZenCheckIn.card(ZenCheckInKind.LAST_HOUR, streak.copy(days = 5), promiseHours = 4, todayMinutes = 190, streakIncludesToday = false)
+        assertEquals("5-day streak", desktop.headline)
+        assertEquals("Stay under it and you bank day 6.", desktop.body)
+        val fresh = ZenCheckIn.card(ZenCheckInKind.LAST_HOUR, streak.copy(days = 0), promiseHours = 4, todayMinutes = 190, streakIncludesToday = false)
+        assertEquals("Stay under it and you bank your first day.", fresh.body)
+    }
+
+    @Test
+    fun `both apps label the card the same way`() {
+        assertEquals("DAILY CHECK-IN", ZenCheckIn.eyebrow(ZenCheckInKind.CELEBRATION))
+        assertEquals("DAILY CHECK-IN", ZenCheckIn.eyebrow(ZenCheckInKind.ENCOURAGEMENT))
+        assertEquals("LAST HOUR", ZenCheckIn.eyebrow(ZenCheckInKind.LAST_HOUR))
+        assertEquals("See my week", ZenCheckIn.SEE_MY_WEEK)
     }
 
     @Test
