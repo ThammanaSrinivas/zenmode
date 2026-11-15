@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ui.components.ZenEyebrow
 import com.zenlauncher.zenmode.ui.components.zenCard
 import com.zenlauncher.zenmode.ui.theme.Geist
@@ -40,16 +41,18 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ZenTypography
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 
 // ZenMode Pro -- the plan page's full free-vs-pro comparison table and the coming-soon
 // roadmap chips. Split out of ZenProScreen.kt; the sales rules at the top of that file apply
 // here too.
 
-private val ComingSoon = listOf(
-    "More export formats",
-    "Zen Circle enhancements",
-    "AI suggestions to optimise",
-    "New modes, and more"
+@Composable
+private fun comingSoon(): List<String> = listOf(
+    stringResource(R.string.zen_pro_compare_coming_soon_export_formats),
+    stringResource(R.string.zen_pro_compare_coming_soon_circle),
+    stringResource(R.string.zen_pro_compare_coming_soon_ai),
+    stringResource(R.string.zen_pro_compare_coming_soon_more)
 )
 
 /** A comparison cell: either a plain value both tiers state in their own words, or an include/exclude mark. */
@@ -61,22 +64,23 @@ private val Yes = CompareCell(included = true)
 private val No = CompareCell(included = false)
 
 /** The full free-vs-pro diff, row for row. Keep in the same order the plans spec lists them. */
-private val CompareRows = listOf(
-    CompareRow("The launcher, with accountability", Yes, Yes),
-    CompareRow("Zen Score average", cell("Daily"), cell("Weekly")),
-    CompareRow("Zen Circle", cell("Beta, all members"), cell("Beta, all members")),
-    CompareRow("History", cell("7 days"), cell("All time")),
-    CompareRow("Session log", cell("Last 7 events"), cell("The day's events, downloadable")),
-    CompareRow("Centralised search", Yes, Yes),
-    CompareRow("Home gestures", cell("Swipe up to search"), cell("Margin taps, double-tap to lock")),
-    CompareRow(RandomConnect.NAME, cell("Up to 5/week"), cell("Up to 50/week, first priority")),
-    CompareRow("Screen time average", cell("Weekly"), cell("Monthly")),
-    CompareRow("Edit my promise", cell("Once a week"), cell("Twice a week")),
-    CompareRow("Weekly report history", cell("Last 2 weeks"), cell("Last 16 weeks")),
-    CompareRow("Devices per account", cell("One"), cell("One")),
-    CompareRow("Distraction blocker pause", No, cell("30 minutes")),
-    CompareRow("Data export", No, Yes),
-    CompareRow("Telegram community", No, Yes)
+@Composable
+private fun compareRows(): List<CompareRow> = listOf(
+    CompareRow(stringResource(R.string.zen_pro_compare_launcher_row), Yes, Yes),
+    CompareRow(stringResource(R.string.zen_pro_compare_zen_score_row), cell(stringResource(R.string.common_daily)), cell(stringResource(R.string.common_weekly))),
+    CompareRow(stringResource(R.string.zen_pro_compare_zen_circle_row), cell(stringResource(R.string.zen_pro_compare_zen_circle_all_members)), cell(stringResource(R.string.zen_pro_compare_zen_circle_all_members))),
+    CompareRow(stringResource(R.string.zen_pro_compare_history_row), cell(stringResource(R.string.zen_pro_compare_history_seven_days)), cell(stringResource(R.string.zen_pro_compare_history_all_time))),
+    CompareRow(stringResource(R.string.zen_pro_compare_session_log_row), cell(stringResource(R.string.zen_pro_compare_session_log_free)), cell(stringResource(R.string.zen_pro_compare_session_log_pro))),
+    CompareRow(stringResource(R.string.zen_pro_compare_centralised_search_row), Yes, Yes),
+    CompareRow(stringResource(R.string.settings_pro_home_gestures_title), cell(stringResource(R.string.settings_swipe_up_search_title)), cell(stringResource(R.string.zen_pro_compare_home_gestures_pro))),
+    CompareRow(RandomConnect.NAME, cell(stringResource(R.string.zen_pro_compare_random_connect_free)), cell(stringResource(R.string.zen_pro_compare_random_connect_pro))),
+    CompareRow(stringResource(R.string.zen_pro_compare_screen_time_row), cell(stringResource(R.string.common_weekly)), cell(stringResource(R.string.common_monthly))),
+    CompareRow(stringResource(R.string.settings_pro_edit_promise_title), cell(stringResource(R.string.zen_pro_compare_edit_promise_free)), cell(stringResource(R.string.zen_pro_compare_edit_promise_pro))),
+    CompareRow(stringResource(R.string.zen_pro_compare_report_history_row), cell(stringResource(R.string.zen_pro_compare_report_history_free)), cell(stringResource(R.string.zen_pro_compare_report_history_pro))),
+    CompareRow(stringResource(R.string.zen_pro_compare_devices_row), cell(stringResource(R.string.zen_pro_compare_devices)), cell(stringResource(R.string.zen_pro_compare_devices))),
+    CompareRow(stringResource(R.string.zen_pro_compare_blocker_pause_row), No, cell(stringResource(R.string.zen_pro_compare_blocker_pause_minutes))),
+    CompareRow(stringResource(R.string.zen_pro_compare_data_export_row), No, Yes),
+    CompareRow(stringResource(R.string.zen_pro_compare_telegram_row), No, Yes)
 )
 
 /** The row-by-row diff. The Pro column carries a soft, continuous tint so the eye reads the
@@ -84,22 +88,23 @@ private val CompareRows = listOf(
 @Composable
 internal fun FeatureComparisonTable(modifier: Modifier = Modifier) {
     val colors = ZenTheme.colors
+    val rows = compareRows()
     Column(
         modifier = modifier.fillMaxWidth().zenCard(),
         verticalArrangement = Arrangement.spacedBy(0.rdp)
     ) {
-        ZenEyebrow("Compare every feature", modifier = Modifier.padding(start = 14.rdp, end = 14.rdp, top = 14.rdp, bottom = 10.rdp))
+        ZenEyebrow(stringResource(R.string.zen_pro_compare_eyebrow), modifier = Modifier.padding(start = 14.rdp, end = 14.rdp, top = 14.rdp, bottom = 10.rdp))
         Row(Modifier.fillMaxWidth().padding(start = 14.rdp, end = 14.rdp, bottom = 8.rdp)) {
             Spacer(Modifier.weight(1.3f))
             Text(
-                text = "FREE",
+                text = stringResource(R.string.common_free_badge),
                 style = ZenTypography.monoLabel,
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f)
             )
             Text(
-                text = "PRO",
+                text = stringResource(R.string.common_pro_badge),
                 style = ZenTypography.monoLabel,
                 color = colors.textBrand,
                 textAlign = TextAlign.Center,
@@ -107,9 +112,9 @@ internal fun FeatureComparisonTable(modifier: Modifier = Modifier) {
             )
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.borderSubtle))
-        CompareRows.forEachIndexed { index, row ->
+        rows.forEachIndexed { index, row ->
             CompareRowView(row)
-            if (index != CompareRows.lastIndex) {
+            if (index != rows.lastIndex) {
                 Box(
                     Modifier.fillMaxWidth().height(1.dp)
                         .padding(start = 14.rdp)
@@ -215,8 +220,8 @@ private fun DashBadge() {
 @Composable
 internal fun ComingSoonSection(modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.rdp)) {
-        ZenEyebrow("Coming soon, for Pro")
-        ComingSoon.chunked(2).forEach { pair ->
+        ZenEyebrow(stringResource(R.string.zen_pro_compare_coming_soon_eyebrow))
+        comingSoon().chunked(2).forEach { pair ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.rdp)) {
                 pair.forEach { item -> ComingSoonChip(item, Modifier.weight(1f)) }
                 if (pair.size == 1) Spacer(Modifier.weight(1f))

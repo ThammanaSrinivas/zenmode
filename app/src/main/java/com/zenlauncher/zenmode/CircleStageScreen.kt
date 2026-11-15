@@ -9,6 +9,7 @@ import com.zenlauncher.zenmode.coreapi.ReactionType
 import com.zenlauncher.zenmode.coreapi.ZEN_CIRCLE_MAX_MEMBERS
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
 import com.zenlauncher.zenmode.ui.screens.ZenCircleScreen
+import com.zenlauncher.zenmode.R
 
 /**
  * Hosts the Zen Bro "Circle" stage's [ZenCircleScreen] -- split out of MainActivity (at the
@@ -60,7 +61,7 @@ fun CircleStageScreen(
         shareCode = shareCode,
         shareCodeIsCircle = circle != null,
         isPro = isPro,
-        primaryShareLabel = if (circle != null && circle.members.size < 2) "Remind With Share Link" else "Share & Invite to Zen Circle",
+        primaryShareLabelRes = if (circle != null && circle.members.size < 2) R.string.common_remind_with_share_link else R.string.circle_primary_share_label,
         // Opened from home there's no connected screen to return to.
         onBackClick = { if (connectedToBuddyScreen) onBackToZenCircleFalse() else onCloseBuddyConnect() },
         onShareInviteLink = {

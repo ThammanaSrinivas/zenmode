@@ -50,6 +50,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
+import androidx.compose.ui.res.stringResource
 
 
 // ── Shared v3 chrome ──────────────────────────────────────────────
@@ -101,6 +102,7 @@ fun openSettings(context: Context) {
 @Composable
 fun SettingsMenuButton(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val settingsLabel = stringResource(R.string.zen_chrome_settings_cd)
     Box(
         modifier = modifier.size(width = 29.rdp, height = 17.5.rdp),
         contentAlignment = Alignment.Center
@@ -109,8 +111,11 @@ fun SettingsMenuButton(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .requiredSize(48.dp)
                 .clip(CircleShape)
-                .pressScale(onClick = { openSettings(context) }, onClickLabel = "Open settings")
-                .semantics { contentDescription = "Settings" },
+                .pressScale(
+                    onClick = { openSettings(context) },
+                    onClickLabel = stringResource(R.string.zen_score_open_settings_label)
+                )
+                .semantics { contentDescription = settingsLabel },
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -135,11 +140,15 @@ fun HomePageDots(
     onPageClick: ((HomePage) -> Unit)? = null
 ) {
     val colors = ZenTheme.colors
+    val pageLabel = stringResource(R.string.zen_chrome_page_cd, current.ordinal + 1, HomePage.entries.size)
+    val pageLabels = HomePage.entries.map { page ->
+        stringResource(R.string.zen_chrome_go_to_label, page.name.lowercase().replace('_', ' '))
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.rdp)
-            .semantics { contentDescription = "Page ${current.ordinal + 1} of ${HomePage.entries.size}" },
+            .semantics { contentDescription = pageLabel },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -152,7 +161,7 @@ fun HomePageDots(
                     .then(
                         if (onPageClick != null && page != current) {
                             Modifier.clip(CircleShape).clickable(
-                                onClickLabel = "Go to ${page.name.lowercase().replace('_', ' ')}",
+                                onClickLabel = pageLabels[page.ordinal],
                                 role = Role.Button
                             ) { onPageClick(page) }
                         } else Modifier

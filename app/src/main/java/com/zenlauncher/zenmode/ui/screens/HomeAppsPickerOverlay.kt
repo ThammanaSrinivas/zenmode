@@ -66,9 +66,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.core.graphics.drawable.toBitmap
 import com.zenlauncher.zenmode.LauncherActivities
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.ZenFrostedOverlay
 import com.zenlauncher.zenmode.ui.components.ZenOverlayTagline
 import com.zenlauncher.zenmode.ui.components.ZenOverlayTitle
@@ -77,6 +77,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -179,15 +180,15 @@ fun HomeAppsPickerOverlay(
     // in for the tagline, and results scroll inside the grid's space, so typing never resizes it.
     ZenFrostedOverlay(
         visible = visible,
-        eyebrow = "Home screen settings",
+        eyebrow = stringResource(R.string.common_home_screen_settings),
         onDismiss = onDismiss,
         onBack = onBack,
         fillHeight = true
     ) {
-        ZenOverlayTitle(text = "Choose your $limit apps")
+        ZenOverlayTitle(text = stringResource(R.string.home_apps_picker_title, limit))
         if (showFullHint) {
             Text(
-                text = "All $limit spots are taken. Remove one first.",
+                text = stringResource(R.string.home_apps_picker_full_hint, limit),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 17.rsp,
@@ -198,7 +199,7 @@ fun HomeAppsPickerOverlay(
                 modifier = Modifier.padding(top = 10.rdp)
             )
         } else {
-            ZenOverlayTagline(text = "Tap to pick. Hold and drag to reorder.")
+            ZenOverlayTagline(text = stringResource(R.string.home_apps_picker_tagline))
         }
 
         HomeSlotGrid(
@@ -220,12 +221,13 @@ fun HomeAppsPickerOverlay(
                 modifier = Modifier.weight(1f)
             )
             Spacer(Modifier.width(12.rdp))
+            val homeAppsPickerSelectionCd = stringResource(R.string.home_apps_picker_selection_cd, selection.size, limit)
             Text(
                 text = "${selection.size}/$limit",
                 fontFamily = DepartureMono,
                 fontSize = 14.rsp,
                 color = if (selection.size == limit) colors.textPrimary else colors.textSecondary,
-                modifier = Modifier.semantics { contentDescription = "${selection.size} of $limit chosen" }
+                modifier = Modifier.semantics { contentDescription = homeAppsPickerSelectionCd }
             )
         }
 
@@ -236,7 +238,7 @@ fun HomeAppsPickerOverlay(
         ) {
             if (apps.isNotEmpty() && visibleApps.isEmpty()) {
                 Text(
-                    text = "No apps match \u201C${query.trim()}\u201D",
+                    text = stringResource(R.string.home_apps_picker_no_match, query.trim()),
                     fontFamily = Geist,
                     fontSize = 15.rsp,
                     color = colors.textSecondary,
@@ -272,7 +274,7 @@ fun HomeAppsPickerOverlay(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Empty spots fill in A–Z. Changes save as you tap.",
+                    text = stringResource(R.string.home_apps_picker_footnote),
                     fontFamily = Geist,
                     fontSize = 14.rsp,
                     lineHeight = 20.rsp,
@@ -282,7 +284,7 @@ fun HomeAppsPickerOverlay(
                 // Always laid out, only hidden, so it appearing never shifts anything.
                 val canClear = selection.isNotEmpty()
                 Text(
-                    text = "Clear all",
+                    text = stringResource(R.string.home_apps_picker_clear_all),
                     fontFamily = Geist,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.rsp,
@@ -432,23 +434,24 @@ private fun HomeSlot(
             .clip(shape)
             .then(
                 if (app == null) Modifier.border(1.rdp, colors.borderOutline, shape).background(colors.surfaceSunk)
-                else Modifier.clickable(onClickLabel = "Remove ${app.label}", role = Role.Button, onClick = onClick)
+                else Modifier.clickable(onClickLabel = stringResource(R.string.home_apps_picker_remove_label, app.label), role = Role.Button, onClick = onClick)
             ),
         contentAlignment = Alignment.Center
     ) {
         if (app != null) {
             Image(
                 bitmap = rememberIconBitmap(app),
-                contentDescription = "Spot $position: ${app.label}. Hold and drag to move.",
+                contentDescription = stringResource(R.string.home_apps_picker_spot_cd, position, app.label),
                 modifier = Modifier.fillMaxSize()
             )
         } else {
+            val homeAppsPickerEmptySpotCd = stringResource(R.string.home_apps_picker_empty_spot_cd, position)
             Text(
                 text = position.toString(),
                 fontFamily = DepartureMono,
                 fontSize = 12.rsp,
                 color = colors.textMuted,
-                modifier = Modifier.semantics { contentDescription = "Spot $position: A–Z fill" }
+                modifier = Modifier.semantics { contentDescription = homeAppsPickerEmptySpotCd }
             )
         }
     }
@@ -539,7 +542,7 @@ private fun PickerSearchField(query: String, onQueryChange: (String) -> Unit, mo
             modifier = Modifier.weight(1f),
             decorationBox = { inner ->
                 if (query.isEmpty()) {
-                    Text(text = "Search apps", fontFamily = Geist, fontSize = 15.rsp, color = colors.textMuted)
+                    Text(text = stringResource(R.string.common_search_apps), fontFamily = Geist, fontSize = 15.rsp, color = colors.textMuted)
                 }
                 inner()
             }

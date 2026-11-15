@@ -52,8 +52,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.BuddyStats
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.MoodBackdrop
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.coreapi.DailyUsage
@@ -62,6 +62,7 @@ import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -223,7 +224,7 @@ private fun Headline(buddyName: String) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "You’re Zen Bros now",
+            text = stringResource(R.string.zen_bro_connected_headline),
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 32.3.rsp,
@@ -236,7 +237,7 @@ private fun Headline(buddyName: String) {
         )
         Spacer(Modifier.height(7.rdp))
         Text(
-            text = "You and $buddyName now see the same three things about each other.",
+            text = stringResource(R.string.zen_bro_connected_body, buddyName),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 17.3.rsp,
@@ -250,7 +251,7 @@ private fun Headline(buddyName: String) {
         Spacer(Modifier.height(10.rdp))
         // The caption becomes three tags that pop in one by one — each is a thing you now share.
         Row(horizontalArrangement = Arrangement.spacedBy(6.rdp)) {
-            listOf("Screen time", "Zen Score", "Streaks").forEachIndexed { i, label ->
+            listOf(stringResource(R.string.zen_bro_stat_screen_time), stringResource(R.string.common_zen_score), stringResource(R.string.zen_bro_stat_streaks)).forEachIndexed { i, label ->
                 SharedStatTag(label = label, delayMillis = 430 + i * 80)
             }
         }
@@ -369,7 +370,7 @@ private fun ZenCirclePanel(visible: Boolean, onInvitePeople: () -> Unit, onMaybe
             .padding(horizontal = 20.7.rdp, vertical = 16.rdp)
     ) {
         Text(
-            text = "Your Zen Circle starts here",
+            text = stringResource(R.string.zen_bro_connected_circle_title),
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 24.9.rsp,
@@ -379,7 +380,7 @@ private fun ZenCirclePanel(visible: Boolean, onInvitePeople: () -> Unit, onMaybe
         )
         Spacer(Modifier.height(12.rdp))
         Text(
-            text = "Invite up to 7 people you trust to keep each other going.",
+            text = stringResource(R.string.zen_bro_connected_circle_body),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 16.2.rsp,
@@ -389,14 +390,14 @@ private fun ZenCirclePanel(visible: Boolean, onInvitePeople: () -> Unit, onMaybe
         )
         Spacer(Modifier.height(16.rdp))
         ZenCirclePillButton(
-            text = "Invite people",
+            text = stringResource(R.string.common_invite_people),
             onClick = onInvitePeople,
             container = colorResource(R.color.zen_700),
             content = Color.White
         )
         Spacer(Modifier.height(7.rdp))
         ZenCirclePillButton(
-            text = "Maybe later",
+            text = stringResource(R.string.zen_bro_connected_maybe_later),
             onClick = onMaybeLater,
             container = Color.Transparent,
             content = brandGreen

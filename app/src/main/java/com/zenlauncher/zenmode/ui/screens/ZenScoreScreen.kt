@@ -64,7 +64,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.coreapi.SessionEventType
 import com.zenlauncher.zenmode.coreapi.ZenScore
 import com.zenlauncher.zenmode.share.ScoreShare
@@ -91,6 +90,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import java.time.LocalDate
 import java.time.format.TextStyle as TextStyleJava
 import java.util.Locale
@@ -100,6 +100,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 
 // ── ZM_OS v3: Zen Score (Home right-swipe page) ─────────────────────
 // Figma node 2026:2035 ("home/ variant-green/ Zen Score"). The left-hand of the three home
@@ -278,14 +279,14 @@ private fun GreetingHeader(
             modifier = Modifier
                 .size(46.rdp)
                 .clip(CircleShape)
-                .pressScale(onClick = { openSettings(context) }, onClickLabel = "Open settings")
+                .pressScale(onClick = { openSettings(context) }, onClickLabel = stringResource(R.string.zen_score_open_settings_label))
         )
 
         Spacer(modifier = Modifier.width(10.rdp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (firstName != null) "Hey, $firstName" else "Hey there",
+                text = if (firstName != null) stringResource(R.string.zen_score_greeting_with_name, firstName) else stringResource(R.string.zen_score_greeting_generic),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 20.rsp,
@@ -313,12 +314,12 @@ private fun GreetingHeader(
                     .height(38.rdp)
                     .clip(RoundedCornerShape(percent = 50))
                     .background(colorResource(R.color.zen_700))
-                    .pressScale(onClick = onUpgradeProClick, onClickLabel = "Upgrade to PRO")
+                    .pressScale(onClick = onUpgradeProClick, onClickLabel = stringResource(R.string.zen_score_upgrade_pro_label))
                     .padding(horizontal = 18.rdp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Upgrade Pro",
+                    text = stringResource(R.string.zen_score_upgrade_pro_button),
                     fontFamily = Geist,
                     fontWeight = FontWeight.Medium,
                     fontSize = 15.rsp,
@@ -341,14 +342,15 @@ private fun greetingDate(date: LocalDate): String {
 /** The Google profile photo when there is one; otherwise the first initial on brand green. */
 @Composable
 private fun ProfileAvatar(name: String?, photoUrl: String?, modifier: Modifier = Modifier) {
+    val zenScoreProfileSettingsCd = stringResource(R.string.zen_score_profile_settings_cd)
     Box(
         modifier = modifier
             .background(colorResource(R.color.zen_700))
-            .semantics { contentDescription = "Profile and settings" },
+            .semantics { contentDescription = zenScoreProfileSettingsCd },
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = name?.firstOrNull()?.uppercase() ?: "Z",
+            text = name?.firstOrNull()?.uppercase() ?: stringResource(R.string.common_avatar_fallback_initial),
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 22.rsp,
@@ -367,11 +369,12 @@ private fun ProfileAvatar(name: String?, photoUrl: String?, modifier: Modifier =
 
 // ── Zen Score card ─────────────────────────────────────────────────
 
+@Composable
 private fun scoreInsight(score: Int, yesterday: Int?): String = when {
-    yesterday == null -> "Your score updates live through the day. Check back tomorrow to compare."
-    score > yesterday -> "Up ${ZenScore.formatDelta(score - yesterday)} from yesterday. Keep it calm."
-    score < yesterday -> "Down ${ZenScore.formatDelta(score - yesterday)} from yesterday. There's still time today."
-    else -> "Level with yesterday."
+    yesterday == null -> stringResource(R.string.zen_score_insight_no_history)
+    score > yesterday -> stringResource(R.string.zen_score_insight_up, ZenScore.formatDelta(score - yesterday))
+    score < yesterday -> stringResource(R.string.zen_score_insight_down, ZenScore.formatDelta(score - yesterday))
+    else -> stringResource(R.string.zen_score_insight_level)
 }
 
 @Composable
@@ -414,7 +417,7 @@ private fun ZenScoreCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Today's Zen Score",
+                    text = stringResource(R.string.zen_score_today_title),
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = 16.rsp,
@@ -511,6 +514,7 @@ private fun PeriodToggle(isPro: Boolean) {
     val wiggle = remember { androidx.compose.animation.core.Animatable(0f) }
     var isWeekly by remember { mutableStateOf(false) }
     val colors = ZenTheme.colors
+    val proRequiredMessage = stringResource(R.string.common_pro_required_toast)
 
     Row(
         modifier = Modifier
@@ -528,7 +532,7 @@ private fun PeriodToggle(isPro: Boolean) {
                 .padding(horizontal = 12.rdp, vertical = 4.rdp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Daily", fontFamily = Geist, fontWeight = if (!isWeekly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isWeekly) colors.textPrimary else colorResource(R.color.toggle_inactive_text))
+            Text(stringResource(R.string.common_daily), fontFamily = Geist, fontWeight = if (!isWeekly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (!isWeekly) colors.textPrimary else colorResource(R.color.toggle_inactive_text))
         }
         Box(
             modifier = Modifier
@@ -544,13 +548,13 @@ private fun PeriodToggle(isPro: Boolean) {
                         scope.launch {
                             for (angle in listOf(-14f, 12f, -8f, 5f, 0f)) wiggle.animateTo(angle, androidx.compose.animation.core.tween(55))
                         }
-                        Toast.makeText(context, "You need to be Pro to access this.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, proRequiredMessage, Toast.LENGTH_SHORT).show()
                     }
                 }
                 .padding(horizontal = 14.rdp, vertical = 4.rdp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Weekly", fontFamily = Geist, fontWeight = if (isWeekly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isWeekly) colors.textPrimary else colorResource(R.color.toggle_inactive_text))
+            Text(stringResource(R.string.common_weekly), fontFamily = Geist, fontWeight = if (isWeekly) FontWeight.Medium else FontWeight.Normal, fontSize = 10.rsp, color = if (isWeekly) colors.textPrimary else colorResource(R.color.toggle_inactive_text))
             
             Box(
                 modifier = Modifier
@@ -562,7 +566,7 @@ private fun PeriodToggle(isPro: Boolean) {
                     .padding(horizontal = 3.rdp, vertical = 1.rdp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("PRO", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
+                Text(stringResource(R.string.common_pro_badge), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 5.6.rsp, color = Color.White)
             }
         }
     }
@@ -633,10 +637,11 @@ private fun ZenScoreDial(score: Int, maxScore: Int, modifier: Modifier = Modifie
     val wall = colorResource(R.color.zen_900)
     val track = colorResource(R.color.zen_700)
 
+    val zenScoreRingCd = stringResource(R.string.zen_score_ring_cd, (progress * 100).toInt())
     Canvas(
         modifier = modifier
             .size(width = 118.rdp, height = 78.rdp)
-            .semantics { contentDescription = "Zen Score ring, ${(progress * 100).toInt()} percent" }
+            .semantics { contentDescription = zenScoreRingCd }
     ) {
         val band = size.width * 0.15f
         val depth = size.height * 0.11f
@@ -718,11 +723,11 @@ private fun DownloadReportButton(isPro: Boolean, onClick: () -> Unit) {
             .fillMaxWidth()
             .fillMaxHeight()
             .clip(RoundedCornerShape(50))
-            .pressScale(onClick = onClick, onClickLabel = "Download report PDF", pressedScale = 0.96f)
+            .pressScale(onClick = onClick, onClickLabel = stringResource(R.string.zen_score_download_report_label), pressedScale = 0.96f)
             .padding(top = 8.rdp)
     ) {
         Text(
-            text = "Download Report PDF",
+            text = stringResource(R.string.zen_score_download_report_button),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 19.rsp,
@@ -739,7 +744,7 @@ private fun DownloadReportButton(isPro: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun ShareScoreButton(onClick: () -> Unit) {
-    val label = "Share Zen Score"
+    val label = stringResource(R.string.zen_score_share_button)
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -769,7 +774,7 @@ internal fun ProBadge(modifier: Modifier = Modifier) {
             .padding(horizontal = 5.rdp, vertical = 2.rdp)
     ) {
         Text(
-            text = "PRO",
+            text = stringResource(R.string.common_pro_badge),
             fontFamily = Geist,
             fontWeight = FontWeight.Bold,
             fontSize = 8.rsp,

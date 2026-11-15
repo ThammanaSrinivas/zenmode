@@ -30,14 +30,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.Spacing
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 
 /**
  * Play-policy prominent disclosure, shown before sending the user to Accessibility settings.
@@ -64,7 +65,7 @@ fun AccessibilityDisclosureScreen(
                 .verticalScroll(scrollState)
         ) {
             Text(
-                text = "Accessibility Service Disclosure",
+                text = stringResource(R.string.a11y_disclosure_title),
                 color = colors.textPrimary,
                 style = TextStyle(
                     fontFamily = Geist,
@@ -77,7 +78,7 @@ fun AccessibilityDisclosureScreen(
 
             // Section: Why
             Text(
-                text = "Why $PRODUCT_NAME needs Accessibility Service",
+                text = stringResource(R.string.a11y_disclosure_why, PRODUCT_NAME),
                 color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = Geist,
@@ -87,13 +88,7 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "$PRODUCT_NAME uses Android's Accessibility Service API for two features:\n\n" +
-                        "1. Lock screen: Android gives a launcher no other way to lock the screen, " +
-                        "so this permission is required for the lock button to work.\n\n" +
-                        "2. In-app content blocking (optional): when you turn on blocking for a " +
-                        "surface such as YouTube Shorts, the service checks " +
-                        "whether that screen is currently open and, if so, navigates you away. It runs " +
-                        "only for apps you have explicitly chosen to block.",
+                text = stringResource(R.string.a11y_disclosure_why_body, PRODUCT_NAME),
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -102,7 +97,7 @@ fun AccessibilityDisclosureScreen(
 
             // Section: What it does
             Text(
-                text = "What this service does",
+                text = stringResource(R.string.a11y_disclosure_does_title),
                 color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = Geist,
@@ -112,9 +107,7 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "• Uses the system lock-screen action (GLOBAL_ACTION_LOCK_SCREEN) when you tap the lock button\n" +
-                        "• For apps you chose to block: checks which screen (view IDs) is visible and, on a blocked screen, presses Back\n" +
-                        "• Only wakes for apps in your block list (currently YouTube)",
+                text = stringResource(R.string.a11y_disclosure_does_body),
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -123,7 +116,7 @@ fun AccessibilityDisclosureScreen(
 
             // Section: What it does NOT do
             Text(
-                text = "What this service does NOT do",
+                text = stringResource(R.string.a11y_disclosure_not_does_title),
                 color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = Geist,
@@ -133,11 +126,7 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "• Does NOT read, store, or transmit the text, media, or messages inside any app\n" +
-                        "• Does NOT monitor apps that are not in your block list\n" +
-                        "• Does NOT perform gestures or tap anything inside other apps\n" +
-                        "• Does NOT collect, store, transmit, or share any personal data\n" +
-                        "• Sends nothing off your device; all checks happen locally",
+                text = stringResource(R.string.a11y_disclosure_not_does_body),
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -146,7 +135,7 @@ fun AccessibilityDisclosureScreen(
 
             // Section: Privacy
             Text(
-                text = "Privacy",
+                text = stringResource(R.string.a11y_disclosure_privacy_title),
                 color = colors.textBrand,
                 style = TextStyle(
                     fontFamily = Geist,
@@ -156,15 +145,13 @@ fun AccessibilityDisclosureScreen(
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "This service enables the lock button and, if you turn it on, in-app content blocking. " +
-                        "It reads only which screen of a blocked app is visible, on the device, to decide " +
-                        "whether to navigate away. No screen content or personal data is stored, collected, or sent anywhere.",
+                text = stringResource(R.string.a11y_disclosure_privacy_body),
                 color = colors.textPrimary,
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(8.rdp))
             Text(
-                text = "Read our Privacy Policy",
+                text = stringResource(R.string.a11y_disclosure_read_policy),
                 color = colors.textBrand,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     textDecoration = TextDecoration.Underline,
@@ -188,7 +175,7 @@ fun AccessibilityDisclosureScreen(
             shape = RoundedCornerShape(8.dp)
         ) {
             Text(
-                text = "I Understand and Agree",
+                text = stringResource(R.string.a11y_disclosure_accept),
                 modifier = Modifier.padding(vertical = 4.dp)
             )
         }
@@ -199,7 +186,7 @@ fun AccessibilityDisclosureScreen(
             onClick = onDecline,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text(text = "Decline", color = colors.textSecondary)
+            Text(text = stringResource(R.string.a11y_disclosure_decline), color = colors.textSecondary)
         }
     }
 }

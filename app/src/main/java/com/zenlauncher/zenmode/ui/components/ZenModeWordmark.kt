@@ -44,6 +44,7 @@ import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.ui.res.stringResource
 
 // ── ZenMode OS wordmark ─────────────────────────────────────────────
 // Brand rule: in "ZenMode OS" the "OS" is always drawn in the brand OS gradient.
@@ -207,13 +208,14 @@ fun ZenModeOsSettingsTitle(
     color: Color = ZenTheme.colors.textPrimary,
     letterSpacing: TextUnit = (-0.44).sp
 ) {
+    val titleLabel = stringResource(R.string.zen_mode_os_settings_title, PRODUCT_NAME)
     Row(
-        modifier = modifier.clearAndSetSemantics { contentDescription = "$PRODUCT_NAME Settings" },
+        modifier = modifier.clearAndSetSemantics { contentDescription = titleLabel },
         verticalAlignment = Alignment.CenterVertically
     ) {
         ZenModeOsWordmark(fontSize = fontSize, zenModeColor = color, letterSpacing = letterSpacing)
         Text(
-            text = " Settings",
+            text = stringResource(R.string.zen_mode_os_settings_suffix),
             style = FullLineBox.copy(
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,

@@ -17,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
+import com.zenlauncher.zenmode.R
 
 /**
  * Non-intrusive banner shown on the home screen only when Usage Access has been revoked
@@ -40,12 +42,12 @@ fun UsageAccessBanner(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "Screen time is paused",
+            text = stringResource(R.string.usage_banner_title),
             color = colors.textPrimary,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "Usage access was turned off, so your screen time can't update. Grant it again to keep tracking.",
+            text = stringResource(R.string.usage_banner_body),
             color = colors.textSecondary
         )
         Row(
@@ -60,7 +62,7 @@ fun UsageAccessBanner(
                     contentColor = colors.actionPrimaryText
                 )
             ) {
-                Text("Grant access")
+                Text(stringResource(R.string.usage_banner_grant))
             }
         }
     }

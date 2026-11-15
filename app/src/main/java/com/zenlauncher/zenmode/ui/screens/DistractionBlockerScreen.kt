@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -63,9 +64,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalInspectionMode
 import com.zenlauncher.zenmode.BuildConfig
 import com.zenlauncher.zenmode.ContentBlockPrefs
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.components.ZenModeOsSettingsTitle
 import com.zenlauncher.zenmode.ui.components.ZenSwitch
 import com.zenlauncher.zenmode.ui.components.zenToggleable
@@ -82,8 +83,10 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.core.graphics.drawable.toBitmap
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -119,7 +122,11 @@ data class BlockerState(
     val isPaused: Boolean get() = pausedUntil > System.currentTimeMillis()
 }
 
-private enum class AppFilter(val label: String) { ALL("All"), QUIETED("Quieted"), OPEN("Open") }
+private enum class AppFilter(@StringRes val labelRes: Int) {
+    ALL(R.string.blocker_filter_all),
+    QUIETED(R.string.blocker_filter_quieted),
+    OPEN(R.string.blocker_filter_open)
+}
 
 private val ScreenMargin: Dp @Composable get() = 30.rdp
 
@@ -136,6 +143,11 @@ fun DistractionBlockerScreen(
     onClearLastCrash: () -> Unit = {}
 ) {
     val colors = ZenTheme.colors
+    // Previews and the screenshot tests set LocalInspectionMode, and there the debug
+    // tools render in every build variant. The golden PNGs are shared between the
+    // debug and the release test, so the render has to be the same in both - otherwise
+    // one of the two variants always fails.
+    val showDebugTools = BuildConfig.DEBUG || LocalInspectionMode.current
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(AppFilter.ALL) }
 
@@ -168,7 +180,7 @@ fun DistractionBlockerScreen(
                 Spacer(Modifier.height(28.rdp))
                 Column(Modifier.padding(horizontal = ScreenMargin)) {
                     Text(
-                        text = "Distraction Blocker",
+                        text = stringResource(R.string.common_distraction_blocker),
                         fontFamily = ClashDisplay,
                         fontWeight = FontWeight.Medium,
                         fontSize = 34.rsp,
@@ -178,7 +190,7 @@ fun DistractionBlockerScreen(
                         modifier = Modifier.semantics { heading() }
                     )
                     Text(
-                        text = "Choose what stays, and what quietly goes away.",
+                        text = stringResource(R.string.blocker_subtitle),
                         fontFamily = Geist,
                         fontSize = 14.rsp,
                         letterSpacing = (-0.28).sp,
@@ -210,7 +222,7 @@ fun DistractionBlockerScreen(
                             AppFilter.QUIETED -> quietedCount
                             AppFilter.OPEN -> searched.size - quietedCount
                         }
-                        FilterChip(label = f.label, count = count, selected = filter == f, onClick = { filter = f })
+                        FilterChip(label = stringResource(f.labelRes), count = count, selected = filter == f, onClick = { filter = f })
                     }
                 }
                 Spacer(Modifier.height(16.rdp))
@@ -237,7 +249,7 @@ fun DistractionBlockerScreen(
                 }
             }
 
-            if (BuildConfig.DEBUG) {
+            if (showDebugTools) {
                 item {
                     DebugTools(
                         debugDump = state.debugDump,
@@ -275,13 +287,13 @@ private fun BlockerHeader(state: BlockerState, onBackClick: () -> Unit, onPauseC
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.rdp))
-                .clickable(onClickLabel = "Back to settings", onClick = onBackClick)
+                .clickable(onClickLabel = stringResource(R.string.blocker_back_to_settings_label), onClick = onBackClick)
                 .padding(vertical = 6.rdp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_arrow_back),
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.common_back),
                 colorFilter = ColorFilter.tint(green),
                 modifier = Modifier.size(28.rdp)
             )
@@ -309,12 +321,12 @@ private fun PausePill(paused: Boolean, pausedUntil: Long, isPro: Boolean, onClic
                         .border(1.dp, green, CircleShape)
                     else Modifier.background(colors.actionPrimary)
                 )
-                .pressScale(onClick = onClick, onClickLabel = if (paused) "Resume blocking" else "Pause blocking for 30 minutes")
+                .pressScale(onClick = onClick, onClickLabel = if (paused) stringResource(R.string.blocker_resume_blocking_label) else stringResource(R.string.blocker_pause_blocking_label))
                 .padding(horizontal = 18.rdp),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = if (paused) "Paused ${minutesLeft(pausedUntil)}m" else "Pause ${ContentBlockPrefs.PAUSE_MINUTES}m",
+                text = if (paused) stringResource(R.string.blocker_paused_minutes_label, minutesLeft(pausedUntil)) else stringResource(R.string.blocker_pause_minutes_label, ContentBlockPrefs.PAUSE_MINUTES),
                 fontFamily = Geist,
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.rsp,
@@ -344,7 +356,7 @@ private fun ProTag(modifier: Modifier = Modifier) {
             .background(colorResource(R.color.gold_delta_text))
             .padding(horizontal = 3.rdp, vertical = 1.rdp)
     ) {
-        Text("PRO", fontFamily = Geist, fontSize = 5.6.rsp, lineHeight = 7.rsp, color = Color.White)
+        Text(stringResource(R.string.common_pro_badge), fontFamily = Geist, fontSize = 5.6.rsp, lineHeight = 7.rsp, color = Color.White)
     }
 }
 
@@ -357,18 +369,18 @@ private fun AccessibilityBanner(onClick: () -> Unit) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.rdp))
             .background(colorResource(R.color.amber_500).copy(alpha = 0.16f))
-            .clickable(onClickLabel = "Open accessibility settings", onClick = onClick)
+            .clickable(onClickLabel = stringResource(R.string.blocker_open_accessibility_label), onClick = onClick)
             .padding(14.rdp)
     ) {
         Text(
-            text = "Turn on $PRODUCT_NAME in Accessibility",
+            text = stringResource(R.string.blocker_enable_accessibility_title, PRODUCT_NAME),
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.rsp,
             color = colors.textPrimary
         )
         Text(
-            text = "Quieting needs it to spot a feed or an app opening. Nothing is blocked until you do. Tap to open.",
+            text = stringResource(R.string.blocker_enable_accessibility_body),
             fontFamily = Geist,
             fontSize = 12.rsp,
             lineHeight = 16.rsp,
@@ -403,7 +415,7 @@ private fun QuietReelsCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Quiet reels & shorts",
+                    text = stringResource(R.string.blocker_quiet_reels_title),
                     fontFamily = ClashDisplay,
                     fontWeight = FontWeight.Medium,
                     fontSize = 23.rsp,
@@ -413,9 +425,9 @@ private fun QuietReelsCard(
                 )
                 Text(
                     text = when {
-                        paused -> "Paused. Feeds are open until the pause ends."
-                        on -> "Break the endless scrolling, right now."
-                        else -> "Off. Reels, Shorts and Spotlight scroll freely."
+                        paused -> stringResource(R.string.blocker_reels_paused_status)
+                        on -> stringResource(R.string.blocker_reels_on_status)
+                        else -> stringResource(R.string.blocker_reels_off_status)
                     },
                     fontFamily = Geist,
                     fontSize = 12.rsp,
@@ -435,18 +447,19 @@ private fun QuietReelsCard(
         Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = 0.25f)))
         Spacer(Modifier.height(14.rdp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Stat(label = "Approx scrolls stopped", value = "~$stops", unit = null, modifier = Modifier.weight(1f))
+            Stat(label = stringResource(R.string.blocker_approx_scrolls_stopped_label), value = stringResource(R.string.blocker_approx_scrolls_stopped_value, stops), unit = null, modifier = Modifier.weight(1f))
             Box(Modifier.width(1.dp).height(46.rdp).background(Color.White.copy(alpha = 0.25f)))
-            val (value, unit) = savedParts(minutesSaved)
-            Stat(label = "Time saved quieting", value = "~$value", unit = unit, modifier = Modifier.weight(1f).padding(start = 16.rdp))
+            val (value, unitRes) = savedParts(minutesSaved)
+            Stat(label = stringResource(R.string.blocker_time_saved_quieting_label), value = stringResource(R.string.blocker_time_saved_quieting_value, value), unit = stringResource(unitRes), modifier = Modifier.weight(1f).padding(start = 16.rdp))
         }
     }
 }
 
-/** 420 → ("7", "HOURS"); 40 → ("40", "MINS"). */
-private fun savedParts(minutes: Int): Pair<String, String> = when {
-    minutes >= 60 -> (minutes / 60).toString() to if (minutes / 60 == 1) "HOUR" else "HOURS"
-    else -> minutes.toString() to "MINS"
+/** 420 → ("7", HOURS); 40 → ("40", MINS). The unit is a resource id, resolved
+ *  where it is shown, so the copy lives in strings.xml. */
+private fun savedParts(minutes: Int): Pair<String, Int> = when {
+    minutes >= 60 -> (minutes / 60).toString() to if (minutes / 60 == 1) R.string.blocker_saved_unit_hour else R.string.blocker_saved_unit_hours
+    else -> minutes.toString() to R.string.blocker_saved_unit_mins
 }
 
 @Composable
@@ -507,7 +520,7 @@ private fun AppSearchField(query: String, onQueryChange: (String) -> Unit) {
                 )
                 Spacer(Modifier.width(12.rdp))
                 Box(Modifier.weight(1f)) {
-                    if (query.isEmpty()) Text("Search apps", style = style.copy(color = colors.textSecondary), maxLines = 1)
+                    if (query.isEmpty()) Text(stringResource(R.string.common_search_apps), style = style.copy(color = colors.textSecondary), maxLines = 1)
                     inner()
                 }
             }
@@ -585,7 +598,7 @@ private fun AppRow(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.rdp))
                         .then(
-                            if (hasSurfaces) Modifier.clickable(onClickLabel = if (expanded) "Hide in-app feeds" else "Show in-app feeds") { expanded = !expanded }
+                            if (hasSurfaces) Modifier.clickable(onClickLabel = if (expanded) stringResource(R.string.blocker_hide_in_app_feeds_label) else stringResource(R.string.blocker_show_in_app_feeds_label)) { expanded = !expanded }
                             else Modifier
                         ),
                     verticalAlignment = Alignment.CenterVertically
@@ -642,7 +655,7 @@ private fun AppRow(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Quiet $label only",
+                            text = stringResource(R.string.blocker_quiet_surface_only, label),
                             fontFamily = Geist,
                             fontSize = 14.rsp,
                             color = colors.textPrimary,
@@ -724,19 +737,20 @@ internal fun initialsFor(label: String): String {
     return letters.lowercase().replaceFirstChar { it.uppercase() }
 }
 
+@Composable
 private fun usageLabel(minutes: Long): String = when {
-    minutes <= 0 -> "not opened today"
-    minutes < 60 -> "${minutes}m today"
-    else -> "${minutes / 60}h ${minutes % 60}m today"
+    minutes <= 0 -> stringResource(R.string.blocker_not_opened_today)
+    minutes < 60 -> stringResource(R.string.blocker_minutes_today, minutes)
+    else -> stringResource(R.string.blocker_hours_minutes_today, minutes / 60, minutes % 60)
 }
 
 @Composable
 private fun EmptyApps(filter: AppFilter, searching: Boolean) {
     Text(
         text = when {
-            searching -> "No apps match that search."
-            filter == AppFilter.QUIETED -> "Nothing quieted yet. Flip an app's switch to quiet it."
-            else -> "Every app is quieted."
+            searching -> stringResource(R.string.blocker_no_apps_match_search)
+            filter == AppFilter.QUIETED -> stringResource(R.string.blocker_nothing_quieted_yet)
+            else -> stringResource(R.string.blocker_every_app_quieted)
         },
         fontFamily = Geist,
         fontSize = 14.rsp,
@@ -764,9 +778,9 @@ private fun DebugTools(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text("Log view IDs (debug)", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, color = colors.textPrimary)
+                Text(stringResource(R.string.blocker_debug_log_view_ids), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, color = colors.textPrimary)
                 Text(
-                    "Writes on-screen view IDs to logcat (tag ZenA11y) to tune the feed rules.",
+                    stringResource(R.string.blocker_debug_log_view_ids_body),
                     fontFamily = Geist,
                     fontSize = 12.rsp,
                     color = colors.textSecondary
@@ -776,7 +790,7 @@ private fun DebugTools(
         }
         if (lastCrash != null) {
             Text(
-                text = "Blocker last crashed: $lastCrash. Tap to clear.",
+                text = stringResource(R.string.blocker_last_crash_message, lastCrash),
                 fontFamily = Geist,
                 fontSize = 12.rsp,
                 color = colors.textSecondary,

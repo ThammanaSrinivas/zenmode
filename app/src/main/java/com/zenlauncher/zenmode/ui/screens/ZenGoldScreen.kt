@@ -66,7 +66,6 @@ import androidx.compose.ui.unit.sp
 import com.zenlauncher.zenmode.AppConstants
 import com.zenlauncher.zenmode.GoldPromisePeriod
 import com.zenlauncher.zenmode.PromiseUnit
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenGoldPromiseState
 import com.zenlauncher.zenmode.ui.components.HomePage
 import com.zenlauncher.zenmode.ui.components.LocalZenClock
@@ -89,6 +88,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ui.components.SettingsMenuButton
 import com.zenlauncher.zenmode.ui.components.pageSwipe
 import com.zenlauncher.zenmode.ui.components.pressScale
@@ -99,6 +99,7 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import java.time.LocalDate
 import java.util.Locale
 
@@ -252,18 +253,18 @@ private fun ZenGoldHeader(onBackClick: () -> Unit) {
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_arrow_back),
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.common_back),
                 modifier = Modifier
                     .requiredSize(48.dp)
                     .clip(CircleShape)
-                    .clickable(onClickLabel = "Back to home", onClick = onBackClick)
+                    .clickable(onClickLabel = stringResource(R.string.common_back_to_home), onClick = onBackClick)
                     .padding(10.dp),
                 colorFilter = ColorFilter.tint(ZenTheme.colors.textBrandStrong)
             )
         }
 
         Text(
-            text = "ZEN GOLD",
+            text = stringResource(R.string.zen_gold_screen_title),
             fontFamily = ClashDisplay,
             fontWeight = FontWeight.Medium,
             fontSize = 24.rsp,
@@ -315,7 +316,7 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
             )
             Spacer(modifier = Modifier.width(6.rdp))
             Text(
-                text = "FORECAST",
+                text = stringResource(R.string.zen_gold_forecast_eyebrow),
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.7.rsp,
@@ -335,7 +336,7 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
         Spacer(modifier = Modifier.height(12.rdp))
 
         Text(
-            text = "Expect your Gold to rise by $forecastPercent% as $outlookMonthName approaches",
+            text = stringResource(R.string.zen_gold_forecast_rise_message, forecastPercent, outlookMonthName),
             fontFamily = Geist,
             fontWeight = FontWeight.SemiBold,
             fontSize = 18.rsp,
@@ -347,7 +348,7 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
         Spacer(modifier = Modifier.height(8.rdp))
 
         Text(
-            text = "Invest an extra ₹$forecastMonthlyAmount/month & watch the magic.",
+            text = stringResource(R.string.zen_gold_forecast_invest_extra_message, forecastMonthlyAmount),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 13.rsp,
@@ -364,8 +365,8 @@ private fun ForecastCard(forecastPercent: Int, forecastMonthlyAmount: Int) {
                 .padding(end = 4.rdp),
             horizontalAlignment = Alignment.Start
         ) {
-            Text("Forecast", fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, letterSpacing = (-0.28).sp, color = colors.textPrimary)
-            Text("₹$forecastMonthlyAmount/mo avg", fontFamily = DepartureMono, fontSize = 9.5.rsp, letterSpacing = (-0.19).sp, color = colors.textPrimary)
+            Text(stringResource(R.string.zen_gold_forecast_legend_label), fontFamily = Geist, fontWeight = FontWeight.Medium, fontSize = 14.rsp, letterSpacing = (-0.28).sp, color = colors.textPrimary)
+            Text(stringResource(R.string.zen_gold_forecast_monthly_avg, forecastMonthlyAmount), fontFamily = DepartureMono, fontSize = 9.5.rsp, letterSpacing = (-0.19).sp, color = colors.textPrimary)
         }
 
         Spacer(modifier = Modifier.height(6.rdp))
@@ -488,12 +489,12 @@ private fun ViewAllPillButton(onClick: () -> Unit) {
             .height(34.rdp)
             .clip(RoundedCornerShape(percent = 50))
             .background(colorResource(R.color.ink_surface))
-            .pressScale(onClick = onClick, onClickLabel = "View all gold")
+            .pressScale(onClick = onClick, onClickLabel = stringResource(R.string.zen_gold_view_all_gold_label))
             .padding(horizontal = 16.rdp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "View all →",
+            text = stringResource(R.string.zen_gold_view_all),
             fontFamily = Geist,
             fontSize = 14.9.rsp,
             letterSpacing = (-0.3).sp,
@@ -525,23 +526,23 @@ private fun GoldUnlockDisclaimer(daysUntilUnlock: Int, unlocked: Boolean, onView
         text = if (unlocked) {
             buildAnnotatedString {
                 withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
-                    append("Gold pay is open.")
+                    append(stringResource(R.string.zen_gold_pay_is_open))
                 }
-                append(" You pick the quantity, we never pick it for you, and we take nothing from it. ")
+                append(stringResource(R.string.zen_gold_you_pick_quantity))
                 withLink(termsLink) {
-                    append("View T&C")
+                    append(stringResource(R.string.zen_gold_view_terms))
                 }
             }
         } else {
             buildAnnotatedString {
                 val staySentence = if (daysUntilUnlock <= 1) {
-                    "Stay under tomorrow and it opens then."
+                    stringResource(R.string.zen_gold_stay_under_tomorrow)
                 } else {
-                    "Stay under $daysUntilUnlock more days and it opens then."
+                    stringResource(R.string.zen_gold_stay_under_more_days, daysUntilUnlock)
                 }
-                append("Invest gold opens at $unlockAt of $unlockOutOf days under your Promise. $staySentence ")
+                append(stringResource(R.string.zen_gold_invest_opens_at, unlockAt, unlockOutOf, staySentence))
                 withLink(termsLink) {
-                    append("View T&C")
+                    append(stringResource(R.string.zen_gold_view_terms))
                 }
             }
         },
@@ -573,7 +574,7 @@ private fun InvestGoldButton(unlocked: Boolean, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Invest Gold",
+            text = stringResource(R.string.common_invest_gold),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 17.6.rsp,
@@ -584,7 +585,7 @@ private fun InvestGoldButton(unlocked: Boolean, onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(8.rdp))
             Image(
                 painter = painterResource(R.drawable.ic_bangzhu),
-                contentDescription = "Locked",
+                contentDescription = stringResource(R.string.zen_gold_locked_content_description),
                 modifier = Modifier.size(16.rdp)
             )
         }
@@ -606,7 +607,7 @@ private fun EditPromiseButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Edit my promise",
+            text = stringResource(R.string.settings_pro_edit_promise_title),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 17.6.rsp,

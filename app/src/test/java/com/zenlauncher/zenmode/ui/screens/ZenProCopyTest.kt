@@ -1,5 +1,6 @@
 package com.zenlauncher.zenmode.ui.screens
 
+import com.zenlauncher.zenmode.TestStrings
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
@@ -26,17 +27,17 @@ class ZenProCopyTest {
 
     @Test
     fun `price summary puts both plans in one line`() {
-        assertEquals("₹699/year, or ₹75/month", offers.priceSummary())
+        assertEquals("₹699/year, or ₹75/month", TestStrings.format(offers.priceSummaryCopy()!!))
     }
 
     @Test
     fun `price summary is null until the store answers`() {
-        assertNull(emptyList<PlanOffer>().priceSummary())
+        assertNull(emptyList<PlanOffer>().priceSummaryCopy())
     }
 
     @Test
     fun `price summary never invents a monthly price`() {
-        assertEquals("₹699/year", offers.take(1).priceSummary())
+        assertEquals("₹699/year", TestStrings.format(offers.take(1).priceSummaryCopy()!!))
     }
 
     @Test
@@ -50,31 +51,31 @@ class ZenProCopyTest {
     @Test
     fun `trial line names the first charge before it happens`() {
         val e = Entitlement(status = ProStatus.TRIAL, period = BillingPeriod.ANNUAL, trialEndsOn = date(2026, 10, 17))
-        assertEquals("Free trial ends 17 Oct 2026, then ₹699/year.", e.statusLine(offers))
+        assertEquals("Free trial ends 17 Oct 2026, then ₹699/year.", TestStrings.format(e.statusLineCopy(offers)))
     }
 
     @Test
     fun `active monthly line shows renewal and price`() {
         val e = Entitlement(status = ProStatus.ACTIVE, period = BillingPeriod.MONTHLY, renewsOn = date(2026, 10, 17))
-        assertEquals("Renews 17 Oct 2026 · ₹75/month.", e.statusLine(offers))
+        assertEquals("Renews 17 Oct 2026 · ₹75/month.", TestStrings.format(e.statusLineCopy(offers)))
     }
 
     @Test
     fun `ending line says when pro stops and that it will not renew`() {
         val e = Entitlement(status = ProStatus.ENDING, period = BillingPeriod.ANNUAL, endsOn = date(2027, 10, 17))
-        assertEquals("Pro until 17 Oct 2027. It won't renew.", e.statusLine(offers))
+        assertEquals("Pro until 17 Oct 2027. It won't renew.", TestStrings.format(e.statusLineCopy(offers)))
     }
 
     @Test
     fun `early access never quotes an upcoming charge`() {
         val trial = Entitlement(status = ProStatus.TRIAL, period = BillingPeriod.ANNUAL, trialEndsOn = date(2026, 10, 17))
-        assertEquals("Free trial ends 17 Oct 2026.", trial.statusLine(offers, isSimulated = true))
+        assertEquals("Free trial ends 17 Oct 2026.", TestStrings.format(trial.statusLineCopy(offers, isSimulated = true)))
         val active = Entitlement(status = ProStatus.ACTIVE, period = BillingPeriod.MONTHLY, renewsOn = date(2026, 10, 17))
-        assertEquals("Early access. Nothing is charged.", active.statusLine(offers, isSimulated = true))
+        assertEquals("Early access. Nothing is charged.", TestStrings.format(active.statusLineCopy(offers, isSimulated = true)))
     }
 
     @Test
     fun `server granted pro still gets a status line`() {
-        assertEquals("Early access, nothing to manage.", Entitlement.Free.statusLine(offers))
+        assertEquals("Early access, nothing to manage.", TestStrings.format(Entitlement.Free.statusLineCopy(offers)))
     }
 }

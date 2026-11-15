@@ -86,6 +86,7 @@ import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 // ── ZM_OS v3 shared building blocks ─────────────────────────────────
 // Pieces the Zen Gold sub-screens (My Promise 2026:1793, Invest Gold 2026:1250)
@@ -142,7 +143,7 @@ internal fun V3ScreenHeader(
         ) {
             Image(
                 painter = painterResource(R.drawable.ic_my_promise_back),
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.common_back),
                 modifier = Modifier
                     .width(arrowWidth)
                     .height(20.1378.rdp)

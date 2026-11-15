@@ -12,7 +12,6 @@
     <color name="onboarding_sunrise">#2A2111</color>
 
     <!-- Home header + gold row -->
-    <color name="streak_days">#B4B4AE</color>
     <color name="gold_label">#A8A8A2</color>
     <color name="gold_delta_bg">#2B2B2B</color>
 
@@ -48,8 +47,6 @@
     <color name="invest_gold_success_icon">#5BDF62</color>
 
     <!-- Zen Circle / Zen Bro screens -->
-    <color name="zen_circle_wash_edge">#141208</color>
-    <color name="zen_circle_wash_core">#221D0A</color>
     <color name="zen_circle_subtitle">#B4B4AE</color>
     <color name="zen_circle_body">#C4C4BE</color>
     <color name="zen_circle_step_number">#9A9A94</color>

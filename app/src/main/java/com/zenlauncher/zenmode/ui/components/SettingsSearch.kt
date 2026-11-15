@@ -33,6 +33,8 @@ import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 /**
  * Search across Settings, filtering the screen in place rather than keeping a second list of
@@ -81,7 +83,7 @@ fun SettingsSearchField(query: String, onQueryChange: (String) -> Unit, modifier
         Spacer(Modifier.width(10.rdp))
         Box(Modifier.weight(1f)) {
             val style = TextStyle(fontFamily = Geist, fontSize = 15.rsp, color = colors.textPrimary)
-            if (query.isEmpty()) Text("Search settings", style = style.copy(color = colors.textMuted))
+            if (query.isEmpty()) Text(stringResource(R.string.settings_search_placeholder), style = style.copy(color = colors.textMuted))
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
@@ -100,7 +102,7 @@ fun SettingsSearchField(query: String, onQueryChange: (String) -> Unit, modifier
                     .clickable(role = Role.Button) { onQueryChange("") },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Rounded.Close, contentDescription = "Clear search", tint = colors.textSecondary, modifier = Modifier.size(18.rdp))
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.home_clear_search), tint = colors.textSecondary, modifier = Modifier.size(18.rdp))
             }
         }
     }

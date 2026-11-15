@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ZenCheckInPreferences
 import com.zenlauncher.zenmode.ui.components.ZenSheet
 import com.zenlauncher.zenmode.ui.components.ZenSheetBody
@@ -26,6 +27,7 @@ import com.zenlauncher.zenmode.ui.theme.DepartureMono
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -62,9 +64,9 @@ internal fun CheckInTimeSheet(
     }
 
     ZenSheet(onDismiss = onDismiss) {
-        ZenSheetTitle("Check-in time")
+        ZenSheetTitle(stringResource(R.string.settings_checkin_time_title))
         ZenSheetBody(
-            "Your evening card appears at this time, once a day, the next time you're on home."
+            stringResource(R.string.settings_checkin_sheet_body)
         )
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.rdp),
@@ -82,7 +84,7 @@ internal fun CheckInTimeSheet(
                             RoundedCornerShape(percent = 50)
                         )
                         .clickable(
-                            onClickLabel = "Check in at ${slot.format(CheckInTimeFormat)}",
+                            onClickLabel = stringResource(R.string.settings_checkin_slot_label, slot.format(CheckInTimeFormat)),
                             role = Role.Button
                         ) { onPick(slot) }
                         .padding(horizontal = 14.rdp, vertical = 10.rdp),

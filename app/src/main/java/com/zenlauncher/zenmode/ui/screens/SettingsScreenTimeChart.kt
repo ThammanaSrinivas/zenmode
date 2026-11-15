@@ -95,7 +95,9 @@ import java.time.format.TextStyle as JavaTextStyle
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.ZenCheckInPreferences
+import com.zenlauncher.zenmode.R
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -134,7 +136,7 @@ internal fun SettingsScreenTimeCard(
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
-                ZenEyebrow(if (showingMonth) "Last 30 days" else "This week")
+                ZenEyebrow(if (showingMonth) stringResource(R.string.settings_chart_last_30_days) else stringResource(R.string.settings_chart_this_week))
                 Text(
                     text = formatHours(total),
                     fontFamily = DepartureMono,
@@ -144,7 +146,7 @@ internal fun SettingsScreenTimeCard(
                     modifier = Modifier.padding(top = 4.rdp)
                 )
                 Text(
-                    text = "${formatHours(average)} a day on average",
+                    text = stringResource(R.string.settings_chart_average, formatHours(average)),
                     fontFamily = Geist,
                     fontSize = 13.rsp,
                     color = colors.textSecondary
@@ -153,8 +155,8 @@ internal fun SettingsScreenTimeCard(
             if (showMonthOption) {
                 ZenSegmented(
                     options = listOf(
-                        SegmentOption(ScreenTimeRange.WEEK, "7D"),
-                        SegmentOption(ScreenTimeRange.MONTH, "30D", locked = !isPro)
+                        SegmentOption(ScreenTimeRange.WEEK, stringResource(R.string.settings_chart_range_week)),
+                        SegmentOption(ScreenTimeRange.MONTH, stringResource(R.string.settings_chart_range_month), locked = !isPro)
                     ),
                     selected = if (showingMonth) ScreenTimeRange.MONTH else ScreenTimeRange.WEEK,
                     onSelect = { option ->
@@ -171,13 +173,13 @@ internal fun SettingsScreenTimeCard(
         Spacer(Modifier.height(16.rdp))
         if (showingMonth && monthlyHours == null) {
             Box(Modifier.fillMaxWidth().height(150.rdp), contentAlignment = Alignment.Center) {
-                Text("Counting the month…", fontFamily = Geist, fontSize = 13.rsp, color = colors.textSecondary)
+                Text(stringResource(R.string.settings_chart_counting_month), fontFamily = Geist, fontSize = 13.rsp, color = colors.textSecondary)
             }
         } else {
             ScreenTimeBars(data, labelDays = !showingMonth)
         }
         Text(
-            text = "Counted on this phone. Your partner sees your Zen Score, never these hours.",
+            text = stringResource(R.string.settings_chart_privacy_note),
             fontFamily = Geist,
             fontSize = 13.rsp,
             lineHeight = 18.rsp,
@@ -223,12 +225,13 @@ private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
         }
         Spacer(Modifier.width(6.rdp))
         Column(Modifier.weight(1f)) {
+            val settingsChartDescription = stringResource(R.string.settings_chart_description, hours.size, axisHourLabel(max), formatHours(hours.lastOrNull() ?: 0f))
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(130.rdp)
                     .semantics {
-                        contentDescription = "Screen time per day, ${hours.size} days, up to ${axisHourLabel(max)}. Today ${formatHours(hours.lastOrNull() ?: 0f)}."
+                        contentDescription = settingsChartDescription
                     }
             ) {
                 val n = hours.size.coerceAtLeast(1)
@@ -264,8 +267,8 @@ private fun ScreenTimeBars(hours: List<Float>, labelDays: Boolean) {
                 }
             } else {
                 Row(Modifier.fillMaxWidth()) {
-                    Text("30 DAYS AGO", style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
-                    Text("TODAY", style = ZenTypography.monoLabel, color = colors.textPrimary)
+                    Text(stringResource(R.string.settings_chart_30_days_ago), style = ZenTypography.monoLabel, color = colors.textMuted, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.settings_chart_today_label), style = ZenTypography.monoLabel, color = colors.textPrimary)
                 }
             }
         }

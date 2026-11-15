@@ -75,13 +75,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
-import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ClashDisplay
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import com.zenlauncher.zenmode.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -136,7 +137,7 @@ internal fun ZenCircleSheetHost(
     ZenSheetScrim(visible = sheet != null, onDismiss = { sheet = null })
     ZenSheetSurface(
         visible = sheet == ZenCircleSheet.Invite,
-        paneTitle = "Invite your people",
+        paneTitle = stringResource(R.string.circle_sheets_invite_pane_title),
         onDismiss = { sheet = null }
     ) {
         val height = if (onRandomConnect != null) InviteSheetHeight + InviteOptionStep else InviteSheetHeight
@@ -154,7 +155,7 @@ internal fun ZenCircleSheetHost(
     if (settings != null) {
         ZenSheetSurface(
             visible = sheet == ZenCircleSheet.Settings,
-            paneTitle = "Zen Circle settings",
+            paneTitle = stringResource(R.string.common_zen_circle_settings),
             onDismiss = { sheet = null }
         ) {
             ZenCircleSettingsContent(
@@ -182,7 +183,7 @@ private fun ZenSheetScrim(visible: Boolean, onDismiss: () -> Unit) {
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClickLabel = "Close",
+                    onClickLabel = stringResource(R.string.common_close),
                     onClick = onDismiss
                 )
         ) {
@@ -193,12 +194,12 @@ private fun ZenSheetScrim(visible: Boolean, onDismiss: () -> Unit) {
                     .offset(x = 16.rdp + 14.8.rdp - 24.dp, y = 16.2.rdp - 24.dp)
                     .requiredSize(48.dp)
                     .clip(CircleShape)
-                    .clickable(onClickLabel = "Close", onClick = onDismiss),
+                    .clickable(onClickLabel = stringResource(R.string.common_close), onClick = onDismiss),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_zen_circle_back),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.common_back),
                     modifier = Modifier
                         .width(29.6.rdp)
                         .height(20.3.rdp)
@@ -284,7 +285,7 @@ private fun SheetContent(
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(Modifier.height(39.75.rdp))
         Text(
-            text = "ZEN CIRCLE SETTINGS",
+            text = stringResource(R.string.common_zen_circle_settings_header),
             fontFamily = Geist,
             fontWeight = FontWeight.Medium,
             fontSize = 14.15.rsp,
@@ -297,7 +298,7 @@ private fun SheetContent(
         Spacer(Modifier.height(9.rdp))
         Column(modifier = Modifier.padding(start = 32.35.rdp, end = 32.35.rdp)) {
             Text(
-                text = "Invite your people!",
+                text = stringResource(R.string.circle_sheets_invite_title),
                 fontFamily = ClashDisplay,
                 fontWeight = FontWeight.Medium,
                 fontSize = 20.22.rsp,
@@ -307,7 +308,7 @@ private fun SheetContent(
             )
             Spacer(Modifier.height(12.13.rdp))
             Text(
-                text = "A Wholesome Zen Journey awaits!",
+                text = stringResource(R.string.circle_sheets_wholesome_subtitle),
                 fontFamily = Geist,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.18.rsp,
@@ -322,8 +323,8 @@ private fun SheetContent(
             InviteOption(
                 iconRes = R.drawable.ic_zen_circle_share,
                 iconSize = 26.42.rdp,
-                title = "Share invite link",
-                subtitle = "Works even without having $PRODUCT_NAME installed",
+                title = stringResource(R.string.circle_sheets_share_invite_link_title),
+                subtitle = stringResource(R.string.circle_sheets_share_invite_link_subtitle, PRODUCT_NAME),
                 enabled = userCode != null,
                 entranceDelay = 140,
                 onClick = onShareInviteLink
@@ -332,8 +333,8 @@ private fun SheetContent(
             InviteOption(
                 iconRes = R.drawable.ic_zen_circle_copy,
                 iconSize = 26.79.rdp,
-                title = "Copy Invite code",
-                subtitle = if (copied) "Copied. Paste it to your people" else userCode ?: "Sign in to get your code",
+                title = stringResource(R.string.circle_sheets_copy_invite_code_title),
+                subtitle = if (copied) stringResource(R.string.circle_sheets_invite_code_copied) else userCode ?: stringResource(R.string.circle_sheets_invite_code_sign_in),
                 subtitleHighlighted = copied,
                 enabled = userCode != null,
                 entranceDelay = 210,
@@ -350,7 +351,7 @@ private fun SheetContent(
                     iconRes = R.drawable.ic_zen_circle_random,
                     iconSize = 26.79.rdp,
                     title = RandomConnect.NAME,
-                    subtitle = "Get a Zen Bro in your circle right now",
+                    subtitle = stringResource(R.string.circle_sheets_random_connect_subtitle),
                     enabled = true,
                     entranceDelay = 280,
                     onClick = {
@@ -372,7 +373,7 @@ private fun SheetContent(
 
         Spacer(Modifier.height(16.4.rdp))
         Text(
-            text = "No spam, no auto-follows. They'll just see your invite and decide.",
+            text = stringResource(R.string.circle_sheets_no_spam_note),
             fontFamily = Geist,
             fontSize = 13.83.rsp,
             lineHeight = 19.36.rsp,
@@ -482,12 +483,12 @@ private fun BoxScope.CloseButton(onDismiss: () -> Unit) {
             .offset(x = -(25.6.rdp - (48.dp - 28.94.rdp) / 2), y = 31.11.rdp - (48.dp - 28.94.rdp) / 2)
             .requiredSize(48.dp)
             .clip(CircleShape)
-            .clickable(onClickLabel = "Close", onClick = onDismiss),
+            .clickable(onClickLabel = stringResource(R.string.common_close), onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(R.drawable.ic_zen_circle_close),
-            contentDescription = "Close",
+            contentDescription = stringResource(R.string.common_close),
             modifier = Modifier
                 .size(20.46.rdp)
                 .graphicsLayer { rotationZ = rotation }

@@ -75,6 +75,8 @@ import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.ZenTypography
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
+import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 // ZenMode OS v3 settings primitives. Radii follow the token set: 20 card, 16 row/tile,
 // 8 chip. Every interactive element keeps the 48dp minimum target.
@@ -181,7 +183,7 @@ fun ZenProTag(unlocked: Boolean, modifier: Modifier = Modifier) {
     val line = if (unlocked) colors.surfaceTintLine else colors.rewardSurfaceLine
     val fg = if (unlocked) colors.textOnTint else colors.accentReward
     Text(
-        text = "PRO",
+        text = stringResource(R.string.common_pro_badge),
         fontFamily = DepartureMono,
         fontSize = 10.rsp,
         letterSpacing = 1.sp,

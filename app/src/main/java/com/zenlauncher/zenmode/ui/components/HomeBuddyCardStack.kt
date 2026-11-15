@@ -27,6 +27,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlin.math.sin
+import androidx.compose.ui.res.stringResource
+import com.zenlauncher.zenmode.R
 
 /**
  * Home's right-hand stats card, queued the same way the Zen Circle dashboard's
@@ -55,7 +57,7 @@ fun HomeBuddyCardStack(
     Box(
         modifier = modifier
             // Quick tap opens the Zen Circle dashboard -- same behavior as the plain card.
-            .clickable(onClickLabel = "Open Zen Circle", onClick = onTap)
+            .clickable(onClickLabel = stringResource(R.string.zen_bro_open_circle_label), onClick = onTap)
             // A drag past touch slop is claimed and consumed by this (inner) node before
             // Home's outer page-swipe (Zen Score / Zen Gold, registered on HomeScreen's
             // top-level Box) ever sees it -- Compose's main pointer pass dispatches
