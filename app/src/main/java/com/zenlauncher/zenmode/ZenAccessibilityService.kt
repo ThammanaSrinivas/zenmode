@@ -16,13 +16,15 @@ import com.zenlauncher.zenmode.accessibility.NodeQuery
 import com.zenlauncher.zenmode.accessibility.SurfaceRule
 import com.zenlauncher.zenmode.accessibility.SurfaceDetector
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.island.IslandHost
 
 /**
- * Two jobs:
+ * Three jobs:
  *  1. Global lock-screen action for the home-screen lock button.
  *  2. In-app content blocking: when a tracked app (YouTube, Instagram, Snapchat)
  *     shows a short-form feed surface the user has blocked, press Back to leave
  *     it — same approach as the FlowBit reference app.
+ *  3. Carrying the Zen Island above every app ([IslandHost]), when the person has it on.
  *
  * Robustness matters: if this service throws out of a callback, Android disables
  * it (permanently, after a couple of times — users read that as "the permission
@@ -53,6 +55,9 @@ class ZenAccessibilityService : AccessibilityService() {
         }
 
         fun isRunning(): Boolean = instance != null
+
+        /** The running service, which can carry the Zen Island above every app. */
+        fun current(): ZenAccessibilityService? = instance
 
         /** Last recorded in-callback crash ("<Exception>: <msg> @ <time>"), or null. */
         fun lastCrash(context: Context): String? =
@@ -94,6 +99,7 @@ class ZenAccessibilityService : AccessibilityService() {
         blockPrefs = ContentBlockPrefs.snapshot(this)
         updateWatchedPackages()
         runCatching { A11yPermissionMonitor.check(this) }
+        runCatching { IslandHost.update(this) }
 
         getSharedPreferences(CRASH_PREFS, Context.MODE_PRIVATE)
             .getString(KEY_LAST_CRASH, null)?.let { last ->
@@ -229,6 +235,11 @@ class ZenAccessibilityService : AccessibilityService() {
         serviceInfo = info
     }
 
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        runCatching { IslandHost.onConfigurationChanged() }
+    }
+
     override fun onInterrupt() {
         // No-op
     }
@@ -238,6 +249,7 @@ class ZenAccessibilityService : AccessibilityService() {
         handler.removeCallbacksAndMessages(null)
         ContentBlockPrefs.prefs(this).unregisterOnSharedPreferenceChangeListener(prefsListener)
         instance = null
+        runCatching { IslandHost.onAccessibilityGone(applicationContext) }
     }
 
     /**

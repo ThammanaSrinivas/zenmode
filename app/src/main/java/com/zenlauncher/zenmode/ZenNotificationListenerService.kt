@@ -7,9 +7,12 @@ import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.compose.runtime.mutableStateMapOf
+import com.zenlauncher.zenmode.island.IslandHost
+import com.zenlauncher.zenmode.island.IslandNotes
 
 /**
- * Keeps per-app notification counts for the home tiles' badges.
+ * Keeps per-app notification counts for the home tiles' badges, and hands each notification to
+ * the Zen Island ([IslandNotes]), which does nothing unless the island is running.
  *
  * Android wakes this service for every notification posted or removed anywhere on the
  * device — screen off, phone pocketed, all day — so the work done per callback is the
@@ -86,14 +89,22 @@ class ZenNotificationListenerService : NotificationListenerService() {
         super.onListenerConnected()
         instance = this
         rebuildCounts()
+        // The island can now hear calls, timers and music: let it start (or look again).
+        runCatching {
+            IslandHost.update(this)
+            if (IslandHost.isActive) IslandNotes.scan(this)
+        }
     }
 
-    override fun onNotificationPosted(sbn: StatusBarNotification?) {
+    override fun onNotificationPosted(sbn: StatusBarNotification?, rankingMap: RankingMap?) {
         scheduleRebuild()
+        if (sbn != null) runCatching { IslandNotes.posted(this, sbn, rankingMap) }
+            .onFailure { if (BuildConfig.DEBUG) android.util.Log.w("ZenIsland", "island skipped a notification", it) }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         scheduleRebuild()
+        if (sbn != null) runCatching { IslandNotes.removed(sbn) }
     }
 
     override fun onListenerDisconnected() {

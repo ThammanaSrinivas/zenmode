@@ -48,6 +48,9 @@ class ZenModeApp : Application() {
             // Widgets: the 15-minute refresh and the next day-boundary alarm.
             ZenWidgets.schedule(this)
 
+            // The Zen Island: starts if it's on and the phone lets it draw over other apps.
+            com.zenlauncher.zenmode.island.IslandHost.update(this)
+
             // Re-identify existing signed-in users (one-time backfill)
             if (ServiceLocator.authProvider.isSignedIn() && !repository.isPostHogIdentified()) {
                 val authProvider = ServiceLocator.authProvider
@@ -67,5 +70,6 @@ class ZenModeApp : Application() {
         super.onConfigurationChanged(newConfig)
         // A widget draws for the system theme; a switch reaches it now, not at the next refresh.
         if (ServiceLocator.isInitialized) ZenWidgets.refresh(this, force = true)
+        com.zenlauncher.zenmode.island.IslandHost.onConfigurationChanged()
     }
 }

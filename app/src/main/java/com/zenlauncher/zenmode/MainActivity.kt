@@ -322,6 +322,7 @@ class MainActivity : AppCompatActivity() {
         homeAppCount = AppGridPreferences.getAppCount(this)
         openUnseenRecap()
         com.zenlauncher.zenmode.widget.glance.ZenWidgets.refresh(this)
+        com.zenlauncher.zenmode.island.IslandHost.update(this)
 
         // Stats Sync Check
         if (::repository.isInitialized) {

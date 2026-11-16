@@ -7,6 +7,11 @@
             android:exported="true"
             android:taskAffinity="com.zenlauncher.zenmode.test"
             android:launchMode="standard" />
+
+        <!-- Drives the Zen Island's real paths from adb (debug builds only). -->
+        <receiver
+            android:name="com.zenlauncher.zenmode.island.IslandDemoReceiver"
+            android:exported="true" />
     </application>
 
 </manifest>
