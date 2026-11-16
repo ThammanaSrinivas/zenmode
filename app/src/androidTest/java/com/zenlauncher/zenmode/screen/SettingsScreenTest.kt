@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.coreapi.services.BillingPeriod
 import com.zenlauncher.zenmode.coreapi.services.Entitlement
 import com.zenlauncher.zenmode.coreapi.services.PlanOffer
@@ -45,6 +46,7 @@ class SettingsScreenTest {
         onShareClick: () -> Unit = {},
         onOpenPro: (ProEntry) -> Unit = {},
         onProGateShown: (ProFeature) -> Unit = {},
+        onExportData: () -> Unit = {},
         onLogoutClick: () -> Unit = {},
         onDeleteAccountClick: () -> Unit = {}
     ) {
@@ -61,6 +63,7 @@ class SettingsScreenTest {
                     onShareClick = onShareClick,
                     onOpenPro = onOpenPro,
                     onProGateShown = onProGateShown,
+                    onExportData = onExportData,
                     onLogoutClick = onLogoutClick,
                     onDeleteAccountClick = onDeleteAccountClick
                 )
@@ -73,22 +76,51 @@ class SettingsScreenTest {
     @Test
     fun rendersTitleAndScreenTime() {
         setContent()
-        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        // The title is the "ZenMode OS Settings" wordmark, read out as one phrase.
+        composeTestRule.onNodeWithContentDescription("$PRODUCT_NAME Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("THIS WEEK").assertIsDisplayed()
     }
 
     @Test
     fun keepsEveryExistingSetting() {
         setContent()
+        // Every row a free user sees, group by group. Rows that only appear with Pro on sale
+        // (themes, export) or behind a toggle (check-in time) are covered by their own tests.
         listOf(
+            // Focus
             "Resistance screen",
             "Distraction Blocker",
+            // Daily check-in
+            "Evening check-in",
+            // Home screen
             "Choose home apps",
             "Notification badges",
-            "Dark mode (beta)",
+            // Gestures
+            "Swipe up to search",
+            "Tap the margins",
+            "Double-tap to lock",
+            // Look & sound
+            "Appearance",
+            "Interface sounds",
+            // Accountability
             "Accountability partner",
+            "Zen Circle members",
+            // Phone
+            "Default home app",
+            "Zen Island",
+            "Widgets",
+            "Usage access",
+            "Accessibility",
+            "Battery",
+            "Do Not Disturb",
+            "$PRODUCT_NAME notifications",
+            "All phone settings",
+            // Help us build it
+            "Report a bug",
+            "Suggest a feature",
+            // ZenMode OS
             "Rate on Play Store",
-            "Share ZenMode",
+            "Share $PRODUCT_NAME",
             "Contribute on GitHub"
         ).forEach { composeTestRule.onNodeWithText(it).performScrollTo().assertIsDisplayed() }
     }
@@ -150,14 +182,14 @@ class SettingsScreenTest {
     @Test
     fun proUnavailable_showsNoProSurfaces() {
         setContent(isProAvailable = false)
-        composeTestRule.onAllNodesWithText("ZenMode Pro").assertCountEquals(0)
+        composeTestRule.onAllNodesWithText(PRO_PLAN_NAME).assertCountEquals(0)
         composeTestRule.onAllNodesWithText("PRO").assertCountEquals(0)
     }
 
     @Test
     fun free_planCardShowsPriceInTheRow() {
         setContent(isProAvailable = true)
-        composeTestRule.onNodeWithText("ZenMode Pro").assertIsDisplayed()
+        composeTestRule.onNodeWithText(PRO_PLAN_NAME).assertIsDisplayed()
         composeTestRule.onNodeWithText("₹699/year, or ₹75/month").assertIsDisplayed()
     }
 
@@ -205,13 +237,22 @@ class SettingsScreenTest {
     @Test
     fun pro_proRow_neverOpensGate() {
         var gated: ProFeature? = null
+        var exported = false
         setContent(
             isProAvailable = true,
             entitlement = Entitlement(status = ProStatus.ACTIVE, period = BillingPeriod.MONTHLY),
-            onProGateShown = { gated = it }
+            onProGateShown = { gated = it },
+            onExportData = { exported = true }
         )
+        // Export has shipped: on Pro the row runs it straight away, no gate and no "arriving" note.
         composeTestRule.onNodeWithText("Export data").performScrollTo().performClick()
         assertEquals(null, gated)
-        composeTestRule.onNodeWithText("Included in your Pro".uppercase()).assertIsDisplayed()
+        assertTrue("Pro's Export data row should run the export", exported)
+        composeTestRule.onAllNodesWithText("See what Pro adds").assertCountEquals(0)
+    }
+
+    private companion object {
+        /** The plan card's title. */
+        const val PRO_PLAN_NAME = "$PRODUCT_NAME Pro"
     }
 }
