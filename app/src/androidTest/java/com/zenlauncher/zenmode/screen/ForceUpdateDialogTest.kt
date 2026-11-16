@@ -2,6 +2,7 @@ package com.zenlauncher.zenmode.screen
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import com.zenlauncher.zenmode.AppConstants.PRODUCT_NAME
 import com.zenlauncher.zenmode.testing.TestActivity
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -42,7 +43,7 @@ class ForceUpdateDialogTest {
     @Test
     fun forceUpdateDialog_showsDescription() {
         setContent()
-        composeTestRule.onNodeWithText("A new version of ZenMode is required", substring = true)
+        composeTestRule.onNodeWithText("A new version of $PRODUCT_NAME is required", substring = true)
             .assertIsDisplayed()
     }
 
