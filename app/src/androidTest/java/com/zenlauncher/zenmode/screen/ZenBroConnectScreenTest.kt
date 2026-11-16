@@ -64,7 +64,8 @@ class ZenBroConnectScreenTest {
             BuddyAddResult.Success("Asha")
         })
 
-        composeTestRule.onNodeWithText("ZEN-000").performScrollTo().performTextInput("  BUDDY42 ")
+        // Codes are raw UIDs, so the field asks for a paste rather than showing a ZEN-000 format.
+        composeTestRule.onNodeWithText("Paste code here").performScrollTo().performTextInput("  BUDDY42 ")
         composeTestRule.onNodeWithText("Connect").performClick()
 
         composeTestRule.onNodeWithText("Connected with Asha!").performScrollTo().assertIsDisplayed()

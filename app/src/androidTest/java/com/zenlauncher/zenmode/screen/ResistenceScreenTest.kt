@@ -1,6 +1,7 @@
 package com.zenlauncher.zenmode.screen
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.zenlauncher.zenmode.testing.TestActivity
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -103,10 +104,12 @@ class ResistenceScreenTest {
     fun resistenceScreen_showsV3StreakBlock() {
         // The v2 pill ("streaks: 3") is gone; the header now draws the same
         // StreakStat block Home does — label over count, with the unit beside it.
+        // The block reads as one merged node, and the countdown ring can show a bare "3"
+        // of its own, so match the label, count and unit together.
         setContent(streaks = 3)
-        composeTestRule.onNodeWithText("Streaks").assertIsDisplayed()
-        composeTestRule.onNodeWithText("3").assertIsDisplayed()
-        composeTestRule.onNodeWithText("days").assertIsDisplayed()
+        composeTestRule
+            .onNode(hasText("Streaks") and hasText("3") and hasText("days"))
+            .assertIsDisplayed()
     }
 
     @Test
