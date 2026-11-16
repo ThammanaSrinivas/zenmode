@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.zenlauncher.zenmode.Feedback
 import com.zenlauncher.zenmode.AppGridPreferences
 import com.zenlauncher.zenmode.GesturePreferences
 import com.zenlauncher.zenmode.HomeGesture
@@ -81,7 +82,7 @@ import com.zenlauncher.zenmode.ui.components.ZenSegmented
 import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
 import com.zenlauncher.zenmode.ui.components.ZenSettingsGroup
 import com.zenlauncher.zenmode.ui.components.ZenSettingsRow
-import com.zenlauncher.zenmode.ui.components.BugReportSheet
+import com.zenlauncher.zenmode.ui.components.FeedbackSheet
 import com.zenlauncher.zenmode.ui.components.ZenSheet
 import com.zenlauncher.zenmode.ui.components.ZenSheetBody
 import com.zenlauncher.zenmode.ui.components.ZenSheetTitle
@@ -139,7 +140,6 @@ fun SettingsScreen(
     onRateClick: () -> Unit,
     onShareClick: () -> Unit,
     /** Opens the public product board (zenmodeos.com/board) in the browser. */
-    onFeatureRequestClick: () -> Unit = {},
     onOpenPro: (ProEntry) -> Unit = {},
     onProGateShown: (ProFeature) -> Unit = {},
     /** Pro: writes the CSV export and opens the share sheet. */
@@ -160,7 +160,7 @@ fun SettingsScreen(
     var gate by remember { mutableStateOf<ProFeature?>(null) }
     var soon by remember { mutableStateOf<ProFeature?>(null) }
     var themePicker by remember { mutableStateOf(false) }
-    var bugReport by remember { mutableStateOf(false) }
+    var mailSheet by remember { mutableStateOf<Feedback.Kind?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     val searching = searchQuery.isNotBlank()
     var resultsHeight by remember { mutableStateOf(1) }
@@ -420,14 +420,13 @@ fun SettingsScreen(
                         ZenSettingsRow(
                             title = "Report a bug",
                             subtitle = "Tell us what happened. A screenshot helps.",
-                            onClick = { bugReport = true }
+                            onClick = { mailSheet = Feedback.Kind.BUG }
                         )
                         ZenRowDivider()
                         ZenSettingsRow(
-                            title = "Feature requests",
-                            subtitle = "The board of what's being built, and what you'd like next.",
-                            trailing = RowTrailing.External,
-                            onClick = onFeatureRequestClick
+                            title = "Suggest a feature",
+                            subtitle = "Tell us what you'd like next. We read every one.",
+                            onClick = { mailSheet = Feedback.Kind.IDEA }
                         )
                     }
 
@@ -471,8 +470,8 @@ fun SettingsScreen(
             )
         }
 
-        if (bugReport) {
-            BugReportSheet(onDismiss = { bugReport = false })
+        mailSheet?.let { kind ->
+            FeedbackSheet(kind = kind, onDismiss = { mailSheet = null })
         }
 
         if (showAccountSheet) {

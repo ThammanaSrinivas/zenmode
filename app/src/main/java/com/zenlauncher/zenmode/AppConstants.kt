@@ -111,10 +111,6 @@ object AppConstants {
     // Step-by-step guide to redeeming a Pro promo code at Google Play checkout. Not under an
     // App Links pathPrefix, so it always opens in the browser.
     const val REDEEM_CODE_URL = "https://zenmodeos.com/redeem/"
-    // Public product board: what's being built, what's being considered, and the form that
-    // adds to it. Settings -> "Feature requests" is the only link to it from the app, so the
-    // page and this constant are the pair to keep in step (hosting/public/board/index.html).
-    const val FEATURE_BOARD_URL = "https://zenmodeos.com/board/"
     // Play Store listing. Same id="com.zenlauncher.zenmode" MainActivity/SettingsActivity
     // build from `packageName` for the in-app "Rate us" flow; hardcoded here since this
     // object has no Context. Doubles as the download CTA appended to every share-card's

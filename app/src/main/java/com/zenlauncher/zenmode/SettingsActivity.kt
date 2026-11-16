@@ -143,7 +143,6 @@ class SettingsActivity : AppCompatActivity() {
                         startActivity(intent)
                     },
                     onContributeClick = { openGitHub() },
-                    onFeatureRequestClick = { openFeatureBoard() },
                     onRateClick = { openPlayStore() },
                     onShareClick = { shareZenMode() },
                     onOpenPro = { entry -> startActivity(ZenProActivity.intent(this, entry)) },
@@ -258,16 +257,6 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun openGitHub() {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.GITHUB_URL)))
-    }
-
-    /** Settings -> "Feature requests": the public product board on zenmodeos.com. */
-    private fun openFeatureBoard() {
-        ServiceLocator.analyticsManager.trackEvent("feature_board_opened", mapOf("source" to "settings"))
-        try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AppConstants.FEATURE_BOARD_URL)))
-        } catch (_: android.content.ActivityNotFoundException) {
-            Toast.makeText(this, "No browser to open the board with.", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun openPlayStore() {

@@ -77,7 +77,6 @@ import com.zenlauncher.zenmode.ui.components.ZenSegmented
 import com.zenlauncher.zenmode.ui.components.ZenSettingToggleItem
 import com.zenlauncher.zenmode.ui.components.ZenSettingsGroup
 import com.zenlauncher.zenmode.ui.components.ZenSettingsRow
-import com.zenlauncher.zenmode.ui.components.BugReportSheet
 import com.zenlauncher.zenmode.ui.components.ZenSheet
 import com.zenlauncher.zenmode.ui.components.ZenSheetBody
 import com.zenlauncher.zenmode.ui.components.ZenSheetTitle
