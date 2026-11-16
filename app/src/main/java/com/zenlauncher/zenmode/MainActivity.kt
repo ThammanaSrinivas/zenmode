@@ -154,6 +154,8 @@ class MainActivity : AppCompatActivity() {
     private var revealAfterDelayedUnlock = false
 
     companion object {
+        /** Opens "the buddy area" (the circle, or connecting one); read by [handleIntentDeepLink]. */
+        const val EXTRA_SHOW_BUDDY_CONNECT = "SHOW_BUDDY_CONNECT"
         // Shared to avoid re-running the animation if the home screen restarts while
         // the device is unlocked, since ACTION_USER_PRESENT is only broadcast once.
         var lastScreenOffTime = 0L
@@ -270,7 +272,7 @@ class MainActivity : AppCompatActivity() {
             DeepLink.None -> {
                 // Both extras open "the buddy area" - which screen that resolves to is
                 // openBuddyFlow()'s call, not the sender's (Settings, an old push notification).
-                if (intent.getBooleanExtra("SHOW_BUDDY_CONNECT", false) ||
+                if (intent.getBooleanExtra(EXTRA_SHOW_BUDDY_CONNECT, false) ||
                     intent.getBooleanExtra("SHOW_BUDDY_BATTLE", false)
                 ) {
                     openBuddyFlow()
@@ -319,6 +321,7 @@ class MainActivity : AppCompatActivity() {
         loadInstalledApps()
         homeAppCount = AppGridPreferences.getAppCount(this)
         openUnseenRecap()
+        com.zenlauncher.zenmode.widget.glance.ZenWidgets.refresh(this)
 
         // Stats Sync Check
         if (::repository.isInitialized) {

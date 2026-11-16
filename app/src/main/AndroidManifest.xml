@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Widgets re-arm their day-boundary refresh after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- So OEM battery managers don't kill the accessibility service (in-app content blocking) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -170,6 +172,111 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Widgets: the family of seven (widget/glance/ZenWidgets.kt). -->
+        <receiver
+            android:name=".widget.glance.ZenoWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_zeno_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_zeno_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.WeekWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_week_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_week_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.ScoreWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_score_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_score_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.ScreenTimeWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_screen_time_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_screen_time_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.QuietWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_quiet_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_quiet_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.GoldWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_gold_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_gold_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.CircleWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_circle_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_circle_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.WidgetTickReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+        <activity
+            android:name=".widget.glance.WidgetGalleryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <!-- The backdrop choice behind the system's reconfigure button. -->
+        <activity
+            android:name=".widget.glance.WidgetStyleActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

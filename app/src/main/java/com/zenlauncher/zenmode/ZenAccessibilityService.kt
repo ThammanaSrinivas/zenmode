@@ -157,10 +157,12 @@ class ZenAccessibilityService : AccessibilityService() {
 
         val debug = prefs.isDebugDumpEnabled
         val appRule = rules.appRule(pkg) ?: return
-        if (!prefs.isAnyBlockEnabled) return
+        // A Quiet session quiets every short-form surface until it ends, switches or not.
+        val quiet = prefs.isQuiet(now)
+        if (!quiet && !prefs.isAnyBlockEnabled) return
         // Nothing blocked in this app: the surface check below would refuse every surface
         // we could detect, so skip the node walk rather than pay for it on every scroll.
-        if (!prefs.hasBlockedSurface(pkg)) return
+        if (!quiet && !prefs.hasBlockedSurface(pkg)) return
 
         val root = rootInActiveWindow
         if (root == null) {
@@ -173,7 +175,7 @@ class ZenAccessibilityService : AccessibilityService() {
         val surface = SurfaceDetector.detect(appRule, snapshot)
         if (debug) Log.d(TAG, "event pkg=$pkg detected surface=${surface?.id}")
         if (surface == null) return
-        if (!prefs.isSurfaceBlocked(pkg, surface.id)) return
+        if (!quiet && !prefs.isSurfaceBlocked(pkg, surface.id)) return
 
         block(pkg, surface)
     }

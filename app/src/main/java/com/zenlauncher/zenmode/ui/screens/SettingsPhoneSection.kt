@@ -3,6 +3,7 @@ package com.zenlauncher.zenmode.ui.screens
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import com.zenlauncher.zenmode.widget.glance.WidgetGalleryActivity
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.PowerManager
@@ -115,6 +116,12 @@ internal fun PhoneSettingsGroup() {
             value = if (state.isDefaultHome) PRODUCT_NAME else "Not set",
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_HOME_SETTINGS)) }
+        )
+        ZenRowDivider()
+        ZenSettingsRow(
+            title = "Widgets",
+            subtitle = "Your week on any home screen. Seven to choose from.",
+            onClick = { context.startActivity(Intent(context, WidgetGalleryActivity::class.java)) }
         )
         ZenRowDivider()
         ZenSettingsRow(

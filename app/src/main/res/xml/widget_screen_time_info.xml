@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_screen_time_description"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:previewImage="@drawable/widget_preview_screen_time"
+    android:minWidth="276dp"
+    android:minHeight="220dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="50dp"
+    android:maxResizeWidth="600dp"
+    android:maxResizeHeight="600dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen|keyguard"
+    android:configure="com.zenlauncher.zenmode.widget.glance.WidgetStyleActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional" />
