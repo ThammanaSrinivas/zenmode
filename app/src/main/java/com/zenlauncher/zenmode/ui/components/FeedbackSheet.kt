@@ -7,33 +7,44 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.zenlauncher.zenmode.AppConstants
-import com.zenlauncher.zenmode.BugReport
+import com.zenlauncher.zenmode.Feedback
 import com.zenlauncher.zenmode.ui.theme.Geist
 import com.zenlauncher.zenmode.ui.theme.ZenTheme
 import com.zenlauncher.zenmode.ui.theme.rdp
 import com.zenlauncher.zenmode.ui.theme.rsp
 
 /**
- * Settings → "Report a bug". Says where reports go and opens the mail to send it.
+ * Settings → "Report a bug" and "Suggest a feature". Says where it goes and opens the mail.
  *
- * The sheet owns no policy: [BugReport] decides what the report carries and where it goes, so a
- * report sent from here reads the same as one sent from anywhere else we add the entry point.
+ * The sheet owns no policy: [Feedback] decides what the mail carries and where it goes, so
+ * one sent from here reads the same as one sent from anywhere else we add the entry point.
  */
 @Composable
-fun BugReportSheet(onDismiss: () -> Unit) {
+fun FeedbackSheet(kind: Feedback.Kind, onDismiss: () -> Unit) {
     val colors = ZenTheme.colors
     val context = LocalContext.current
 
     ZenSheet(onDismiss = onDismiss) {
-        ZenSheetTitle("Report a bug")
-        ZenSheetBody(
-            "Email us at ${AppConstants.SUPPORT_EMAIL}. What happened, and the step just before " +
-                "it, is usually the useful part. Attach a screenshot in your mail app if you can."
-        )
+        when (kind) {
+            Feedback.Kind.BUG -> {
+                ZenSheetTitle("Report a bug")
+                ZenSheetBody(
+                    "Email us at ${AppConstants.SUPPORT_EMAIL}. What happened, and the step just before " +
+                        "it, is usually the useful part. Attach a screenshot in your mail app if you can."
+                )
+            }
+            Feedback.Kind.IDEA -> {
+                ZenSheetTitle("Suggest a feature")
+                ZenSheetBody(
+                    "Email us at ${AppConstants.SUPPORT_EMAIL}. Tell us what you'd like, and the moment " +
+                        "you wished you had it. We read every one."
+                )
+            }
+        }
 
         Text(
-            text = "Your phone model, Android version and app build are filled in so we can " +
-                "reproduce it. You can read every line before you send.",
+            text = "Your phone model, Android version and app build are filled in. " +
+                "You can read every line before you send.",
             fontFamily = Geist,
             fontSize = 12.rsp,
             lineHeight = 17.rsp,
@@ -50,7 +61,7 @@ fun BugReportSheet(onDismiss: () -> Unit) {
             ZenButton(
                 text = "Email us",
                 onClick = {
-                    BugReport.send(context)
+                    Feedback.send(context, kind)
                     onDismiss()
                 },
                 modifier = Modifier.weight(1f)

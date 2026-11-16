@@ -3,6 +3,7 @@ package com.zenlauncher.zenmode.ui.screens
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import com.zenlauncher.zenmode.widget.glance.WidgetGalleryActivity
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.PowerManager
@@ -22,6 +23,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +49,8 @@ import com.zenlauncher.zenmode.BuildConfig
 import com.zenlauncher.zenmode.R
 import com.zenlauncher.zenmode.ZenAccessibilityService
 import com.zenlauncher.zenmode.coreapi.UsageAccess
+import com.zenlauncher.zenmode.island.IslandHost
+import com.zenlauncher.zenmode.ui.components.IslandSheet
 import com.zenlauncher.zenmode.ui.components.RowTrailing
 import com.zenlauncher.zenmode.ui.components.ZenRowDivider
 import com.zenlauncher.zenmode.ui.components.ZenSettingsGroup
@@ -107,6 +112,9 @@ internal fun PhoneSettingsGroup() {
     val resumes = rememberResumeCount()
     val state = remember(resumes) { readPhoneState(context) }
     val pkgUri = Uri.parse("package:${context.packageName}")
+    var islandSheet by remember { mutableStateOf(false) }
+    val islandStatus = remember(resumes, islandSheet) { IslandHost.status(context) }
+    if (islandSheet) IslandSheet(onDismiss = { islandSheet = false })
 
     ZenSettingsGroup(label = "Phone") {
         ZenSettingsRow(
@@ -115,6 +123,23 @@ internal fun PhoneSettingsGroup() {
             value = if (state.isDefaultHome) PRODUCT_NAME else "Not set",
             trailing = RowTrailing.External,
             onClick = { openSystemSetting(context, Intent(Settings.ACTION_HOME_SETTINGS)) }
+        )
+        ZenRowDivider()
+        ZenSettingsRow(
+            title = "Zen Island",
+            subtitle = "Live moments round the camera, over every app.",
+            value = when (islandStatus) {
+                IslandHost.Status.RUNNING -> "On"
+                IslandHost.Status.OFF -> "Off"
+                IslandHost.Status.NEEDS_ACCESS -> "Needs access"
+            },
+            onClick = { islandSheet = true }
+        )
+        ZenRowDivider()
+        ZenSettingsRow(
+            title = "Widgets",
+            subtitle = "Your week on any home screen. Seven to choose from.",
+            onClick = { context.startActivity(Intent(context, WidgetGalleryActivity::class.java)) }
         )
         ZenRowDivider()
         ZenSettingsRow(

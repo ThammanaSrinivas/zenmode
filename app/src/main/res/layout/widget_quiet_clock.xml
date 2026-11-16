@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Quiet countdown on the widgets: the one number not in Departure Mono. It has to tick every
+     second inside another launcher with our process asleep, so it is the system's Chronometer in
+     the system monospace (another launcher can't load our fonts). Colour and size are set per face. -->
+<Chronometer xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/quiet_clock"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fontFamily="monospace"
+    android:gravity="start|center_vertical"
+    android:includeFontPadding="false"
+    android:maxLines="1"
+    android:textSize="30dp" />

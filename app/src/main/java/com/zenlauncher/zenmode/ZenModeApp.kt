@@ -2,6 +2,8 @@ package com.zenlauncher.zenmode
 
 import com.zenlauncher.zenmode.recap.WeeklyRecapWorker
 import android.app.Application
+import android.content.res.Configuration
+import com.zenlauncher.zenmode.widget.glance.ZenWidgets
 import com.zenlauncher.zenmode.coreapi.UsageRepository
 import com.zenlauncher.zenmode.coreapi.services.AppInitializer
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
@@ -43,6 +45,12 @@ class ZenModeApp : Application() {
             // Weekly recap: record finished days before Android forgets them, announce Mondays.
             WeeklyRecapWorker.schedule(this)
 
+            // Widgets: the 15-minute refresh and the next day-boundary alarm.
+            ZenWidgets.schedule(this)
+
+            // The Zen Island: starts if it's on and the phone lets it draw over other apps.
+            com.zenlauncher.zenmode.island.IslandHost.update(this)
+
             // Re-identify existing signed-in users (one-time backfill)
             if (ServiceLocator.authProvider.isSignedIn() && !repository.isPostHogIdentified()) {
                 val authProvider = ServiceLocator.authProvider
@@ -56,5 +64,12 @@ class ZenModeApp : Application() {
                 }
             }
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // A widget draws for the system theme; a switch reaches it now, not at the next refresh.
+        if (ServiceLocator.isInitialized) ZenWidgets.refresh(this, force = true)
+        com.zenlauncher.zenmode.island.IslandHost.onConfigurationChanged()
     }
 }

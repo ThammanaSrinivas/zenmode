@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The widget family's names and one-line descriptions in the system widget picker
+     (widget quality bar WD-4.4 and WD-4.5: a distinct name and a description for each). -->
+<resources>
+    <string name="widget_zeno_name">Zeno</string>
+    <string name="widget_zeno_description">One kind word at the right moment. Tap Zeno and he answers.</string>
+    <string name="widget_week_name">This week</string>
+    <string name="widget_week_description">Your weekly streak, each day\'s score, and the week in bloom.</string>
+    <string name="widget_screen_time_name">Screen time</string>
+    <string name="widget_screen_time_description">Today\'s time on this phone against your promise, and the last seven days.</string>
+    <string name="widget_score_name">Zen Score</string>
+    <string name="widget_score_description">Today\'s score against your promise.</string>
+    <string name="widget_quiet_name">Quiet</string>
+    <string name="widget_quiet_description">Start 25 minutes of quiet without opening the app.</string>
+    <string name="widget_gold_name">Zen Gold</string>
+    <string name="widget_gold_description">What you\'ve set aside, and what opens gold pay.</string>
+    <string name="widget_circle_name">Zen Circle</string>
+    <string name="widget_circle_description">Your rank today and the top three in your circle.</string>
+</resources>

@@ -111,10 +111,19 @@ object ContentBlockPrefs {
         val pausedUntil: Long,
         val quietedApps: Set<String>,
         val blockedSurfaceKeys: Set<String>,
-        val isDebugDumpEnabled: Boolean
+        val isDebugDumpEnabled: Boolean,
+        /** End of the running Quiet session ([com.zenlauncher.zenmode.quiet.QuietSession]), or 0. */
+        val quietUntil: Long = 0L
     ) {
         val isAnyBlockEnabled: Boolean get() = blockedSurfaceKeys.isNotEmpty() || quietedApps.isNotEmpty()
         fun isPaused(now: Long): Boolean = pausedUntil > now
+
+        /**
+         * A Quiet session is running: every short-form surface is quiet until it ends, whatever
+         * the per-surface switches say. Checked against the clock on every event, so quieting
+         * stops on the second the session ends, with no alarm needed.
+         */
+        fun isQuiet(now: Long): Boolean = quietUntil > now
         fun isAppQuieted(packageName: String): Boolean = packageName in quietedApps
         fun isSurfaceBlocked(packageName: String, surfaceId: String): Boolean =
             surfaceKey(packageName, surfaceId) in blockedSurfaceKeys
@@ -137,9 +146,14 @@ object ContentBlockPrefs {
             pausedUntil = all[KEY_PAUSED_UNTIL] as? Long ?: 0L,
             quietedApps = (all[KEY_QUIETED_APPS] as? Set<*>).orEmpty().filterIsInstance<String>().toSet(),
             blockedSurfaceKeys = all.filter { (k, v) -> k.startsWith(SURFACE_PREFIX) && v == true }.keys,
-            isDebugDumpEnabled = all[KEY_DEBUG_DUMP] as? Boolean ?: false
+            isDebugDumpEnabled = all[KEY_DEBUG_DUMP] as? Boolean ?: false,
+            quietUntil = all[KEY_QUIET_ENDS_AT] as? Long ?: 0L
         )
     }
+
+    /** Where [com.zenlauncher.zenmode.quiet.QuietSession] keeps its end time: in this file, so
+     * the accessibility service's change listener sees a session start and end. */
+    const val KEY_QUIET_ENDS_AT = "quiet_ends_at"
 
     fun isDebugDumpEnabled(ctx: Context): Boolean =
         prefs(ctx).getBoolean(KEY_DEBUG_DUMP, false)

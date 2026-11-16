@@ -16,13 +16,15 @@ import com.zenlauncher.zenmode.accessibility.NodeQuery
 import com.zenlauncher.zenmode.accessibility.SurfaceRule
 import com.zenlauncher.zenmode.accessibility.SurfaceDetector
 import com.zenlauncher.zenmode.coreapi.services.ServiceLocator
+import com.zenlauncher.zenmode.island.IslandHost
 
 /**
- * Two jobs:
+ * Three jobs:
  *  1. Global lock-screen action for the home-screen lock button.
  *  2. In-app content blocking: when a tracked app (YouTube, Instagram, Snapchat)
  *     shows a short-form feed surface the user has blocked, press Back to leave
  *     it — same approach as the FlowBit reference app.
+ *  3. Carrying the Zen Island above every app ([IslandHost]), when the person has it on.
  *
  * Robustness matters: if this service throws out of a callback, Android disables
  * it (permanently, after a couple of times — users read that as "the permission
@@ -53,6 +55,9 @@ class ZenAccessibilityService : AccessibilityService() {
         }
 
         fun isRunning(): Boolean = instance != null
+
+        /** The running service, which can carry the Zen Island above every app. */
+        fun current(): ZenAccessibilityService? = instance
 
         /** Last recorded in-callback crash ("<Exception>: <msg> @ <time>"), or null. */
         fun lastCrash(context: Context): String? =
@@ -94,6 +99,7 @@ class ZenAccessibilityService : AccessibilityService() {
         blockPrefs = ContentBlockPrefs.snapshot(this)
         updateWatchedPackages()
         runCatching { A11yPermissionMonitor.check(this) }
+        runCatching { IslandHost.update(this) }
 
         getSharedPreferences(CRASH_PREFS, Context.MODE_PRIVATE)
             .getString(KEY_LAST_CRASH, null)?.let { last ->
@@ -157,10 +163,12 @@ class ZenAccessibilityService : AccessibilityService() {
 
         val debug = prefs.isDebugDumpEnabled
         val appRule = rules.appRule(pkg) ?: return
-        if (!prefs.isAnyBlockEnabled) return
+        // A Quiet session quiets every short-form surface until it ends, switches or not.
+        val quiet = prefs.isQuiet(now)
+        if (!quiet && !prefs.isAnyBlockEnabled) return
         // Nothing blocked in this app: the surface check below would refuse every surface
         // we could detect, so skip the node walk rather than pay for it on every scroll.
-        if (!prefs.hasBlockedSurface(pkg)) return
+        if (!quiet && !prefs.hasBlockedSurface(pkg)) return
 
         val root = rootInActiveWindow
         if (root == null) {
@@ -173,7 +181,7 @@ class ZenAccessibilityService : AccessibilityService() {
         val surface = SurfaceDetector.detect(appRule, snapshot)
         if (debug) Log.d(TAG, "event pkg=$pkg detected surface=${surface?.id}")
         if (surface == null) return
-        if (!prefs.isSurfaceBlocked(pkg, surface.id)) return
+        if (!quiet && !prefs.isSurfaceBlocked(pkg, surface.id)) return
 
         block(pkg, surface)
     }
@@ -227,6 +235,11 @@ class ZenAccessibilityService : AccessibilityService() {
         serviceInfo = info
     }
 
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        runCatching { IslandHost.onConfigurationChanged() }
+    }
+
     override fun onInterrupt() {
         // No-op
     }
@@ -236,6 +249,7 @@ class ZenAccessibilityService : AccessibilityService() {
         handler.removeCallbacksAndMessages(null)
         ContentBlockPrefs.prefs(this).unregisterOnSharedPreferenceChangeListener(prefsListener)
         instance = null
+        runCatching { IslandHost.onAccessibilityGone(applicationContext) }
     }
 
     /**
